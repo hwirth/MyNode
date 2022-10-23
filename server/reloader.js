@@ -47,6 +47,7 @@ module.exports = function AppReloader (web_socket) {
 						})
 					);
 				});
+
 				done();
 			});
 		});
@@ -66,6 +67,7 @@ module.exports = function AppReloader (web_socket) {
 
 	function re_require_modules () {
 		const load_requests = [];
+console.log( self.fileTimes );
 		Object.keys( self.fileTimes ).forEach( (file_name)=>{
 			const module = self.loadedModules[file_name];
 

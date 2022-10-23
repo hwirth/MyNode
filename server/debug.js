@@ -33,7 +33,7 @@ const DEBUG = {                                    // What to log
 	RELOADER_UP_TO_DATE 	  : DEBUG_ENABLED && !false,
 
 	PROTOCOLS                 : DEBUG_ENABLED && false,
-	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && !false,
+	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && false,
 
 }; // DEBUG
 

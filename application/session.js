@@ -28,7 +28,6 @@ module.exports = function SessionHandler (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function log_persistent_data () {
-return
 		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
 			COLORS.PROTOCOL,
 			'<session>',
@@ -50,6 +49,7 @@ return
 		});
 
 	} // respond_success
+
 
 	function respond_failure (client, command, reason) {
 		respond_success( client, command, reason, false );
@@ -81,8 +81,7 @@ return
 			return;
 		}
 
-		const password = parameters.password;
-		if (! password) {
+		if (! parameters.password) {
 			respond_failure( client, 'login', 'password undefined' );
 			return;
 		}
@@ -182,12 +181,13 @@ return
 			},
 		});
 
-		target_client.login = false;
-
-		//... This timeout should not be neccessary, but apparently is. WTF.
+		//... This timeout should not be neccessary, but apparently is;
+		//... Without it, the previous message may not arrive at the client.
 		setTimeout( ()=>{
 			target_client.closeSocket();
 		}, 1000);
+
+		target_client.login = false;
 
 	}; // kick
 

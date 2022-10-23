@@ -315,6 +315,7 @@ const WebSocketServer = function () {
 
 	} // global_error_handler
 
+
 	function cleanup (event) {
 		if (event == 'SIGINT') console.log();
 
@@ -342,6 +343,7 @@ const WebSocketServer = function () {
 		}
 
 	} // cleanup
+
 
 	function install_error_handler() {
 		color_log( COLORS.WSS, 'WebSocketServer', 'Setting up error handler' );

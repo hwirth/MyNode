@@ -30,7 +30,7 @@ return
 	} // log_persistent_data
 
 
-	function send_as_json( socket, data ) {
+	function send_as_json (socket, data) {
 		color_log( COLORS.PROTOCOLS, 'Protocols-send_as_json', data );
 		if (socket.send) socket.send( JSON.stringify( data ) );
 	}
@@ -82,11 +82,11 @@ return
 		const lut = {};
 
 		Object.keys( self.protocols ).forEach( (protocol_name)=>{
-			const protocol_commands = self.protocols[protocol_name]; //.commands;
+			const protocol_commands = self.protocols[ protocol_name ]; //.commands;
 
 			Object.keys( protocol_commands ).forEach( (command_name)=>{
 				const combined = protocol_name + '.' + command_name;
-				lut[combined] = protocol_commands[command_name];
+				lut[combined] = protocol_commands[ command_name ];
 			});
 		});
 
@@ -199,13 +199,13 @@ return
 		self.protocols = {};
 
 		function protocol (protocol_name, object_template) {
-			if (! persistent_data[protocol_name]) {
+			if (! persistent_data[ protocol_name ]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol', protocol_name );
-				persistent_data[protocol_name] = null;
+				persistent_data[ protocol_name ] = null;
 			}
 
 			return new Promise( async (done)=>{
-				self.protocols[protocol_name]
+				self.protocols[ protocol_name ]
 				= await new object_template( persistent_data )
 				;
 

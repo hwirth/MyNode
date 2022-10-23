@@ -1,6 +1,6 @@
 ==================================================================================================================119:=
                               SPIELWIESE - copy(l)eft 2022 - spielwiese.central-dogma.at
-                                                  README for v0.0.2p
+                                                  README for v0.0.3p
 ==================================================================================================================119:=
 
 Index
@@ -20,8 +20,8 @@ Index
 1. Overview
 ===========
 WebSocketServer deals with connections and redirects messages between client and your business logic, called
-"application" here. Furthermore, it provides automatic hot-reloading of the application code, just hit ctrl+s and
-reload the web page.
+"application" here. Furthermore, it provides automatic hot-reloading of the application code, simply hit ctrl+s and
+reload the web page, or just have the client send the request again.
 
 
 2. Mode of operation
@@ -55,8 +55,8 @@ any further protocols with a message like:
 2.2. Hot code reloading
 -----------------------
 The program is split into two parts: Persistent and ephemeral. Websocket events (i.e. onMessage) will first see, if any
-modules in ./application/ have changed and will reloaded them, before calling the updated actual event handlers
-contained in said modules.
+modules in ./application/ have changed and will reload them and re-instantiate , before calling the updated actual event handlers contained
+in said modules.
 
 2.3. Persistent data
 --------------------
@@ -87,7 +87,7 @@ $ npm install ws follow-redirects re-require-module
 	./server/main.js             Web socket, http server, hot reload of application code
 	./server/debug.js            Colored logging to stdout, log to file
 	./server/config.js           Provides hard coded constants and values from the configuration file
-	./server/interface.js        Hot code-reloading. Reinstantiates the application for each request
+	./server/reloader.js         Hot code-reloading. Reinstantiates the application for each request
 	./application/               Hot reloadable code, responses to messages from the websocket
 	./application/protocols.js   Calls response handler depending on given protocol and command
 	./application/session.js     Main protocol, handles accounts and logins
@@ -96,17 +96,25 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] .gitignore node_modules
 [?] Multiclienting as option per protocol
 [ ] Make session state available to protocols
 [ ] Execute commands in order
 [ ] Several protocols in one request?
 [!] Server: also log sent messages
+#1: Implement rate limiting
+#2: Restrict payload size
+#4: Authenticate users before WS connection establishes
 
 
 7. Code Parking Space (Ignore)
 ==============================
 
+https://www.freecodecamp.org/news/how-to-secure-your-websocket-connections-d0be0996c556/
+
+
 https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04
+(07:49:57 PM) madude: You can store the connect_id on the connection to identify them
 
 
 
