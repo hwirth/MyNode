@@ -1,0 +1,350 @@
+==================================================================================================================119:=
+                              SPIELWIESE - copy(l)eft 2022 - spielwiese.central-dogma.at
+                                                  README for v0.0.2p
+==================================================================================================================119:=
+
+Index
+	1. Overview
+	2. Mode of operation
+		2.1. Messages and session handling
+		2.2. Hot code reloading
+		2.3. Persistent data
+		2.4. Protocols
+	3. Configuration
+	4. Installation
+	5. File structure
+	6. TODO
+	7. Code parking space
+
+
+1. Overview
+===========
+WebSocketServer deals with connections and redirects messages between client and your business logic, called
+"application" here. Furthermore, it provides automatic hot-reloading of the application code, just hit ctrl+s and
+reload the web page.
+
+
+2. Mode of operation
+====================
+
+2.1. Messages and session handling
+----------------------------------
+Messages to the websocket are expected to be stringified JSON objects of the following structure:
+
+	{
+		"<Protocol name>": {
+			"<Command name>": {
+				<Command specific arguments>
+			}
+		}
+	}
+
+The "session" protocol is handling logins, accounts and permissions. The client must authenticate before accessing
+any further protocols with a message like:
+
+	{
+		"session": {
+			"authenticate": {
+				username: '<username>',
+				password: '<password>'
+			}
+		}
+	}
+
+
+2.2. Hot code reloading
+-----------------------
+The program is split into two parts: Persistent and ephemeral. Websocket events (i.e. onMessage) will first see, if any
+modules in ./application/ have changed and will reloaded them, before calling the updated actual event handlers
+contained in said modules.
+
+2.3. Persistent data
+--------------------
+The websocket itself is kept alive in the persistent part of the program, only the response handlers are hot reloaded.
+Persistent data is stored in the main part as well. Application code will be given a reference to its data on creation.
+
+2.4. Protocols
+--------------
+Each message contains commands for specific protocols. These will be relayed accordingly through  protocols.js .
+This allows for independent servers to run over the same websocket. Protocol code will be given a reference to its
+persistent data, which is stored in  AppReloader.persistentData.<protocol name> .
+
+
+3. Configuration
+================
+/etc/spielwiese.conf
+
+
+4. Installation
+===============
+$ npm install ws follow-redirects re-require-module
+
+
+5. File structure
+=================
+	./start_server.sh            Runs node in a loop, terminates on certain exit codes
+	./server/                    Code in this folder cannot be hot-reloaded
+	./server/main.js             Web socket, http server, hot reload of application code
+	./server/debug.js            Colored logging to stdout, log to file
+	./server/config.js           Provides hard coded constants and values from the configuration file
+	./server/interface.js        Hot code-reloading. Reinstantiates the application for each request
+	./application/               Hot reloadable code, responses to messages from the websocket
+	./application/protocols.js   Calls response handler depending on given protocol and command
+	./application/session.js     Main protocol, handles accounts and logins
+	./application/chat/chat.js   Custom server protocol, simple text chat
+
+
+6. TODO
+=======
+[?] Multiclienting as option per protocol
+[ ] Make session state available to protocols
+[ ] Execute commands in order
+[ ] Several protocols in one request?
+[!] Server: also log sent messages
+
+
+7. Code Parking Space (Ignore)
+==============================
+
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04
+
+
+
+const os        = require( 'os' );
+const fs        = require( 'fs' );
+const path      = require( 'path' );
+const http      = require( 'follow-redirects' ).http;
+const https     = require( 'https' );
+const WebSocket = require( 'ws' );
+
+
+/*
+	//self.wsServer = new WebSocket.Server({ noServer: true });
+
+	function create_https_server () {
+		console.log( 'WebSocketServer: Initializing https server...' );
+
+		const https_server = https.createServer( HTTPS_OPTIONS ).listen( HTTPS_OPTIONS.port )
+
+
+		https_server.on( 'error', (error)=>{
+			if (error.code == 'EADDRINUSE') {
+				color_log( COLORS.ERROR, 'ERROR', 'https_server: Port ' + error.port + ' already in use.' );
+				process.exit( EXIT_CODES.PORT_IN_USE );
+			} else {
+				global_error_handler( error );
+			}
+
+		}); // onError
+
+
+		https_server.on( 'upgrade', (request, socket, head)=>{
+			color_log( COLORS.SOCKET, 'UPGRADE', COLORS.ADDRESS + socket.remoteAddress + ':' + socket.remotePort );
+
+			self.wsServer.handleUpgrade( request, socket, head, (socket)=>{
+				self.wsServer.emit( 'connection', socket, request );
+			});
+
+		}); // onUpgrade
+
+
+		https_server.on( 'request', (request, response)=>{
+
+			function return_http_error (response, code) {
+				response.statusCode = code;
+				response.end( '<h1>' + code + '</h1><p>' + http.STATUS_CODES[code] );
+
+			} // return_http_error
+
+
+			if ( DEBUG.HTTP_GET_ALL || (DEBUG.HTTP_GET_ROOT && (request.url == '/')) ) {
+				color_log( COLORS.HTTPS, 'GET', request.url );
+			}
+
+			if (request.url == '/public_ip') {
+				response.setHeader( 'Content-Type', MIME_TYPES.txt + '; charset=utf8' );
+				response.writeHead( 200 );
+				response.end( request.connection.remoteAddress );
+
+				return;
+			}
+
+
+			let request_url_tainted = request.url;
+			let request_url_clean = '';
+			for (let i = 0; i < request_url_tainted.length; ++i) {
+				const char = request_url_tainted[i].toLowerCase();
+				if (SETTINGS.ALLOWED_URI_CHARS.indexOf(char) >= 0) {
+					request_url_clean += char;
+				}
+			}
+
+			if (request_url_clean != request_url_tainted) {
+				color_log( COLORS.ERROR, 'ERROR', 'Invalid URL: ' + request_url_tainted );
+				return_http_error( response, 404 );
+				return;
+			}
+
+			const pos = (request_url_clean + '?').indexOf( '?' );
+			request_url_clean = request_url_clean.substr( 0, pos );
+
+			const file_name
+			= SETTINGS.SERVER.DOCUMENT_ROOT
+			+ ((request_url_clean == '/') ? '/index.html' : request_url_clean)
+			;
+
+			if (! fs.existsSync( file_name )) {
+				color_log( COLORS.ERROR, 'ERROR', 'File not found: ' + file_name );
+				return_http_error( response, 404 );
+				return;
+			}
+
+			fs.stat( file_name, (error)=>{
+				if (error !== null) {
+					color_log( COLORS.ERROR, 'ERROR', error.code );
+					return_http_error( response, 404 );
+					return;
+				}
+			});
+
+			if (! fs.statSync( file_name ).isFile()) {
+				color_log( COLORS.ERROR, 'ERROR', 'Not a file ' + file_name );
+				return_http_error( response, 404 );
+				return;
+			}
+
+			fs.readFile( file_name, (error, data)=>{
+				if (error) {
+					console.log( error );
+					return;
+				} else {
+					const file_extension = path.extname( file_name ).substr( 1 );
+					let mime_type = MIME_TYPES[file_extension];
+					if (mime_type == undefined) mime_type = 'text/plain';
+
+					response.setHeader( 'Content-Type', mime_type + '; charset=utf8' );
+					response.writeHead( 200 );
+					response.end( data );
+				}
+			});
+
+		}); // onRequest
+
+	} // create_https_server
+*/
+
+
+
+
+
+
+
+
+/*
+	this.query = function (parameters) {
+		new Promise( async ()=>{
+			try {
+				if (DEBUG.PAYLOAD) color_log( COLORS.PAYLOAD, 'PAYLOAD', 'Reloading hot_reload.js' );
+				const { HotReloader } = reRequire( './server/hot_reload.js' );
+
+				if (parameters[0] == 'reset') {
+					if (DEBUG.PAYLOAD) color_log(
+						COLORS.PAYLOAD,
+						'PAYLOAD',
+						'Triggering reset'
+					);
+
+				}
+				self.hotReloader = await new HotReloader( self, parameters[0] == 'reset' )
+
+				if (DEBUG.PAYLOAD) color_log(
+					COLORS.PAYLOAD,
+					'QUERY',
+					'Calling command "' + parameters[0] + '"'
+				);
+
+				self.ephemeralCode.onMessage( parameters );
+
+			} catch (error) {
+				self.sendFailure(
+					{
+						error: FAILURE.PAYLOAD,
+						text:
+							//JSON.stringify( error.toJSON(), null, '<br>' )
+							error.stack
+							.replace( /\n/g, '<br>' )
+							.trim()
+					},
+					[user.name],
+				);
+			}
+		});
+
+	} // query
+*/
+
+
+
+
+
+
+		const handled_commands = [];
+		let nr_handled_commands = 0;
+
+		// Search the message for objects with key names equal to a known protocol
+		Object.keys( self.protocols ).forEach( (protocol_name)=>{
+			const has_protocol = (typeof message[protocol_name] != 'undefined');
+			if (has_protocol) {
+				const protocol_commands = self.protocols[protocol_name];
+
+				if (DEBUG.PROTOCOLS) color_log(
+					COLORS.PROTOCOLS,
+					'Protocols.onMessage',
+					'protocol_commands:',
+					protocol_commands,
+				);
+
+				// Search the protocol object for known commands
+				Object.keys( protocol_commands ).forEach( (command_name)=>{
+					const message_has_command
+					= (typeof message[protocol_name][command_name] != 'undefined')
+					;
+
+					const known_command = (typeof protocol_commands[command_name] != 'undefined');
+					if (known_command && message_has_command) {
+						const command_handler = protocol_commands[command_name];
+						const arguments = message[protocol_name][command_name];
+
+						if (DEBUG.PROTOCOLS) color_log(
+							COLORS.PROTOCOLS,
+							'Protocols.onMessage',
+							'command_handler:',
+							command_handler
+						);
+
+						// Call the handler for the given command
+						command_handler( client, arguments );
+
+						handled_commands.push( protocol_name + '.' + command_name );
+
+						nr_handled_commands += 1;
+
+					} // protocol has command
+				});
+			} // message has protocol
+		});
+
+		color_log(
+			COLORS.PROTOCOLS,
+			'Protocols.onMessage:',
+			(nr_handled_commands ? COLORS.DEFAULT : COLORS.ERROR)
+			+ 'nr_handled_commands'
+			+ COLORS.DEFAULT
+			, nr_handled_commands
+		);
+
+		send_as_json( socket, {
+			debug: {
+				validCommands: ((handled_commands.length == 0) ? 'none' : handled_commands),
+			},
+		});

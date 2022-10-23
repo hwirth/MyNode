@@ -1,0 +1,38 @@
+<!DOCTYPE html><html id="top" lang="en" class="Xdebug"><head><meta charset="UTF-8">
+<title>Spielwiese Login</title>
+<meta name="robots"       content="noindex,nofollow">
+<meta name="viewport"     content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet"    href="spielwiese.css" type="text/css">
+<style class="noscript">
+	* { margin:0; padding:0; box-sizing:border-box; }
+	body.initializing { width:100%; height:100%; background:#fff; color:#000; }
+	div.noscript { position:absolute; display:table; top:0; left:0; z-index:999; width:100%; height:100%; }
+	.noscript div { display:table-cell; text-align:center; vertical-align:middle; }
+	.noscript p { margin-top:2em; }
+	@media (prefers-color-scheme: dark) {
+		body.initializing { background:#000; color:#fff; }
+	}
+</style>
+<script class="noscript">
+	function splash_status (text) { document.querySelector( 'div.noscript p').innerHTML = text; };
+</script>
+<script src="main.js" type="module"></script>
+</head><body class="initializing">
+
+	<div class="noscript">
+		<div>
+			<h1>
+				<img src="spielwiese.png" alt="Site icon">
+				<br>
+				spielwiese
+			</h1>
+			<p>Please enable JavaScript!</p>
+		</div>
+	</div>
+	<script class="noscript">
+		splash_status( 'Loading...' );
+	</script>
+
+</body></html>
