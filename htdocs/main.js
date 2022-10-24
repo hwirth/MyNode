@@ -91,7 +91,9 @@ export const Application = function () {
 
 
 	function on_console_send (request) {
-		//self.debugConsole.print( request, 'request' );
+		console.log( 'on_console_send(): request:', request );
+
+
 		self.webSocketClient.send( request );
 
 	} // on_debug_message
