@@ -5,8 +5,10 @@
 
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 
+// Protocol object templates
 const SessionHandler = require( './session.js' );
 const ServerManager  = require( './server_manager.js' );
+const ChatProtocol   = require( './chat/chat_main.js' );
 
 
 module.exports.Protocols = function (persistent_data, callbacks) {
@@ -218,6 +220,7 @@ return
 		return Promise.all([
 			protocol( 'session' , SessionHandler ),
 			protocol( 'server'  , ServerManager  ),
+			protocol( 'chat'    , ChatProtocol  ),
 		]);
 
 	}; // init
