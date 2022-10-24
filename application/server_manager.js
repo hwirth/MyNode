@@ -3,6 +3,8 @@
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
@@ -68,16 +70,23 @@ module.exports = function ServerManager (persistent_data) {
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function init () {
+	this.exit = function () {
+		color_log( COLORS.TRACE_EXIT, 'ServerManager.exit()' );
+
+		return Promise.resolve();
+
+	}; // exit
+
+
+	this.init = function () {
 		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ServerManager.init' );
+
 		return Promise.resolve();
 
 	}; // init
 
 
-	// Initialize the object asynchronously
-	// Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
-	init().then( ()=>self );
+	self.init().then( ()=>self );   // const manager = await new ServerManager();
 
 }; // ServerManager
 

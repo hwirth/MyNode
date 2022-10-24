@@ -3,6 +3,8 @@
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 const os = require( 'os' );
 const fs   = require( 'fs' );
 const util = require( 'util' );

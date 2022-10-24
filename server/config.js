@@ -3,6 +3,8 @@
 // SPIELWIESE - WEB SOCKET SERVER - copy(l)eft 2022 - http://spielwiese.central-dogma.at/
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 const fs = require( 'fs' );
 
 const DEV_SERVER = true || (os.hostname() == 'labor');
@@ -34,7 +36,7 @@ function parse_config_file () {
 
 		// Extract variable names and store values in dictionary
 		lines.forEach( (line)=>{
-			words = line.replace( /\t/g, ' ' ).split( ' ' );
+			const words = line.replace( /\t/g, ' ' ).split( ' ' );
 			const variable = words[0];
 			words.shift();
 			config_file[variable] = words.join( ' ' ).trim();

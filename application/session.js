@@ -3,6 +3,8 @@
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
@@ -69,11 +71,6 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PROTOCOL DEFINITION
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -114,7 +111,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 	this.onConnect = function (socket, client_address) {
 		if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect', client_address );
 
-		persistent_data.session.clients[ client_address ] = new WebSocketClient( socket, client_address );
+		persistent_data.clients[ client_address ] = new WebSocketClient( socket, client_address );
 
 	}; // onConnect
 
@@ -149,7 +146,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 			return;
 		}
 
-		const user_record = persistent_data.session.accounts[ parameters.username ];
+		const user_record = persistent_data.accounts[ parameters.username ];
 
 		if (! user_record) {
 			respond_failure( client, 'login', 'User "' + parameters.username + '" unknown' );
@@ -184,11 +181,11 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 
 
 	function find_client_by_username (username) {
-		const client_address = Object.keys( persistent_data.session.clients ).find( (address)=>{
-			const client = persistent_data.session.clients[ address ];
+		const client_address = Object.keys( persistent_data.clients ).find( (address)=>{
+			const client = persistent_data.clients[ address ];
 			return (client.login && (client.login.userName == username));
 		});
-		return (client_address) ? persistent_data.session.clients[ client_address ] : null;
+		return (client_address) ? persistent_data.clients[ client_address ] : null;
 
 	} // find_client_by_username
 
@@ -201,17 +198,9 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 
 		let target_client = null;
 		if (parameters.address) {
-			target_client = persistent_data.session.clients[ parameters.address ];
+			target_client = persistent_data.clients[ parameters.address ];
 		}
 		else if (parameters.username) {
-			//const client = find_client_by_username( parameters.username );
-			/*
-			const client_address = Object.keys( persistent_data.session.clients ).find( (key)=>{
-				const client = persistent_data.session.clients[ key ];
-				return (client.login && (client.login.userName == parameters.username));
-			});
-			if (client_address) target_client = persistent_data.session.clients[ client_address ];
-			*/
 			target_client = find_client_by_username( parameters.username );
 		}
 
@@ -262,7 +251,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 					client.send({
 						session: {   //... Move to a debug protocol
 							status: {
-								persistent: persistent_data,
+								persistent: 'persistent_data no longer global',
 							},
 						},
 					});
@@ -310,6 +299,14 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	this.exit = function () {
+		color_log( COLORS.TRACE_EXIT, 'SessionHandler.exit()' );
+
+		return Promise.resolve();
+
+	}; // exit
+
+
 	function load_data () {
 		color_log( COLORS.SESSION, 'SessionHandler', 'save_data' );
 
@@ -338,19 +335,17 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 	} // save_data
 
 
-	function init () {
+	this.init = function () {
 		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'SessionHandler.init' );
 
-		if (persistent_data.session === null) {
+		if (Object.keys( persistent_data ).length == 0) {
 			// "Load from database"
-			persistent_data.session = load_data();
-		 /*
 			const data = load_data();
 			Object.keys( data ).forEach( (key)=>{
-				persistent_data.session[key] = data[key];
+				persistent_data[key] = data[key];
 			});
-		*/
 
+			//... Before: "Global" persistent_data.session = load_data();
 		}
 
 		return Promise.resolve();
@@ -358,9 +353,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 	}; // init
 
 
-	// Initialize the object asynchronously
-	// Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
-	init().then( ()=>self );
+	self.init().then( ()=>self );   // const sessions = await new SessionHandler();
 
 }; // SessionHandler
 

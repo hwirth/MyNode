@@ -3,6 +3,8 @@
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 import { DEBUG } from './main.js';
 
 const CONNECTION_TIMEOUT_MS = 5000;

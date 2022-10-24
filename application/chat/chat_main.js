@@ -3,6 +3,8 @@
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 const { DEBUG, COLORS, color_log } = require( '../../server/debug.js' );
 const { REASONS                  } = require( '../constants.js' );
 
@@ -10,18 +12,6 @@ const { REASONS                  } = require( '../constants.js' );
 module.exports = function ChatServer (persistent_data) {
 	const self = this;
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PROTOCOL DEFINITION
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-/*
-	this.commands = {
-		kick    : '{ address: <ip>:<port> }',
-		login   : '{ username: <user name>, password: <password> }',
-		logout  : null,
-		status  : null,
-	};
-*/
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
@@ -69,8 +59,30 @@ module.exports = function ChatServer (persistent_data) {
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function init () {
+	this.exit = function () {
 		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ChatServer.init' );
+
+		return Promise.resolve();
+
+	}; // exit
+
+
+	function load_data () {
+		return {};
+
+	} // load_data
+
+
+	this.init = function () {
+		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ChatServer.init' );
+
+		if (Object.keys( persistent_data ).length == 0) {
+			const data = load_data();
+			Object.keys( data ).forEach( (key)=>{
+				persistent_data[key] = data[key];
+			});
+		}
+
 		return Promise.resolve();
 
 	}; // init
@@ -78,7 +90,7 @@ module.exports = function ChatServer (persistent_data) {
 
 	// Initialize the object asynchronously
 	// Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
-	init().then( ()=>self );
+	self.init().then( ()=>self );   // const chat = await new ChatServer();
 
 }; // ChatServer
 

@@ -52,9 +52,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 			color_log( COLORS.PROTOCOLS, 'Protocols.onConnect: Client already logged in', client_address );
 		}
 
-		self.protocols.session.onConnect( socket, client_address );
-
-		//persistent_data.session.clients[ client_address ] = new WebSocketClient( socket, client_address );
+		self.protocols.session.onConnect( socket, client_address );   // Will create new WebSocketClient()
 
 		log_persistent_data( 'onConnect' );
 
@@ -187,7 +185,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		color_log( COLORS.PROTOCOLS, 'Protocols.exit()' );
+		color_log( COLORS.TRACE_EXIT, 'Protocols.exit()' );
 
 		return Promise.resolve();
 
@@ -199,15 +197,15 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		self.protocols = {};
 
-		function protocol (protocol_name, object_template) {
+		function protocol (protocol_name, object_template, initial_arguments) {
 			if (! persistent_data[ protocol_name ]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
-				persistent_data[ protocol_name ] = null;
+				persistent_data[ protocol_name ] = {};
 			}
 
 			return new Promise( async (done)=>{
 				self.protocols[ protocol_name ]
-				= await new object_template( persistent_data )
+				= await new object_template( persistent_data[ protocol_name ] )
 				;
 
 				done();
@@ -223,7 +221,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 	}; // init
 
 
-	return self.init().then( ()=>self );   // Instantiation: const protocols = await new Protocols();
+	return self.init().then( ()=>self );   // const protocols = await new Protocols();
 
 }; // Protocols
 

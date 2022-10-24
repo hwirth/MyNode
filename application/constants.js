@@ -3,6 +3,8 @@
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 module.exports.REASONS = {
 	UNKNOWN_COMMAND             : 'Unknown command',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
