@@ -85,7 +85,7 @@ return
 		const lut = {};
 
 		Object.keys( self.protocols ).forEach( (protocol_name)=>{
-			const protocol_commands = self.protocols[ protocol_name ]; //.commands;
+			const protocol_commands = self.protocols[ protocol_name ].requestHandlers;
 
 			Object.keys( protocol_commands ).forEach( (command_name)=>{
 				const combined = protocol_name + '.' + command_name;
@@ -112,7 +112,7 @@ return
 		const rejected_commands = [];
 
 		Object.keys( message ).forEach( (protocol_name)=>{
-			if (typeof self.protocols[protocol_name] == 'undefined') {
+			if (! self.protocols[ protocol_name ]) {
 				rejected_commands.push( protocol_name + '.*' );
 
 				if (DEBUG.PROTOCOLS) color_log(
@@ -134,9 +134,10 @@ return
 
 				Object.keys( message_commands ).forEach( (command_name)=>{
 					const combined_name = protocol_name + '.' + command_name;
-					command_handler = self.protocols[protocol_name][command_name];
 
-					if (typeof command_handler == 'undefined') {
+					request_handler = self.protocols[protocol_name].requestHandlers[command_name];
+
+					if (typeof request_handler == 'undefined') {
 						rejected_commands.push( combined_name );
 
 						if (DEBUG.PROTOCOLS) color_log(
@@ -152,15 +153,15 @@ return
 						if (DEBUG.PROTOCOLS) color_log(
 							COLORS.PROTOCOLS,
 							'Protocols.onMessage',
-							'command_handler: ',
-							command_handler
+							'request_handler: ',
+							request_handler
 						);
 
 						log_persistent_data( 'onMessage:', 'PRE COMMAND: ' );
 
 						// Call the handler for the given command
 						const arguments = message[protocol_name][command_name];
-						command_handler( client, arguments );
+						request_handler( client, arguments );
 
 						log_persistent_data( 'onMessage:', 'POST COMMAND: ' );
 					}

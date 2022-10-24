@@ -14,14 +14,7 @@ module.exports = function SessionHandler (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // PROTOCOL DEFINITION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-/*
-	this.commands = {
-		kick    : '{ address: <ip>:<port> }',
-		login   : '{ username: <user name>, password: <password> }',
-		logout  : null,
-		status  : null,
-	};
-*/
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
@@ -61,7 +54,10 @@ module.exports = function SessionHandler (persistent_data) {
 // COMMAND HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.login = function (client, parameters) {
+
+	this.requestHandlers = {};
+
+	this.requestHandlers.login = function (client, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<session.login>',
@@ -108,7 +104,7 @@ module.exports = function SessionHandler (persistent_data) {
 	}; // login
 
 
-	this.logout = function (client, parameters) {
+	this.requestHandlers.logout = function (client, parameters) {
 		if (client.login) {
 			client.login = false;
 			respond_success( client, 'logout', 'Logged out' );
@@ -129,7 +125,7 @@ module.exports = function SessionHandler (persistent_data) {
 	} // find_client_by_username
 
 
-	this.kick = function (client, parameters) {
+	this.requestHandlers.kick = function (client, parameters) {
 		if (! client.inGroup( 'admin' )) {
 			respond_failure( client, 'kick', REASONS.INSUFFICIENT_PERMS );
 			return;
@@ -191,7 +187,7 @@ module.exports = function SessionHandler (persistent_data) {
 	}; // kick
 
 
-	this.status = function (client, parameters) {
+	this.requestHandlers.status = function (client, parameters) {
 		if (parameters.persistent && client.login) {
 			if (client.inGroup('admin')) {
 				client.send({
