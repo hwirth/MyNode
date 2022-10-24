@@ -78,9 +78,9 @@ module.exports = function AppReloader (web_socket) {
 
 				load_requests.push(
 					new Promise( (done)=>{
-						if (DEBUG.RELOADER_UP_TO_DATE) color_log(
+						if (DEBUG.RELOADER_REQUIRE) color_log(
 							COLORS.REQUIRE,
-							'REQUIRE',
+							'AppReloader-re_require_modules:',
 							file_name,
 						);
 

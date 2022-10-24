@@ -65,8 +65,7 @@ module.exports = function SessionHandler (persistent_data) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<session.login>',
-			parameters.username,
-			parameters.password,
+			'client:',
 			client,
 		);
 
@@ -92,7 +91,6 @@ module.exports = function SessionHandler (persistent_data) {
 			respond_failure( client, 'login', 'User "' + parameters.username + '" unknown' );
 
 		} else {
- console.log( 'P', parameters.password, user_record.password );
 			const password_correct = (user_record.password === parameters.password);
 
 			if (password_correct) {
@@ -268,7 +266,7 @@ module.exports = function SessionHandler (persistent_data) {
 		if (persistent_data.session === null) {
 			// "Load from database"
 			persistent_data.session = load_data();
-		/*
+		 /*
 			const data = load_data();
 			Object.keys( data ).forEach( (key)=>{
 				persistent_data.session[key] = data[key];

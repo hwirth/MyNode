@@ -30,7 +30,8 @@ const DEBUG = {                                    // What to log
 	HTTP_GET_ROOT             : DEBUG_ENABLED && !false,   // Log GET / requests
 
 	RELOADER                  : DEBUG_ENABLED && !false,   // Hot reloading
-	RELOADER_UP_TO_DATE 	  : DEBUG_ENABLED && !false,
+	RELOADER_UP_TO_DATE 	  : DEBUG_ENABLED && false,    // Report unchanged files
+	RELOADER_REQUIRE    	  : DEBUG_ENABLED && !false,   // Report changed and re-required files
 
 	PROTOCOLS                 : DEBUG_ENABLED && false,
 	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && false,
@@ -75,8 +76,8 @@ const COLORS = {
 	SESSION      : ANSI_COLORS.GREEN   + ANSI_COLORS.BRIGHT,
 
 	RELOADER     : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
-	REQUIRE      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
 	UP_TO_DATE   : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
+	REQUIRE      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 	CONNECT      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
 	DISCONNECT   : ANSI_COLORS.RED,
 

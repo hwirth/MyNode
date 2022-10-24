@@ -98,7 +98,7 @@ return
 
 
 	this.onMessage = function (socket, client_address, message) {
-		//color_log( COLORS.PROTOCOLS, 'Protocols.onMessage', client_address, message );
+		color_log( COLORS.PROTOCOLS, 'Protocols.onMessage', client_address, message );
 
 		const client = persistent_data.session.clients[ client_address ];
 		if (! client) {
