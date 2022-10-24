@@ -69,6 +69,7 @@ module.exports = function ServerManager (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function init () {
+		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ServerManager.init' );
 		return Promise.resolve();
 
 	}; // init

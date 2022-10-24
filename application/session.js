@@ -7,8 +7,7 @@ const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
 
-// Used in  Protocols.onConnect() :
-module.exports.WebSocketClient = function WebSocketClient (socket, client_address) {
+const WebSocketClient = function WebSocketClient (socket, client_address) {
 	const self = this;
 
 	this.address;
@@ -20,7 +19,7 @@ module.exports.WebSocketClient = function WebSocketClient (socket, client_addres
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function send_as_json (socket, data) {
-		color_log( COLORS.PROTOCOLS, 'Protocols-send_as_json', data );
+		if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'WebSocketClient-send_as_json', data );
 		if (socket.send) socket.send( JSON.stringify( data ) );
 	}
 
@@ -53,13 +52,16 @@ module.exports.WebSocketClient = function WebSocketClient (socket, client_addres
 
 	function init () {
 		self.address = client_address;
-		self.login = false;
+		self.login   = false;
 	}
 
 
 	init();
 
 }; // WebSocketClient
+
+
+
 
 
 module.exports.SessionHandler = function SessionHandler (persistent_data) {
@@ -106,6 +108,18 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// INTERFACE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.onConnect = function (socket, client_address) {
+		if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect', client_address );
+
+		persistent_data.session.clients[ client_address ] = new WebSocketClient( socket, client_address );
+
+	}; // onConnect
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -116,7 +130,6 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<session.login>',
-			'client:',
 			client,
 		);
 
@@ -149,7 +162,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 					userName : parameters.username,
 					groups   : (user_record.groups) ? user_record.groups : [],
 				};
-				respond_success( client, 'login', 'Login succeeded' );
+				respond_success( client, 'login', 'Logged in' );
 
 			} else {
 				respond_failure( client, 'login', 'Login failed' );
@@ -243,17 +256,30 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 
 
 	this.requestHandlers.status = function (client, parameters) {
-		if (parameters.persistent && client.login) {
-			if (client.inGroup('admin')) {
-				client.send({
-					session: {   //... Move to a debug protocol
-						status: {
-							persistent: persistent_data,
+		if (parameters.persistent || (parameters.persistent === null)) {
+			if (client.login) {
+				if (client.inGroup('admin')) {
+					client.send({
+						session: {   //... Move to a debug protocol
+							status: {
+								persistent: persistent_data,
+							},
 						},
-					},
-				});
+					});
+				} else {
+					//respond_failure( client, 'status.persistent', REASONS.INSUFFICIENT_PERMS );
+					client.send({
+						session: {
+							status: {
+								persistent: {
+									success : false,
+									reason  : REASONS.INSUFFICIENT_PERMS,
+								},
+							},
+						},
+					});
+				}
 			} else {
-				//respond_failure( client, 'status.persistent', REASONS.INSUFFICIENT_PERMS );
 				client.send({
 					session: {
 						status: {
@@ -265,8 +291,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 					},
 				});
 			}
-		} else {
-			//respond_failure( client, 'status', REASONS.INSUFFICIENT_PERMS );
+		} else if (Object.keys(parameters).length == 0) {
 			client.send({
 				session: {
 					status: {
@@ -274,6 +299,8 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 					},
 				},
 			});
+		} else {
+			respond_failure( client, 'status', REASONS.UNKNOWN_COMMAND );
 		}
 
 	}; // status

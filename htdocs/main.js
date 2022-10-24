@@ -28,9 +28,9 @@ export const Application = function () {
 					password : 'pass1',
 				},
 				status: {},
+				logout: {},
 			},
 		},
-	/*
 		{
 
 			session: {
@@ -48,17 +48,17 @@ export const Application = function () {
 				status: {},
 			},
 		},
-	*/
 
-	];
+	]; // boot_sequence
 
 
 
 	function on_websocket_open (event, socket)  {
 		self.debugConsole.print( 'Connected to ' + WS_URL, 'success' );
 
-		if (boot_sequence.length > 0) socket.send( boot_sequence[0] );
-		boot_sequence.shift();
+		boot_sequence.forEach( (request)=>{
+			socket.send( request );
+		});
 
 	} // on_websocket_open
 
@@ -75,11 +75,12 @@ export const Application = function () {
 		const request = JSON.parse( event.data );
 
 		self.debugConsole.print( request, 'response' );
-
+	/*
 		if (boot_sequence.length > 0) {
 			socket.send( boot_sequence[0] );
 			boot_sequence.shift();
 		}
+	*/
 
 	} // on_websocket_message
 
@@ -91,10 +92,14 @@ export const Application = function () {
 
 
 	function on_console_send (request) {
-		console.log( 'on_console_send(): request:', request );
+		//console.log( 'on_console_send(): request:', request );
 
 		if (request.connect) {
+			console.log( 'on_console_send: Connecting to', WS_URL );
+			self.webSocketClient.connect( WS_URL );
 		} else if (request.disconnect) {
+			console.log( 'on_console_send: Disconnecting' );
+			self.webSocketClient.disconnect();
 		} else {
 			self.webSocketClient.send( request );
 		}
@@ -160,6 +165,10 @@ export const Application = function () {
 
 		self.debugConsole = await new DebugConsole({
 			send: on_console_send,
+		});
+
+		boot_sequence.forEach( (request)=>{
+			self.debugConsole.history.add( self.debugConsole.requestToText(request) );
 		});
 
 		self.webSocketClient = await new WebSocketClient({

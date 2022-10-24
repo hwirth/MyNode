@@ -26,10 +26,14 @@ const DEBUG = {                                    // What to log
 	TRACE_INIT                : DEBUG_ENABLED && !false,   // Functions announcing when they are called
 	TRAFFIC                   : DEBUG_ENABLED && !false,   //
 
+	CONNECT                   : DEBUG_ENABLED && !false,   // Trace onConnect
+	DISCONNECT                : DEBUG_ENABLED && !false,   // Trace onDisconnect
+	MESSAGE_IN                : DEBUG_ENABLED && !false,   // Show received, onMessage
+	MESSAGE_OUT               : DEBUG_ENABLED && !false,   // Show sent, socket.send()
+
 	HTTP_GET_ALL              : DEBUG_ENABLED && !false,   // Log all GET requests
 	HTTP_GET_ROOT             : DEBUG_ENABLED && !false,   // Log GET / requests
 
-	RELOADER                  : DEBUG_ENABLED && !false,   // Hot reloading
 	RELOADER_UP_TO_DATE 	  : DEBUG_ENABLED && false,    // Report unchanged files
 	RELOADER_REQUIRE    	  : DEBUG_ENABLED && !false,   // Report changed and re-required files
 
@@ -67,6 +71,11 @@ const COLORS = {
 	BOOT         : ANSI_COLORS.GREEN   + ANSI_COLORS.BRIGHT,
 	RUNNING_AS   : ANSI_COLORS.YELLOW  + ANSI_COLORS.BRIGHT,
 
+	CONNECT      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+	DISCONNECT   : ANSI_COLORS.RED,
+	RECEIVED     : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
+	SENDING      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+
 	WSS          : ANSI_COLORS.GREEN,
 	HTTP         : ANSI_COLORS.GREEN,
 	TRACE_INIT   : ANSI_COLORS.YELLOW  + ANSI_COLORS.BRIGHT,
@@ -78,8 +87,6 @@ const COLORS = {
 	RELOADER     : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
 	UP_TO_DATE   : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
 	REQUIRE      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
-	CONNECT      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
-	DISCONNECT   : ANSI_COLORS.RED,
 
 	EXIT         : ANSI_COLORS.RED     + ANSI_COLORS.BRIGHT,
 	ERROR        : ANSI_COLORS.RED     + ANSI_COLORS.BRIGHT,

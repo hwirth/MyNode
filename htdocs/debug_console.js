@@ -66,6 +66,9 @@ export const DebugConsole = function (callbacks) {
 
 	this.history;
 
+	this.requestToText = request_to_text;
+	this.textToRequest = text_to_request;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONVERT USER INPUT <--> JSON
@@ -237,11 +240,31 @@ export const DebugConsole = function (callbacks) {
 			send    : new_element.querySelector( '.submit' ),
 		};
 
-		self.elements.input.addEventListener( 'mousemove', ()=>{
-			self.elements.input.focus();
-		});
+
+		function adjust_textarea_height () {
+			const lines = self.elements.input.value.split('\n');
+			const nr_lines = (lines.length > 0) ? lines.length : 1;
+			self.elements.input.rows = nr_lines + EXTRA_LINES;
+        	}
+
 
 		let accept_click = null;
+		self.elements.console.addEventListener( 'dblclick', (event)=>{
+			if( event.target.classList.contains('request')
+			||  event.target.classList.contains('response')
+			) {
+				event.preventDefault();
+				self.elements.input.value = event.target.innerText;
+				adjust_textarea_height();
+				self.elements.input.focus();
+			}
+		});
+		self.elements.console.addEventListener( 'mousemove', (event)=>{
+			if (event.target.classList.contains( 'debug_console' )) {
+				self.elements.input.focus();
+				accept_click = null;
+			}
+		});
 		self.elements.console.addEventListener( 'mousedown', (event)=>{
 			accept_click = event.target.classList.contains( 'debug_console' );
 		});
@@ -251,18 +274,11 @@ export const DebugConsole = function (callbacks) {
 				accept_click = null;
 			}
 		});
-		self.elements.console.addEventListener( 'mousemove', (event)=>{
-			if (event.target.classList.contains( 'debug_console' )) {
-				self.elements.input.focus();
-				accept_click = null;
-			}
-		});
 
-		function adjust_textarea_height () {
-			const lines = self.elements.input.value.split('\n');
-			const nr_lines = (lines.length > 0) ? lines.length : 1;
-			self.elements.input.rows = nr_lines + EXTRA_LINES;
-        	}
+
+		self.elements.input.addEventListener( 'mousemove', ()=>{
+			self.elements.input.focus();
+		});
 		self.elements.input.addEventListener( 'keyup', adjust_textarea_height );
         	self.elements.input.addEventListener( 'keydown', (event)=>{
 			adjust_textarea_height();
@@ -290,6 +306,7 @@ export const DebugConsole = function (callbacks) {
 			}
         	});
 
+
 		self.elements.send.addEventListener( 'click', ()=>{
 			const text = self.elements.input.value.trim();
 			if (! text) {
@@ -300,6 +317,7 @@ export const DebugConsole = function (callbacks) {
 			self.history.add( text );
 			callbacks.send( text_to_request(text) );
 		});
+
 
 		addEventListener( 'keydown', (event)=>{
 			const shift = event.shiftKey;

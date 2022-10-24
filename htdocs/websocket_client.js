@@ -20,28 +20,18 @@ export const WebSocketClient = function (parameters = {}) {
 	this.websocket = null;
 
 
-	this.send = function (request) {
-		console.log(
-			'%c🡅 WebSocketClient sending%c:',
-			'color:#480',
-			'color:unset',
-			JSON.stringify( request, '', '   ' ),
-		);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HELPERS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-		parameters.debugConsole.print( request, 'request' );
-		self.websocket.send( JSON.stringify(request) );
-
-	} // send
-
-
-	function websocket_connection (callback_done) {
+	function websocket_connection (callback_connection_established) {
 		console.log( 'Connecting to ' + parameters.url + '...' );
 
 		// When unable to connect, try again after a few seconds
 		connection_timeout = setTimeout( ()=>{
 			console.log( 'Connection timed out' );
 			connection_timeout = null;
-			websocket_connection( callback_done );
+			websocket_connection( callback_connection_established );
 		}, CONNECTION_TIMEOUT_MS );
 
 
@@ -66,9 +56,9 @@ export const WebSocketClient = function (parameters = {}) {
 			log( 'WebSocketClient.onOpen', event );
 			stop_timeout_loop();
 
-			callback_done();
-
 			if (callbacks.onOpen) callbacks.onOpen( event, self );
+
+			callback_connection_established();
 		});
 		ws.addEventListener( 'close', (event)=>{
 			log( 'WebSocketClient.onClose', event );
@@ -100,6 +90,32 @@ export const WebSocketClient = function (parameters = {}) {
 		self.websocket = ws;
 
 	} // websocket_connection
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// INTERFACE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.connect = function (websocket_url) {
+	}; // connect
+
+
+	this.disconnect = function () {
+	}; // disconnect
+
+
+	this.send = function (request) {
+		console.log(
+			'%c🡅 WebSocketClient sending%c:',
+			'color:#480',
+			'color:unset',
+			JSON.stringify( request, '', '   ' ),
+		);
+
+		parameters.debugConsole.print( request, 'request' );
+		self.websocket.send( JSON.stringify(request) );
+
+	} // send
 
 
 	function on_before_unload () {

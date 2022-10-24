@@ -137,7 +137,7 @@ module.exports = function AppReloader (web_socket) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = async function (socket, client_address) {
-		if (DEBUG.RELOADER) color_log( COLORS.RELOADER, 'AppReloader.onConnect', client_address );
+		if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect', client_address );
 		await update_modules();
 		self.protocols.onConnect( socket, client_address );
 
@@ -145,11 +145,11 @@ module.exports = function AppReloader (web_socket) {
 
 
 	this.onDisconnect = async function (socket, client_address) {
-		if (DEBUG.RELOADER) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect', client_address );
+		if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect', client_address );
 		await update_modules();
 		self.protocols.onDisconnect( socket, client_address );
 
-	}; // onConnect
+	}; // onDisconnect
 
 
 	this.onMessage = async function (socket, client_address, data) {
@@ -161,7 +161,7 @@ module.exports = function AppReloader (web_socket) {
 			color_log( COLORS.RELOADER, 'AppReloader.onMessage: JSON.parse() failed.' );
 		}
 
-		if (DEBUG.RELOADER) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
+		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
 			await update_modules();

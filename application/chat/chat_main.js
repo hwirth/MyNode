@@ -7,7 +7,7 @@ const { DEBUG, COLORS, color_log } = require( '../../server/debug.js' );
 const { REASONS                  } = require( '../constants.js' );
 
 
-module.exports = function ChatProtocol (persistent_data) {
+module.exports = function ChatServer (persistent_data) {
 	const self = this;
 
 
@@ -70,6 +70,7 @@ module.exports = function ChatProtocol (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function init () {
+		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ChatServer.init' );
 		return Promise.resolve();
 
 	}; // init
@@ -79,7 +80,7 @@ module.exports = function ChatProtocol (persistent_data) {
 	// Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
 	init().then( ()=>self );
 
-}; // ChatProtocol
+}; // ChatServer
 
 
 //EOF

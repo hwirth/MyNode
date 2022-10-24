@@ -157,7 +157,7 @@ const WebSocketServer = function () {
 			});
 
 			socket.onerror = function (error) {
-				color_log( COLORS.ERROR, 'ERROR', error  );
+				color_log( COLORS.ERROR, 'websocket:', error  );
 			}
 
 			socket.on( 'message', (data)=>{
@@ -222,6 +222,10 @@ const WebSocketServer = function () {
 		new_http_server.on( 'request', (request, response)=>{
 
 			function return_http_error (response, code) {
+				color_log( COLORS.ERROR, 'http:', 'Client address:', request.socket.remoteAddress );
+				color_log( COLORS.ERROR, 'http:', 'Requested URL:', request.url );
+				color_log( COLORS.ERROR, 'http:', 'Headers:', request.headers );
+
 				response.statusCode = code;
 				response.end( '<h1>' + code + '</h1><p>' + http.STATUS_CODES[code] );
 
@@ -250,7 +254,7 @@ const WebSocketServer = function () {
 			}
 
 			if (request_url_clean != request_url_tainted) {
-				color_log( COLORS.ERROR, 'ERROR', 'Invalid URL: ' + request_url_tainted );
+				color_log( COLORS.ERROR, 'http:', 'Invalid URL: ' + request_url_tainted );
 				return_http_error( response, 404 );
 				return;
 			}
@@ -264,28 +268,28 @@ const WebSocketServer = function () {
 			;
 
 			if (! fs.existsSync( file_name )) {
-				color_log( COLORS.ERROR, 'ERROR', 'File not found: ' + file_name );
+				color_log( COLORS.ERROR, 'http:', 'File not found: ' + file_name );
 				return_http_error( response, 404 );
 				return;
 			}
 
 			fs.stat( file_name, (error)=>{
 				if (error !== null) {
-					color_log( COLORS.ERROR, 'ERROR', error.code );
+					color_log( COLORS.ERROR, 'http:', error.code );
 					return_http_error( response, 404 );
 					return;
 				}
 			});
 
 			if (! fs.statSync( file_name ).isFile()) {
-				color_log( COLORS.ERROR, 'ERROR', 'Not a file ' + file_name );
+				color_log( COLORS.ERROR, 'http:', 'Not a file ' + file_name );
 				return_http_error( response, 404 );
 				return;
 			}
 
 			fs.readFile( file_name, (error, data)=>{
 				if (error) {
-					color_log( COLORS.ERROR, 'ERROR', error );
+					color_log( COLORS.ERROR, 'http:', error );
 					return;
 				} else {
 					const file_extension = path.extname( file_name ).substr( 1 );

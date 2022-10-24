@@ -3,13 +3,15 @@
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+"use strict";
+
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 
 // Protocol object templates
 const SessionHandler  = require( './session.js' ).SessionHandler;
 const WebSocketClient = require( './session.js' ).WebSocketClient;
 const ServerManager   = require( './server_manager.js' );
-const ChatProtocol    = require( './chat/chat_main.js' );
+const ChatServer    = require( './chat/chat_main.js' );
 
 
 module.exports.Protocols = function (persistent_data, callbacks) {
@@ -34,7 +36,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 
 	function send_as_json (socket, data) {
-		color_log( COLORS.PROTOCOLS, 'Protocols-send_as_json', data );
+		if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'Protocols-send_as_json', data );
 		if (socket.send) socket.send( JSON.stringify( data ) );
 	}
 
@@ -44,32 +46,23 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = function (socket, client_address) {
-		color_log( COLORS.PROTOCOLS, 'Protocols.onConnect', client_address );
+		if (DEBUG.CONNECT) color_log( COLORS.PROTOCOLS, 'Protocols.onConnect', client_address );
 
 		if (persistent_data.session.clients[ client_address ]) {
 			color_log( COLORS.PROTOCOLS, 'Protocols.onConnect: Client already logged in', client_address );
 		}
 
-		persistent_data.session.clients[ client_address ] = new WebSocketClient( socket, client_address );
-/*
-		persistent_data.session.clients[client_address] = {
-			address     : client_address,
-			login       : false,
-			send        : (message)=>{ send_as_json(socket, message); },
-			closeSocket : ()=>{ socket.close(); },
-			inGroup     : (group)=>{
-				const client = persistent_data.session.clients[client_address];
-				return client.login && (client.login.groups.indexOf( group ) >= 0);
-			},
-		};
-*/
+		self.protocols.session.onConnect( socket, client_address );
+
+		//persistent_data.session.clients[ client_address ] = new WebSocketClient( socket, client_address );
+
 		log_persistent_data( 'onConnect' );
 
 	}; // onConnect
 
 
 	this.onDisconnect = function (socket, client_address) {
-		color_log( COLORS.PROTOCOLS, 'Protocols.onDisconnect', client_address );
+		if (DEBUG.DISCONNECT) color_log( COLORS.PROTOCOLS, 'Protocols.onDisconnect', client_address );
 
 		if (! persistent_data.session.clients[ client_address ]) {
 			color_log( COLORS.ERROR, 'ERROR', 'Protocols.onDisconnect: Unknown client:', client_address );
@@ -100,7 +93,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 
 	this.onMessage = function (socket, client_address, message) {
-		color_log( COLORS.PROTOCOLS, 'Protocols.onMessage', client_address, message );
+		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage', client_address, message );
 
 		const client = persistent_data.session.clients[ client_address ];
 		if (! client) {
@@ -125,21 +118,23 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 				);
 
 			} else {
-				const message_commands = message[protocol_name];
+				const message_commands = message[ protocol_name ];
 
 				if (DEBUG.PROTOCOLS) color_log(
 					COLORS.PROTOCOLS,
 					'Protocols.onMessage',
 					'protocol_commands:',
-					self.protocols[protocol_name],
+					self.protocols[ protocol_name ],
 				);
 
 				Object.keys( message_commands ).forEach( (command_name)=>{
 					const combined_name = protocol_name + '.' + command_name;
 
-					request_handler = self.protocols[protocol_name].requestHandlers[command_name];
+					const request_handler
+					= self.protocols[ protocol_name  ].requestHandlers[ command_name ]
+					;
 
-					if (typeof request_handler == 'undefined') {
+					if (! request_handler) {
 						rejected_commands.push( combined_name );
 
 						if (DEBUG.PROTOCOLS) color_log(
@@ -160,10 +155,9 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 						);
 
 						log_persistent_data( 'onMessage:', 'PRE COMMAND: ' );
+						const request_arguments = message[ protocol_name ][ command_name ];
 
-						// Call the handler for the given command
-						const arguments = message[protocol_name][command_name];
-						request_handler( client, arguments );
+						request_handler( client, request_arguments );
 
 						log_persistent_data( 'onMessage:', 'POST COMMAND: ' );
 					}
@@ -207,7 +201,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		function protocol (protocol_name, object_template) {
 			if (! persistent_data[ protocol_name ]) {
-				color_log( COLORS.PROTOCOL, 'No persistent data for protocol', protocol_name );
+				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
 				persistent_data[ protocol_name ] = null;
 			}
 
@@ -223,13 +217,13 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		return Promise.all([
 			protocol( 'session' , SessionHandler ),
 			protocol( 'server'  , ServerManager  ),
-			protocol( 'chat'    , ChatProtocol  ),
+			protocol( 'chat'    , ChatServer     ),
 		]);
 
 	}; // init
 
 
-	return self.init().then( ()=>self );
+	return self.init().then( ()=>self );   // Instantiation: const protocols = await new Protocols();
 
 }; // Protocols
 

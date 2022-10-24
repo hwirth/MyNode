@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 module.exports.REASONS = {
+	UNKNOWN_COMMAND             : 'Unknown command',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
 	INVALID_ADDRESS             : 'Invalid address',
 	INVALID_USERNAME            : 'Invalid username',
