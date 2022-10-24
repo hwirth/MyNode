@@ -6,9 +6,10 @@
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 
 // Protocol object templates
-const SessionHandler = require( './session.js' );
-const ServerManager  = require( './server_manager.js' );
-const ChatProtocol   = require( './chat/chat_main.js' );
+const SessionHandler  = require( './session.js' ).SessionHandler;
+const WebSocketClient = require( './session.js' ).WebSocketClient;
+const ServerManager   = require( './server_manager.js' );
+const ChatProtocol    = require( './chat/chat_main.js' );
 
 
 module.exports.Protocols = function (persistent_data, callbacks) {
@@ -22,7 +23,6 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function log_persistent_data (event_name, caption = '') {
-return
 		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
 			COLORS.PROTOCOLS,
 			'Protocols.' + event_name,
@@ -50,6 +50,8 @@ return
 			color_log( COLORS.PROTOCOLS, 'Protocols.onConnect: Client already logged in', client_address );
 		}
 
+		persistent_data.session.clients[ client_address ] = new WebSocketClient( socket, client_address );
+/*
 		persistent_data.session.clients[client_address] = {
 			address     : client_address,
 			login       : false,
@@ -60,7 +62,7 @@ return
 				return client.login && (client.login.groups.indexOf( group ) >= 0);
 			},
 		};
-
+*/
 		log_persistent_data( 'onConnect' );
 
 	}; // onConnect
