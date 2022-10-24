@@ -21,36 +21,31 @@ export const Application = function () {
 
 
 	const boot_sequence = [
-	/*
 		{
 			session: {
 				login: {
 					username : 'hmw',
-					password : 'DiuGP333',
+					password : 'pass1',
 				},
-			},
-		},
-		{
-			session: {
 				status: {},
 			},
 		},
-	*/
 	/*
 		{
+
 			session: {
+				status: {
+					persistent: {},
+				},
 				kick: {
 					username: 'hmw',
 				},
 			},
 		},
-	*/
-	/*
 		{
+
 			session: {
-				status: {
-					persistent: {},
-				},
+				status: {},
 			},
 		},
 	*/
@@ -60,7 +55,7 @@ export const Application = function () {
 
 
 	function on_websocket_open (event, socket)  {
-		self.debugConsole.print( 'Connection to ' + WS_URL + ' established', 'success' );
+		self.debugConsole.print( 'Connected to ' + WS_URL, 'success' );
 
 		if (boot_sequence.length > 0) socket.send( boot_sequence[0] );
 		boot_sequence.shift();
@@ -127,8 +122,8 @@ export const Application = function () {
 </nav>
 
 <nav class="main_menu">
-	<a href="//spielwiese.central-dogma.at:443/">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/">Node</a>
+	<a href="//spielwiese.central-dogma.at:443/" title="Load this web page via Apache">Apache</a>
+	<a href="//spielwiese.central-dogma.at:1337/" title="Load this web page directly from the node.js server">Node</a>
 </nav>
 
 <article>

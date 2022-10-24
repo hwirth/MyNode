@@ -5,14 +5,14 @@
 
 Index
 	1. Overview
-	2. Mode of operation
-		2.1. Messages and session handling
-		2.2. Hot code reloading
-		2.3. Persistent data
-		2.4. Protocols
-	3. Configuration
-	4. Installation
-	5. File structure
+	2. File structure
+	3. Mode of operation
+		3.1. Messages and session handling
+		3.2. Hot code reloading
+		3.3. Persistent data
+		3.4. Protocols
+	4. Configuration
+	5. Installation
 	6. TODO
 	7. Code parking space
 
@@ -24,10 +24,25 @@ WebSocketServer deals with connections and redirects messages between client and
 reload the web page, or just have the client send the request again.
 
 
-2. Mode of operation
+2. File structure
+=================
+	./start_server.sh            Runs node in a loop, terminates on certain exit codes
+	./server/                    Code in this folder cannot be hot-reloaded
+	./server/main.js             Web socket, http server, hot reload of application code
+	./server/debug.js            Colored logging to stdout, log to file
+	./server/config.js           Provides hard coded constants and values from the configuration file
+	./server/reloader.js         Hot code-reloading. Reinstantiates the application for each request
+	./application/               Hot reloadable code, responses to messages from the websocket
+	./application/protocols.js   Calls response handler depending on given protocol and command
+	./application/session.js     Main protocol, handles accounts and logins
+	./application/chat/chat.js   Custom server protocol, simple text chat
+	./htdocs                     Chat client and a debug thingy
+
+
+3. Mode of operation
 ====================
 
-2.1. Messages and session handling
+3.1. Messages and session handling
 ----------------------------------
 Messages to the websocket are expected to be stringified JSON objects of the following structure:
 
@@ -44,7 +59,7 @@ any further protocols with a message like:
 
 	{
 		"session": {
-			"authenticate": {
+			"login": {
 				username: '<username>',
 				password: '<password>'
 			}
@@ -52,46 +67,33 @@ any further protocols with a message like:
 	}
 
 
-2.2. Hot code reloading
+3.2. Hot code reloading
 -----------------------
 The program is split into two parts: Persistent and ephemeral. Websocket events (i.e. onMessage) will first see, if any
 modules in ./application/ have changed and will reload them and re-instantiate , before calling the updated actual event handlers contained
 in said modules.
 
-2.3. Persistent data
+3.3. Persistent data
 --------------------
 The websocket itself is kept alive in the persistent part of the program, only the response handlers are hot reloaded.
-Persistent data is stored in the main part as well. Application code will be given a reference to its data on creation.
+Persistent data is stored in the main part as well. Application code will be given a reference to its data on
+(re-)creation.
 
-2.4. Protocols
+3.4. Protocols
 --------------
 Each message contains commands for specific protocols. These will be relayed accordingly through  protocols.js .
 This allows for independent servers to run over the same websocket. Protocol code will be given a reference to its
 persistent data, which is stored in  AppReloader.persistentData.<protocol name> .
 
 
-3. Configuration
+4. Configuration
 ================
 /etc/spielwiese.conf
 
 
-4. Installation
+5. Installation
 ===============
 $ npm install ws follow-redirects re-require-module
-
-
-5. File structure
-=================
-	./start_server.sh            Runs node in a loop, terminates on certain exit codes
-	./server/                    Code in this folder cannot be hot-reloaded
-	./server/main.js             Web socket, http server, hot reload of application code
-	./server/debug.js            Colored logging to stdout, log to file
-	./server/config.js           Provides hard coded constants and values from the configuration file
-	./server/reloader.js         Hot code-reloading. Reinstantiates the application for each request
-	./application/               Hot reloadable code, responses to messages from the websocket
-	./application/protocols.js   Calls response handler depending on given protocol and command
-	./application/session.js     Main protocol, handles accounts and logins
-	./application/chat/chat.js   Custom server protocol, simple text chat
 
 
 6. TODO

@@ -66,7 +66,11 @@ export const DebugConsole = function (callbacks) {
 	this.history;
 
 
-	function format_request (request, indentation = '') {
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// CONVERT USER INPUT <--> JSON
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function request_to_text (request, indentation = '') {
 		let text = '';
 
 		Object.keys( request ).forEach( (key)=>{
@@ -77,7 +81,7 @@ export const DebugConsole = function (callbacks) {
 				+= indentation
 				+  key
 				+  '\n'
-				+ format_request( request[key], indentation + '\t' )
+				+ request_to_text( request[key], indentation + '\t' )
 				;
 			} else {
 				if (typeof request[key] == 'undefined') {
@@ -94,10 +98,10 @@ export const DebugConsole = function (callbacks) {
 
 		return text;
 
-	} // format_request
+	} // request_to_text
 
 
-	function unformat_request (text) {
+	function text_to_request (text) {
 		const lines = text.split( '\n' );
 
 		function find_indentation (text) {
@@ -118,11 +122,10 @@ export const DebugConsole = function (callbacks) {
 		let current_indentation = 0;
 
 		function parse_line (index, current_indentation = 0) {
-			// Line does not exist: End of text, exit recursion:
+			// Line does not exist: End of text, end recursion:
 			if (typeof lines[index] == 'undefined') return result;
 
 			const line_indentation = find_indentation( lines[index] );
-			//lines[index] = line_indentation + '#' + lines[index];
 
 			if (line_indentation < current_indentation) {
 				const difference = current_indentation - line_indentation;
@@ -165,7 +168,7 @@ export const DebugConsole = function (callbacks) {
 				++current_indentation;
 
 			} else {
-				console.log( 'unformat_request: parts.length == 0' );
+				console.log( 'text_to_request: parts.length == 0' );
 			}
 
 			return parse_line( index + 1, current_indentation );
@@ -173,7 +176,7 @@ export const DebugConsole = function (callbacks) {
 
 		return parse_line( 0 );
 
-	} // unformat_request
+	} // text_to_request
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -186,7 +189,7 @@ export const DebugConsole = function (callbacks) {
 		new_element.innerHTML
 		= (typeof message == 'string')
 		? message
-		: format_request( message )
+		: request_to_text( message )
 		;
 
 		self.elements.console.insertBefore( new_element, self.elements.prompt );
@@ -263,17 +266,18 @@ export const DebugConsole = function (callbacks) {
         	self.elements.input.addEventListener( 'keydown', (event)=>{
 			adjust_textarea_height();
 
-			// Execute command with any modifyer+Enter
 			if (event.keyCode == 13 && (event.shiftKey || event.ctrlKey || event.altKey)) {
+				// Execute command with any modifyer+Enter
 				event.preventDefault();
 				self.elements.send.click();
 				self.elements.input.select();
 
 			} else if (event.keyCode == 9 || event.which == 9) {
+				// Insert TAB character instead of leaving the textarea
 				event.preventDefault();
-				const input = self.elements.input;
 
-				var selection_start = input.selectionStart;
+				const input = self.elements.input;
+				let selection_start = input.selectionStart;
 
 				input.value
 				= input.value.substring( 0, input.selectionStart )
@@ -286,12 +290,14 @@ export const DebugConsole = function (callbacks) {
         	});
 
 		self.elements.send.addEventListener( 'click', ()=>{
-			const value = self.elements.input.value.trim();
-			if (! value) return;
-			const request = unformat_request( value );
-			self.history.add( value );
-			console.log( self.history.entries );
-			callbacks.send( request );
+			const text = self.elements.input.value.trim();
+			if (! text) {
+				event.preventDefault();
+				self.elements.input.focus();
+				return;
+			}
+			self.history.add( text );
+			callbacks.send( text_to_request(text) );
 		});
 
 		addEventListener( 'keydown', (event)=>{
@@ -329,7 +335,7 @@ export const DebugConsole = function (callbacks) {
 
 	// Initialize the object asynchronously
 	// Makes sure, a reference to this instance is returned to  const app = await new Application();
-	return self.init().then( ()=>self );
+	self.init().then( ()=>self );
 
 }; // DebugConsole
 

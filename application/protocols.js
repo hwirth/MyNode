@@ -6,9 +6,10 @@
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 
 const SessionHandler = require( './session.js' );
+const ServerManager  = require( './server_manager.js' );
 
 
-module.exports.Protocols = function (persistent_data) {
+module.exports.Protocols = function (persistent_data, callbacks) {
 	const self = this;
 
 	this.protocols;
@@ -188,6 +189,7 @@ return
 
 	this.exit = function () {
 		color_log( COLORS.PROTOCOLS, 'Protocols.exit()' );
+
 		return Promise.resolve();
 
 	}; // exit
@@ -214,7 +216,8 @@ return
 		}
 
 		return Promise.all([
-			protocol( 'session', SessionHandler ),
+			protocol( 'session' , SessionHandler ),
+			protocol( 'server'  , ServerManager  ),
 		]);
 
 	}; // init

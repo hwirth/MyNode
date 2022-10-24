@@ -9,7 +9,7 @@ const DEV_SERVER = true || (os.hostname() == 'labor');
 module.exports.DEV_SERVER = DEV_SERVER;
 
 const PROGRAM_NAME    = 'Spielwiese Websocket Server';
-const PROGRAM_VERSION = 'v0.0.2p';
+const PROGRAM_VERSION = 'v0.0.3p';
 
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
 const config_file = {};   // Dictionary of parsed values, used for exporting in this file via SETTINGS[], etc.

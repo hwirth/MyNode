@@ -92,6 +92,7 @@ module.exports = function SessionHandler (persistent_data) {
 			respond_failure( client, 'login', 'User "' + parameters.username + '" unknown' );
 
 		} else {
+ console.log( 'P', parameters.password, user_record.password );
 			const password_correct = (user_record.password === parameters.password);
 
 			if (password_correct) {
@@ -196,7 +197,7 @@ module.exports = function SessionHandler (persistent_data) {
 		if (parameters.persistent && client.login) {
 			if (client.inGroup('admin')) {
 				client.send({
-					session: {
+					session: {   //... Move to a debug protocol
 						status: {
 							persistent: persistent_data,
 						},
@@ -239,13 +240,13 @@ module.exports = function SessionHandler (persistent_data) {
 		return {
 			accounts: {
 				hmw: {
-					password: 'DiuGP333',
+					password: 'pass1',
 					groups: [
 						'admin',
 					],
 				},
 				sec: {
-					password: 'DiuGP553',
+					password: 'pass2',
 				},
 			}, // accounts
 			clients: {
