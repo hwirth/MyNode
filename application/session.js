@@ -268,6 +268,13 @@ module.exports = function SessionHandler (persistent_data) {
 		if (persistent_data.session === null) {
 			// "Load from database"
 			persistent_data.session = load_data();
+		/*
+			const data = load_data();
+			Object.keys( data ).forEach( (key)=>{
+				persistent_data.session[key] = data[key];
+			});
+		*/
+
 		}
 
 		return Promise.resolve();
