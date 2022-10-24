@@ -85,7 +85,7 @@ export const Application = function () {
 
 
 	function on_websocket_error (event, socket) {
-		splash_status( 'Error while connecting to<br>' + event.target.url );
+		self.debugConsole.print( 'Connection error', 'error' );
 
 	} // on_websocket_error
 
@@ -93,10 +93,13 @@ export const Application = function () {
 	function on_console_send (request) {
 		console.log( 'on_console_send(): request:', request );
 
+		if (request.connect) {
+		} else if (request.disconnect) {
+		} else {
+			self.webSocketClient.send( request );
+		}
 
-		self.webSocketClient.send( request );
-
-	} // on_debug_message
+	} // on_console_send
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
