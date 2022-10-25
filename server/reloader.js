@@ -5,6 +5,7 @@
 
 "use strict";
 
+const util      = require( 'util' );
 const fs        = require( 'fs' );
 const path      = require( 'path' );
 const glob      = require( 'glob' );
@@ -27,7 +28,7 @@ module.exports = function AppReloader (web_socket) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HOT RELOAD APP SOURCES
+// HOT CODE RELOAD
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	async function get_file_times () {
@@ -67,8 +68,10 @@ module.exports = function AppReloader (web_socket) {
 	} // get_file_times
 
 
-	function re_require_modules () {
+	async function re_require_modules (socket) {
 		const load_requests = [];
+
+		const report_file_names = {};
 
 		Object.keys( self.fileTimes ).forEach( (file_name)=>{
 			const module = self.loadedModules[file_name];
@@ -87,6 +90,7 @@ module.exports = function AppReloader (web_socket) {
 						);
 
 						try {
+							report_file_names[ file_name.replace('../','') ] = {};
 							reRequire( path.resolve( file_name ) );
 
 						} catch (error) {
@@ -95,6 +99,15 @@ module.exports = function AppReloader (web_socket) {
 								file_name,
 								'could not be loaded',
 							);
+
+							const stringified_error = JSON.stringify(
+								error,
+								Object.getOwnPropertyNames( error ),
+							).replace( /\\n/g, '<br>' );  //... Don't send HTML
+
+							report_file_names[ file_name.replace('../','') ] = {
+								error: stringified_error,
+							};
 						}
 
 						done();
@@ -110,14 +123,20 @@ module.exports = function AppReloader (web_socket) {
 
 		});
 
-		return Promise.all( load_requests ).then( ()=>load_requests.length );
+		await Promise.all( load_requests );
+
+		if (socket && Object.keys( report_file_names ).length) {
+			socket.send( JSON.stringify({ require: report_file_names }) );
+		}
+
+		return load_requests.length;
 
 	} // re_require_modules
 
 
-	async function update_modules () {
+	async function update_modules (socket) {
 		self.fileTimes = await get_file_times();
-		const nr_reloaded_files = await re_require_modules();
+		const nr_reloaded_files = await re_require_modules( socket );
 
 		if (nr_reloaded_files === 0) return;
 
@@ -129,6 +148,18 @@ module.exports = function AppReloader (web_socket) {
 			;
 		} catch (error) {
 			color_log( COLORS.ERROR, 'ERROR', error );
+		/*
+			if (socket) {
+				const error_message = JSON.stringify( error, Object.getOwnPropertyNames(error) );
+				socket.send(
+					JSON.stringify({
+						reRequire: {
+							error: error_message,
+						},
+					})
+				);
+			}
+		*/
 		}
 
 	} // update_modules
@@ -140,7 +171,7 @@ module.exports = function AppReloader (web_socket) {
 
 	this.onConnect = async function (socket, client_address) {
 		if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect', client_address );
-		await update_modules();
+		await update_modules( socket );
 		self.protocols.onConnect( socket, client_address );
 
 	}; // onConnect
@@ -148,17 +179,17 @@ module.exports = function AppReloader (web_socket) {
 
 	this.onDisconnect = async function (socket, client_address) {
 		if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect', client_address );
-		await update_modules();
+		await update_modules( socket );
 		self.protocols.onDisconnect( socket, client_address );
 
 	}; // onDisconnect
 
 
-	this.onMessage = async function (socket, client_address, data) {
+	this.onMessage = async function (socket, client_address, json_string) {
 		let message = null;
 
 		try {
-			message = JSON.parse( String( data ));
+			message = JSON.parse( String(json_string) );
 		} catch (error) {
 			color_log( COLORS.RELOADER, 'AppReloader.onMessage: JSON.parse() failed.' );
 		}
@@ -166,7 +197,7 @@ module.exports = function AppReloader (web_socket) {
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
-			await update_modules();
+			await update_modules( socket );
 			self.protocols.onMessage( socket, client_address, message );
 		}
 

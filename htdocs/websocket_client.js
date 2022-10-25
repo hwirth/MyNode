@@ -44,6 +44,8 @@ export const WebSocketClient = function (parameters = {}) {
 
 
 		// Create socket and connect
+		//...document.cookie = 'username=' + parameters.username + '; path=/';
+		//...document.cookie = 'password=' + parameters.password + '; path=/';
 		const ws = new WebSocket( parameters.url );
 
 		function log (caption, data) {
@@ -131,25 +133,25 @@ export const WebSocketClient = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
+		removeEventListener( 'beforeunload', on_before_unload, false );
+
 		return Promise.resolve();
 
 	}; // exit
 
 
-	this.init = async function () {
+	this.init = function () {
 		console.log( 'WebSocketClient.init' );
 
 		return new Promise( async (done)=>{
 			await websocket_connection( done );
 			addEventListener( 'beforeunload', on_before_unload, false );
-		 });
+		});
 
 	}; // init
 
 
-	// Initialize the object asynchronously
-	// Makes sure, a reference to this instance is returned to  const ws = await new WebSocketClient();
-	return self.init().then( ()=>self );
+	self.init().then( ()=>self );   // const websocket = await new WebSocketClient()
 
 }; // WebSocketClient
 

@@ -5,6 +5,7 @@
 
 "use strict";
 
+const { SETTINGS                 } = require( '../server/config.js' );
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
@@ -21,7 +22,7 @@ const WebSocketClient = function WebSocketClient (socket, client_address) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function send_as_json (socket, data) {
-		if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'WebSocketClient-send_as_json', data );
+		if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'WebSocketClient-send_as_json:', data );
 		if (socket.send) socket.send( JSON.stringify( data ) );
 	}
 
@@ -37,7 +38,12 @@ const WebSocketClient = function WebSocketClient (socket, client_address) {
 
 
 	this.closeSocket = function () {
-		socket.close();
+		return new Promise( (done)=>{
+			setTimeout( ()=>{
+				socket.close();
+				done();
+			}, SETTINGS.TIMEOUT_MS.SOCKET_CLOSE );
+		});
 
 	}; // closeSocket
 
@@ -104,6 +110,16 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 	} // respond_failure
 
 
+	function find_client_by_username (username) {
+		const client_address = Object.keys( persistent_data.clients ).find( (address)=>{
+			const client = persistent_data.clients[ address ];
+			return (client.login && (client.login.userName == username));
+		});
+		return (client_address) ? persistent_data.clients[ client_address ] : null;
+
+	} // find_client_by_username
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -112,6 +128,25 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 		if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect', client_address );
 
 		persistent_data.clients[ client_address ] = new WebSocketClient( socket, client_address );
+		const client = persistent_data.clients[ client_address ];
+
+		const login_timeout = setTimeout(
+			function on_login_timed_out () {
+				respond_failure( client, 'login', REASONS.LOGIN_TIMED_OUT );
+				client.closeSocket();
+			},
+			SETTINGS.TIMEOUT_MS.LOGIN,
+		);
+
+		client.cancelLoginTimeout = function () {
+			if (DEBUG.CONNECT) color_log(
+				COLORS.SESSION,
+				'SessionHandler.onConnect: client.cancelLoginTimeout:',
+				client_address,
+			);
+			clearTimeout( login_timeout );
+			delete client.cancelLoginTimeout;
+		}
 
 	}; // onConnect
 
@@ -155,9 +190,11 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 			const password_correct = (user_record.password === parameters.password);
 
 			if (password_correct) {
+				if (client.cancelLoginTimeout) client.cancelLoginTimeout();
+
 				client.login = {
 					userName : parameters.username,
-					groups   : (user_record.groups) ? user_record.groups : [],
+					groups   : (user_record.groups) ? user_record.groups : ['guest'],
 				};
 				respond_success( client, 'login', 'Logged in' );
 
@@ -180,17 +217,21 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 	}; // logout
 
 
-	function find_client_by_username (username) {
-		const client_address = Object.keys( persistent_data.clients ).find( (address)=>{
-			const client = persistent_data.clients[ address ];
-			return (client.login && (client.login.userName == username));
-		});
-		return (client_address) ? persistent_data.clients[ client_address ] : null;
+	this.requestHandlers.who = function (client, parameters) {
+		if (client.inGroup('admin') ) {
+			client.send({
+				session: {
+					who: persistent_data.clients,
+				},
+			});
+		} else {
+			respond_failure( client, 'who', REASONS.INSUFFICIENT_PERMS );
+		}
 
-	} // find_client_by_username
+	}; // who
 
 
-	this.requestHandlers.kick = function (client, parameters) {
+	this.requestHandlers.kick = async function (client, parameters) {
 		if (! client.inGroup( 'admin' )) {
 			respond_failure( client, 'kick', REASONS.INSUFFICIENT_PERMS );
 			return;
@@ -214,6 +255,7 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 			else {
 				respond_failure( client, 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME );
 			}
+
 			return;
 		}
 
@@ -233,13 +275,19 @@ module.exports.SessionHandler = function SessionHandler (persistent_data) {
 			},
 		});
 
-		//... This timeout should not be neccessary, but apparently is;
-		//... Without it, the previous message may not arrive at the client.
-		setTimeout( ()=>{
-			target_client.closeSocket();
-		}, 1000);
+		const target_address  = target_client.address;
+		const target_username = target_client.login.userName;
 
 		target_client.login = false;
+		await target_client.closeSocket();
+
+		respond_success( client, 'kick', REASONS.KICKED_USER + ' ' + target_username + ' ' + target_address );
+
+		if (parameters.username) {
+			if (find_client_by_username( parameters.username )) {
+				self.requestHandlers.kick( client, parameters );
+			}
+		}
 
 	}; // kick
 

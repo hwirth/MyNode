@@ -70,11 +70,19 @@ const SETTINGS = {
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
 	},
 
+	SESSION: {
+
+	},
+
 	// Upper case chars are also allowed
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.?&%=-+/:[]',   // http server white list
 	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz1234567890_[]()@-/äöüß',   // Chat name white list
 
-	PING_TIMEOUT: 2000,   // How long clients have to react to a RESPONSE.PING
+	TIMEOUT_MS: {
+		LOGIN        : 15*1000,
+		SOCKET_CLOSE : 100,
+		PING         : 2000,
+	},
 
 }; // SETTINGS
 

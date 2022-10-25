@@ -6,12 +6,13 @@
 "use strict";
 
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
+const { REASONS                  } = require( './constants.js' );
 
 // Protocol object templates
 const SessionHandler  = require( './session.js' ).SessionHandler;
 const WebSocketClient = require( './session.js' ).WebSocketClient;
 const ServerManager   = require( './server_manager.js' );
-const ChatServer    = require( './chat/chat_main.js' );
+const ChatServer      = require( './chat/chat_main.js' );
 
 
 module.exports.Protocols = function (persistent_data, callbacks) {
@@ -155,7 +156,27 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 						log_persistent_data( 'onMessage:', 'PRE COMMAND: ' );
 						const request_arguments = message[ protocol_name ][ command_name ];
 
-						request_handler( client, request_arguments );
+						try {
+							request_handler( client, request_arguments );
+
+						} catch (error) {
+							const stringified_error = JSON.stringify(
+								error,
+								Object.getOwnPropertyNames( error ),
+							).replace( /\\n/g, '<br>' );
+
+							color_log( COLORS.ERROR, 'Protocols.onMessage', 'ERR!!' );
+
+							send_as_json( socket, {
+								[protocol_name]: {
+									[command_name]: {
+										success : false,
+										reason  : REASONS.INTERNAL_ERROR,
+										error   : stringified_error,
+									},
+								},
+							});
+						}
 
 						log_persistent_data( 'onMessage:', 'POST COMMAND: ' );
 					}

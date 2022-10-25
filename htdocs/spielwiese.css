@@ -71,9 +71,10 @@
 	--input-border-width : 1px;
 	--input-radius       : 0.2rem;
 
-	--button-color : #fff;
-	--button-bg    : #383;
-
+	--button-color        : #fff;
+	--button-bg           : #333;
+	--button-submit-color : #fff;
+	--button-submit-bg    : #383;
 }
 
 body.dark_mode {
@@ -124,7 +125,7 @@ body {
 	Xgrid-template-columns:auto auto;
 	Xmax-width:60em;
 	min-height:100vh;
-	border:var(--border-bg); border-width:var(--body-border-width);
+	Xborder:var(--border-bg); border-width:var(--body-border-width);
 	margin:0 auto;
 	font-family:var(--font-family);
 	background:var(--body-bg); color:var(--text-color);
@@ -213,8 +214,12 @@ button {
 	border-radius:0.25em;
 	background: var(--button-bg); color:var(--button-color);
 	padding:0.25em 0.5em;
+	white-space:nowrap;
 }
-
+.prompt button { width:100%; }
+button.submit {  background: var(--button-submit-bg); color:var(--button-submit-color); }
+Xbutton.login { background: var(--button-bg); color:var(--button-color); }
+Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
 
 
 /* PAGE SPECIFIC */
@@ -243,6 +248,10 @@ article.lobby {
 }
 .debug_console .prompt.disabled {
 	display:none;
+}
+
+.debug_console .prompt button {
+	Xline-height:0; margin:1px auto; padding:0.1em 0.25em;
 }
 
 .debug_console .output { overflow-y:scroll; border-bottom:solid 1px #444; font-family:monospace,monospace; }

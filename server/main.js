@@ -28,8 +28,8 @@ const { DEBUG, COLORS, color_log } = require( './debug.js' );
 const WebSocketServer = function () {
 	const self = this;
 
-	this.wsServer;
 	this.httpServer;
+	this.wsServer;
 	this.appReloader;
 
 
@@ -71,27 +71,27 @@ const WebSocketServer = function () {
 	this.onConnect = async function (socket, client_address, data) {
 		const request_nr = ++connect_id;
 		log_header( COLORS.CONNECT, 'CONNECT ' + request_nr + ' ]--[ ' + client_address );
-		await self.appReloader.onConnect( socket, client_address, data );
+		await self.appReloader.onConnect( socket, client_address );
 		end_header( COLORS.CONNECT, 'CONNECT ' + request_nr );
 
 	}; // onConnect
 
 
 	let message_id = 0;
-	this.onMessage = async function (socket, client_address, data) {
+	this.onMessage = async function (socket, client_address, json_string) {
 		const request_nr = ++message_id;
 		log_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr + ' ]--[ ' + client_address );
-		await self.appReloader.onMessage( socket, client_address, data );
+		await self.appReloader.onMessage( socket, client_address, json_string );
 		end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr );
 
 	}; // onMessage
 
 
 	let disconnect_id = 0;
-	this.onDisconnect = async function (socket, client_address, data) {
+	this.onDisconnect = async function (socket, client_address) {
 		const request_nr = ++disconnect_id;
 		log_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr + ' ]--[ ' + client_address );
-		await self.appReloader.onDisconnect( socket, client_address, data );
+		await self.appReloader.onDisconnect( socket, client_address );
 		end_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr );
 
 	}; // onDisconnect
@@ -129,57 +129,10 @@ const WebSocketServer = function () {
 	} // drop_privileges
 
 
-// WEB SOCKET ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function create_web_socket (callbacks) {
-		color_log( COLORS.WSS, 'WebSocketServer', 'Creating web socket' );
-
-		const new_server = new WebSocket.Server({ noServer: true });
-
-		new_server.on( 'connection', (socket, request)=>{
-			var client_address;
-
-			if (request.headers['x-forwarded-for'] == undefined) {
-				client_address
-				= request.connection.remoteAddress
-				+ ':'
-				+ request.connection.remotePort
-				;
-			} else {
-				client_address = request.headers['x-forwarded-for'];   //... not tested
-			}
-
-			// Remove IPv6 prefix
-			if (client_address.slice(0, 7) === '::ffff:') {
-				client_address = client_address.slice( 7 );
-			}
-
-			socket.on( 'close', ()=>{
-				callbacks.onDisconnect( socket, client_address );
-			});
-
-			socket.onerror = function (error) {
-				color_log( COLORS.ERROR, 'websocket:', error  );
-			}
-
-			socket.on( 'message', (data)=>{
-				callbacks.onMessage( socket, client_address, data );
-			});
-
-			callbacks.onConnect( socket, client_address );
-		});
-
-		color_log( COLORS.WSS, 'WebSocketServer', 'Web socket running on port', HTTPS_OPTIONS.port );
-
-		return new_server;
-
-	} // create_web_socket
-
-
 // HTTP SERVER ///////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function create_http_server () {
-		color_log( COLORS.WSS, 'WebSocketServer', 'Creating http server' );
+	function create_http_server (websocket_server) {
+		color_log( COLORS.WSS, 'WebSocketServer:', 'Creating http server' );
 
 		const new_http_server = https.createServer( HTTPS_OPTIONS ).listen( HTTPS_OPTIONS.port )
 
@@ -311,6 +264,59 @@ const WebSocketServer = function () {
 	} // create_http_server
 
 
+// WEB SOCKET ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function create_web_socket (callbacks) {
+		color_log( COLORS.WSS, 'WebSocketServer:', 'Creating web socket' );
+
+		const new_server = new WebSocket.Server({ noServer: true });
+
+		new_server.on( 'connection', (socket, request)=>{
+			let client_address = null;
+		/*
+			if (request.headers.cookie) {
+				color_log( COLORS.WSS, 'Cookie:', request.headers.cookie );
+			}
+		*/
+			if (request.headers['x-forwarded-for']) {
+				color_log( COLORS.WARNING, 'Unexpected header', 'x-forwarded-for' );
+				client_address = request.headers['x-forwarded-for'];   //... not tested
+
+			} else {
+				client_address
+				= request.connection.remoteAddress
+				+ ':'
+				+ request.connection.remotePort
+				;
+			}
+
+			// Remove IPv6 prefix
+			if (client_address.slice(0, 7) === '::ffff:') {
+				client_address = client_address.slice( 7 );
+			}
+
+			socket.on( 'close', ()=>{
+				callbacks.onDisconnect( socket, client_address );
+			});
+
+			socket.on( 'message', (message_data)=>{
+				callbacks.onMessage( socket, client_address, message_data );
+			});
+
+			socket.onerror = function (error) {
+				color_log( COLORS.ERROR, 'websocket:', error  );
+			}
+
+			callbacks.onConnect( socket, client_address );
+		});
+
+		color_log( COLORS.WSS, 'WebSocketServer', 'Web socket running on port', HTTPS_OPTIONS.port );
+
+		return new_server;
+
+	} // create_web_socket
+
+
 // ERROR HANDLER /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function global_error_handler (error) {
@@ -390,7 +396,7 @@ const WebSocketServer = function () {
 				onDisconnect : self.onDisconnect,
 				onMessage    : self.onMessage,
 			});
-			self.httpServer    = create_http_server();
+			self.httpServer    = create_http_server( self.wsServer );
 			self.appReloader   = await new AppReloader( self.wsServer );
 
 			done();

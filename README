@@ -108,6 +108,7 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] kick: Consider user logged in several times
 [!] Chain destructor promises
 [\] Less magic in  color_log() : let caller mix in COLOR.*
 [!] Don't use colors except in color field with  color_log()

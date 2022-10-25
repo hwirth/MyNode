@@ -189,6 +189,17 @@ export const DebugConsole = function (callbacks) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	this.toggle = function () {
+		self.elements.console.classList.toggle( 'active' );
+		if (self.elements.console.classList.contains( 'active' )) {
+			self.elements.input.select();
+		} else {
+			self.elements.input.blur();
+		}
+
+	}; // toggle
+
+
 	this.print = function (message, class_name) {
 		const new_element = document.createElement( 'pre' );
 		new_element.className = class_name;
@@ -218,7 +229,9 @@ export const DebugConsole = function (callbacks) {
 		return (`
 <div class="prompt">
 	<textarea class="input" rows="${EXTRA_LINES}"></textarea>
-	<div><button class="submit" title="Shortcut: [Shift]+[Enter]">Execute</button></div>
+	<div class="buttons">
+		<button class="submit"    title="Shortcut: [Shift]+[Enter]">Execute</button>
+	</div>
 </div>
 		`);
 
@@ -239,8 +252,41 @@ export const DebugConsole = function (callbacks) {
 			console : new_element,
 			prompt  : new_element.querySelector( '.prompt' ),
 			input   : new_element.querySelector( '.input' ),
+			buttons : new_element.querySelector( '.buttons' ),
 			send    : new_element.querySelector( '.submit' ),
 		};
+
+
+		const button_scripts = {
+			'status'    : 'session\n\tstatus',
+			'login hmw' : 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+			'login sec' : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
+			'logout'    : 'session\n\tlogout',
+			'who'       : 'session\n\twho',
+			'kick hmw'  : 'session\n\tkick\n\t\tusername: hmw',
+			'kick sec'  : 'session\n\tkick\n\t\tusername: sec',
+		};
+		Object.keys( button_scripts ).forEach( (key)=>{
+			const name = key.charAt(0).toUpperCase() + key.slice(1);
+			const new_button = document.createElement( 'button' );
+			new_button.className = key;
+			new_button.innerText = name;
+			new_button.title     = 'Double click to execute immediately';
+			new_button.addEventListener( 'click'    , on_script_button_click );
+			new_button.addEventListener( 'dblclick' , on_script_button_dblclick );
+			self.elements.buttons.appendChild( new_button );
+		});
+		function on_script_button_click (event) {
+			event.preventDefault();
+			self.elements.input.value = button_scripts[ event.target.className ];
+		}
+		function on_script_button_dblclick (event) {
+			event.preventDefault();
+			const previous_value = self.elements.input.value;
+			self.elements.input.value = button_scripts[ event.target.className ];
+			self.elements.send.click();
+			self.elements.input.value = previous_value;
+		}
 
 
 		function adjust_textarea_height () {
@@ -331,12 +377,9 @@ export const DebugConsole = function (callbacks) {
 			const backquote = !ctrl && !shift && !alt && (event.code == 'Backquote');
 			if (number || backquote) {
 				event.preventDefault();
-				self.elements.console.classList.toggle( 'active' );
-				if (self.elements.console.classList.contains( 'active' )) {
-					self.elements.input.select();
-				} else {
-					self.elements.input.blur();
-				}
+				self.toggle();
+
+				return;
 			}
 
 			const up   = ctrl && !shift && !alt && (event.key == 'ArrowUp');

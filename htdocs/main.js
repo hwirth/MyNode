@@ -23,6 +23,7 @@ export const Application = function () {
 
 
 	const boot_sequence = [
+	/*
 		{
 			session: {
 				login: {
@@ -44,6 +45,7 @@ export const Application = function () {
 				},
 			},
 		},
+	*/
 		{
 
 			session: {
@@ -168,6 +170,9 @@ export const Application = function () {
 		self.debugConsole = await new DebugConsole({
 			send: on_console_send,
 		});
+		self.debugConsole.toggle();
+		self.debugConsole.elements.input.value = 'session\n\tlogin\n\t\tusername: \n\t\tpassword: ';
+		self.debugConsole.elements.input.focus();
 
 		boot_sequence.forEach( (request)=>{
 			self.debugConsole.history.add( self.debugConsole.requestToText(request) );
