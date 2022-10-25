@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { DEBUG } from './main.js';
+import { DEBUG } from './client_main.js';
 
 const CONNECTION_TIMEOUT_MS = 5000;
 

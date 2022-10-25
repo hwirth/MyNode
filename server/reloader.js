@@ -299,7 +299,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 	}; // init
 
 
-	return self.init().then( ()=>self );   // const reloader = new AppReloader()
+	return self.init().then( ()=>self );   // const reloader = await new AppReloader()
 
 }; // AppReloader
 
