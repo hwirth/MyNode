@@ -75,11 +75,51 @@ module.exports = function AppReloader (web_socket, callbacks) {
 			if (! self.loadedModules[ file_name ]) return true;
 
 			const file_time   = self.fileTimes[ file_name ];
-			const module_time = self.loadedModules[ file_name ].mtime;
+			const module_time = self.loadedModules[ file_name ];
 			return (file_time != module_time);
 		});
 
 	} // find_changed_files
+
+
+	function add_load_request (load_requests, report_file_names, file_name, file_has_changed) {
+		load_requests.push(
+			new Promise( (done)=>{
+				if (file_has_changed) {
+					if (DEBUG.RELOADER_REQUIRE) color_log(
+						COLORS.REQUIRE,
+						'AppReloader-re_require_modules:',
+						file_name,
+					);
+
+					report_file_names[ file_name.replace('../','') ] = {};
+				}
+
+				try {
+					reRequire( path.resolve( file_name ) );
+
+				} catch (error) {
+					color_log(
+						COLORS.ERROR,
+						file_name,
+						'could not be loaded',
+					);
+
+					const stringified_error = JSON.stringify(
+						error,
+						Object.getOwnPropertyNames( error ),
+					).replace( /\\n/g, '<br>' );  //... Don't send HTML
+
+					report_file_names[ file_name.replace('../','') ] = {
+						error: stringified_error,
+					};
+				}
+
+				done();
+			}),
+		);
+
+	} // add_load_request
 
 
 	async function re_require_modules (socket) {
@@ -90,44 +130,14 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		if (changed_files) {
 			Object.keys( self.fileTimes ).forEach( (file_name)=>{
-				self.loadedModules[file_name] = {
-					mtime: self.fileTimes[file_name],
-				};
+				self.loadedModules[ file_name ] = self.fileTimes[file_name];
 
-				load_requests.push(
-					new Promise( (done)=>{
-						if (changed_files.indexOf( file_name ) >= 0) {
-							if (DEBUG.RELOADER_REQUIRE) color_log(
-								COLORS.REQUIRE,
-								'AppReloader-re_require_modules:',
-								file_name,
-							);
-
-							report_file_names[ file_name.replace('../','') ] = {};
-						}
-
-						try {
-							reRequire( path.resolve( file_name ) );
-
-						} catch (error) {
-							color_log(
-								COLORS.ERROR,
-								file_name,
-								'could not be loaded',
-							);
-
-							const stringified_error = JSON.stringify(
-								error,
-								Object.getOwnPropertyNames( error ),
-							).replace( /\\n/g, '<br>' );  //... Don't send HTML
-
-							report_file_names[ file_name.replace('../','') ] = {
-								error: stringified_error,
-							};
-						}
-
-						done();
-					})
+				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
+				add_load_request(
+					load_requests,
+					report_file_names,
+					file_name,
+					file_has_changed
 				);
 			});
 		}
@@ -135,104 +145,43 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		await Promise.all( load_requests );
 
 		if (socket && Object.keys( report_file_names ).length) {
-			socket.send( JSON.stringify({ require: report_file_names }, null, '\t') );
+			socket.send( JSON.stringify({ reload: report_file_names }, null, '\t') );
 		}
 
 		return load_requests.length;
-
-	/*
-		Object.keys( self.fileTimes ).forEach( (file_name)=>{
-			const module = self.loadedModules[file_name];
-
-			if (update_needed || (module == undefined)) {
-				self.loadedModules[file_name] = {
-					mtime: self.fileTimes[file_name],
-				};
-
-				load_requests.push(
-					new Promise( (done)=>{
-						if (DEBUG.RELOADER_REQUIRE) color_log(
-							COLORS.REQUIRE,
-							'AppReloader-re_require_modules:',
-							file_name,
-						);
-
-						try {
-							report_file_names[ file_name.replace('../','') ] = {};
-							reRequire( path.resolve( file_name ) );
-
-						} catch (error) {
-							color_log(
-								COLORS.ERROR,
-								file_name,
-								'could not be loaded',
-							);
-
-							const stringified_error = JSON.stringify(
-								error,
-								Object.getOwnPropertyNames( error ),
-							).replace( /\\n/g, '<br>' );  //... Don't send HTML
-
-							report_file_names[ file_name.replace('../','') ] = {
-								error: stringified_error,
-							};
-						}
-
-						done();
-					})
-				);
-			} else {
-				if (DEBUG.RELOADER_UP_TO_DATE) color_log(
-					COLORS.UP_TO_DATE,
-					'UP-TO-DATE:',
-					file_name
-				);
-			}
-
-		});
-
-		await Promise.all( load_requests );
-
-		if (socket && Object.keys( report_file_names ).length) {
-			socket.send( JSON.stringify({ require: report_file_names }, null, '\t') );
-		}
-
-		return load_requests.length;
-	*/
 
 	} // re_require_modules
 
 
-	async function update_modules (socket) {
-
+	async function reload_modules (socket) {
 		self.fileTimes = await get_file_times();
-		const nr_reloaded_files = await re_require_modules( socket );
 
+		console.time( 'Reload time' );
+		const nr_reloaded_files = await re_require_modules( socket );
+		console.timeEnd( 'Reload time' );
 		if (nr_reloaded_files === 0) return;
 
-		// Rerequire protocols module
 		const MAIN_MODULE = {
 			url            : APP_PATH + '/protocols.js',
 			persistentData : self.persistentData,
 			callbacks      : { triggerExit : callbacks.triggerExit },
 		};
 
-		//...color_log( COLORS.REQUIRE, 'AppReloader-update_modules:', '    ' + MAIN_MODULE.url );
-
 		console.time( 'Init time' );
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
 
+		// Reload and reinstantiate main module:
 		self.protocols = await new reRequire( MAIN_MODULE.url ).Protocols(
 			MAIN_MODULE.persistentData,
 			MAIN_MODULE.callbacks,
 		).catch( (error)=>{
-			color_log( COLORS.ERROR, 'AppReloader-update_modules:', '.catch:', error );
+			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
 		});
 
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );
 
-	} // update_modules
+	} // reload_modules
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -241,7 +190,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 	this.onConnect = async function (socket, client_address) {
 		if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect:', client_address );
-		await update_modules( socket );
+		await reload_modules( socket );
 		self.protocols.onConnect( socket, client_address );
 
 	}; // onConnect
@@ -249,7 +198,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 	this.onDisconnect = async function (socket, client_address) {
 		if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect:', client_address );
-		await update_modules( socket );
+		await reload_modules( socket );
 		self.protocols.onDisconnect( socket, client_address );
 
 	}; // onDisconnect
@@ -267,7 +216,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
-			await update_modules( socket );
+			await reload_modules( socket );
 			self.protocols.onMessage( socket, client_address, message );
 		}
 
@@ -292,7 +241,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		return new Promise( async (done)=>{
 			self.loadedModules = {};
 			self.persistentData = {};
-			await update_modules();
+			await reload_modules();
 			done();
 		});
 

@@ -154,6 +154,76 @@ https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-applica
 
 
 
+
+
+
+	/*
+		Object.keys( self.fileTimes ).forEach( (file_name)=>{
+			const module = self.loadedModules[file_name];
+
+			if (update_needed || (module == undefined)) {
+				self.loadedModules[ file_name ] = {
+					mtime: self.fileTimes[ file_name ],
+				};
+
+				load_requests.push(
+					new Promise( (done)=>{
+						if (DEBUG.RELOADER_REQUIRE) color_log(
+							COLORS.REQUIRE,
+							'AppReloader-re_require_modules:',
+							file_name,
+						);
+
+						try {
+							report_file_names[ file_name.replace('../','') ] = {};
+							reRequire( path.resolve( file_name ) );
+
+						} catch (error) {
+							color_log(
+								COLORS.ERROR,
+								file_name,
+								'could not be loaded',
+							);
+
+							const stringified_error = JSON.stringify(
+								error,
+								Object.getOwnPropertyNames( error ),
+							).replace( /\\n/g, '<br>' );  //... Don't send HTML
+
+							report_file_names[ file_name.replace('../','') ] = {
+								error: stringified_error,
+							};
+						}
+
+						done();
+					})
+				);
+			} else {
+				if (DEBUG.RELOADER_UP_TO_DATE) color_log(
+					COLORS.UP_TO_DATE,
+					'UP-TO-DATE:',
+					file_name
+				);
+			}
+
+		});
+
+		await Promise.all( load_requests );
+
+		if (socket && Object.keys( report_file_names ).length) {
+			socket.send( JSON.stringify({ require: report_file_names }, null, '\t') );
+		}
+
+		return load_requests.length;
+	*/
+
+
+
+
+
+
+
+
 // client.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
