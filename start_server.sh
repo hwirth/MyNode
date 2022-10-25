@@ -1,13 +1,13 @@
 #!/bin/sh
 
 
-cd /var/www/spielwiese.central-dogma.at/websocket/server
+cd server
 
 nr_crashes=0
 max_crashes=30
 
 while [ 1 ] ; do
-	node --trace-warnings main.js
+	node --trace-warnings server_main.js
 
 	exit_code=$?
 
@@ -20,7 +20,7 @@ while [ 1 ] ; do
 		echo "$0 terminating"
 		exit $exit_code
 		;;
-	-1)
+	-1|255)
 		# Requested restart
 		echo "$0: Restart requested"
 		nr_crashes=0

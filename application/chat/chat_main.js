@@ -60,7 +60,7 @@ module.exports = function ChatServer (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ChatServer.init' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.exit' );
 
 		return Promise.resolve();
 
@@ -74,7 +74,7 @@ module.exports = function ChatServer (persistent_data) {
 
 
 	this.init = function () {
-		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ChatServer.init' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.init' );
 
 		if (Object.keys( persistent_data ).length == 0) {
 			const data = load_data();
@@ -88,8 +88,6 @@ module.exports = function ChatServer (persistent_data) {
 	}; // init
 
 
-	// Initialize the object asynchronously
-	// Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
 	self.init().then( ()=>self );   // const chat = await new ChatServer();
 
 }; // ChatServer

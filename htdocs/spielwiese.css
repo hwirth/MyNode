@@ -239,17 +239,22 @@ article.lobby {
 	font-size:1rem;
 	transition:height 0.1s ease-in-out;
 	height:0;
+	tab-size:4;
 }
 .debug_console.active {
 	height:100%;
 }
+
 .debug_console .prompt {
-	display:grid; grid-template-columns:1fr min-content;
+	display:grid; grid-template-rows:1fr min-content;
 }
 .debug_console .prompt.disabled {
 	display:none;
 }
 
+.debug_console .prompt .buttons {
+	display:flex;
+}
 .debug_console .prompt button {
 	Xline-height:0; margin:1px auto; padding:0.1em 0.25em;
 }

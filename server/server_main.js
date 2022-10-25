@@ -1,4 +1,4 @@
-// main.js
+// server_main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -85,7 +85,7 @@ const WebSocketServer = function () {
 
 		await self.appReloader.onConnect( socket, client_address );
 
-		if (DEBUG.CONNECT) end_header( COLORS.CONNECT, 'CONNECT ' + request_nr );
+		if (DEBUG.CONNECT) end_header( COLORS.CONNECT, 'CONNECT ' + request_nr ); else console.log();
 
 	}; // onConnect
 
@@ -101,7 +101,7 @@ const WebSocketServer = function () {
 
 		await self.appReloader.onMessage( socket, client_address, json_string );
 
-		if (DEBUG.MESSAGE) end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr );
+		if (DEBUG.MESSAGE) end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr ); else console.log();
 
 	}; // onMessage
 
@@ -117,7 +117,7 @@ const WebSocketServer = function () {
 
 		await self.appReloader.onDisconnect( socket, client_address );
 
-		if (DEBUG.DISCONNECT) end_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr );
+		if (DEBUG.DISCONNECT) end_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr ); else console.log();
 
 	}; // onDisconnect
 

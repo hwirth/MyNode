@@ -25,11 +25,14 @@ const DEBUG = {                                    // What to log
 
 	LOG_SETTINGS              : DEBUG_ENABLED && !false,   // On startup, show SETTINGS[] on console
 
-	TRACE_INIT                : DEBUG_ENABLED && !false,   // Functions announcing when they are called
-	TRAFFIC                   : DEBUG_ENABLED && !false,   //
+	INSTANCES                : DEBUG_ENABLED && !false,   // Functions announcing when they are called
+	BANNER_HEADERS            : DEBUG_ENABLED && !false,   // Group logs for (dis)connect or messages, show counter
+	HTTP_COOKIES              : DEBUG_ENABLED && !false,   // Show cookies on websocket connect
 
-	CONNECT                   : DEBUG_ENABLED && !false,   // Trace onConnect
-	DISCONNECT                : DEBUG_ENABLED && !false,   // Trace onDisconnect
+	CONNECT                   : DEBUG_ENABLED && false,   // Trace onConnect
+	DISCONNECT                : DEBUG_ENABLED && false,   // Trace onDisconnect
+	MESSAGE                   : DEBUG_ENABLED && !false,   // Trace onMessage
+
 	MESSAGE_IN                : DEBUG_ENABLED && !false,   // Show received, onMessage
 	MESSAGE_OUT               : DEBUG_ENABLED && !false,   // Show sent, socket.send()
 
@@ -69,31 +72,34 @@ const ANSI_COLORS = {
  * Actual colors used with  color_log()
  */
 const COLORS = {
-	DEFAULT      : ANSI_COLORS.WHITE   + ANSI_COLORS.DIM,
-	BOOT         : ANSI_COLORS.GREEN   + ANSI_COLORS.BRIGHT,
-	RUNNING_AS   : ANSI_COLORS.YELLOW  + ANSI_COLORS.BRIGHT,
+	DEFAULT      : ANSI_COLORS.DIM     + ANSI_COLORS.WHITE,
+	STRONG       : ANSI_COLORS.BRIGHT  + ANSI_COLORS.WHITE,
+	BOOT         : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+	RUNNING_AS   : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 
-	CONNECT      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+	CONNECT      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.CYAN,
 	DISCONNECT   : ANSI_COLORS.RED,
+	TRAFFIC      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+
 	RECEIVED     : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
 	SENDING      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
 
 	WSS          : ANSI_COLORS.GREEN,
 	HTTP         : ANSI_COLORS.GREEN,
-	TRACE_INIT   : ANSI_COLORS.YELLOW  + ANSI_COLORS.BRIGHT,
-	TRAFFIC      : ANSI_COLORS.CYAN    + ANSI_COLORS.BRIGHT,
-	PROTOCOLS    : ANSI_COLORS.MAGENTA + ANSI_COLORS.BRIGHT,
-	PROTOCOL     : ANSI_COLORS.GREEN   + ANSI_COLORS.BRIGHT,
-	SESSION      : ANSI_COLORS.GREEN   + ANSI_COLORS.BRIGHT,
+	INSTANCES    : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
+	PROTOCOLS    : ANSI_COLORS.BRIGHT  + ANSI_COLORS.MAGENTA,
+	PROTOCOL     : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+	SESSION      : ANSI_COLORS.GREEN,
 
 	RELOADER     : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
 	UP_TO_DATE   : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
 	REQUIRE      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 
-	EXIT         : ANSI_COLORS.RED     + ANSI_COLORS.BRIGHT,
-	ERROR        : ANSI_COLORS.RED     + ANSI_COLORS.BRIGHT,
-	WARNING      : ANSI_COLORS.YELLOW  + ANSI_COLORS.BRIGHT,
-	HTTPS        : ANSI_COLORS.WHITE   + ANSI_COLORS.DIM,
+	COMMAND      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
+	EXIT         : ANSI_COLORS.BRIGHT  + ANSI_COLORS.RED,
+	ERROR        : ANSI_COLORS.BRIGHT  + ANSI_COLORS.RED,
+	WARNING      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
+	HTTPS        : ANSI_COLORS.DIM     + ANSI_COLORS.WHITE,
 	SOCKET       : ANSI_COLORS.YELLOW,
 	ADDRESS      : ANSI_COLORS.GREEN,
 
@@ -132,8 +138,26 @@ function color_log (colors = '', heading = '', ...text) {
 		? heading.slice( 0, -1 ) + COLORS.RESET + ':'
 		: heading + COLORS.RESET
 		;
+	/*
+		if ([...text].length >= 1) {
+			console.log(
+				date + colors + colored_heading,
+				...[...text].map( (entry)=>{
+					return JSON.parse( JSON.stringify( entry, null, '\t' ));
+				}),
+				COLORS.RESET,
+			);
+		} else {
+	*/
+			console.log(
+				date + colors + colored_heading,
+				...text,
+				COLORS.RESET,
+			);
+	/*
+		}
+	*/
 
-		console.log( date + colors + colored_heading, ...text, COLORS.RESET );
 	}
 
 	if (SETTINGS.LOG.TO_FILE) {
@@ -186,7 +210,14 @@ function color_log (colors = '', heading = '', ...text) {
 } // color_log
 
 
+function dump (data) {
+	return JSON.parse( JSON.stringify(data) );
+
+} // dump
+
+
 module.exports.color_log = color_log;
+module.exports.dump      = dump;
 
 
 //EOF

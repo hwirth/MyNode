@@ -85,7 +85,7 @@ export const WebSocketClient = function (parameters = {}) {
 				'%c🡇 WebSocketClient received%c:',
 				'color:#48f',
 				'color:unset',
-				JSON.stringify( message, '', '   ' ),
+				JSON.stringify( message, null, '   ' ),
 			);
 
 			if (callbacks.onMessage) callbacks.onMessage( event, self, message );
@@ -113,11 +113,11 @@ export const WebSocketClient = function (parameters = {}) {
 			'%c🡅 WebSocketClient sending%c:',
 			'color:#480',
 			'color:unset',
-			JSON.stringify( request, '', '   ' ),
+			JSON.stringify( request, null, '   ' ),
 		);
 
 		parameters.debugConsole.print( request, 'request' );
-		self.websocket.send( JSON.stringify(request) );
+		self.websocket.send( JSON.stringify(request, null, '\t') );
 
 	} // send
 

@@ -5,13 +5,16 @@
 
 "use strict";
 
+const { SETTINGS                 } = require( '../server/config.js' );
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
 // Protocol object templates
-const SessionHandler  = require( './session.js' ).SessionHandler;
+const SessionHandler  = require( './session.js' );
 const ServerManager   = require( './server_manager.js' );
 const ChatServer      = require( './chat/chat_main.js' );
+
+const WebSocketClient = require( './client.js' );
 
 
 module.exports.Protocols = function (persistent_data, callbacks) {
@@ -27,7 +30,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 	function log_persistent_data (event_name, caption = '') {
 		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
 			COLORS.PROTOCOLS,
-			'Protocols.' + event_name,
+			'Protocols.' + event_name + ':',
 			caption + 'persistent_data:',
 			persistent_data, //.clients,
 		);
@@ -36,9 +39,17 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 
 	function send_as_json (socket, data) {
-		if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'Protocols-send_as_json', data );
-		if (socket.send) socket.send( JSON.stringify( data ) );
-	}
+		const stringified_json = JSON.stringify( data, null, '\t' );
+
+		if (DEBUG.MESSAGE_OUT) color_log(
+			COLORS.PROTOCOLS,
+			'Protocols-send_as_json:',
+			JSON.parse( stringified_json ),
+		);
+		//if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'send_as_json:', data );
+		if (socket.send) socket.send( stringified_json );
+
+	} // send_as_json //... Redundant with same function in  SessionHandler()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -46,11 +57,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = function (socket, client_address) {
-		if (DEBUG.CONNECT) color_log( COLORS.PROTOCOLS, 'Protocols.onConnect', client_address );
-
-		if (persistent_data.session.clients[ client_address ]) {
-			color_log( COLORS.PROTOCOLS, 'Protocols.onConnect: Client already logged in', client_address );
-		}
+		if (DEBUG.CONNECT) color_log( COLORS.PROTOCOLS, 'Protocols.onConnect:', client_address );
 
 		self.protocols.session.onConnect( socket, client_address );   // Will create new WebSocketClient()
 
@@ -60,14 +67,9 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 
 	this.onDisconnect = function (socket, client_address) {
-		if (DEBUG.DISCONNECT) color_log( COLORS.PROTOCOLS, 'Protocols.onDisconnect', client_address );
+		if (DEBUG.DISCONNECT) color_log( COLORS.PROTOCOLS, 'Protocols.onDisconnect:', client_address );
 
-		if (! persistent_data.session.clients[ client_address ]) {
-			color_log( COLORS.ERROR, 'ERROR', 'Protocols.onDisconnect: Unknown client:', client_address );
-			return;
-		}
-
-		delete persistent_data.session.clients[ client_address ];
+		self.protocols.session.onDisconnect( socket, client_address );
 
 		log_persistent_data( 'onDisconnect' );
 
@@ -91,9 +93,9 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 
 	this.onMessage = function (socket, client_address, message) {
-		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage', client_address, message );
+		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage:', client_address, message );
 
-		const client = persistent_data.session.clients[ client_address ];
+		const client = persistent_data.session.clients[ client_address ];//... Move to SessionHandler
 		if (! client) {
 			color_log( COLORS.ERROR, 'ERROR', 'Protocols.onMessage: Unknown client:', client_address );
 			return;
@@ -104,13 +106,42 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		const handled_commands = [];
 		const rejected_commands = [];
 
+		function send_error (protocol_name, command_name, error) {
+			//let stringified_error = JSON.stringify(
+			//	error,
+			//	Object.getOwnPropertyNames( error ),   //... SODD
+			//)
+			let stringified_error = error.stack
+			.replace( /\\n/g, '\n' )
+			.replace( /\n    /g, '\n' )
+			.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' )
+			;
+
+			const message = {
+				[protocol_name]: {
+					[command_name]: {
+						success : false,
+						reason  : REASONS.INTERNAL_ERROR,
+					},
+				},
+			};
+			const client = self.protocols.session.getClient( client_address );
+			if (client.login && client.inGroup( 'admin' )) {
+				color_log( COLORS.ERROR, 'ERROR Protocols.onMessage' );
+				message[protocol_name][command_name].stack = stringified_error;
+			} else {
+				color_log( COLORS.ERROR, 'ERROR Protocols.onMessage:', error );
+			}
+			send_as_json( socket, message );
+		}
+
 		Object.keys( message ).forEach( (protocol_name)=>{
 			if (! self.protocols[ protocol_name ]) {
 				rejected_commands.push( protocol_name + '.*' );
 
 				if (DEBUG.PROTOCOLS) color_log(
 					COLORS.ERROR,
-					'Protocols.onMessage',
+					'Protocols.onMessage:',
 					'unknown protocol:',
 					protocol_name,
 				);
@@ -120,10 +151,14 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 				if (DEBUG.PROTOCOLS) color_log(
 					COLORS.PROTOCOLS,
-					'Protocols.onMessage',
+					'Protocols.onMessage:',
 					'protocol_commands:',
 					self.protocols[ protocol_name ],
 				);
+
+				if (self.protocols[ protocol_name ].onMessage) {
+					self.protocols[ protocol_name ].onMessage( socket, client_address, message );
+				}
 
 				Object.keys( message_commands ).forEach( (command_name)=>{
 					const combined_name = protocol_name + '.' + command_name;
@@ -137,7 +172,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 						if (DEBUG.PROTOCOLS) color_log(
 							COLORS.ERROR,
-							'Protocols.onMessage',
+							'Protocols.onMessage:',
 							'unknown command:',
 							combined_name,
 						);
@@ -147,7 +182,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 						if (DEBUG.PROTOCOLS) color_log(
 							COLORS.PROTOCOLS,
-							'Protocols.onMessage',
+							'Protocols.onMessage:',
 							'request_handler: ',
 							request_handler
 						);
@@ -159,22 +194,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 							request_handler( client, request_arguments );
 
 						} catch (error) {
-							const stringified_error = JSON.stringify(
-								error,
-								Object.getOwnPropertyNames( error ),
-							).replace( /\\n/g, '<br>' );
-
-							color_log( COLORS.ERROR, 'Protocols.onMessage', 'ERR!!' );
-
-							send_as_json( socket, {
-								[protocol_name]: {
-									[command_name]: {
-										success : false,
-										reason  : REASONS.INTERNAL_ERROR,
-										error   : stringified_error,
-									},
-								},
-							});
+							send_error( protocol_name, command_name, error );
 						}
 
 						log_persistent_data( 'onMessage:', 'POST COMMAND: ' );
@@ -205,28 +225,45 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		color_log( COLORS.TRACE_EXIT, 'Protocols.exit()' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Protocols.exit' );
 
-		return Promise.resolve();
+		return Promise.all(
+			Object.keys( self.protocols ).map( name => self.protocols[ name ].exit() ),
+		);
 
 	}; // exit
 
 
 	this.init = function () {
-		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'Protocols.init' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Protocols.init' );
 
 		self.protocols = {};
 
-		function protocol (protocol_name, object_template, initial_arguments) {
+		const protocol_callbacks = {
+			session: {
+				allPersistentData: ()=>persistent_data,
+			},
+			server: {
+				triggerExit  : callbacks.triggerExit,
+				getProtocols : ()=>self.protocols,
+			},
+		};
+
+		function protocol (protocol_name, object_template) {
 			if (! persistent_data[ protocol_name ]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
 				persistent_data[ protocol_name ] = {};
 			}
 
 			return new Promise( async (done)=>{
+				const full_persistent_data = (['session'].indexOf( protocol_name ) >= 0);
+				const app_reference        = (['server'].indexOf( protocol_name ) >= 0);
+
 				self.protocols[ protocol_name ]
-				= await new object_template( persistent_data[ protocol_name ] )
-				;
+				= await new object_template(
+					persistent_data[ protocol_name ],
+					protocol_callbacks[ protocol_name ],
+				);
 
 				done();
 			});

@@ -9,7 +9,7 @@ const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
 
-module.exports = function ServerManager (persistent_data) {
+module.exports = function ServerManager (persistent_data, callbacks) {
 	const self = this;
 
 
@@ -61,7 +61,7 @@ module.exports = function ServerManager (persistent_data) {
 			client,
 		);
 
-		process.exit( -1 );
+		callbacks.triggerExit();
 
 	}; // restart
 
@@ -71,7 +71,7 @@ module.exports = function ServerManager (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		color_log( COLORS.TRACE_EXIT, 'ServerManager.exit()' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.exit' );
 
 		return Promise.resolve();
 
@@ -79,7 +79,7 @@ module.exports = function ServerManager (persistent_data) {
 
 
 	this.init = function () {
-		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'ServerManager.init' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
 
 		return Promise.resolve();
 

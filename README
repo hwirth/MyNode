@@ -11,6 +11,7 @@ Index
 		3.2. Hot code reloading
 		3.3. Persistent data
 		3.4. Protocols
+		3.5. Asynchronicity in object instantiation
 	4. Configuration
 	5. Installation
 	6. TODO
@@ -83,17 +84,39 @@ The program is split into two parts: Persistent and ephemeral. Websocket events 
 modules in ./application/ have changed and will reload them and re-instantiate , before calling the updated actual event handlers contained
 in said modules.
 
+
 3.3. Persistent data
 --------------------
 The websocket itself is kept alive in the persistent part of the program, only the response handlers are hot reloaded.
 Persistent data is stored in the main part as well. Application code will be given a reference to its data on
 (re-)creation.
 
+
 3.4. Protocols
 --------------
 Each message contains commands for specific protocols. These will be relayed accordingly through  protocols.js .
 This allows for independent servers to run over the same websocket. Protocol code will be given a reference to its
 persistent data, which is stored in  AppReloader.persistentData.<protocol name> .
+
+
+3.5. Asynchronicity in object instantiation
+-------------------------------------------
+The whole program is probably to be considered a Singleton object.
+
+[ ] // Initialize the object asynchronously
+    // Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
+    self.init().then( ()=>self );   // const chat = await new ChatServer();
+
+
+3.6. Glue code in the main object
+---------------------------------
+//... Rephrase this
+When sub-objects need to call methods of other objects which also need to call methods of the first object, we can't
+just pass the all methods as callbacks when instantiating the first object, because the next one does not exist yet.
+Therefore, "relay" functions in the main object are used for instantiation, because we are allowed to code calls for
+things that don't yet exist, when the funcion is declared.
+
+
 
 
 4. Configuration
@@ -108,8 +131,7 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
-[ ] kick: Consider user logged in several times
-[!] Chain destructor promises
+[ ] server reset: clear persistent_data
 [\] Less magic in  color_log() : let caller mix in COLOR.*
 [!] Don't use colors except in color field with  color_log()
 [?] Multiclienting as option per protocol
@@ -125,6 +147,7 @@ $ npm install ws follow-redirects re-require-module
 7. Code Parking Space (Ignore)
 ==============================
 
+https://ably.com/blog/web-app-websockets-nodejs
 https://www.freecodecamp.org/news/how-to-secure-your-websocket-connections-d0be0996c556/
 https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04
 (07:49:57 PM) madude: You can store the connect_id on the connection to identify them
@@ -149,7 +172,7 @@ module.exports = function Client (persistent_data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function init () {
-		if (DEBUG.TRACE_INIT) color_log( COLORS.TRACE_INIT, 'Client.init' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Client.init' );
 
 		return Promise.resolve();
 

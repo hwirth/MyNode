@@ -5,7 +5,8 @@
 
 "use strict";
 
-const fs = require( 'fs' );
+const fs   = require( 'fs' );
+const path = require( 'path' );
 
 const DEV_SERVER = true || (os.hostname() == 'labor');
 module.exports.DEV_SERVER = DEV_SERVER;
@@ -53,8 +54,11 @@ parse_config_file();
 // SETTINGS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;
+
 const SETTINGS = {
 	DEV_SERVER: DEV_SERVER,
+	BASE_DIR: base_dir,
 
 	LOG: {
 		FILE_NAME     : config_file.LOG_FILE_NAME,                // File name for log output
@@ -70,18 +74,15 @@ const SETTINGS = {
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
 	},
 
-	SESSION: {
-
-	},
-
 	// Upper case chars are also allowed
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.?&%=-+/:[]',   // http server white list
 	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz1234567890_[]()@-/äöüß',   // Chat name white list
 
-	TIMEOUT_MS: {
-		LOGIN        : 15*1000,
+	TIMEOUT: {
 		SOCKET_CLOSE : 100,
 		PING         : 2000,
+		LOGIN        : 5*1000,
+		IDLE         : 5*1000,
 	},
 
 }; // SETTINGS

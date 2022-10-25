@@ -72,6 +72,12 @@ export const DebugConsole = function (callbacks) {
 	this.textToRequest = text_to_request;
 
 
+	function scroll_down () {
+		self.elements.console.scrollBy(0, 99999);
+
+	} // scroll_down
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONVERT USER INPUT <--> JSON
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -201,16 +207,17 @@ export const DebugConsole = function (callbacks) {
 
 
 	this.print = function (message, class_name) {
-		const new_element = document.createElement( 'pre' );
-		new_element.className = class_name;
-		new_element.innerHTML
-		= (typeof message == 'string')
+		const message_html = (typeof message == 'string')
 		? message
 		: request_to_text( message )
 		;
 
+		const new_element = document.createElement( 'pre' );
+		new_element.className = class_name;
+		new_element.innerHTML = message_html;
+
 		self.elements.console.insertBefore( new_element, self.elements.prompt );
-		self.elements.console.scrollBy(0, 99999);
+		scroll_down();
 
 	}; // print
 
@@ -258,13 +265,15 @@ export const DebugConsole = function (callbacks) {
 
 
 		const button_scripts = {
-			'status'    : 'session\n\tstatus',
-			'login hmw' : 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
-			'login sec' : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
-			'logout'    : 'session\n\tlogout',
-			'who'       : 'session\n\twho',
-			'kick hmw'  : 'session\n\tkick\n\t\tusername: hmw',
-			'kick sec'  : 'session\n\tkick\n\t\tusername: sec',
+			'status'     : 'session\n\tstatus',
+			'login hmw'  : 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+			'login sec'  : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
+			'logout'     : 'session\n\tlogout',
+			'who'        : 'session\n\twho',
+			'kick hmw'   : 'session\n\tkick\n\t\tusername: hmw',
+			'kick sec'   : 'session\n\tkick\n\t\tusername: sec',
+			'persistent' : 'session\n\tstatus\n\t\tpersistent',
+			'restart'    : 'server\n\trestart',
 		};
 		Object.keys( button_scripts ).forEach( (key)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
@@ -293,6 +302,7 @@ export const DebugConsole = function (callbacks) {
 			const lines = self.elements.input.value.split('\n');
 			const nr_lines = (lines.length > 0) ? lines.length : 1;
 			self.elements.input.rows = nr_lines + EXTRA_LINES;
+			scroll_down();
         	}
 
 
