@@ -71,7 +71,9 @@ const WebSocketServer = function () {
 	this.onConnect = async function (socket, client_address, data) {
 		const request_nr = ++connect_id;
 		log_header( COLORS.CONNECT, 'CONNECT ' + request_nr + ' ]--[ ' + client_address );
+
 		await self.appReloader.onConnect( socket, client_address );
+
 		end_header( COLORS.CONNECT, 'CONNECT ' + request_nr );
 
 	}; // onConnect
@@ -81,7 +83,9 @@ const WebSocketServer = function () {
 	this.onMessage = async function (socket, client_address, json_string) {
 		const request_nr = ++message_id;
 		log_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr + ' ]--[ ' + client_address );
+
 		await self.appReloader.onMessage( socket, client_address, json_string );
+
 		end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr );
 
 	}; // onMessage
@@ -91,7 +95,9 @@ const WebSocketServer = function () {
 	this.onDisconnect = async function (socket, client_address) {
 		const request_nr = ++disconnect_id;
 		log_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr + ' ]--[ ' + client_address );
+
 		await self.appReloader.onDisconnect( socket, client_address );
+
 		end_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr );
 
 	}; // onDisconnect
@@ -405,7 +411,8 @@ const WebSocketServer = function () {
 	}; // init
 
 
-	return self.init().then( ()=>self );
+	return self.init().then( ()=>self );   // const server = await new WebSocketServer()
+	//... Why does it require a return here, but not with the other object templates in this project??
 
 }; // WebSocketServer
 
@@ -416,8 +423,6 @@ const WebSocketServer = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 console.time( '| READY. Boot time' );
-
-// Exporting the instance, so the payload can require and access .data and .modules
 new WebSocketServer().then( ()=>{
 	console.log( '.' + '-'.repeat(78) );
 	console.timeEnd( '| READY. Boot time' );

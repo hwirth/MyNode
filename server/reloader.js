@@ -148,18 +148,6 @@ module.exports = function AppReloader (web_socket) {
 			;
 		} catch (error) {
 			color_log( COLORS.ERROR, 'ERROR', error );
-		/*
-			if (socket) {
-				const error_message = JSON.stringify( error, Object.getOwnPropertyNames(error) );
-				socket.send(
-					JSON.stringify({
-						reRequire: {
-							error: error_message,
-						},
-					})
-				);
-			}
-		*/
 		}
 
 	} // update_modules
@@ -227,7 +215,7 @@ module.exports = function AppReloader (web_socket) {
 	}; // init
 
 
-	return self.init().then( ()=>self );
+	self.init().then( ()=>self );   // const reloader = new AppReloader()
 
 }; // AppReloader
 

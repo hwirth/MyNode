@@ -10,7 +10,6 @@ const { REASONS                  } = require( './constants.js' );
 
 // Protocol object templates
 const SessionHandler  = require( './session.js' ).SessionHandler;
-const WebSocketClient = require( './session.js' ).WebSocketClient;
 const ServerManager   = require( './server_manager.js' );
 const ChatServer      = require( './chat/chat_main.js' );
 
