@@ -341,8 +341,15 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 					},
 				});
 			}
+
 		} else if (Object.keys(parameters).length == 0) {
 			send({ client: client });
+
+			if (client.inGroup( 'admin' )) send({
+				heap: process.memoryUsage().heapUsed,
+				protocol: callbacks.getProtocolDescription(/*line_numbers*/false).split( '\n' ),
+			});
+
 		} else {
 			respond_failure( client, 'status', REASONS.UNKNOWN_COMMAND );
 		}

@@ -11,7 +11,8 @@ const { REASONS                  } = require( './constants.js' );
 
 // Protocol object templates
 const SessionHandler  = require( './session.js' );
-const ServerManager   = require( './server_manager.js' );
+const AccessControl   = require( './access.js' );
+const ServerManager   = require( './manager.js' );
 const ChatServer      = require( './chat/chat_main.js' );
 
 const WebSocketClient = require( './client.js' );
@@ -82,10 +83,12 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		Object.keys( self.protocols ).forEach( (protocol_name)=>{
 			const protocol_commands = self.protocols[ protocol_name ].requestHandlers;
 
-			Object.keys( protocol_commands ).forEach( (command_name)=>{
-				const combined = protocol_name + '.' + command_name;
-				lut[combined] = protocol_commands[ command_name ];
-			});
+			if (protocol_commands) {
+				Object.keys( protocol_commands ).forEach( (command_name)=>{
+					const combined = protocol_name + '.' + command_name;
+					lut[combined] = protocol_commands[ command_name ];
+				});
+			}
 		});
 
 		return lut;
@@ -241,7 +244,10 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		const protocol_callbacks = {
 			session: {
-				allPersistentData: ()=>persistent_data,
+				allPersistentData      : ()=>persistent_data,
+				getProtocolDescription : (line_numbers)=>{
+					return self.protocols.access.getProtocolDescription( line_numbers );
+				},
 			},
 			server: {
 				triggerExit  : callbacks.triggerExit,
@@ -271,6 +277,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		return Promise.all([
 			protocol( 'session' , SessionHandler ),
+			protocol( 'access'  , AccessControl  ),
 			protocol( 'server'  , ServerManager  ),
 			protocol( 'chat'    , ChatServer     ),
 		]);
