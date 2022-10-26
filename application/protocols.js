@@ -95,7 +95,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 	this.onMessage = function (socket, client_address, message) {
 		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage:', client_address, message );
 
-		const client = persistent_data.session.clients[ client_address ];//... Move to SessionHandler
+		const client = self.protocols.session.getClientByAddress( client_address );
 		if (! client) {
 			color_log( COLORS.ERROR, 'ERROR', 'Protocols.onMessage: Unknown client:', client_address );
 			return;
@@ -125,7 +125,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 					},
 				},
 			};
-			const client = self.protocols.session.getClient( client_address );
+
 			if (client.login && client.inGroup( 'admin' )) {
 				color_log( COLORS.ERROR, 'ERROR Protocols.onMessage' );
 				message[protocol_name][command_name].stack = stringified_error;

@@ -150,6 +150,23 @@ $ npm install ws follow-redirects re-require-module
 #4: Authenticate users before WS connection establishes
 
 
+6.1. Problem with persistence of WebSocketClient instances
+----------------------------------------------------------
+Client connection information is kept in protocols.session.clients{}. Currently, each client entry also has callback
+functions that hide the socket object from the rest of the application program. These client objects are instantiated
+on connection and will not change, when some application code is reloaded. The user needs to close and log in again for
+changes to take effect.
+
+I should not store code in  persistent_data  to eliminate the requirement of reconnection after code update.
+I could re-instantiate all  WebSocketServer()  instances, after code was reloaded, or find an alternative to things
+like  client.send(data)  - e.g.  session.sendToClient( client.address, data );
+
+callbacks.sendToClient( client.address, data ); - Have session.js "publish" its methods (globally? To certain modules)
+
+
+
+
+
 7. Code Parking Space (Ignore)
 ==============================
 
@@ -304,5 +321,169 @@ module.exports = function Client (persistent_data) {
 (03:40:05 PM) ss[m]: then go with text-based gui for git, oldlaptop
 (03:40:07 PM) oldlaptop: I would certainly expect using a VCS to affect how you work and think eventually. (And the precise effects will be different for different VCSes.)
 
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HOT CODE RELOAD
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	async function get_file_times () {
+		const mtimes = [];
+		const stat_requests = [];
+
+		await new Promise( (done)=>{
+			glob( APP_PATH + '/**/*.js', (error, matches)=>{
+				if (error) color_log(
+					COLORS.ERROR,
+					'AppReloader-get_file_times:',
+					error,
+				);
+
+				matches.forEach( (file_name)=>{
+					stat_requests.push(
+						fs.promises.stat( file_name ).then( (stats)=>{
+							mtimes[file_name] = stats.mtimeMs;
+						})
+					);
+				});
+
+				done();
+			});
+		});
+
+		await Promise.all( stat_requests );
+
+		if (DEBUG.RELOADER_TIMES) color_log(
+			COLORS.RELOADER,
+			'AppReloader-get_file_times: File times:',
+			mtimes,
+		);
+
+		return mtimes;
+
+	} // get_file_times
+
+
+	function find_changed_files () {
+		const new_file_times = get_file_times();
+
+		return Object.keys( self.fileTimes ).find( (file_name)=>{
+			if (! self.loadedModules[ file_name ]) return true;
+
+			const file_time   = self.fileTimes[ file_name ];
+			const module_time = self.loadedModules[ file_name ];
+			return (file_time != module_time);
+		});
+
+	} // find_changed_files
+
+
+	function add_load_request (load_requests, report_file_names, file_name, file_has_changed) {
+		load_requests.push(
+			new Promise( (done)=>{
+				if (file_has_changed) {
+					if (DEBUG.RELOADER_REQUIRE) color_log(
+						COLORS.REQUIRE,
+						'AppReloader-re_require_modules:',
+						file_name,
+					);
+				}
+				report_file_names[ file_name.replace('../','') ] = {};
+
+				try {
+					reRequire( path.resolve( file_name ) );
+
+				} catch (error) {
+					color_log(
+						COLORS.ERROR,
+						file_name,
+						'could not be loaded',
+					);
+
+					const stringified_error = JSON.stringify(
+						error,
+						Object.getOwnPropertyNames( error ),
+					).replace( /\\n/g, '<br>' );  //... Don't send HTML
+
+					report_file_names[ file_name.replace('../','') ] = {
+						error: stringified_error,
+					};
+				}
+
+				done();
+			}),
+		);
+
+	} // add_load_request
+
+
+	async function re_require_modules (socket) {
+		const load_requests     = [];
+		const report_file_names = {};
+
+		const changed_files = find_changed_files();
+
+		if (changed_files) {
+			Object.keys( self.fileTimes ).forEach( (file_name)=>{
+				self.loadedModules[ file_name ] = self.fileTimes[file_name];
+
+				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
+				add_load_request(
+					load_requests,
+					report_file_names,
+					file_name,
+					file_has_changed
+				);
+			});
+		}
+
+		await Promise.all( load_requests );
+
+		if (socket && Object.keys( report_file_names ).length) {
+			socket.send( JSON.stringify({ reload: report_file_names }, null, '\t') );
+		}
+
+		return load_requests.length;
+
+	} // re_require_modules
+
+
+	async function reload_modules (socket) {
+		self.fileTimes = await get_file_times();
+
+		console.time( 'Reload time' );
+		const nr_reloaded_files = await re_require_modules( socket );
+		console.timeEnd( 'Reload time' );
+		if (nr_reloaded_files === 0) return;
+
+		const MAIN_MODULE = {
+			url            : APP_PATH + '/protocols.js',
+			persistentData : self.persistentData,
+			callbacks      : { triggerExit : callbacks.triggerExit },
+		};
+
+		console.time( 'Init time' );
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
+try {
+		// Reload and reinstantiate main module:
+		self.protocols = await new reRequire(
+			MAIN_MODULE.url
+		).Protocols(
+			MAIN_MODULE.persistentData,
+			MAIN_MODULE.callbacks,
+		)/*.catch( (error)=>{
+			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
+		})*/;
+} catch (error) {
+	color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:', error );
+}
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
+		console.timeEnd( 'Init time' );
+
+	} // reload_modules
 
 

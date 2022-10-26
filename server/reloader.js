@@ -11,7 +11,9 @@ const path      = require( 'path' );
 const glob      = require( 'glob' );
 const reRequire = require( 're-require-module' ).reRequire;
 
-const { DEBUG, COLORS, color_log } = require( './debug.js' );
+const { SETTINGS      } = require( './config.js' );
+const { DEBUG, COLORS } = require( './debug.js' );
+const { color_log     } = require( './debug.js' );
 
 const APP_PATH = '../application';
 
@@ -85,6 +87,8 @@ module.exports = function AppReloader (web_socket, callbacks) {
 	function add_load_request (load_requests, report_file_names, file_name, file_has_changed) {
 		load_requests.push(
 			new Promise( (done)=>{
+				const index = file_name.replace('../','');
+
 				if (file_has_changed) {
 					if (DEBUG.RELOADER_REQUIRE) color_log(
 						COLORS.REQUIRE,
@@ -92,7 +96,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 						file_name,
 					);
 
-					report_file_names[ file_name.replace('../','') ] = {};
+					report_file_names[ index ] = {};
 				}
 
 				try {
@@ -102,17 +106,19 @@ module.exports = function AppReloader (web_socket, callbacks) {
 					color_log(
 						COLORS.ERROR,
 						file_name,
-						'could not be loaded',
+						're-require failed',
 					);
 
-					const stringified_error = JSON.stringify(
-						error,
-						Object.getOwnPropertyNames( error ),
-					).replace( /\\n/g, '<br>' );  //... Don't send HTML
-
-					report_file_names[ file_name.replace('../','') ] = {
-						error: stringified_error,
-					};
+					if (file_has_changed) {
+						const stringified_error = error.stack
+						.replace( /\\n/g, '\n' )
+						.replace( /\n    /g, '\n' )
+						.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' )
+						;
+						report_file_names[ index ] = {
+							error: stringified_error,
+						};
+					}
 				}
 
 				done();
@@ -169,15 +175,19 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		console.time( 'Init time' );
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
-
+try {
 		// Reload and reinstantiate main module:
-		self.protocols = await new reRequire( MAIN_MODULE.url ).Protocols(
+		self.protocols = await new reRequire(
+			MAIN_MODULE.url
+		).Protocols(
 			MAIN_MODULE.persistentData,
 			MAIN_MODULE.callbacks,
 		).catch( (error)=>{
 			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
 		});
-
+} catch (error) {
+	color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:', error );
+}
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );
 

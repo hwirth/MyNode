@@ -62,11 +62,6 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 
 	function find_client_by_username (username) {
-		const client_address = Object.keys( persistent_data.clients ).find( (address)=>{
-			const client = persistent_data.clients[ address ];
-			return (client.login && (client.login.userName == username));
-		});
-		return (client_address) ? persistent_data.clients[ client_address ] : null;
 
 	} // find_client_by_username
 
@@ -75,10 +70,21 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.getClient = function (address) {
+	this.getClientByAddress = function (address) {
 		return persistent_data.clients[ address ];
 
-	}; // getClient
+	}; // getClientByAddress
+
+
+	this.getClientByName = function (name) {
+		const client_address = Object.keys( persistent_data.clients ).find( (test_address)=>{
+			const client = persistent_data.clients[ test_address ];
+			return (client.login && (client.login.userName == name));
+		});
+
+		return (client_address) ? persistent_data.clients[ client_address ] : null;
+
+	}; // getClientByName
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -212,7 +218,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 				},
 			});
 
-		} else {
+		} else if (client.login) {
 			//color_log( COLORS.ERROR, '<session.who>', REASONS.INSUFFICIENT_PERMS, client.login );
 			//respond_failure( client, 'who', REASONS.INSUFFICIENT_PERMS );
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent_data.clients' );
@@ -231,6 +237,9 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 					who: clients,
 				},
 			});
+		} else {
+			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent_data.clients' );
+			respond_failure( client, 'who', REASONS.INSUFFICIENT_PERMS );
 		}
 
 	}; // who
@@ -248,7 +257,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 			target_client = persistent_data.clients[ parameters.address ];
 		}
 		else if (parameters.username) {
-			target_client = find_client_by_username( parameters.username );
+			target_client = self.getClientByName( parameters.username );
 		}
 
 		if (! target_client) {
@@ -293,7 +302,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		respond_success( client, 'kick', REASONS.KICKED_USER + ' ' + target_username + ' ' + target_address );
 
 		if (parameters.username) {
-			if (find_client_by_username( parameters.username )) {
+			if (self.getClientByName( parameters.username )) {
 				self.requestHandlers.kick( client, parameters );
 			}
 		}
