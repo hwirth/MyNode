@@ -312,46 +312,23 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 	this.requestHandlers.status = function (client, parameters) {
 
-		function send (data) {
+		function respond (success, response) {
 			client.send({
-				session: {
-					status: data,
+				success  : success,
+				response : {
+					session : {
+						status: response,
+					},
 				},
 			});
 		}
 
-		//... Introduce a permission facility to get rid of ifs like this:
-		if (parameters.persistent || (parameters.persistent === null)) {
-			if (client.login) {
-				if (client.inGroup('admin')) {
-					send({ persistent: callbacks.allPersistentData() });
-				} else {
-					send({
-						persistent: {
-							success : false,
-							reason  : REASONS.INSUFFICIENT_PERMS,
-						},
-					});
-				}
-			} else {
-				send({
-					persistent: {
-						success : false,
-						reason  : REASONS.INSUFFICIENT_PERMS,
-					},
-				});
-			}
-
-		} else if (Object.keys(parameters).length == 0) {
-			send({ client: client });
-
-			if (client.inGroup( 'admin' )) send({
-				heap: process.memoryUsage().heapUsed,
-				protocol: callbacks.getProtocolDescription(/*line_numbers*/false).split( '\n' ),
-			});
+		if (Object.keys(parameters).length == 0) {
+			respond( true, {client: client} );
 
 		} else {
-			respond_failure( client, 'status', REASONS.UNKNOWN_COMMAND );
+			const command = Object.keys( parameters )[0];
+			respond( false, { [command]: REASONS.UNKNOWN_COMMAND });
 		}
 
 	}; // status

@@ -5,8 +5,9 @@
 
 "use strict";
 
-const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
-const { REASONS                  } = require( './constants.js' );
+const { DEBUG, COLORS   } = require( '../server/debug.js' );
+const { color_log, dump } = require( '../server/debug.js' );
+const { REASONS         } = require( './constants.js' );
 
 
 module.exports = function ServerManager (persistent_data, callbacks) {
@@ -14,24 +15,12 @@ module.exports = function ServerManager (persistent_data, callbacks) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PROTOCOL DEFINITION
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-/*
-	this.commands = {
-		kick    : '{ address: <ip>:<port> }',
-		login   : '{ username: <user name>, password: <password> }',
-		logout  : null,
-		status  : null,
-	};
-*/
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function respond_success (client, command, reason, status = true) {
 		client.send({
-			session: {
+			server: {
 				[command]: {
 					success   : status,
 					reason    : reason,
@@ -58,12 +47,64 @@ module.exports = function ServerManager (persistent_data, callbacks) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<server.restart>',
-			client,
+			dump( client ),
 		);
 
 		callbacks.triggerExit();
 
 	}; // restart
+
+
+	this.requestHandlers.status = function (client, parameters) {
+
+		function respond (success, response) {
+			client.send({
+				server : {
+					status: response,
+				},
+				success : success,
+			});
+		}
+
+
+		if (parameters.persistent || (parameters.persistent === null)) {
+			if (client.login) {
+				if (client.inGroup( 'admin' )) {
+					respond( true, {
+						persistent: callbacks.getAllPersistentData(),
+					});
+				} else {
+					respond( true, {
+						persistent: {
+							success : false,
+							reason  : REASONS.INSUFFICIENT_PERMS,
+						},
+					});
+				}
+			}
+
+		} else if (Object.keys(parameters).length == 0) {
+			if (client.inGroup( 'admin' )) {
+				const heap = process.memoryUsage().heapUsed;
+				respond( true, {
+					upTime   : callbacks.getUpTime( /*formatted*/true ),
+					heapUsed : Math.floor(heap / 1024**2 * 100) / 100 + ' MiB',
+					access   : {
+						rules: (
+							callbacks
+							.getProtocolDescription( /*show_line_numbers*/false )
+							.split( '\n' )
+						),
+					}
+				});
+			}
+
+		} else {
+			const command = Object.keys( parameters )[0];
+			respond( false, {[command]: REASONS.UNKNOWN_COMMAND} );
+		}
+
+	}; // status
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

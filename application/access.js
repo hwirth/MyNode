@@ -15,10 +15,11 @@ const PROTOCOL_DESCRIPTION = (`
 	guest,user,mod,admin,dev: session.logout
 	guest,user,mod,admin,dev: session.who
 	guest,user,mod,admin,dev: session.who.username=string
+	user,mod,admin,dev: server.status
 	mod,admin,dev: session.who.address=string
 	mod,admin,dev: session.kick.address=string
 	mod,admin,dev: session.kick.username=string
-	admin,dev: session.status.persistent
+	admin,dev: server.status.persistent
 	admin,dev: server.restart
 	#dev: server.log.*
 	dev: test.*
@@ -35,8 +36,8 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function format_source (configuration, line_numbers = true) {
-		const line_number = (index) => (line_numbers ? (index + ': ') : '')
+	function format_source (configuration, show_line_numbers = true) {
+		const line_number = (index) => (show_line_numbers ? (index + ': ') : '')
 
 		return configuration
 		.trim().split( '\n' )                                                   // Split text into lines
@@ -46,7 +47,8 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 		.join( '\n' )
 		;
 
-	} // get_protocol_description
+	} // format_source
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // PARSER
@@ -74,7 +76,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 
 		// 1. Turn include or rule instructions into objects
-		// 2. Splits groups and dot-separated instruction parts into arrays
+		// 2. Split groups and dot-separated instruction parts into arrays
 
 		const instructions = lines.map( (line)=>{
 			const pos_colon  = line.text.indexOf( ':' );
@@ -205,6 +207,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 
 		// 4. Create rules for each group
+
 		const new_rules = {};
 
 		tokens.forEach( (token)=>{
@@ -233,15 +236,17 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.getProtocolDescription = function (line_numbers) {
-		return format_source( persistent_data.configuration, line_numbers );
+	this.getProtocolDescription = function (show_line_numbers) {
+		return format_source( persistent_data.configuration, show_line_numbers );
 
 	}; // getProtocolDescription
 
+
 	this.parseConfiguration = parse_configuration;
 
+
 	this.loadConfiguration = function (new_configuration) {
-		persistent_data.configuration = new_configuration;
+		persistent_data.configuration = new_configuration.trim();
 
 		try {
 			self.rules = parse_configuration( new_configuration );

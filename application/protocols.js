@@ -9,13 +9,13 @@ const { SETTINGS                 } = require( '../server/config.js' );
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
+const WebSocketClient = require( './client.js' );
+
 // Protocol object templates
 const SessionHandler  = require( './session.js' );
 const AccessControl   = require( './access.js' );
 const ServerManager   = require( './manager.js' );
 const ChatServer      = require( './chat/chat_main.js' );
-
-const WebSocketClient = require( './client.js' );
 
 
 module.exports.Protocols = function (persistent_data, callbacks) {
@@ -93,7 +93,6 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		return lut;
 	}
-
 
 	this.onMessage = function (socket, client_address, message) {
 		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage:', client_address, message );
@@ -242,45 +241,67 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		self.protocols = {};
 
+// PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
 		const protocol_callbacks = {
-			session: {
-				allPersistentData      : ()=>persistent_data,
-				getProtocolDescription : (line_numbers)=>{
-					return self.protocols.access.getProtocolDescription( line_numbers );
-				},
+			getProtocolDescription : (show_line_numbers)=>{
+				return self.protocols.access
+				.getProtocolDescription( show_line_numbers );
 			},
-			server: {
-				triggerExit  : callbacks.triggerExit,
-				getProtocols : ()=>self.protocols,
-			},
+			getUpTime              : callbacks.getUpTime,
+			triggerExit            : callbacks.triggerExit,
+			getProtocols           : ()=>self.protocols,
+			getAllPersistentData   : ()=>persistent_data,
 		};
 
-		function protocol (protocol_name, object_template) {
+		const registered_protocols = {
+			session : {
+				template  : SessionHandler,
+				callbacks : [
+					'getAllPersistentData',
+					'getProtocolDescription',
+					'getUpTime',
+				],
+			},
+			access  : {
+				template  : AccessControl,
+			},
+			server  : {
+				template  : ServerManager,
+				callbacks : [
+					'triggerExit',
+					'getProtocols',
+					'getAllPersistentData',
+					'getProtocolDescription',
+					'getUpTime',
+				],
+			},
+			chat    : {
+				template  : ChatServer,
+			},
+		};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+		const load_requests = Object.keys( registered_protocols ).map( (protocol_name)=>{
 			if (! persistent_data[ protocol_name ]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
 				persistent_data[ protocol_name ] = {};
 			}
 
+			const protocol  = registered_protocols[ protocol_name ];
+			const data      = persistent_data     [ protocol_name ];
+
+			const callbacks = {};
+			if (protocol.callbacks) protocol.callbacks.forEach( (name)=>{
+				callbacks[ name ] = protocol_callbacks[ name ];
+			});
+
 			return new Promise( async (done)=>{
-				const full_persistent_data = (['session'].indexOf( protocol_name ) >= 0);
-				const app_reference        = (['server'].indexOf( protocol_name ) >= 0);
-
-				self.protocols[ protocol_name ]
-				= await new object_template(
-					persistent_data[ protocol_name ],
-					protocol_callbacks[ protocol_name ],
-				);
-
+				self.protocols[ protocol_name ] = await new protocol.template( data, callbacks );
 				done();
 			});
-		}
+		});
 
-		return Promise.all([
-			protocol( 'session' , SessionHandler ),
-			protocol( 'access'  , AccessControl  ),
-			protocol( 'server'  , ServerManager  ),
-			protocol( 'chat'    , ChatServer     ),
-		]);
+		return Promise.all( load_requests );
 
 	}; // init
 
