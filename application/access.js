@@ -305,7 +305,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 	}; // init
 
 
-	return self.init().then( ()=>self );   // const protocols = await new Protocols();
+	return self.init().then( ()=>self );   // const access = await new AccessControl();
 
 }; // AccessControl
 
