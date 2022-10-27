@@ -11,12 +11,6 @@ const { REASONS                  } = require( './constants.js' );
 
 const WebSocketClient = require( './client.js' );
 
-// Protocol object templates
-const SessionHandler  = require( './session.js' );
-const AccessControl   = require( './access.js' );
-const ServerManager   = require( './manager.js' );
-const ChatServer      = require( './chat/chat_main.js' );
-
 
 module.exports.Protocols = function (persistent_data, callbacks) {
 	const self = this;
@@ -242,6 +236,11 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		self.protocols = {};
 
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
+		const SessionHandler  = require( './session.js' );
+		const AccessControl   = require( './access.js' );
+		const ServerManager   = require( './manager.js' );
+		const ChatServer      = require( './chat/chat_main.js' );
+
 		const protocol_callbacks = {
 			getProtocolDescription : (show_line_numbers)=>{
 				return self.protocols.access
@@ -256,11 +255,6 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		const registered_protocols = {
 			session : {
 				template  : SessionHandler,
-				callbacks : [
-					'getAllPersistentData',
-					'getProtocolDescription',
-					'getUpTime',
-				],
 			},
 			access  : {
 				template  : AccessControl,

@@ -70,12 +70,27 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 		// Turn text into array of line objects, preserve source code line numbers
 
+		const lines = (()=>{
+			const without_comments = line => line.split('#', 1)[0].trim();
+			const to_objects       = (line, index) => { return {source: index, text: line}; };
+			const empty_lines      = line => (line.text.trim() != '');
+			return (
+				configuration
+				.trim().split( '\n' )
+				.map( without_comments )
+				.map( to_objects )
+				.filter( empty_lines )
+			);
+		})();
+
+	/*
 		const lines = configuration
 		.trim().split( '\n' )                                         // Split text into lines
 		.map( line => line.split( '#', 1 )[0].trim() )                // Remove comments
 		.map( (line, index)=>{return {source: index, text: line}} )   // Turn lines into objects
 		.filter( line => line.text.trim() )                           // Remove empty lines
 		;
+	*/
 
 		if (DEBUG.PARSE.LINES) {
 			console.log( 'lines:', lines );
