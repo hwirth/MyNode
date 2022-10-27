@@ -46,10 +46,10 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		client.send({
 			session: {
 				[command]: {
-					success   : status,
-					reason    : reason,
+					response: reason,
 				},
 			},
+			success : status,
 		});
 
 	} // respond_success
