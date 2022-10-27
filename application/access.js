@@ -9,6 +9,14 @@ const { SETTINGS                 } = require( '../server/config.js' );
 const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
+DEBUG.PARSE = {
+	SHOW_HEADER  : !false,
+	LINES        : false,
+	INSTRUCTIONS : false,
+	TOKENS       : !false,
+	SOURCE       : !false,
+};
+
 const PROTOCOL_DESCRIPTION = (`
 	connecting,guest,user,mod,admin,dev: session.status
 	connecting: session.login.username=string,password=string
@@ -55,7 +63,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function parse_configuration (configuration) {
-		if (DEBUG.PARSE_RULES) {
+		if (DEBUG.PARSE.SHOW_HEADER) {
 			console.log( '*'.repeat(79) );
 		}
 
@@ -64,12 +72,12 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 		const lines = configuration
 		.trim().split( '\n' )                                         // Split text into lines
-		.map( line => line.split( '#', 1 )[0].trim() )                // Remove comments and trim each line
+		.map( line => line.split( '#', 1 )[0].trim() )                // Remove comments
 		.map( (line, index)=>{return {source: index, text: line}} )   // Turn lines into objects
 		.filter( line => line.text.trim() )                           // Remove empty lines
 		;
 
-		if (DEBUG.PARSE_RULES) {
+		if (DEBUG.PARSE.LINES) {
 			console.log( 'lines:', lines );
 			console.log( '*'.repeat(79) );
 		}
@@ -123,7 +131,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 		}); // instructions
 
-		if (DEBUG.PARSE_RULES) {
+		if (DEBUG.PARSE.INSTRUCTIONS) {
 			console.log( 'instructions:', instructions );
 			console.log( '*'.repeat(79) );
 		}
@@ -200,7 +208,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 			}
 		});
 
-		if (DEBUG.PARSE_RULES) {
+		if (DEBUG.PARSE.TOKENS) {
 			console.log( 'tokens:', tokens );
 			console.log( '*'.repeat(79) );
 		}
@@ -222,7 +230,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 		// 5. Done
 
-		if (DEBUG.PARSE_RULES) {
+		if (DEBUG.PARSE.SOURCE) {
 			console.log( 'formatted_source:', '\n' + format_source(configuration) );
 			console.log( '*'.repeat(79) );
 		}
