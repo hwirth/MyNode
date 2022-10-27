@@ -131,12 +131,7 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
-[?]
-	as
-		username: <name>
-		do
-			<command>
-
+[ ] Timeout after logout not cleared
 [ ] server reset: clear persistent_data
 [\] Less magic in  color_log() : let caller mix in COLOR.*
 [!] Don't use colors except in color field with  color_log()
@@ -169,6 +164,11 @@ callbacks.sendToClient( client.address, data ); - Have session.js "publish" its 
 
 7. Code Parking Space (Ignore)
 ==============================
+
+	as
+		username: <name>
+		do
+			<command>
 
 https://ably.com/blog/web-app-websockets-nodejs
 https://www.freecodecamp.org/news/how-to-secure-your-websocket-connections-d0be0996c556/
@@ -487,3 +487,113 @@ try {
 	} // reload_modules
 
 
+
+
+
+
+
+
+
+
+
+
+		const new_rules = {
+			'connecting': {
+				include: [],
+				templates: [
+					{
+						session: {
+							status: 'empty',
+						},
+					},
+					{
+						session: {
+							login: {
+								username: 'string',
+								password: 'string',
+							}
+						},
+					},
+				],
+			},
+			'guest': {
+				include: [],
+				templates: [
+					{
+						session: {
+							status: 'empty',
+						},
+					},
+					{
+						session: {
+							logout: 'empty',
+						},
+					},
+					{
+						session: {
+							who: 'empty',
+						},
+					},
+					{
+						session: {
+							who: {
+								address: 'string',
+							},
+						},
+					},
+					{
+						session: {
+							who: {
+								username: 'string',
+							},
+						},
+					},
+				],
+			},
+			'user': {
+				include: [ 'guest' ],
+				templates: [
+				],
+			},
+			'mod': {
+				include: [ 'user' ],
+				templates: [
+					{
+						session: {
+							kick: {
+								address: 'empty',
+							},
+						},
+					},
+					{
+						session: {
+							kick: {
+								username: 'empty',
+							},
+						},
+					},
+				],
+			},
+			'admin': {
+				include: [ 'mod' ],
+				templates: [
+					{
+						session: {
+							status: {
+								persistent: 'empty',
+							},
+						},
+					},
+					{
+						server: {
+							restart: 'empty',
+						},
+					},
+				],
+			},
+			'dev': {
+				include: [ 'admin'  ],
+				templates: [
+				],
+			},
+		};

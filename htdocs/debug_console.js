@@ -272,7 +272,8 @@ export const DebugConsole = function (callbacks) {
 			'who'        : 'session\n\twho',
 			'kick hmw'   : 'session\n\tkick\n\t\tusername: hmw',
 			'kick sec'   : 'session\n\tkick\n\t\tusername: sec',
-			'persistent' : 'session\n\tstatus\n\t\tpersistent',
+			'srv status' : 'server\n\tstatus',
+			'persistent' : 'server\n\tstatus\n\t\tpersistent',
 			'restart'    : 'server\n\trestart',
 		};
 		Object.keys( button_scripts ).forEach( (key)=>{

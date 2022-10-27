@@ -90,24 +90,23 @@ module.exports = function AppReloader (web_socket, callbacks) {
 				const index = file_name.replace('../','');
 
 				if (file_has_changed) {
-					if (DEBUG.RELOADER_REQUIRE) color_log(
-						COLORS.REQUIRE,
-						'AppReloader-re_require_modules:',
-						file_name,
-					);
-
 					report_file_names[ index ] = {};
 				}
+
+				let color = (file_has_changed ? COLORS.REQUIRE : COLORS.UP_TO_DATE);
 
 				try {
 					reRequire( path.resolve( file_name ) );
 
 				} catch (error) {
+				/*
 					color_log(
 						COLORS.ERROR,
+						'AppReloader-add_load_request:',
 						file_name,
-						're-require failed',
 					);
+				*/
+					color = COLORS.ERROR;
 
 					if (file_has_changed) {
 						const stringified_error = error.stack
@@ -120,6 +119,12 @@ module.exports = function AppReloader (web_socket, callbacks) {
 						};
 					}
 				}
+
+				if (DEBUG.RELOADER_REQUIRE) color_log(
+					color,
+					'AppReloader-re_require_modules:',
+					file_name,
+				);
 
 				done();
 			}),
@@ -170,7 +175,10 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		const MAIN_MODULE = {
 			url            : APP_PATH + '/protocols.js',
 			persistentData : self.persistentData,
-			callbacks      : { triggerExit : callbacks.triggerExit },
+			callbacks      : {
+				triggerExit : callbacks.triggerExit,
+				getUpTime   : callbacks.getUpTime,
+			},
 		};
 
 		console.time( 'Init time' );
@@ -186,7 +194,8 @@ try {
 			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
 		});
 } catch (error) {
-	color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:', error );
+	color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:' );
+	color_log( COLORS.ERROR, 'ERROR', error );
 }
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );

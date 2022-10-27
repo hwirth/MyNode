@@ -21,16 +21,16 @@ const PROTOCOL_DESCRIPTION = (`
 	connecting,guest,user,mod,admin,dev: session.status
 	connecting: session.login.username=string,password=string
 	guest,user,mod,admin,dev: session.logout
-	guest,user,mod,admin,dev: session.who
-	guest,user,mod,admin,dev: session.who.username=string
-	user,mod,admin,dev: server.status
-	mod,admin,dev: session.who.address=string
-	mod,admin,dev: session.kick.address=string
-	mod,admin,dev: session.kick.username=string
-	admin,dev: server.status.persistent
-	admin,dev: server.restart
-	#dev: server.log.*
-	dev: test.*
+	#guest,user,mod,admin,dev: session.who
+	#guest,user,mod,admin,dev: session.who.username=string
+	#user,mod,admin,dev: server.status
+	#mod,admin,dev: session.who.address=address+port
+	mod,admin,dev: session.kick.address=address+port
+	#mod,admin,dev: session.kick.username=string
+	#admin,dev: server.status.persistent
+	#admin,dev: server.restart
+	dev: server.log.*
+	#dev: test.*
 `); // PROTOCOL_DESCRIPTION
 
 
@@ -94,23 +94,13 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 			const has_equals = (pos_equals >= 0);
 
 			// No group ":" or include "=" ?
-			if (!has_colon && !has_equals) {
+			if (!has_colon) {
 				throw new Error(
-					'No group or include in line '
+					'No group in line '
 					+ line.source
 					+ ': '
 					+ line.text
 				);
-			}
-
-			// Include?
-			if (!has_colon && has_equals) {
-				const parts = line.text.split( '=', 2 );
-				return {
-					source  : line.source,
-					groups  : parts[0].trim().split( ',' ),   // Comma
-					include : parts[1].trim().split( ',' ),   // Comma
-				};
 			}
 
 			if (has_colon) {
@@ -139,7 +129,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 		// 3. Turn rule strings into tokens
 
-		const token_glyphs = [
+		const separators = [
 			{ char: '=', name: 'equals'       },
 			{ char: ',', name: 'comma'        },
 			{ char: '|', name: 'pipe'         },
@@ -157,7 +147,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 			};
 
 			function parse_rule (rule) {
-				const pos = {};  token_glyphs.forEach( (glyph)=>{
+				const pos = {};  separators.forEach( (glyph)=>{
 					pos[ glyph.name ] = rule.indexOf( glyph.char );
 				});
 				const has = {};  Object.keys( pos ).forEach( (key)=>{

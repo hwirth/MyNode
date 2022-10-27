@@ -20,17 +20,17 @@ const { SETTINGS } = require( './config.js' );
  * DEBUG
  * Flags controlling, what is logged and to which extent the output should contain details.
  */
-const DEBUG_ENABLED = (SETTINGS.DEV_SERVER === true);       // Globally turn debug on or off
-const DEBUG = {                                    // What to log
+const DEBUG_ENABLED = (SETTINGS.DEV_SERVER === true);          // Globally turn debug on or off
+const DEBUG = {                                                // What to log
 
 	LOG_SETTINGS              : DEBUG_ENABLED && !false,   // On startup, show SETTINGS[] on console
 
-	INSTANCES                : DEBUG_ENABLED && !false,   // Functions announcing when they are called
+	INSTANCES                 : DEBUG_ENABLED && !false,   // Functions announcing when they are called
 	BANNER_HEADERS            : DEBUG_ENABLED && !false,   // Group logs for (dis)connect or messages, show counter
 	HTTP_COOKIES              : DEBUG_ENABLED && !false,   // Show cookies on websocket connect
 
-	CONNECT                   : DEBUG_ENABLED && false,   // Trace onConnect
-	DISCONNECT                : DEBUG_ENABLED && false,   // Trace onDisconnect
+	CONNECT                   : DEBUG_ENABLED && false,    // Trace onConnect
+	DISCONNECT                : DEBUG_ENABLED && false,    // Trace onDisconnect
 	MESSAGE                   : DEBUG_ENABLED && !false,   // Trace onMessage
 
 	MESSAGE_IN                : DEBUG_ENABLED && !false,   // Show received, onMessage
@@ -44,6 +44,8 @@ const DEBUG = {                                    // What to log
 
 	PROTOCOLS                 : DEBUG_ENABLED && false,
 	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && false,
+
+	PARSE_RULES               : DEBUG_ENABLED && !false,
 
 }; // DEBUG
 
@@ -211,7 +213,16 @@ function color_log (colors = '', heading = '', ...text) {
 
 
 function dump (data) {
-	return JSON.parse( JSON.stringify(data) );
+	return (
+		(data instanceof Error)? (
+			'Error: "'
+			+ data.message
+			+ '"\nStack: '
+			+ data.stack
+		):(
+			JSON.parse( JSON.stringify(data) )
+		)
+	);
 
 } // dump
 

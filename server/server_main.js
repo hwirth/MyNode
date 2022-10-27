@@ -5,15 +5,6 @@
 
 "use strict";
 
-const os        = require( 'os' );
-const fs        = require( 'fs' );
-const path      = require( 'path' );
-const http      = require( 'follow-redirects' ).http;
-const https     = require( 'https' );
-const WebSocket = require( 'ws' );
-
-const AppReloader = require( './reloader.js' );
-
 const {
 	PROGRAM_NAME, PROGRAM_VERSION,
 	SETTINGS, EXIT_CODES,
@@ -21,8 +12,17 @@ const {
 	SSL_KEYS, MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
 
 } = require( './config.js' );
+const { DEBUG, COLORS   } = require( '../server/debug.js' );
+const { color_log, dump } = require( '../server/debug.js' );
 
-const { DEBUG, COLORS, color_log } = require( './debug.js' );
+const AppReloader = require( './reloader.js' );
+
+const os        = require( 'os' );
+const fs        = require( 'fs' );
+const path      = require( 'path' );
+const http      = require( 'follow-redirects' ).http;
+const https     = require( 'https' );
+const WebSocket = require( 'ws' );
 
 
 const WebSocketServer = function () {
@@ -120,6 +120,36 @@ const WebSocketServer = function () {
 		if (DEBUG.DISCONNECT) end_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr ); else console.log();
 
 	}; // onDisconnect
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// INTERFACE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	const server_start_time = Date.now();
+
+	this.getUpTime = function (formatted = false) {
+		let milliseconds = Date.now() - server_start_time;
+		if (formatted) {
+			let seconds = Math.floor( milliseconds / 1000 );   milliseconds -= seconds * 1000;
+			let minutes = Math.floor( seconds      / 60   );   seconds      -= minutes * 60;
+			let hours   = Math.floor( minutes      / 60   );   minutes      -= hours   * 60;
+			let days    = Math.floor( hours        / 24   );   hours        -= days    * 24;
+			let weeks   = Math.floor( days         / 7    );   days         -= weeks   * 24;
+			return (
+				  (weeks   ? weeks   + 'w, ' : '')
+				+ (days    ? days    + 'd ' : '')
+				+ (hours   ? hours   + 'h ' : '')
+				+ (minutes ? minutes + 'm ' : '')
+				+ (seconds ? seconds + 's ' : '')
+				+ milliseconds + 'ms'
+			);
+
+		} else {
+			return milliseconds;
+		}
+
+	}; // getUpTime
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -345,8 +375,7 @@ const WebSocketServer = function () {
 // ERROR HANDLER /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function global_error_handler (error) {
-		color_log( COLORS.ERROR, '== GLOBAL = ERROR = HANDLER ==', '' );
-		color_log( COLORS.ERROR, 'ERROR', 'WebSocketServer: ', error );
+		color_log( COLORS.ERROR, 'GLOBAL ERROR HANDLER', dump(error) );
 
 		self.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
 		//terminate_program( EXIT_CODES.GLOBAL_ERROR_HANDLER );
@@ -447,7 +476,10 @@ const WebSocketServer = function () {
 				onMessage    : self.onMessage,
 			});
 			self.httpServer    = create_http_server( self.wsServer );
-			self.appReloader   = await new AppReloader( self.wsServer, { triggerExit: self.exit } );
+			self.appReloader   = await new AppReloader( self.wsServer, {
+				triggerExit : self.exit,
+				getUpTime   : self.getUpTime,
+			});
 
 			done();
 		});

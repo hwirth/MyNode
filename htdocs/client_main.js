@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { WebSocketClient } from './websocket_client.js';
+import { WebSocketClient } from './websocket.js';
 import { DebugConsole    } from './debug_console.js';
 
 export const DEBUG = {
