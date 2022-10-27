@@ -31,7 +31,7 @@ export const History = function () {
 			self.currentEntry = self.entries.length - 1;
 		}
 
-		return self.entries[ self.currentEntry ];
+		return self.entries[self.currentEntry];
 
 	}; // goBack
 
@@ -42,7 +42,7 @@ export const History = function () {
 			self.currentEntry = 0;
 		}
 
-		return self.entries[ self.currentEntry ];
+		return self.entries[self.currentEntry];
 
 	}; // goForward
 
@@ -288,12 +288,12 @@ export const DebugConsole = function (callbacks) {
 		});
 		function on_script_button_click (event) {
 			event.preventDefault();
-			self.elements.input.value = button_scripts[ event.target.className ];
+			self.elements.input.value = button_scripts[event.target.className];
 		}
 		function on_script_button_dblclick (event) {
 			event.preventDefault();
 			const previous_value = self.elements.input.value;
-			self.elements.input.value = button_scripts[ event.target.className ];
+			self.elements.input.value = button_scripts[event.target.className];
 			self.elements.send.click();
 			self.elements.input.value = previous_value;
 		}

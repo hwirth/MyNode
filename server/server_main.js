@@ -8,8 +8,7 @@
 const {
 	PROGRAM_NAME, PROGRAM_VERSION,
 	SETTINGS, EXIT_CODES,
-	//ALLOWED_URI_CHARS,
-	SSL_KEYS, MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
+	MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
 
 } = require( './config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
@@ -42,7 +41,7 @@ const WebSocketServer = function () {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENT RELAYS
+// HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function log_header (color, text, extra_dashes = 0) {
@@ -72,14 +71,27 @@ const WebSocketServer = function () {
 	}
 
 
-	const EXTRA_HEADER_DASHES = 18;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENT RELAYS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	let connect_id = 0;
+	const EXTRA_HEADER_DASHES = 18;
+	let connect_id    = 0;
+	let message_id    = 0;
+	let disconnect_id = 0;
+
 	this.onConnect = async function (socket, client_address, data) {
 		const request_nr = ++connect_id;
+
 		log_header(
 			COLORS.CONNECT,
-			'CONNECT ' + request_nr + ' ]--[ ' + COLORS.STRONG + client_address + COLORS.CONNECT,
+			'CONNECT '
+			+ request_nr
+			+ ' ]--[ '
+			+ COLORS.STRONG
+			+ client_address
+			+ COLORS.CONNECT
+			,
 			EXTRA_HEADER_DASHES,
 		);
 
@@ -90,12 +102,18 @@ const WebSocketServer = function () {
 	}; // onConnect
 
 
-	let message_id = 0;
 	this.onMessage = async function (socket, client_address, json_string) {
 		const request_nr = ++message_id;
+
 		log_header(
 			COLORS.TRAFFIC,
-			'MESSAGE ' + request_nr + ' ]--[ ' + COLORS.STRONG + client_address + COLORS.TRAFFIC,
+			'MESSAGE '
+			+ request_nr
+			+ ' ]--[ '
+			+ COLORS.STRONG
+			+ client_address
+			+ COLORS.TRAFFIC
+			,
 			EXTRA_HEADER_DASHES,
 		);
 
@@ -106,12 +124,19 @@ const WebSocketServer = function () {
 	}; // onMessage
 
 
-	let disconnect_id = 0;
 	this.onDisconnect = async function (socket, client_address) {
 		const request_nr = ++disconnect_id;
+
 		log_header(
 			COLORS.DISCONNECT,
-			'DISCONNECT ' + request_nr + ' ]--[ ' + COLORS.STRONG + client_address + COLORS.RESET + COLORS.DISCONNECT,
+			'DISCONNECT '
+			+ request_nr
+			+ ' ]--[ '
+			+ COLORS.STRONG
+			+ client_address
+			+ COLORS.RESET
+			+ COLORS.DISCONNECT
+			,
 			EXTRA_HEADER_DASHES,
 		);
 
@@ -189,7 +214,7 @@ const WebSocketServer = function () {
 	function create_http_server (websocket_server) {
 		color_log( COLORS.WSS, 'WebSocketServer:', 'Creating http server' );
 
-		const new_http_server = https.createServer( HTTPS_OPTIONS ).listen( HTTPS_OPTIONS.port )
+		const new_http_server = https.createServer( HTTPS_OPTIONS ).listen( HTTPS_OPTIONS.port );
 
 		new_http_server.on( 'error', (error)=>{
 			if (error.code == 'EADDRINUSE') {
@@ -436,6 +461,7 @@ const WebSocketServer = function () {
 
 			console.timeEnd( 'Shutdown time' );
 			console.log( '\n\n' );
+
 			process.exit( exit_code );
 
 		} // cleanup_and_die
@@ -466,7 +492,7 @@ const WebSocketServer = function () {
 			console.log( '| SETTINGS          ', SETTINGS );
 		}
 			console.log( "'" + '-'.repeat(78) );
-			//process.argv.forEach( (value, index)=>console.log( index + ': ' + value ) );
+			//...process.argv.forEach( (value, index)=>console.log( index + ': ' + value ) );
 
 			install_error_handler();
 			drop_privileges();

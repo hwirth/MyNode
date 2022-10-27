@@ -74,10 +74,10 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		const new_file_times = get_file_times();
 
 		return Object.keys( self.fileTimes ).find( (file_name)=>{
-			if (! self.loadedModules[ file_name ]) return true;
+			if (! self.loadedModules[file_name]) return true;
 
-			const file_time   = self.fileTimes[ file_name ];
-			const module_time = self.loadedModules[ file_name ];
+			const file_time   = self.fileTimes[file_name];
+			const module_time = self.loadedModules[file_name];
 			return (file_time != module_time);
 		});
 
@@ -90,7 +90,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 				const index = file_name.replace('../','');
 
 				if (file_has_changed) {
-					report_file_names[ index ] = {};
+					report_file_names[index] = {};
 				}
 
 				let color = (file_has_changed ? COLORS.REQUIRE : COLORS.UP_TO_DATE);
@@ -114,7 +114,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 						.replace( /\n    /g, '\n' )
 						.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' )
 						;
-						report_file_names[ index ] = {
+						report_file_names[index] = {
 							error: stringified_error,
 						};
 					}
@@ -141,7 +141,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		if (changed_files) {
 			Object.keys( self.fileTimes ).forEach( (file_name)=>{
-				self.loadedModules[ file_name ] = self.fileTimes[file_name];
+				self.loadedModules[file_name] = self.fileTimes[file_name];
 
 				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
 				add_load_request(

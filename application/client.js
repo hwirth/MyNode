@@ -50,16 +50,16 @@ module.exports = function WebSocketClient (socket, client_address) {
 		clear_timeout( name );
 
 		if (delay_ms) {
-			timeouts[ name ] = setTimeout( on_timeout, delay_ms );
+			timeouts[name] = setTimeout( on_timeout, delay_ms );
 		}
 
 	} // set_timeout
 
 
 	function clear_timeout (name) {
-		if (timeouts[ name ]) {
+		if (timeouts[name]) {
 			clearTimeout( timeouts[ name ] );
-			delete timeouts[ name ];
+			delete timeouts[name];
 
 			if (name == 'login') {
 				set_timeout( 'idle' , on_idle_timeout , self.maxIdleTime );

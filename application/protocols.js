@@ -75,12 +75,12 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		const lut = {};
 
 		Object.keys( self.protocols ).forEach( (protocol_name)=>{
-			const protocol_commands = self.protocols[ protocol_name ].requestHandlers;
+			const protocol_commands = self.protocols[protocol_name].requestHandlers;
 
 			if (protocol_commands) {
 				Object.keys( protocol_commands ).forEach( (command_name)=>{
 					const combined = protocol_name + '.' + command_name;
-					lut[combined] = protocol_commands[ command_name ];
+					lut[combined] = protocol_commands[command_name];
 				});
 			}
 		});
@@ -132,7 +132,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		}
 
 		Object.keys( message ).forEach( (protocol_name)=>{
-			if (! self.protocols[ protocol_name ]) {
+			if (! self.protocols[protocol_name]) {
 				rejected_commands.push( protocol_name + '.*' );
 
 				if (DEBUG.PROTOCOLS) color_log(
@@ -143,24 +143,24 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 				);
 
 			} else {
-				const message_commands = message[ protocol_name ];
+				const message_commands = message[protocol_name];
 
 				if (DEBUG.PROTOCOLS) color_log(
 					COLORS.PROTOCOLS,
 					'Protocols.onMessage:',
 					'protocol_commands:',
-					self.protocols[ protocol_name ],
+					self.protocols[protocol_name],
 				);
 
-				if (self.protocols[ protocol_name ].onMessage) {
-					self.protocols[ protocol_name ].onMessage( socket, client_address, message );
+				if (self.protocols[protocol_name].onMessage) {
+					self.protocols[protocol_name].onMessage( socket, client_address, message );
 				}
 
 				Object.keys( message_commands ).forEach( (command_name)=>{
 					const combined_name = protocol_name + '.' + command_name;
 
 					const request_handler
-					= self.protocols[ protocol_name  ].requestHandlers[ command_name ]
+					= self.protocols[protocol_name].requestHandlers[command_name]
 					;
 
 					if (! request_handler) {
@@ -224,7 +224,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Protocols.exit' );
 
 		return Promise.all(
-			Object.keys( self.protocols ).map( name => self.protocols[ name ].exit() ),
+			Object.keys( self.protocols ).map( name => self.protocols[name].exit() ),
 		);
 
 	}; // exit
@@ -276,21 +276,21 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 		const load_requests = Object.keys( registered_protocols ).map( (protocol_name)=>{
-			if (! persistent_data[ protocol_name ]) {
+			if (! persistent_data[protocol_name]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
-				persistent_data[ protocol_name ] = {};
+				persistent_data[protocol_name] = {};
 			}
 
-			const protocol  = registered_protocols[ protocol_name ];
-			const data      = persistent_data     [ protocol_name ];
+			const protocol  = registered_protocols[protocol_name];
+			const data      = persistent_data     [protocol_name];
 
 			const callbacks = {};
 			if (protocol.callbacks) protocol.callbacks.forEach( (name)=>{
-				callbacks[ name ] = protocol_callbacks[ name ];
+				callbacks[name] = protocol_callbacks[name];
 			});
 
 			return new Promise( async (done)=>{
-				self.protocols[ protocol_name ] = await new protocol.template( data, callbacks );
+				self.protocols[protocol_name] = await new protocol.template( data, callbacks );
 				done();
 			});
 		});

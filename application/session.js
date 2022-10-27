@@ -71,18 +71,18 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.getClientByAddress = function (address) {
-		return persistent_data.clients[ address ];
+		return persistent_data.clients[address];
 
 	}; // getClientByAddress
 
 
 	this.getClientByName = function (name) {
 		const client_address = Object.keys( persistent_data.clients ).find( (test_address)=>{
-			const client = persistent_data.clients[ test_address ];
+			const client = persistent_data.clients[test_address];
 			return (client.login && (client.login.userName == name));
 		});
 
-		return (client_address) ? persistent_data.clients[ client_address ] : null;
+		return (client_address) ? persistent_data.clients[client_address] : null;
 
 	}; // getClientByName
 
@@ -94,7 +94,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 	this.onConnect = async function (socket, client_address) {
 		if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect:', client_address );
 
-		if (persistent_data.clients[ client_address ]) {
+		if (persistent_data.clients[client_address]) {
 			color_log(
 				COLORS.PROTOCOLS,
 				'SessionHandler.onConnect:',
@@ -104,13 +104,13 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 			return;
 		}
 
-		persistent_data.clients[ client_address ] = await new WebSocketClient( socket, client_address );
+		persistent_data.clients[client_address] = await new WebSocketClient( socket, client_address );
 
 	}; // onConnect
 
 
 	this.onDisconnect = async function (socket, client_address) {
-		const client = persistent_data.clients[ client_address ];
+		const client = persistent_data.clients[client_address];
 
 		if (! client) {
 			color_log(
@@ -123,13 +123,13 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		}
 
 		await client.exit();
-		delete persistent_data.clients[ client_address ];
+		delete persistent_data.clients[client_address];
 
 	}; // onDisconnect
 
 
 	this.onMessage = function (socket, client_address, message) {
-		persistent_data.clients[ client_address ].registerActivity();
+		persistent_data.clients[client_address ].registerActivity();
 
 	}; // onMessage
 
@@ -159,7 +159,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 			return;
 		}
 
-		const user_record = persistent_data.accounts[ parameters.username ];
+		const user_record = persistent_data.accounts[parameters.username];
 		if (! user_record) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
 			respond_failure( client, 'login', 'User "' + parameters.username + '" unknown' );
@@ -225,9 +225,9 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 			const clients = JSON.parse( JSON.stringify(persistent_data.clients, null, '\t') );
 			for (let address in clients) {
-				clients[ address ]
-				= (clients[ address ].login)
-				? { userName: clients[ address ].login.userName }
+				clients[address]
+				= (clients[address].login)
+				? { userName: clients[address].login.userName }
 				: { login: false }
 				;
 			}
@@ -254,7 +254,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 		let target_client = null;
 		if (parameters.address) {
-			target_client = persistent_data.clients[ parameters.address ];
+			target_client = persistent_data.clients[parameters.address];
 		}
 		else if (parameters.username) {
 			target_client = self.getClientByName( parameters.username );
