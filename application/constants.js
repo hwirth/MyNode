@@ -12,9 +12,7 @@ module.exports.RESULT = {
 };
 
 module.exports.ID_SERVER = {
-	server: {
-		Xstatus: true,
-	},
+	serverInitiated: {},
 };
 
 module.exports.REASONS = {
@@ -28,8 +26,8 @@ module.exports.REASONS = {
 	BAD_PASSWORD                : 'Invalid password',   //... Say "Connection failed"
 	NOT_LOGGED_IN               : 'Not logged in',
 	ALREADY_LOGGED_IN           : 'Already logged in',
-	LOGIN_TIMED_OUT             : 'Timeout',            //... Say "Connection failed"
-	IDLE_TIMEOUT                : 'Timeout',
+	LOGIN_TIMED_OUT             : 'Login timeout',            //... Say "Connection failed"
+	IDLE_TIMEOUT                : 'Idle t imeout',
 	SUCCESSFULLY_LOGGED_IN      : 'Logged in',
 	SUCCESSFULLY_LOGGED_OUT     : 'Logged out',
 	KICKED_USER                 : 'Kicked user NAME, address: ADDRESS',

@@ -23,8 +23,9 @@ const { Protocols } = require( APP_PATH + '/protocols.js' );
 module.exports = function AppReloader (web_socket, callbacks) {
 	const self = this;
 
-	this.loadedModules;
-	this.fileTimes;
+	this.previousTimes;
+	this.newFileTimes;
+
 	this.protocols;
 	this.persistentData;
 
@@ -61,7 +62,8 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		if (DEBUG.RELOADER_TIMES) color_log(
 			COLORS.RELOADER,
-			'AppReloader-get_file_times: File times:',
+			'AppReloader-get_file_times:',
+			'File times:',
 			mtimes,
 		);
 
@@ -70,87 +72,45 @@ module.exports = function AppReloader (web_socket, callbacks) {
 	} // get_file_times
 
 
-	function find_changed_files () {
-		const new_file_times = get_file_times();
+	function re_require_modules (socket) {
 
-		return Object.keys( self.fileTimes ).find( (file_name)=>{
-			if (! self.loadedModules[file_name]) return true;
+		console.time( 'Reload time' );
+		const file_name_report = {};   // Response telling user which files were updated
 
-			const file_time   = self.fileTimes[file_name];
-			const module_time = self.loadedModules[file_name];
-			return (file_time != module_time);
+		const changed_files = Object.keys( self.newFileTimes ).filter( (file_name)=>{
+			const new_time = self.newFileTimes[file_name];
+			const old_time = self.previousTimes[file_name];
+			return (new_time != old_time);
 		});
 
-	} // find_changed_files
+		if (DEBUG.RELOADER_TIMES) color_log(
+			COLORS.RELOADER,
+			'AppReloader-re_require_modules:',
+			'changed_files:',
+			changed_files,
+		);
 
+		if (changed_files.length > 0) {
+			Object.keys( self.newFileTimes ).forEach( (file_name)=>{
 
-	function add_load_request (load_requests, report_file_names, file_name, file_has_changed) {
-		load_requests.push(
-			new Promise( (done)=>{
-				const index = file_name.replace('../','');
+				self.previousTimes[file_name] = self.newFileTimes[file_name];
+
+				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
 
 				if (file_has_changed) {
-					report_file_names[index] = {};
-				}
+					const index = file_name.replace( '../', '' );
+					file_name_report[index] = {};   // Empty: Nicer formatting in DebugConsole
+				};
 
-				let color = (file_has_changed ? COLORS.REQUIRE : COLORS.UP_TO_DATE);
-
-				try {
-					reRequire( path.resolve( file_name ) );
-
-				} catch (error) {
-					color = COLORS.ERROR;
-
-					if (file_has_changed) {
-						const stringified_error = error.stack
-						.replace( /\\n/g, '\n' )
-						.replace( /\n    /g, '\n' )
-						.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' )
-						;
-						report_file_names[index] = {
-							error: stringified_error,
-						};
-					}
-				}
-
-				if (DEBUG.RELOADER_REQUIRE) color_log(
-					color,
+				if (DEBUG.RELOADER) color_log(
+					(file_has_changed ? COLORS.REQUIRE : COLORS.UP_TO_DATE),
 					'AppReloader-re_require_modules:',
 					file_name,
 				);
 
-				done();
-			}),
-		);
-
-	} // add_load_request
-
-
-	async function re_require_modules (socket) {
-		const load_requests     = [];
-		const report_file_names = {};
-
-		const changed_files = find_changed_files();
-
-		if (changed_files) {
-			Object.keys( self.fileTimes ).forEach( (file_name)=>{
-				self.loadedModules[file_name] = self.fileTimes[file_name];
-
-				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
-				add_load_request(
-					load_requests,
-					report_file_names,
-					file_name,
-					file_has_changed,
-				);
 			});
-		}
-		//... Useless in many situations: If a file was NOT changed but includes a CHANGED file,
-		//... it won't be (re)required due to caching inside  require() .
-		await Promise.all( load_requests );
-	/*
-		//... Needs removing of unneded code above
-		if (changed_files) {
+
+			// Trigger force reloading all files
 			const app_path = path.resolve( APP_PATH );
 			Object.keys( require.cache ).forEach( (key)=>{
 				if (key.slice(0, app_path.length) == app_path) {
@@ -158,50 +118,78 @@ module.exports = function AppReloader (web_socket, callbacks) {
 				}
 			});
 		}
-	*/
-		if (socket && Object.keys( report_file_names ).length) {
-			socket.send( JSON.stringify({ reload: report_file_names }, null, '\t') );
+
+		if (socket && Object.keys( file_name_report ).length) {
+			socket.send( JSON.stringify({ reloader: file_name_report }, null, '\t') );
 		}
 
-		return load_requests.length;
+
+		const nr_reloaded_files = Object.keys( file_name_report ).length;
+
+		if (DEBUG.RELOADER) color_log(
+			COLORS.RELOADER,
+			'AppReloader-reload_modules:',
+			'nr_reloaded_files:',
+			nr_reloaded_files,
+		);
+
+		console.timeEnd( 'Reload time' );
+
+		return nr_reloaded_files;
 
 	} // re_require_modules
 
 
 	async function reload_modules (socket) {
-		self.fileTimes = await get_file_times();
+		self.newFileTimes = await get_file_times();
 
-		console.time( 'Reload time' );
-		const nr_reloaded_files = await re_require_modules( socket );
+		if (DEBUG.RELOADER_TIMES) color_log(
+			COLORS.RELOADER,
+			'AppReloader-reload_modules:',
+			self.newFileTimes,
+		);
 
-		console.timeEnd( 'Reload time' );
-		if (nr_reloaded_files === 0) return;
 
+		// Re-require modules
+		const reload_required = re_require_modules( socket );
+		if (DEBUG.RELOADER_TIMES) color_log(
+			COLORS.RELOADER,
+			'AppReloader-reload_modules:',
+			'reload_required:',
+			reload_required,
+		);
+
+		if (! reload_required) return;
+
+		// Re-instantiate  Protocols
 		const MAIN_MODULE = {
 			url            : APP_PATH + '/protocols.js',
 			persistentData : self.persistentData,
 			callbacks      : {
 				triggerExit : callbacks.triggerExit,
-				getUpTime   : callbacks.getUpTime,
 			},
 		};
 
 		console.time( 'Init time' );
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
-try {
-		// Reload and reinstantiate main module:
-		self.protocols = await new reRequire(
-			MAIN_MODULE.url
-		).Protocols(
-			MAIN_MODULE.persistentData,
-			MAIN_MODULE.callbacks,
-		).catch( (error)=>{
-			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
-		});
-} catch (error) {
-	color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:' );
-	color_log( COLORS.ERROR, 'ERROR', error );
-}
+
+		try {
+			// Reload and reinstantiate main module
+			self.protocols = await new reRequire(
+				MAIN_MODULE.url
+			).Protocols(
+				MAIN_MODULE.persistentData,
+				MAIN_MODULE.callbacks,
+
+			).catch( (error)=>{
+				color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
+			});
+
+		} catch (error) {
+			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:' );
+			color_log( COLORS.ERROR, 'ERROR', error );
+		}
+
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );
 
@@ -263,7 +251,7 @@ try {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
 
 		return new Promise( async (done)=>{
-			self.loadedModules = {};
+			self.previousTimes  = {};
 			self.persistentData = {};
 			await reload_modules();
 			done();

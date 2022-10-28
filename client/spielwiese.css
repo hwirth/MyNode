@@ -248,6 +248,11 @@ article.lobby {
 	padding-bottom:0.1em;
 }
 
+.debug_console .output > * {
+	border-top:dashed 1px #444;
+	margin:0.25em 0;
+}
+
 .debug_console .prompt.disabled {
 	display:none;
 }

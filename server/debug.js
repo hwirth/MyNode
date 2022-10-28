@@ -22,7 +22,6 @@ const { SETTINGS } = require( './config.js' );
  */
 const DEBUG_ENABLED = (SETTINGS.DEV_SERVER === true);          // Globally turn debug on or off
 const DEBUG = {                                                // What to log
-
 	LOG_SETTINGS              : DEBUG_ENABLED && !false,   // On startup, show SETTINGS[] on console
 
 	INSTANCES                 : DEBUG_ENABLED && !false,   // Functions announcing when they are called
@@ -39,8 +38,8 @@ const DEBUG = {                                                // What to log
 	HTTP_GET_ALL              : DEBUG_ENABLED && !false,   // Log all GET requests
 	HTTP_GET_ROOT             : DEBUG_ENABLED && !false,   // Log GET / requests
 
-	RELOADER_UP_TO_DATE 	  : DEBUG_ENABLED && false,    // Report unchanged files
-	RELOADER_REQUIRE    	  : DEBUG_ENABLED && !false,   // Report changed and re-required files
+	RELOADER                  : DEBUG_ENABLED && false,   // Report changed and re-required files
+	RELOADER_TIMES            : DEBUG_ENABLED && false,   // Debug reloader itself
 
 	PROTOCOLS                 : DEBUG_ENABLED && false,
 	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && false,
@@ -129,6 +128,8 @@ module.exports.COLORS        = COLORS;
  */
 function color_log (colors = '', heading = '', ...text) {
 	if (colors == '\n') return console.log();
+
+	heading = String( heading );
 
 	const date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' ';
 

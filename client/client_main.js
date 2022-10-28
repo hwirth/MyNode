@@ -45,14 +45,13 @@ export const Application = function () {
 				},
 			},
 		},
-	*/
 		{
 			session : {
 				status: {},
 			},
 			tag : 0,
 		},
-
+	*/
 	]; // boot_sequence
 
 
