@@ -23,7 +23,7 @@ const { Protocols } = require( APP_PATH + '/protocols.js' );
 module.exports = function AppReloader (web_socket, callbacks) {
 	const self = this;
 
-	this.previousTimes;
+	this.oldFileTimes;
 	this.newFileTimes;
 
 	this.protocols;
@@ -77,9 +77,9 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		console.time( 'Reload time' );
 		const file_name_report = {};   // Response telling user which files were updated
 
-		const changed_files = Object.keys( self.newFileTimes ).filter( (file_name)=>{
-			const new_time = self.newFileTimes[file_name];
-			const old_time = self.previousTimes[file_name];
+		const changed_files = Object.keys( self.fileTimes.current ).filter( (file_name)=>{
+			const new_time = self.fileTimes.current[file_name];
+			const old_time = self.fileTimes.previous[file_name];
 			return (new_time != old_time);
 		});
 
@@ -91,9 +91,9 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		);
 
 		if (changed_files.length > 0) {
-			Object.keys( self.newFileTimes ).forEach( (file_name)=>{
+			Object.keys( self.fileTimes.current ).forEach( (file_name)=>{
 
-				self.previousTimes[file_name] = self.newFileTimes[file_name];
+				self.fileTimes.previous[file_name] = self.fileTimes.current[file_name];
 
 				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
 
@@ -141,12 +141,12 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 
 	async function reload_modules (socket) {
-		self.newFileTimes = await get_file_times();
+		self.fileTimes.current = await get_file_times();
 
 		if (DEBUG.RELOADER_TIMES) color_log(
 			COLORS.RELOADER,
 			'AppReloader-reload_modules:',
-			self.newFileTimes,
+			self.fileTimes.current,
 		);
 
 
@@ -251,8 +251,11 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
 
 		return new Promise( async (done)=>{
-			self.previousTimes  = {};
 			self.persistentData = {};
+			self.fileTimes = {
+				previous: {},
+				current: {},
+			};
 			await reload_modules();
 			done();
 		});
