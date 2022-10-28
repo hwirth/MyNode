@@ -5,37 +5,14 @@
 
 "use strict";
 
-const { SETTINGS        } = require( '../server/config.js' );
-const { DEBUG, COLORS   } = require( '../server/debug.js' );
-const { color_log, dump } = require( '../server/debug.js' );
-const { REASONS         } = require( './constants.js' );
+const { SETTINGS         } = require( '../server/config.js' );
+const { DEBUG, COLORS    } = require( '../server/debug.js' );
+const { color_log, dump  } = require( '../server/debug.js' );
+const { REASONS, RESULT } = require( './constants.js' );
 
 
 module.exports = function ServerManager (persistent_data, callbacks) {
 	const self = this;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HELPERS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function respond_success (client, command, reason, status = true) {
-		client.send({
-			server: {
-				[command]: {
-					success   : status,
-					reason    : reason,
-				},
-			},
-		});
-
-	} // respond_success
-
-
-	function respond_failure (client, command, reason) {
-		respond_success( client, command, reason, false );
-
-	} // respond_failure
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -80,12 +57,12 @@ module.exports = function ServerManager (persistent_data, callbacks) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// REQUEST HANDLERS
+// RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.requestHandlers = {};
 
-	this.requestHandlers.restart = function (client, parameters) {
+	this.requestHandlers.restart = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<server.restart>',
@@ -97,55 +74,49 @@ module.exports = function ServerManager (persistent_data, callbacks) {
 	}; // restart
 
 
-	this.requestHandlers.status = function (client, parameters) {
-
-		function respond (success, response) {
-			client.send({
-				server : {
-					status: response,
-				},
-				success : success,
-			});
-		}
-
-
+	this.requestHandlers.status = function (client, request_id, parameters) {
 		if (parameters.persistent || (parameters.persistent === null)) {
 			if (client.login) {
 				if (client.inGroup( 'admin' )) {
-					respond( true, {
-						persistent: callbacks.getAllPersistentData(),
-					});
+					client.respond(
+						RESULT.SUCCESS,
+						request_id,
+						callbacks.getAllPersistentData(),
+					);
 				} else {
-					respond( true, {
-						persistent: {
-							success : false,
-							reason  : REASONS.INSUFFICIENT_PERMS,
-						},
-					});
+					client.respond(
+						RESULT.SUCCESS,
+						request_id,
+						REASONS.INSUFFICIENT_PERMS,
+					);
 				}
 			}
 
 		} else if (Object.keys(parameters).length == 0) {
 			if (client.inGroup( 'admin' )) {
 				const heap = process.memoryUsage().heapUsed;
-				respond( true, {
-					upTime   : get_uptime( /*formatted*/true ),
-					heapUsed : Math.floor(heap / 1024**2 * 100) / 100 + ' MiB',
-					access   : {
-						rules: (
-							callbacks
-							.getProtocolDescription( /*show_line_numbers*/false )
-							.split( '\n' )
-						),
-					debug: DEBUG,
-					settings: SETTINGS,
-					}
-				});
+				client.respond(
+					RESULT.SUCCESS,
+					request_id,
+					{
+						upTime   : get_uptime( /*formatted*/true ),
+						heapUsed : Math.floor(heap / 1024**2 * 100) / 100 + ' MiB',
+						access   : {
+							rules: (
+								callbacks
+								.getProtocolDescription( /*show_line_numbers*/false )
+								.split( '\n' )
+							),
+						},
+						debug: DEBUG,
+						settings: SETTINGS,
+					},
+				);
 			}
 
 		} else {
 			const command = Object.keys( parameters )[0];
-			respond( false, {[command]: REASONS.UNKNOWN_COMMAND} );
+			client.respond( RESULT.FAILURE, request_id, {[command]: REASONS.UNKNOWN_COMMAND} );
 		}
 
 	}; // status

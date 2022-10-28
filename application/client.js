@@ -5,10 +5,13 @@
 
 "use strict";
 
-const { SETTINGS      } = require( '../server/config.js' );
-const { DEBUG, COLORS } = require( '../server/debug.js' );
-const { color_log     } = require( '../server/debug.js' );
-const { REASONS       } = require( './constants.js' );
+const reRequire = require( 're-require-module' ).reRequire;
+//...reRequire( './constants.js' );
+
+const { SETTINGS        } = require( '../server/config.js' );
+const { DEBUG, COLORS   } = require( '../server/debug.js' );
+const { color_log, dump } = require( '../server/debug.js' );
+const { REASONS, RESULT, ID_SERVER } = require( './constants.js' );
 
 
 module.exports = function WebSocketClient (socket, client_address) {
@@ -18,24 +21,6 @@ module.exports = function WebSocketClient (socket, client_address) {
 	this.idleSince;
 	this.maxIdleTime;
 	this.login;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HELPERS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function send_as_json (socket, data) {
-		const stringified_json = JSON.stringify( data, null, '\t' );
-
-		if (DEBUG.MESSAGE_OUT) color_log(
-			COLORS.SESSION,
-			'WebSocketClient-send_as_json:',
-			JSON.parse( stringified_json ),
-		);
-
-		if (socket.send) socket.send( stringified_json );
-
-	} // send_as_json //... Redundant with same function in  Protocols()
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -71,7 +56,7 @@ module.exports = function WebSocketClient (socket, client_address) {
 
 	function on_login_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
-		self.reportFailure( 'session', 'login', REASONS.LOGIN_TIMED_OUT );
+		self.respond( RESULT.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
 		self.closeSocket();
 
 	} // on_login_timeout
@@ -79,7 +64,7 @@ module.exports = function WebSocketClient (socket, client_address) {
 
 	function on_idle_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_idle_timeout:', client_address );
-		self.reportFailure( 'session', 'activity', REASONS.IDLE_TIMEOUT );
+		self.respond( RESULT.NONE, ID_SERVER, REASONS.IDLE_TIMEOUT );
 		self.closeSocket();
 
 	} // on_idle_timeout
@@ -93,7 +78,15 @@ module.exports = function WebSocketClient (socket, client_address) {
 // CONNECTION AND MESSAGES ///////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.send = function (message) {
-		send_as_json( socket, message );
+		const stringified_json = JSON.stringify( message, null, '\t' );
+
+		if (DEBUG.MESSAGE_OUT) color_log(
+			COLORS.SESSION,
+			'WebSocketClient-send_as_json:',
+			JSON.parse( stringified_json ),
+		);
+
+		if (socket.send) socket.send( stringified_json );
 
 	}; // send
 
@@ -110,23 +103,20 @@ module.exports = function WebSocketClient (socket, client_address) {
 	}; // closeSocket
 
 
-	this.reportSuccess = function (protocol, command, reason, status = true) {
+	this.respond = function (status, request_id, result) {
+		/*
+		const parts = command.split( '.' ).reverse();
+		parts.forEach( (key)=>{
+			result = { [key]: result };
+		});
+		*/
 		self.send({
-			session: {
-				[command]: {
-					success   : status,
-					reason    : reason,
-				},
-			},
+			request  : request_id,
+			success  : status,
+			response : result,
 		});
 
-	}; // reportSuccess
-
-
-	this.reportFailure = function (protocol, command, reason) {
-		self.reportSuccess( protocol, command, reason, false );
-
-	} // respond_failure
+	}; // respond
 
 
 // OTHER METHODS /////////////////////////////////////////////////////////////////////////////////////////////////119:/

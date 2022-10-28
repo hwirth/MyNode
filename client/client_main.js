@@ -47,10 +47,10 @@ export const Application = function () {
 		},
 	*/
 		{
-
-			session: {
+			session : {
 				status: {},
 			},
+			tag : 0,
 		},
 
 	]; // boot_sequence
@@ -171,7 +171,7 @@ export const Application = function () {
 			send: on_console_send,
 		});
 		self.debugConsole.toggle();
-		self.debugConsole.elements.input.value = 'session\n\tlogin\n\t\tusername: \n\t\tpassword: ';
+		//...self.debugConsole.elements.input.value = 'session\n\tlogin\n\t\tusername: \n\t\tpassword: ';
 		self.debugConsole.elements.input.focus();
 
 		boot_sequence.forEach( (request)=>{

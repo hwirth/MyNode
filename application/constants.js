@@ -5,6 +5,18 @@
 
 "use strict";
 
+module.exports.RESULT = {
+	SUCCESS : true,
+	FAILURE : false,
+	NONE    : null,
+};
+
+module.exports.ID_SERVER = {
+	server: {
+		Xstatus: true,
+	},
+};
+
 module.exports.REASONS = {
 	UNKNOWN_COMMAND             : 'Unknown command',
 	INTERNAL_ERROR              : 'Internal error',
@@ -12,15 +24,17 @@ module.exports.REASONS = {
 	INVALID_ADDRESS             : 'Invalid address',
 	INVALID_USERNAME            : 'Invalid username',
 	INVALID_ADDRESS_OR_USERNAME : 'Invalid address or username',
-	ALREADY_LOGGED_IN           : 'Already logged in',
 	BAD_USERNAME                : 'Invalid username',   //... Say "Connection failed" to increase security
 	BAD_PASSWORD                : 'Invalid password',   //... Say "Connection failed"
+	NOT_LOGGED_IN               : 'Not logged in',
+	ALREADY_LOGGED_IN           : 'Already logged in',
 	LOGIN_TIMED_OUT             : 'Timeout',            //... Say "Connection failed"
 	IDLE_TIMEOUT                : 'Timeout',
-	NOT_LOGGED_IN               : 'Not logged in',
 	SUCCESSFULLY_LOGGED_IN      : 'Logged in',
-	KICKED_USER                 : 'Kicked user',
-	KICKED_BY                   : 'Kicked by ',
+	SUCCESSFULLY_LOGGED_OUT     : 'Logged out',
+	KICKED_USER                 : 'Kicked user NAME, address: ADDRESS',
+	KICKED_BY                   : 'Kicked by',
+	USERNAME_UNKNOWN            : 'User NAME unknown',
 
 }; // RESPONSES
 

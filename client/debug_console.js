@@ -5,7 +5,8 @@
 
 "use strict";
 
-const EXTRA_LINES = 4;
+const EXTRA_LINES = 0;
+const MIN_LINES = 5;
 
 export const History = function () {
 	const self = this;
@@ -71,9 +72,11 @@ export const DebugConsole = function (callbacks) {
 	this.requestToText = request_to_text;
 	this.textToRequest = text_to_request;
 
+	this.requestId;
+
 
 	function scroll_down () {
-		self.elements.console.scrollBy(0, 99999);
+		self.elements.output.scrollBy(0, 99999);
 
 	} // scroll_down
 
@@ -113,7 +116,7 @@ export const DebugConsole = function (callbacks) {
 	} // request_to_text
 
 
-	function text_to_request (text) {
+	function text_to_request (text, id = null) {
 		const lines = text.split( '\n' );
 
 		function find_indentation (text) {
@@ -132,6 +135,7 @@ export const DebugConsole = function (callbacks) {
 		const result = {};
 		const stack = [result];
 		let current_indentation = 0;
+		const request = parse_line( 0 )
 
 		function parse_line (index, current_indentation = 0) {
 			// Line does not exist: End of text, end recursion:
@@ -186,7 +190,13 @@ export const DebugConsole = function (callbacks) {
 			return parse_line( index + 1, current_indentation );
 		}
 
-		return parse_line( 0 );
+		if (id === null) {
+			return request;
+		} else {
+			request.tag = id;
+			return request;
+		}
+
 
 	} // text_to_request
 
@@ -216,7 +226,8 @@ export const DebugConsole = function (callbacks) {
 		new_element.className = class_name;
 		new_element.innerHTML = message_html;
 
-		self.elements.console.insertBefore( new_element, self.elements.prompt );
+		//self.elements.console.insertBefore( new_element, self.elements.prompt );
+		self.elements.output.appendChild( new_element );
 		scroll_down();
 
 	}; // print
@@ -234,6 +245,7 @@ export const DebugConsole = function (callbacks) {
 
 	function create_markup () {
 		return (`
+<div class="output"></div>
 <div class="prompt">
 	<textarea class="input" rows="${EXTRA_LINES}"></textarea>
 	<div class="buttons">
@@ -244,6 +256,13 @@ export const DebugConsole = function (callbacks) {
 
 	} // create_markup
 
+
+	function adjust_textarea_height () {
+		const lines = self.elements.input.value.split('\n');
+		const nr_lines = (lines.length > 0) ? lines.length : 1;
+		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
+		scroll_down();
+	}
 
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
@@ -257,6 +276,7 @@ export const DebugConsole = function (callbacks) {
 
 		self.elements = {
 			console : new_element,
+			output  : new_element.querySelector( '.output' ),
 			prompt  : new_element.querySelector( '.prompt' ),
 			input   : new_element.querySelector( '.input' ),
 			buttons : new_element.querySelector( '.buttons' ),
@@ -284,11 +304,12 @@ export const DebugConsole = function (callbacks) {
 			new_button.title     = 'Double click to execute immediately';
 			new_button.addEventListener( 'click'    , on_script_button_click );
 			new_button.addEventListener( 'dblclick' , on_script_button_dblclick );
-			self.elements.buttons.appendChild( new_button );
+			self.elements.buttons.insertBefore( new_button, self.elements.send );
 		});
 		function on_script_button_click (event) {
 			event.preventDefault();
 			self.elements.input.value = button_scripts[event.target.className];
+			adjust_textarea_height();
 		}
 		function on_script_button_dblclick (event) {
 			event.preventDefault();
@@ -297,15 +318,6 @@ export const DebugConsole = function (callbacks) {
 			self.elements.send.click();
 			self.elements.input.value = previous_value;
 		}
-
-
-		function adjust_textarea_height () {
-			const lines = self.elements.input.value.split('\n');
-			const nr_lines = (lines.length > 0) ? lines.length : 1;
-			self.elements.input.rows = nr_lines + EXTRA_LINES;
-			scroll_down();
-        	}
-
 
 		let accept_click = null;
 		self.elements.console.addEventListener( 'dblclick', (event)=>{
@@ -335,6 +347,8 @@ export const DebugConsole = function (callbacks) {
 		});
 
 
+		self.elements.input.addEventListener( 'change', adjust_textarea_height );
+		self.elements.input.addEventListener( 'input', adjust_textarea_height );
 		self.elements.input.addEventListener( 'mousemove', ()=>{
 			self.elements.input.focus();
 		});
@@ -366,6 +380,7 @@ export const DebugConsole = function (callbacks) {
         	});
 
 
+		self.requestId = 0;
 		self.elements.send.addEventListener( 'click', ()=>{
 			const text = self.elements.input.value.trim();
 			if (! text) {
@@ -374,7 +389,7 @@ export const DebugConsole = function (callbacks) {
 				return;
 			}
 			self.history.add( text );
-			callbacks.send( text_to_request(text) );
+			callbacks.send( text_to_request(text, ++self.requestId) );
 		});
 
 

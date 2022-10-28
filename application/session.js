@@ -8,7 +8,7 @@
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
-const { REASONS         } = require( './constants.js' );
+const { REASONS, RESULT } = require( './constants.js' );
 
 const WebSocketClient = require( './client.js' );
 
@@ -40,30 +40,6 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		);
 
 	} // log_persistent_data
-
-
-	function respond_success (client, command, reason, status = true) {
-		client.send({
-			session: {
-				[command]: {
-					response: reason,
-				},
-			},
-			success : status,
-		});
-
-	} // respond_success
-
-
-	function respond_failure (client, command, reason) {
-		respond_success( client, command, reason, false );
-
-	} // respond_failure
-
-
-	function find_client_by_username (username) {
-
-	} // find_client_by_username
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -135,34 +111,38 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// REQUEST HANDLERS
+// RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.requestHandlers = {};
 
-	this.requestHandlers.login = function (client, parameters) {
+	this.requestHandlers.login = function (client, request_id, parameters) {
 		if (client.login) {
 			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, dump(client) );
-			respond_failure( client, 'login', REASONS.ALREADY_LOGGED_IN );
+			client.respond( RESULT.FAILURE, request_id, REASONS.ALREADY_LOGGED_IN );
 			return;
 		}
 
 		if (! parameters.username) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
-			respond_failure( client, 'login', REASONS.BAD_USERNAME );
+			client.respond( RESULT.FAILURE, request_id, REASONS.BAD_USERNAME );
 			return;
 		}
 
 		if (! parameters.password) {
 			log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
-			respond_failure( client, 'login', REASONS.BAD_PASSWORD );
+			client.respond( RESULT.FAILURE, request_id, REASONS.BAD_PASSWORD );
 			return;
 		}
 
 		const user_record = persistent_data.accounts[parameters.username];
 		if (! user_record) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
-			respond_failure( client, 'login', 'User "' + parameters.username + '" unknown' );
+			client.respond(
+				RESULT.FAILURE,
+				request_id,
+				REASONS.USER_UNKNOWN.replace('NAME', parameters.username)
+			);
 
 		} else {
 			const password_correct = (user_record.password === parameters.password);
@@ -180,49 +160,41 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 					client.setIdleTime( user_record.maxIdleTime );
 				}
 
-				respond_success( client, 'login', REASONS.SUCCESSFULLY_LOGGED_IN );
 				color_log( COLORS.COMMAND, '<session.login>', dump(client) );
+				client.respond( RESULT.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
 
 			} else {
-				respond_failure( client, 'login', 'Login failed' );
 				log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
+				client.respond( RESULT.FAILURE, request_id, REASONS.BAD_PASSWORD );
 			}
 		}
 
 	}; // login
 
 
-	this.requestHandlers.logout = function (client, parameters) {
+	this.requestHandlers.logout = function (client, request_id, parameters) {
 		if (client.login) {
 			color_log( COLORS.COMMAND, '<session.logout>', client.login );
 			client.login = false;
-			respond_success( client, 'logout', 'Logged out' );
+			client.respond( RESULT.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 		} else {
 			log_warning( 'logout', REASONS.NOT_LOGGED_IN, dump(client) );
-			respond_failure( client, 'logout', 'Not logged in' );
+			client.respond( RESULT.FAILURE, request_id, REASONS.NOT_LOGGED_IN );
 		}
 
 	}; // logout
 
 
-	this.requestHandlers.who = function (client, parameters) {
+	this.requestHandlers.who = function (client, request_id, parameters) {
 
 		//... session who {multiclients, idles, ...}
 		//... session who {filter, sort, sort:{reverse:{}} }
 
 		if (client.inGroup('admin') ) {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent_data.clients' );
-			client.send({
-				session: {
-					who: persistent_data.clients,
-				},
-			});
+			client.respond( RESULT.SUCCESS, request_id, persistent_data.clients );
 
 		} else if (client.login) {
-			//color_log( COLORS.ERROR, '<session.who>', REASONS.INSUFFICIENT_PERMS, client.login );
-			//respond_failure( client, 'who', REASONS.INSUFFICIENT_PERMS );
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent_data.clients' );
-
 			const clients = JSON.parse( JSON.stringify(persistent_data.clients, null, '\t') );
 			for (let address in clients) {
 				clients[address]
@@ -232,23 +204,20 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 				;
 			}
 
-			client.send({
-				session: {
-					who: clients,
-				},
-			});
+			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent_data.clients' );
+			client.respond( RESULT.SUCCESS, request_id, clients );
 		} else {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent_data.clients' );
-			respond_failure( client, 'who', REASONS.INSUFFICIENT_PERMS );
+			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
 	}; // who
 
 
-	this.requestHandlers.kick = async function (client, parameters) {
+	this.requestHandlers.kick = async function (client, request_id, parameters) {
 		if (! client.inGroup( 'admin' )) {
 			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
-			respond_failure( client, 'kick', REASONS.INSUFFICIENT_PERMS );
+			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
 
@@ -263,15 +232,15 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		if (! target_client) {
 			if (parameters.address) {
 				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
-				respond_failure( client, 'kick', REASONS.INVALID_ADDRESS );
+				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_ADDRESS );
 			}
 			else if (parameters.username) {
 				log_warning( 'kick', REASONS.INVALID_USERNAME, dump(client) );
-				respond_failure( client, 'kick', REASONS.INVALID_USERNAME );
+				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			}
 			else {
 				log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, dump(client) );
-				respond_failure( client, 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME );
+				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
 			}
 
 			return;
@@ -284,14 +253,12 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 			target_client,
 		);
 
-		target_client.send({
-			session: {
-				status: {
-					connection : 'terminating',
-					reason     : REASONS.KICKED_BY + client.login.userName,
-				},
-			},
-		});
+		target_client.respond(
+			RESULT.NONE,
+			request_id,
+			REASONS.KICKED_BY + ' ' + client.login.userName,
+			null,
+		);
 
 		const target_address  = target_client.address;
 		const target_username = target_client.login.userName;
@@ -299,7 +266,15 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		target_client.login = false;
 		await target_client.closeSocket();
 
-		respond_success( client, 'kick', REASONS.KICKED_USER + ' ' + target_username + ' ' + target_address );
+		client.respond(
+			RESULT.SUCCESS,
+			request_id,
+			(
+				REASONS.KICKED_USER
+				.replace('NAME', target_username)
+				.replace('ADDRESS', target_address)
+			)
+		);
 
 		if (parameters.username) {
 			if (self.getClientByName( parameters.username )) {
@@ -310,25 +285,13 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 	}; // kick
 
 
-	this.requestHandlers.status = function (client, parameters) {
-
-		function respond (success, response) {
-			client.send({
-				success  : success,
-				response : {
-					session : {
-						status: response,
-					},
-				},
-			});
-		}
-
+	this.requestHandlers.status = function (client, request_id, parameters) {
 		if (Object.keys(parameters).length == 0) {
-			respond( true, {client: client} );
+			client.respond( RESULT.SUCCESS, request_id, {client: client} );
 
 		} else {
 			const command = Object.keys( parameters )[0];
-			respond( false, { [command]: REASONS.UNKNOWN_COMMAND });
+			client.respond( RESULT.FAILURE, request_id, {[command]: REASONS.UNKNOWN_COMMAND} );
 		}
 
 	}; // status

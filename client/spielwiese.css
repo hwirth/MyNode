@@ -216,7 +216,6 @@ button {
 	padding:0.25em 0.5em;
 	white-space:nowrap;
 }
-.prompt button { width:100%; }
 button.submit {  background: var(--button-submit-bg); color:var(--button-submit-color); }
 Xbutton.login { background: var(--button-bg); color:var(--button-color); }
 Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
@@ -233,8 +232,7 @@ article.lobby {
 .debug_console {
 	position:absolute; bottom:0; left:0; z-index:999;
 	width:100%;
-	background:#001008; color:#fff;
-	overflow-y:scroll;
+	background:#000; color:#fff;
 	line-height:1.4rem;
 	font-size:1rem;
 	transition:height 0.1s ease-in-out;
@@ -242,29 +240,34 @@ article.lobby {
 	tab-size:4;
 }
 .debug_console.active {
+	display:grid; grid-template-rows:1fr min-content;
 	height:100%;
 }
 
-.debug_console .prompt {
-	display:grid; grid-template-rows:1fr min-content;
+.debug_console .output {
+	padding-bottom:0.1em;
 }
+
 .debug_console .prompt.disabled {
 	display:none;
 }
 
 .debug_console .prompt .buttons {
 	display:flex;
+	flex-wrap:wrap;
+	width:100%;
 }
 .debug_console .prompt button {
-	Xline-height:0; margin:1px auto; padding:0.1em 0.25em;
+	flex-grow:1; margin:1px; padding:0.1em 0.5em 0.2em;
+	border:none;
+	Xmax-width:10em;
 }
 
 .debug_console .output { overflow-y:scroll; border-bottom:solid 1px #444; font-family:monospace,monospace; }
 .debug_console .input  { width:100%; border:none; background:transparent; color:#fff; resize:none; }
 .debug_console .input:focus { outline:none; }
 
-.debug_console .output > pre { border-top:solid 1px #444; padding:0.25em 0.5em; }
-.debug_console .output > pre:first-child { border:none; }
+.debug_console > pre { border-bottom:dashed 1px #444; padding:0.25em 0.5em; }
 .debug_console .request  { color:#4a2; }
 .debug_console .response { color:#48c; }
 

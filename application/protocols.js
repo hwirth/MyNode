@@ -5,9 +5,10 @@
 
 "use strict";
 
-const { SETTINGS                 } = require( '../server/config.js' );
-const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
-const { REASONS                  } = require( './constants.js' );
+const { SETTINGS        } = require( '../server/config.js' );
+const { DEBUG, COLORS   } = require( '../server/debug.js' );
+const { color_log, dump } = require( '../server/debug.js' );
+const { REASONS         } = require( './constants.js' );
 
 const WebSocketClient = require( './client.js' );
 
@@ -89,6 +90,8 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 	}
 
 	this.onMessage = function (socket, client_address, message) {
+		const request_id = message;
+
 		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage:', client_address, message );
 
 		const client = self.protocols.session.getClientByAddress( client_address );
@@ -132,6 +135,8 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 		}
 
 		Object.keys( message ).forEach( (protocol_name)=>{
+			if (protocol_name == 'tag') return;
+
 			if (! self.protocols[protocol_name]) {
 				rejected_commands.push( protocol_name + '.*' );
 
@@ -187,7 +192,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 						const request_arguments = message[ protocol_name ][ command_name ];
 
 						try {
-							request_handler( client, request_arguments );
+							request_handler( client, request_id, request_arguments );
 
 						} catch (error) {
 							send_error( protocol_name, command_name, error );
@@ -252,7 +257,14 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 			getAllPersistentData   : ()=>persistent_data,
 		};
 
+		const ignore_keyword = {
+			template: function Dummy () {
+				this.exit = ()=>Promise.resolve;
+			},
+		};
+
 		const registered_protocols = {
+			//request : ignore_keyword,
 			session : {
 				template  : SessionHandler,
 			},

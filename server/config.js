@@ -124,7 +124,7 @@ module.exports.WSS_OPTIONS   = WSS_OPTIONS;
 
 const EXIT_CODES = {
 	UNKNOWN                 : -2,
-	REQUEST_RESTART         : -1,
+	RESULT_RESTART         : -1,
 	EXIT                    : 0,
 	PORT_IN_USE             : 1,
 	CANT_DROP_PRIVILEGES    : 2,

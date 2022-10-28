@@ -5,8 +5,9 @@
 
 "use strict";
 
-const { DEBUG, COLORS, color_log } = require( '../../server/debug.js' );
-const { REASONS                  } = require( '../constants.js' );
+const { DEBUG, COLORS   } = require( '../../server/debug.js' );
+const { color_log, dump } = require( '../../server/debug.js' );
+const { REASONS, RESULT } = require( '../constants.js' );
 
 
 module.exports = function ChatServer (persistent_data) {
@@ -14,43 +15,19 @@ module.exports = function ChatServer (persistent_data) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HELPERS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function respond_success (client, command, reason, status = true) {
-		client.send({
-			session: {
-				[command]: {
-					success   : status,
-					reason    : reason,
-				},
-			},
-		});
-
-	} // respond_success
-
-
-	function respond_failure (client, command, reason) {
-		respond_success( client, command, reason, false );
-
-	} // respond_failure
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// REQUEST HANDLERS
+// RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.requestHandlers = {};
 
-	this.requestHandlers.test = function (client, parameters) {
+	this.requestHandlers.test = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<chat.test>',
-			client,
+			dump( client ),
 		);
 
-		respond_success( client, 'test', 'niy' );
+		client.respond( RESULT.NONE, request_id, 'niy' );
 
 	}; // test
 

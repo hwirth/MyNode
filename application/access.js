@@ -5,9 +5,10 @@
 
 "use strict";
 
-const { SETTINGS                 } = require( '../server/config.js' );
-const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
-const { REASONS                  } = require( './constants.js' );
+const { SETTINGS        } = require( '../server/config.js' );
+const { DEBUG, COLORS   } = require( '../server/debug.js' );
+const { color_log, dump } = require( '../server/debug.js' );
+const { REASONS         } = require( './constants.js' );
 
 DEBUG.PARSE = {
 	SHOW_HEADER  : !false,
@@ -91,7 +92,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 		const tokens = (()=>{
 			const without_comments = line => line.split('#', 1)[0].trim();
 			const to_objects       = (line, index) => { return {source: index, text: line}; };
-			const empty_lines      = line => (line.text.trim() != '');
+			const empty_lines      = lineMeta => (lineMeta.text.trim() != '');
 
 			const groups_and_rule  = line => {
 				const parts = line.text.split( ':' );
@@ -123,6 +124,11 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 			if (nr_parens_open != nr_parens_close) {
 				throw new Error( 'Parens mismatch in ' + line_source + ': ' + text );
+			}
+
+			function next_parens (text) {
+				const pos_open  = text.indexOf( '(' );
+				const pos_close = text.indexOf( ')' );
 			}
 
 			return text.trim();

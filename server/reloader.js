@@ -99,13 +99,6 @@ module.exports = function AppReloader (web_socket, callbacks) {
 					reRequire( path.resolve( file_name ) );
 
 				} catch (error) {
-				/*
-					color_log(
-						COLORS.ERROR,
-						'AppReloader-add_load_request:',
-						file_name,
-					);
-				*/
 					color = COLORS.ERROR;
 
 					if (file_has_changed) {
@@ -148,13 +141,24 @@ module.exports = function AppReloader (web_socket, callbacks) {
 					load_requests,
 					report_file_names,
 					file_name,
-					file_has_changed
+					file_has_changed,
 				);
 			});
 		}
-
+		//... Useless in many situations: If a file was NOT changed but includes a CHANGED file,
+		//... it won't be (re)required due to caching inside  require() .
 		await Promise.all( load_requests );
-
+	/*
+		//... Needs removing of unneded code above
+		if (changed_files) {
+			const app_path = path.resolve( APP_PATH );
+			Object.keys( require.cache ).forEach( (key)=>{
+				if (key.slice(0, app_path.length) == app_path) {
+					delete require.cache[key];
+				}
+			});
+		}
+	*/
 		if (socket && Object.keys( report_file_names ).length) {
 			socket.send( JSON.stringify({ reload: report_file_names }, null, '\t') );
 		}
@@ -169,6 +173,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		console.time( 'Reload time' );
 		const nr_reloaded_files = await re_require_modules( socket );
+
 		console.timeEnd( 'Reload time' );
 		if (nr_reloaded_files === 0) return;
 

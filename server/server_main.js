@@ -34,7 +34,7 @@ const WebSocketServer = function () {
 
 	this.onRestart = function () {
 		self.appReloader.exit().then( ()=>{
-			process.terminate( EXIT_CODES.REQUESTED_RESTART );
+			process.terminate( EXIT_CODES.RESULTED_RESTART );
 		});
 
 	}; // onRestart
