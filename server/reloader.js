@@ -23,9 +23,7 @@ const { Protocols } = require( APP_PATH + '/protocols.js' );
 module.exports = function AppReloader (web_socket, callbacks) {
 	const self = this;
 
-	this.oldFileTimes;
-	this.newFileTimes;
-
+	this.fileTimes;
 	this.protocols;
 	this.persistentData;
 
@@ -252,11 +250,10 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		return new Promise( async (done)=>{
 			self.persistentData = {};
-			self.fileTimes = {
-				previous: {},
-				current: {},
-			};
+			self.fileTimes = { previous: {}, current: {} };
+
 			await reload_modules();
+
 			done();
 		});
 
