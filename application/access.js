@@ -55,7 +55,7 @@ const PROTOCOL_DESCRIPTION = (`
 `); // PROTOCOL_DESCRIPTION
 
 
-module.exports = function AccessControl (persistent_data, callbacks) {
+module.exports = function AccessControl (persistent, callbacks) {
 	const self = this;
 
 	this.rules;
@@ -311,7 +311,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.getProtocolDescription = function (show_line_numbers) {
-		return format_source( persistent_data.configuration, show_line_numbers );
+		return format_source( persistent.configuration, show_line_numbers );
 
 	}; // getProtocolDescription
 
@@ -320,7 +320,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 
 	this.loadConfiguration = function (new_configuration) {
-		persistent_data.configuration = new_configuration.trim();
+		persistent.configuration = new_configuration.trim();
 
 		try {
 			self.rules = parse_configuration( new_configuration );
@@ -334,7 +334,7 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 
 
 	this.reloadConfiguration = function () {
-		self.loadConfiguration( persistent_data.configuration );
+		self.loadConfiguration( persistent.configuration );
 
 	}; // reloadConfiguration
 
@@ -355,9 +355,9 @@ module.exports = function AccessControl (persistent_data, callbacks) {
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init' );
 
-		if (Object.keys( persistent_data ).length == 0) {
-			persistent_data.configuration = null;
-			persistent_data.rules = {};
+		if (Object.keys( persistent ).length == 0) {
+			persistent.configuration = null;
+			persistent.rules = {};
 		}
 
 		self.loadConfiguration( PROTOCOL_DESCRIPTION );

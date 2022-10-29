@@ -167,7 +167,9 @@ export const Application = function () {
 		document.body.innerHTML = create_markup();
 
 		self.debugConsole = await new DebugConsole({
-			send: on_console_send,
+			getUrl      : ()=>WS_URL,
+			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
+			send        : on_console_send,
 		});
 		self.debugConsole.toggle();
 		//...self.debugConsole.elements.input.value = 'session\n\tlogin\n\t\tusername: \n\t\tpassword: ';

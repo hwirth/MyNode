@@ -8,6 +8,31 @@
 const EXTRA_LINES = 0;
 const MIN_LINES = 5;
 
+const BUTTON_SCRIPTS = {
+	'status'     : 'session\n\tstatus',
+	'login hmw'  : 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+	'login sec'  : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
+	'logout'     : 'session\n\tlogout',
+	'who'        : 'session\n\twho',
+	'kick hmw'   : 'session\n\tkick\n\t\tusername: hmw',
+	'kick sec'   : 'session\n\tkick\n\t\tusername: sec',
+	'mcp status' : 'mcp\n\tstatus',
+	'persistent' : 'mcp\n\tstatus\n\t\tpersistent',
+	'restart'    : 'mcp\n\trestart',
+};
+
+const SPEED_SCRIPT = [
+	'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+	'session\n\tstatus',
+	'mcp\n\tinspect',
+	'mcp\n\tinspect: reloader',
+	'mcp\n\tinspect: reloader.persistentData',
+	'mcp\n\tinspect: reloader.persistentData.session',
+	'mcp\n\tinspect: reloader.persistentData.session.accounts',
+	'mcp\n\tstatus',
+];
+
+
 export const History = function () {
 	const self = this;
 
@@ -64,7 +89,7 @@ export const History = function () {
 }; // History
 
 
-export const DebugConsole = function (callbacks) {
+export const DebugConsole = function (callback) {
 	const self = this;
 
 	this.history;
@@ -284,52 +309,21 @@ export const DebugConsole = function (callbacks) {
 		};
 
 
-		const button_scripts = {
-			'status'     : 'session\n\tstatus',
-			'login hmw'  : 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
-			'login sec'  : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
-			'logout'     : 'session\n\tlogout',
-			'who'        : 'session\n\twho',
-			'kick hmw'   : 'session\n\tkick\n\t\tusername: hmw',
-			'kick sec'   : 'session\n\tkick\n\t\tusername: sec',
-			'srv status' : 'server\n\tstatus',
-			'persistent' : 'server\n\tstatus\n\t\tpersistent',
-			'restart'    : 'server\n\trestart',
-		};
-		Object.keys( button_scripts ).forEach( (key)=>{
+		Object.keys( BUTTON_SCRIPTS ).forEach( (key)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
 			new_button.className = key;
 			new_button.innerText = name;
 			new_button.title     = 'Double click to execute immediately';
-			new_button.addEventListener( 'click'    , on_script_button_click );
-			new_button.addEventListener( 'dblclick' , on_script_button_dblclick );
+			new_button.addEventListener( 'click', on_script_button_click );
 			self.elements.buttons.insertBefore( new_button, self.elements.send );
 		});
 		function on_script_button_click (event) {
 			event.preventDefault();
-			self.elements.input.value = button_scripts[event.target.className];
+			self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
 			adjust_textarea_height();
 		}
-		function on_script_button_dblclick (event) {
-			event.preventDefault();
-			const previous_value = self.elements.input.value;
-			self.elements.input.value = button_scripts[event.target.className];
-			self.elements.send.click();
-			self.elements.input.value = previous_value;
-		}
 
-		let accept_click = null;
-		self.elements.console.addEventListener( 'dblclick', (event)=>{
-			if( event.target.classList.contains('request')
-			||  event.target.classList.contains('response')
-			) {
-				event.preventDefault();
-				self.elements.input.value = event.target.innerText;
-				adjust_textarea_height();
-				self.elements.input.focus();
-			}
-		});
 		self.elements.console.addEventListener( 'mousemove', (event)=>{
 			if (event.target.classList.contains( 'debug_console' )) {
 				self.elements.input.focus();
@@ -389,7 +383,7 @@ export const DebugConsole = function (callbacks) {
 				return;
 			}
 			self.history.add( text );
-			callbacks.send( text_to_request(text, ++self.requestId) );
+			callback.send( text_to_request(text, ++self.requestId) );
 		});
 
 
@@ -417,6 +411,45 @@ export const DebugConsole = function (callbacks) {
 				self.elements.input.value = self.history.forward();
 			}
 		});
+
+
+		function next_script_entry () {
+			if (!callback.isConnected()) return 'connect ' + callback.getUrl();
+			return (SPEED_SCRIPT.length > 0) ? SPEED_SCRIPT.shift() : 'END OF LINE.' ;
+
+		} // next_script_entry
+
+		let accept_click = null;
+		addEventListener( 'dblclick', (event)=>{
+			if (event.target.closest('.buttons')) {
+				event.preventDefault();
+				const previous_value = self.elements.input.value;
+
+				self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
+				self.elements.send.click();
+				self.elements.input.value = previous_value;
+
+				return;
+			}
+
+			if (event.target.closest('.output')) {
+				event.preventDefault();
+
+				self.elements.input.value
+				= (callback.isConnected() && (event.shiftKey || event.ctrlKey || event.altKey))
+				? event.target.innerText
+				: next_script_entry()
+				;
+
+				self.elements.send.click();
+
+				adjust_textarea_height();
+				self.elements.input.focus();
+
+				return;
+			}
+		});
+
 
 		return Promise.resolve();
 

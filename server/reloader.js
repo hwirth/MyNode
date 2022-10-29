@@ -9,22 +9,25 @@ const util      = require( 'util' );
 const fs        = require( 'fs' );
 const path      = require( 'path' );
 const glob      = require( 'glob' );
-const reRequire = require( 're-require-module' ).reRequire;
+//...const reRequire = require( 're-require-module' ).reRequire;
 
 const { SETTINGS      } = require( './config.js' );
 const { DEBUG, COLORS } = require( './debug.js' );
 const { color_log     } = require( './debug.js' );
 
 const APP_PATH = '../application';
+const EMPTY = {};
 
-const { Protocols } = require( APP_PATH + '/protocols.js' );
+const { Router } = require( APP_PATH + '/router.js' );
 
 
-module.exports = function AppReloader (web_socket, callbacks) {
+module.exports = function AppReloader (callbacks) {
 	const self = this;
 
+	this.isAppReloader
+
 	this.fileTimes;
-	this.protocols;
+	this.router;
 	this.persistentData;
 
 
@@ -37,7 +40,8 @@ module.exports = function AppReloader (web_socket, callbacks) {
 		const stat_requests = [];
 
 		await new Promise( (done)=>{
-			glob( APP_PATH + '/**/*.js', (error, matches)=>{
+
+			const g = glob( APP_PATH + '/**/*.js', (error, matches)=>{
 				if (error) color_log(
 					COLORS.ERROR,
 					'AppReloader-get_file_times:',
@@ -72,7 +76,9 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 	function re_require_modules (socket) {
 
-		console.time( 'Reload time' );
+		const RELOAD_TIME = '| (re)load time'
+
+		console.time( RELOAD_TIME );
 		const file_name_report = {};   // Response telling user which files were updated
 
 		const changed_files = Object.keys( self.fileTimes.current ).filter( (file_name)=>{
@@ -131,7 +137,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 			nr_reloaded_files,
 		);
 
-		console.timeEnd( 'Reload time' );
+		console.timeEnd( RELOAD_TIME );
 
 		return nr_reloaded_files;
 
@@ -159,33 +165,61 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		if (! reload_required) return;
 
-		// Re-instantiate  Protocols
+		// Re-instantiate  Router
 		const MAIN_MODULE = {
-			url            : APP_PATH + '/protocols.js',
+			url            : APP_PATH + '/router.js',
 			persistentData : self.persistentData,
 			callbacks      : {
-				triggerExit : callbacks.triggerExit,
+				getFullAccess : callbacks.getFullAccess,
+				triggerExit   : callbacks.triggerExit,
 			},
 		};
 
 		console.time( 'Init time' );
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
 
+		function show_error (error, ...parameters) {
+			color_log( COLORS.ERROR, '- ERROR ' + '-'.repeat(51) );
+			color_log( COLORS.ERROR, ...parameters );
+			color_log( COLORS.ERROR, 'Error:', error );
+			color_log( COLORS.ERROR, '- /ERROR ' + '-'.repeat(50) );
+		}
+
 		try {
 			// Reload and reinstantiate main module
-			self.protocols = await new reRequire(
+			self.router =
+			await new require(
 				MAIN_MODULE.url
-			).Protocols(
+
+			).Router(
 				MAIN_MODULE.persistentData,
 				MAIN_MODULE.callbacks,
 
 			).catch( (error)=>{
-				color_log( COLORS.ERROR, 'AppReloader-reload_modules:', '.catch:', error );
+				show_error( error, 'AppReloader-reload_modules:',
+					'await new require().Router()' + COLORS.STRONG + '.catch()',
+				);
 			});
 
 		} catch (error) {
-			color_log( COLORS.ERROR, 'AppReloader-reload_modules:', 'try/catch:' );
-			color_log( COLORS.ERROR, 'ERROR', error );
+			show_error( error, 'AppReloader-reload_modules:',
+				COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
+			);
+
+			if (socket) {
+				const message = {
+					request  : { reloadSource: EMPTY },
+					success  : false,
+					response : error.message,
+				};
+
+				try {
+					socket.send( JSON.stringify(message) );
+
+				} catch (error) {
+					color_log( COLORS.ERROR, 'Another edge case:', error.message, message );
+				}
+			}
 		}
 
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
@@ -201,7 +235,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 	this.onConnect = async function (socket, client_address) {
 		if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect:', client_address );
 		await reload_modules( socket );
-		self.protocols.onConnect( socket, client_address );
+		self.router.onConnect( socket, client_address );
 
 	}; // onConnect
 
@@ -209,7 +243,7 @@ module.exports = function AppReloader (web_socket, callbacks) {
 	this.onDisconnect = async function (socket, client_address) {
 		if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect:', client_address );
 		await reload_modules( socket );
-		self.protocols.onDisconnect( socket, client_address );
+		self.router.onDisconnect( socket, client_address );
 
 	}; // onDisconnect
 
@@ -227,7 +261,8 @@ module.exports = function AppReloader (web_socket, callbacks) {
 
 		if (message) {
 			await reload_modules( socket );
-			self.protocols.onMessage( socket, client_address, message );
+			self.router.onMessage( socket, client_address, message );
+
 		}
 
 	}; // onMessage
@@ -240,7 +275,11 @@ module.exports = function AppReloader (web_socket, callbacks) {
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.exit' );
 
-		return self.protocols.exit();
+		if (self.router) {
+			return self.router.exit();
+		} else {
+			return Promise.resolve();
+		}
 
 	}; // exit
 

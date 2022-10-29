@@ -11,6 +11,7 @@ const {
 	MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
 
 } = require( './config.js' );
+const { STRINGS         } = require( '../server/constants.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 
@@ -23,21 +24,18 @@ const http      = require( 'follow-redirects' ).http;
 const https     = require( 'https' );
 const WebSocket = require( 'ws' );
 
+const EXIT_MESSAGE = 'END OF LINE.';
+
 
 const WebSocketServer = function () {
 	const self = this;
 
+	this.isTheApp;//...
+
 	this.httpServer;
 	this.wsServer;
-	this.appReloader;
 
-
-	this.onRestart = function () {
-		self.appReloader.exit().then( ()=>{
-			process.terminate( EXIT_CODES.RESULTED_RESTART );
-		});
-
-	}; // onRestart
+	this.reloader;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -95,7 +93,7 @@ const WebSocketServer = function () {
 			EXTRA_HEADER_DASHES,
 		);
 
-		await self.appReloader.onConnect( socket, client_address );
+		await self.reloader.onConnect( socket, client_address );
 
 		if (DEBUG.CONNECT) end_header( COLORS.CONNECT, 'CONNECT ' + request_nr ); else console.log();
 
@@ -117,7 +115,7 @@ const WebSocketServer = function () {
 			EXTRA_HEADER_DASHES,
 		);
 
-		await self.appReloader.onMessage( socket, client_address, json_string );
+		await self.reloader.onMessage( socket, client_address, json_string );
 
 		if (DEBUG.MESSAGE) end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr ); else console.log();
 
@@ -140,41 +138,11 @@ const WebSocketServer = function () {
 			EXTRA_HEADER_DASHES,
 		);
 
-		await self.appReloader.onDisconnect( socket, client_address );
+		await self.reloader.onDisconnect( socket, client_address );
 
 		if (DEBUG.DISCONNECT) end_header( COLORS.DISCONNECT, 'DISCONNECT ' + request_nr ); else console.log();
 
 	}; // onDisconnect
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// INTERFACE
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	const server_start_time = Date.now();
-
-	this.getUpTime = function (formatted = false) {
-		let milliseconds = Date.now() - server_start_time;
-		if (formatted) {
-			let seconds = Math.floor( milliseconds / 1000 );   milliseconds -= seconds * 1000;
-			let minutes = Math.floor( seconds      / 60   );   seconds      -= minutes * 60;
-			let hours   = Math.floor( minutes      / 60   );   minutes      -= hours   * 60;
-			let days    = Math.floor( hours        / 24   );   hours        -= days    * 24;
-			let weeks   = Math.floor( days         / 7    );   days         -= weeks   * 24;
-			return (
-				  (weeks   ? weeks   + 'w, ' : '')
-				+ (days    ? days    + 'd ' : '')
-				+ (hours   ? hours   + 'h ' : '')
-				+ (minutes ? minutes + 'm ' : '')
-				+ (seconds ? seconds + 's ' : '')
-				+ milliseconds + 'ms'
-			);
-
-		} else {
-			return milliseconds;
-		}
-
-	}; // getUpTime
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -400,10 +368,19 @@ const WebSocketServer = function () {
 // ERROR HANDLER /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function global_error_handler (error) {
-		color_log( COLORS.ERROR, 'GLOBAL ERROR HANDLER', dump(error) );
+		color_log(
+			COLORS.ERROR, STRINGS.MASTER_CONTROL+':',
+			COLORS.WARNING + STRINGS.GLOBAL_ERROR_HANDLER,
+			dump(error),
+		);
 
-		self.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
-		//terminate_program( EXIT_CODES.GLOBAL_ERROR_HANDLER );
+		if (SETTINGS.ERROR_SHUT_DOWN) {
+			self.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
+
+		} else {
+			console.log( EXIT_MESSAGE );
+			process.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
+		}
 
 	} // global_error_handler
 
@@ -411,68 +388,54 @@ const WebSocketServer = function () {
 	function install_error_handler() {
 		color_log( COLORS.WSS, 'WebSocketServer:', 'Setting up error handler' );
 
-		process.on( 'uncaughtException', global_error_handler );
-		process.on( 'unhandledRejection', global_error_handler );
-		process.on( 'SIGINT',  terminate_program );
-		process.on( 'SIGQUIT', terminate_program );
-		process.on( 'SIGTERM', terminate_program );
-		process.on( 'SIGUSR1', terminate_program );
-		process.on( 'SIGUSR2', terminate_program );
-		process.on( 'exit',    terminate_program );
+		process.on( 'uncaughtException'  , global_error_handler );
+		process.on( 'unhandledRejection' , global_error_handler );
+		process.on( 'SIGINT',  self.exit );
+		process.on( 'SIGQUIT', self.exit );
+		process.on( 'SIGTERM', self.exit );
+		process.on( 'SIGUSR1', self.exit );
+		process.on( 'SIGUSR2', self.exit );
+		process.on( 'exit',    self.exit );
 
 	} // install_error_handler
 
 
 // EXIT //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function terminate_program (event) {
-		if (event == 'SIGINT') {
-			console.log();
-			return self.exit();
-		}
+	this.exit = function (event) {
+		console.time( 'Shutdown time' );
+		if (event == 'SIGINT') console.log();
 
 		console.log( '.' + '-'.repeat(78) );
 		console.log( '| SHUTTING DOWN' );
 		console.log( "'" + '-'.repeat(78) );
 
-		console.time( 'Shutdown time' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.exit' );
 
-		if (self.appReloader) {
-			self.appReloader.exit().then( cleanup_and_die );
+		if (self.reloader.exit) {
+			self.reloader.exit().then( cleanup_and_die );
 		} else {
 			cleanup_and_die();
 		}
 
 		function cleanup_and_die () {
-			console.log( '.' + '-'.repeat(78) );
-			console.log( '| main.js: exit: signal', event, '- Cleaning up...' );
-			console.log( "'" + '-'.repeat(78) );
-
 			const exit_code = ((typeof event == 'number') ? event : EXIT_CODES.UNKNOWN);
 			color_log( COLORS.EXIT, 'EXIT', 'Server terminating with exit code', exit_code );
 
-			process.removeListener( 'uncaughtException', global_error_handler );
-			process.removeListener( 'unhandledRejection', global_error_handler );
-			process.removeListener( 'SIGINT',  terminate_program );
-			process.removeListener( 'SIGQUIT', terminate_program );
-			process.removeListener( 'SIGUSR1', terminate_program );
-			process.removeListener( 'SIGUSR2', terminate_program );
-			process.removeListener( 'exit',    terminate_program );
+			process.removeListener( 'uncaughtException'  , global_error_handler );
+			process.removeListener( 'unhandledRejection' , global_error_handler );
+			process.removeListener( 'SIGINT',  self.exit );
+			process.removeListener( 'SIGQUIT', self.exit );
+			process.removeListener( 'SIGUSR1', self.exit );
+			process.removeListener( 'SIGUSR2', self.exit );
+			process.removeListener( 'exit',    self.exit );
 
 			console.timeEnd( 'Shutdown time' );
-			console.log( '\n\n' );
 
+			console.log( EXIT_MESSAGE );
 			process.exit( exit_code );
 
 		} // cleanup_and_die
-
-	} // terminate_program
-
-
-	this.exit = function (event) {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.exit' );
-
-		terminate_program( event );
 
 	}; // exit
 
@@ -481,6 +444,10 @@ const WebSocketServer = function () {
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.init' );
+
+		function get_full_access (access_token) {
+			return self;
+		}
 
 		return new Promise( async (done)=>{
 			console.log( '.' + '-'.repeat(78) );
@@ -502,9 +469,14 @@ const WebSocketServer = function () {
 				onMessage    : self.onMessage,
 			});
 			self.httpServer    = create_http_server( self.wsServer );
-			self.appReloader   = await new AppReloader( self.wsServer, {
-				triggerExit : self.exit,
-				getUpTime   : self.getUpTime,
+
+			console.log( '.' + '-'.repeat(78) );
+			console.log( '| APPLICATION' );
+			console.log( "'" + '-'.repeat(78) );
+
+			self.reloader      = await new AppReloader({
+				getFullAccess : get_full_access,
+				triggerExit   : self.exit,
 			});
 
 			done();
@@ -524,10 +496,12 @@ const WebSocketServer = function () {
 // PROGRAM ENTRY POINT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-console.time( '| READY. Boot time' );
+const time_label = '| ' + COLORS.BOOT + 'ONLINE' + COLORS.DEFAULT + '. Boot time';
+console.time( time_label );
+
 new WebSocketServer().then( ()=>{
 	console.log( '.' + '-'.repeat(78) );
-	console.timeEnd( '| READY. Boot time' );
+	console.timeEnd( time_label );
 	console.log( "'" + '-'.repeat(78) );
 });
 

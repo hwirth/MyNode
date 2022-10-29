@@ -260,12 +260,13 @@ article.lobby {
 .debug_console .prompt .buttons {
 	display:flex;
 	flex-wrap:wrap;
+	flex-direction:row-reverse;
 	width:100%;
 }
 .debug_console .prompt button {
-	flex-grow:1; margin:1px; padding:0.1em 0.5em 0.2em;
+	flex-grow:1;
+	margin:1px; padding:0.1em 0.5em 0.2em;
 	border:none;
-	Xmax-width:10em;
 }
 
 .debug_console .output { overflow-y:scroll; border-bottom:solid 1px #444; font-family:monospace,monospace; }

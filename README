@@ -95,8 +95,11 @@ Persistent data is stored in the main part as well. Application code will be giv
 3.4. Protocols
 --------------
 Each message contains commands for specific protocols. These will be relayed accordingly through  protocols.js .
-This allows for independent servers to run over the same websocket. Protocol code will be given a reference to its
-persistent data, which is stored in  AppReloader.persistentData.<protocol name> .
+This allows for independent servers to run over the same websocket. Each protocol implementation will be given a
+reference to its respective persistent data, which is stored in  AppReloader.persistentData.<protocol name> .
+
+Some protocols need special callbacks, for instance  triggerExit , which allows a protocol to cause a full restart of
+the server. How protocols are created and interconnected is configured by hand in  Protocols.init() .
 
 
 3.5. Asynchronicity in object instantiation
@@ -131,8 +134,9 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] {} ==> EMPTY
 [ ] Timeout after logout not cleared
-[ ] server reset: clear persistent_data
+[ ] server reset: clear persistent
 [\] Less magic in  color_log() : let caller mix in COLOR.*
 [!] Don't use colors except in color field with  color_log()
 [?] Multiclienting as option per protocol
@@ -152,7 +156,7 @@ functions that hide the socket object from the rest of the application program. 
 on connection and will not change, when some application code is reloaded. The user needs to close and log in again for
 changes to take effect.
 
-I should not store code in  persistent_data  to eliminate the requirement of reconnection after code update.
+I should not store code in  persistent  to eliminate the requirement of reconnection after code update.
 I could re-instantiate all  WebSocketServer()  instances, after code was reloaded, or find an alternative to things
 like  client.send(data)  - e.g.  session.sendToClient( client.address, data );
 
@@ -256,7 +260,7 @@ const { DEBUG, COLORS, color_log } = require( '../server/debug.js' );
 const { REASONS                  } = require( './constants.js' );
 
 
-module.exports = function Client (persistent_data) {
+module.exports = function Client (persistent) {
 	const self = this;
 
 

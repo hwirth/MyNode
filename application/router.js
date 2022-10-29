@@ -13,7 +13,7 @@ const { REASONS         } = require( './constants.js' );
 const WebSocketClient = require( './client.js' );
 
 
-module.exports.Protocols = function (persistent_data, callbacks) {
+module.exports.Router = function (persistent, callbacks) {
 	const self = this;
 
 	this.protocols;
@@ -23,15 +23,15 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function log_persistent_data (event_name, caption = '') {
+	function log_persistent (event_name, caption = '') {
 		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
 			COLORS.PROTOCOLS,
 			'Protocols.' + event_name + ':',
-			caption + 'persistent_data:',
-			persistent_data, //.clients,
+			caption + 'persistent:',
+			persistent, //.clients,
 		);
 
-	} // log_persistent_data
+	} // log_persistent
 
 
 	function send_as_json (socket, data) {
@@ -57,7 +57,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		self.protocols.session.onConnect( socket, client_address );   // Will create new WebSocketClient()
 
-		log_persistent_data( 'onConnect' );
+		log_persistent( 'onConnect' );
 
 	}; // onConnect
 
@@ -67,7 +67,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 		self.protocols.session.onDisconnect( socket, client_address );
 
-		log_persistent_data( 'onDisconnect' );
+		log_persistent( 'onDisconnect' );
 
 	}; // onDisconnect
 
@@ -134,9 +134,14 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 			send_as_json( socket, message );
 		}
 
+		// A message can have several protocol requests.
+		// JSON format: { <protocol>: { <command>: { <request> }}}
+		// Main level keys designate target protocol, second level a command
+		// Since keys in objects must be unique, each command can only be used once
 		Object.keys( message ).forEach( (protocol_name)=>{
 			if (protocol_name == 'tag') return;
 
+			// Registered protocol?
 			if (! self.protocols[protocol_name]) {
 				rejected_commands.push( protocol_name + '.*' );
 
@@ -148,6 +153,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 				);
 
 			} else {
+				// A protocol request can contain several commands
 				const message_commands = message[protocol_name];
 
 				if (DEBUG.PROTOCOLS) color_log(
@@ -188,7 +194,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 							request_handler
 						);
 
-						log_persistent_data( 'onMessage:', 'PRE COMMAND: ' );
+						log_persistent( 'onMessage:', 'PRE COMMAND: ' );
 						const request_arguments = message[ protocol_name ][ command_name ];
 
 						try {
@@ -198,7 +204,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 							send_error( protocol_name, command_name, error );
 						}
 
-						log_persistent_data( 'onMessage:', 'POST COMMAND: ' );
+						log_persistent( 'onMessage:', 'POST COMMAND: ' );
 					}
 				});
 			}
@@ -226,7 +232,7 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Protocols.exit' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Router.exit' );
 
 		return Promise.all(
 			Object.keys( self.protocols ).map( name => self.protocols[name].exit() ),
@@ -236,73 +242,64 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Protocols.init' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Router.init' );
 
 		self.protocols = {};
 
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
-		const SessionHandler  = require( './session.js' );
-		const AccessControl   = require( './access.js' );
-		const ServerManager   = require( './manager.js' );
-		const ChatServer      = require( './chat/chat_main.js' );
+		const SessionHandler = require( './session.js' );
+		const AccessControl  = require( './access.js' );
+		const MasterControl  = require( './mcp/mcp_main.js' );
+		const ChatServer     = require( './chat/chat_main.js' );
 
-		const protocol_callbacks = {
+		const registered_callbacks = {
+			getUpTime              : ()=>{ return self.protocols.server.getUpTime(); },
+			getProtocols           : ()=>self.protocols,
+			getAllPersistentData   : ()=>persistent,
+			getFullAccess          : callbacks.getFullAccess,
+			triggerExit            : callbacks.triggerExit,
 			getProtocolDescription : (show_line_numbers)=>{
 				return self.protocols.access
 				.getProtocolDescription( show_line_numbers );
 			},
-			getUpTime              : callbacks.getUpTime,
-			triggerExit            : callbacks.triggerExit,
-			getProtocols           : ()=>self.protocols,
-			getAllPersistentData   : ()=>persistent_data,
-		};
-
-		const ignore_keyword = {
-			template: function Dummy () {
-				this.exit = ()=>Promise.resolve;
-			},
 		};
 
 		const registered_protocols = {
-			//request : ignore_keyword,
-			session : {
-				template  : SessionHandler,
-			},
-			access  : {
-				template  : AccessControl,
-			},
-			server  : {
-				template  : ServerManager,
+			session : { template: SessionHandler },
+			access  : { template: AccessControl },
+			//...mc     : { template: MCP, callbacks: Object.keys(registered_callbacks) },
+			mcp     : { template: MasterControl,
 				callbacks : [
-					'triggerExit',
+					'getUpTime',
 					'getProtocols',
 					'getAllPersistentData',
+					'getFullAccess',
+					'triggerExit',
 					'getProtocolDescription',
-					'getUpTime',
 				],
 			},
-			chat    : {
-				template  : ChatServer,
-			},
+			chat    : { template: ChatServer },
 		};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 		const load_requests = Object.keys( registered_protocols ).map( (protocol_name)=>{
-			if (! persistent_data[protocol_name]) {
+			if (! persistent[protocol_name]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
-				persistent_data[protocol_name] = {};
+				persistent[protocol_name] = {};
 			}
 
 			const protocol  = registered_protocols[protocol_name];
-			const data      = persistent_data     [protocol_name];
+			const data      = persistent     [protocol_name];
 
-			const callbacks = {};
+			const new_callbacks = {};
 			if (protocol.callbacks) protocol.callbacks.forEach( (name)=>{
-				callbacks[name] = protocol_callbacks[name];
+				new_callbacks[name] = registered_callbacks[name];
 			});
 
 			return new Promise( async (done)=>{
-				self.protocols[protocol_name] = await new protocol.template( data, callbacks );
+				self.protocols[protocol_name] =
+					await new protocol.template( data, new_callbacks )
+				;
 				done();
 			});
 		});
@@ -312,9 +309,9 @@ module.exports.Protocols = function (persistent_data, callbacks) {
 	}; // init
 
 
-	return self.init().then( ()=>self );   // const protocols = await new Protocols();
+	return self.init().then( ()=>self );   // const protocols = await new Router();
 
-}; // Protocols
+}; // Router
 
 
 //EOF

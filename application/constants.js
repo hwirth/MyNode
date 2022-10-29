@@ -5,6 +5,8 @@
 
 "use strict";
 
+const { STRINGS } = require( '../server/constants.js' );
+
 module.exports.RESULT = {
 	SUCCESS : true,
 	FAILURE : false,
@@ -12,13 +14,14 @@ module.exports.RESULT = {
 };
 
 module.exports.ID_SERVER = {
-	serverInitiated: {},
+	MCP: STRINGS.END_OF_LINE,
 };
 
 module.exports.REASONS = {
 	UNKNOWN_COMMAND             : 'Unknown command',
 	INTERNAL_ERROR              : 'Internal error',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
+	INVALID_REQUEST             : 'Invalid request',
 	INVALID_ADDRESS             : 'Invalid address',
 	INVALID_USERNAME            : 'Invalid username',
 	INVALID_ADDRESS_OR_USERNAME : 'Invalid address or username',
@@ -33,6 +36,8 @@ module.exports.REASONS = {
 	KICKED_USER                 : 'Kicked user NAME, address: ADDRESS',
 	KICKED_BY                   : 'Kicked by',
 	USERNAME_UNKNOWN            : 'User NAME unknown',
+
+	YOU_SHOULDNT_HAVE           : "YOU SHOULDN'T HAVE COME BACK, FLYNN",
 
 }; // RESPONSES
 

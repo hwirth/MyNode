@@ -13,7 +13,7 @@ const { REASONS, RESULT } = require( './constants.js' );
 const WebSocketClient = require( './client.js' );
 
 
-module.exports = function SessionHandler (persistent_data, callbacks) {
+module.exports = function SessionHandler (persistent, callbacks) {
 	const self = this;
 
 
@@ -31,15 +31,15 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 	} // log_warning
 
 
- 	function log_persistent_data () {
+ 	function log_persistent () {
 		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
 			COLORS.PROTOCOL,
 			'<session>',
-			'persistent_data:',
-			persistent_data
+			'persistent:',
+			persistent
 		);
 
-	} // log_persistent_data
+	} // log_persistent
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -47,18 +47,18 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.getClientByAddress = function (address) {
-		return persistent_data.clients[address];
+		return persistent.clients[address];
 
 	}; // getClientByAddress
 
 
 	this.getClientByName = function (name) {
-		const client_address = Object.keys( persistent_data.clients ).find( (test_address)=>{
-			const client = persistent_data.clients[test_address];
+		const client_address = Object.keys( persistent.clients ).find( (test_address)=>{
+			const client = persistent.clients[test_address];
 			return (client.login && (client.login.userName == name));
 		});
 
-		return (client_address) ? persistent_data.clients[client_address] : null;
+		return (client_address) ? persistent.clients[client_address] : null;
 
 	}; // getClientByName
 
@@ -70,7 +70,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 	this.onConnect = async function (socket, client_address) {
 		if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect:', client_address );
 
-		if (persistent_data.clients[client_address]) {
+		if (persistent.clients[client_address]) {
 			color_log(
 				COLORS.PROTOCOLS,
 				'SessionHandler.onConnect:',
@@ -80,13 +80,13 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 			return;
 		}
 
-		persistent_data.clients[client_address] = await new WebSocketClient( socket, client_address );
+		persistent.clients[client_address] = await new WebSocketClient( socket, client_address );
 
 	}; // onConnect
 
 
 	this.onDisconnect = async function (socket, client_address) {
-		const client = persistent_data.clients[client_address];
+		const client = persistent.clients[client_address];
 
 		if (! client) {
 			color_log(
@@ -99,13 +99,13 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		}
 
 		await client.exit();
-		delete persistent_data.clients[client_address];
+		delete persistent.clients[client_address];
 
 	}; // onDisconnect
 
 
 	this.onMessage = function (socket, client_address, message) {
-		persistent_data.clients[client_address ].registerActivity();
+		persistent.clients[client_address ].registerActivity();
 
 	}; // onMessage
 
@@ -135,7 +135,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 			return;
 		}
 
-		const user_record = persistent_data.accounts[parameters.username];
+		const user_record = persistent.accounts[parameters.username];
 		if (! user_record) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
 			client.respond(
@@ -191,11 +191,11 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 		//... session who {filter, sort, sort:{reverse:{}} }
 
 		if (client.inGroup('admin') ) {
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent_data.clients' );
-			client.respond( RESULT.SUCCESS, request_id, persistent_data.clients );
+			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
+			client.respond( RESULT.SUCCESS, request_id, persistent.clients );
 
 		} else if (client.login) {
-			const clients = JSON.parse( JSON.stringify(persistent_data.clients, null, '\t') );
+			const clients = JSON.parse( JSON.stringify(persistent.clients, null, '\t') );
 			for (let address in clients) {
 				clients[address]
 				= (clients[address].login)
@@ -204,10 +204,10 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 				;
 			}
 
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent_data.clients' );
+			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent.clients' );
 			client.respond( RESULT.SUCCESS, request_id, clients );
 		} else {
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent_data.clients' );
+			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
 			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
@@ -223,7 +223,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 		let target_client = null;
 		if (parameters.address) {
-			target_client = persistent_data.clients[parameters.address];
+			target_client = persistent.clients[parameters.address];
 		}
 		else if (parameters.username) {
 			target_client = self.getClientByName( parameters.username );
@@ -291,7 +291,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 
 		} else {
 			const command = Object.keys( parameters )[0];
-			client.respond( RESULT.FAILURE, request_id, {[command]: REASONS.UNKNOWN_COMMAND} );
+			client.respond( RESULT.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
 		}
 
 	}; // status
@@ -326,7 +326,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.init' );
 
-		if (Object.keys( persistent_data ).length == 0) {
+		if (Object.keys( persistent ).length == 0) {
 			// "Load from database"
 			const data = {
 				accounts: {
@@ -345,7 +345,7 @@ module.exports = function SessionHandler (persistent_data, callbacks) {
 				}, // clients
 			};
 			Object.keys( data ).forEach( (key)=>{
-				persistent_data[key] = data[key];
+				persistent[key] = data[key];
 			});
 		}
 

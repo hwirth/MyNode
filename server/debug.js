@@ -22,7 +22,7 @@ const { SETTINGS } = require( './config.js' );
  */
 const DEBUG_ENABLED = (SETTINGS.DEV_SERVER === true);          // Globally turn debug on or off
 const DEBUG = {                                                // What to log
-	LOG_SETTINGS              : DEBUG_ENABLED && !false,   // On startup, show SETTINGS[] on console
+	LOG_SETTINGS              : DEBUG_ENABLED && false,   // On startup, show SETTINGS[] on console
 
 	INSTANCES                 : DEBUG_ENABLED && !false,   // Functions announcing when they are called
 	BANNER_HEADERS            : DEBUG_ENABLED && !false,   // Group logs for (dis)connect or messages, show counter
@@ -45,6 +45,8 @@ const DEBUG = {                                                // What to log
 	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && false,
 
 	PARSE_RULES               : DEBUG_ENABLED && !false,
+
+	BOOT_TIME                 : Date.now(),
 
 }; // DEBUG
 
@@ -97,14 +99,16 @@ const COLORS = {
 	REQUIRE      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 
 	COMMAND      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.GREEN,
-	EXIT         : ANSI_COLORS.BRIGHT  + ANSI_COLORS.RED,
 	ERROR        : ANSI_COLORS.BRIGHT  + ANSI_COLORS.RED,
 	WARNING      : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 	HTTPS        : ANSI_COLORS.DIM     + ANSI_COLORS.WHITE,
 	SOCKET       : ANSI_COLORS.YELLOW,
 	ADDRESS      : ANSI_COLORS.GREEN,
 
+	MCP          : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
+
 	RESET        : ANSI_COLORS.RESET,
+	EXIT         : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 
 }; // COLORS
 
@@ -117,10 +121,6 @@ module.exports.COLORS        = COLORS;
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-//function debug_log (tags = null, heading = null, ...logees) {
-//} // debug_log
-
-
 /**
  * color_log
  * Creates nice output to the console while debugging, and/or writes text sans color to a log file.
@@ -131,7 +131,14 @@ function color_log (colors = '', heading = '', ...text) {
 
 	heading = String( heading );
 
+	function format_uptime (milliseconds) {
+		const seconds = Math.floor( milliseconds / 1000 );
+		const frac = ms => '000'.slice( String(ms).length ) + ms;
+		return seconds + '.' + frac( milliseconds % 1000 );
+	}
+
 	const date = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + ' ';
+	const uptime = format_uptime(Date.now() - DEBUG.BOOT_TIME) + ' ';
 
 	util.inspect.defaultOptions.depth = SETTINGS.LOG.MAX_DEPTH;
 
@@ -153,7 +160,7 @@ function color_log (colors = '', heading = '', ...text) {
 		} else {
 	*/
 			console.log(
-				date + colors + colored_heading,
+				uptime + date + colors + colored_heading,
 				...text,
 				COLORS.RESET,
 			);

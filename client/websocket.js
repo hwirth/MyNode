@@ -104,6 +104,12 @@ export const WebSocketClient = function (parameters = {}) {
 	}; // connect
 
 
+	this.isConnected = function () {
+		return (self.websocket.readyState == 1);//... use a constant
+
+	}; // isConnected
+
+
 	this.disconnect = function () {
 	}; // disconnect
 

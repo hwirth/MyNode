@@ -111,9 +111,10 @@ module.exports = function WebSocketClient (socket, client_address) {
 		});
 		*/
 		self.send({
-			request  : request_id,
+			tag      : request_id.tag,
 			success  : status,
 			response : result,
+			MCP      : request_id.MCP,
 		});
 
 	}; // respond
