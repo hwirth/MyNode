@@ -1,13 +1,12 @@
 #!/bin/sh
 
-
-cd server
-
 nr_crashes=0
 max_crashes=30
 
+cd server
+
 while [ 1 ] ; do
-	node --trace-warnings server_main.js
+	node --trace-warnings main.js
 
 	exit_code=$?
 

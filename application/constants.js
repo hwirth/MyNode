@@ -5,17 +5,12 @@
 
 "use strict";
 
-const { STRINGS } = require( '../server/constants.js' );
-
-module.exports.RESULT = {
+const RESULT = {
 	SUCCESS : true,
 	FAILURE : false,
 	NONE    : null,
-};
 
-module.exports.ID_SERVER = {
-	MCP: STRINGS.END_OF_LINE,
-};
+}; // RESULT
 
 module.exports.REASONS = {
 	UNKNOWN_COMMAND             : 'Unknown command',
@@ -37,9 +32,24 @@ module.exports.REASONS = {
 	KICKED_BY                   : 'Kicked by',
 	USERNAME_UNKNOWN            : 'User NAME unknown',
 
-	YOU_SHOULDNT_HAVE           : "YOU SHOULDN'T HAVE COME BACK, FLYNN",
-
 }; // RESPONSES
 
+const STRINGS = {
+	MCP                  : 'MCP',
+	GLOBAL_ERROR_HANDLER : 'FATAL SYSTEM FAILURE:',
+	YOU_SHOULDNT_HAVE    : "YOU SHOULDN'T HAVE COME BACK, FLYNN",
+	END_OF_LINE          : 'END OF LINE.',
+
+}; // STRINGS
+
+
+const ID_SERVER = {
+	MCP: STRINGS.END_OF_LINE,
+};
+
+
+module.exports.RESULT    = RESULT;
+module.exports.STRINGS   = STRINGS;
+module.exports.ID_SERVER = ID_SERVER;
 
 //EOF

@@ -13,7 +13,7 @@ const { REASONS, RESULT } = require( './constants.js' );
 const WebSocketClient = require( './client.js' );
 
 
-module.exports = function SessionHandler (persistent, callbacks) {
+module.exports = function SessionHandler (persistent, callback) {
 	const self = this;
 
 
@@ -88,7 +88,7 @@ module.exports = function SessionHandler (persistent, callbacks) {
 	this.onDisconnect = async function (socket, client_address) {
 		const client = persistent.clients[client_address];
 
-		if (! client) {
+		if (!client) {
 			color_log(
 				COLORS.ERROR,
 				'ERROR',
@@ -123,20 +123,20 @@ module.exports = function SessionHandler (persistent, callbacks) {
 			return;
 		}
 
-		if (! parameters.username) {
+		if (!parameters.username) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
 			client.respond( RESULT.FAILURE, request_id, REASONS.BAD_USERNAME );
 			return;
 		}
 
-		if (! parameters.password) {
+		if (!parameters.password) {
 			log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
 			client.respond( RESULT.FAILURE, request_id, REASONS.BAD_PASSWORD );
 			return;
 		}
 
 		const user_record = persistent.accounts[parameters.username];
-		if (! user_record) {
+		if (!user_record) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
 			client.respond(
 				RESULT.FAILURE,
@@ -215,7 +215,7 @@ module.exports = function SessionHandler (persistent, callbacks) {
 
 
 	this.requestHandlers.kick = async function (client, request_id, parameters) {
-		if (! client.inGroup( 'admin' )) {
+		if (!client.inGroup( 'admin' )) {
 			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
 			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
@@ -229,7 +229,7 @@ module.exports = function SessionHandler (persistent, callbacks) {
 			target_client = self.getClientByName( parameters.username );
 		}
 
-		if (! target_client) {
+		if (!target_client) {
 			if (parameters.address) {
 				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
 				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_ADDRESS );

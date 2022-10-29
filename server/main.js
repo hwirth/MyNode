@@ -1,4 +1,4 @@
-// server_main.js
+// server: main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -43,7 +43,7 @@ const WebSocketServer = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function log_header (color, text, extra_dashes = 0) {
-		if (! DEBUG.BANNER_HEADERS) return;
+		if (!DEBUG.BANNER_HEADERS) return;
 
 		const banner
 		= '--[ '
@@ -68,6 +68,29 @@ const WebSocketServer = function () {
 		if (DEBUG.BANNER_HEADERS) log_header( color, '/' + text, extra_dashes );
 	}
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// VERIFY ACCESS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	let current_access_token = create_new_access_token();
+	escalate_privileges( current_access_token );
+
+	function create_new_access_token () {
+		DEBUG.MCPTOKEN = Math.floor( Math.random() * 900 ) + 100;
+		return DEBUG.MCPTOKEN;
+	}
+
+	function escalate_privileges (access_token) {
+		const token_confirmed = (access_token === current_access_token);
+		current_access_token = String( create_new_access_token() ).split('').join(' ');
+
+		color_log( COLORS.MCP, 'MCP .' + '='.repeat(14) + '.' );
+		color_log( COLORS.MCP, 'MCP | TOKEN:', COLORS.TOKEN + current_access_token, COLORS.MCP + '|' );
+		color_log( COLORS.MCP, "MCP '" + '='.repeat(14) + "'" );
+
+		return (token_confirmed) ? self : null;
+	}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENT RELAYS
@@ -250,8 +273,8 @@ const WebSocketServer = function () {
 			let request_url_tainted = request.url;
 			let request_url_clean = '';
 			for (let i = 0; i < request_url_tainted.length; ++i) {
-				const char = request_url_tainted[i].toLowerCase();
-				if (SETTINGS.ALLOWED_URI_CHARS.indexOf(char) >= 0) {
+				const char = request_url_tainted[i];   // Allow upper case too.
+				if (SETTINGS.ALLOWED_URI_CHARS.indexOf(char.toLowerCase()) >= 0) {
 					request_url_clean += char;
 				}
 			}
@@ -270,7 +293,7 @@ const WebSocketServer = function () {
 			+ ((request_url_clean == '/') ? '/index.html' : request_url_clean)
 			;
 
-			if (! fs.existsSync( file_name )) {
+			if (!fs.existsSync( file_name )) {
 				color_log( COLORS.ERROR, 'http:', 'File not found: ' + file_name );
 				return_http_error( response, 404 );
 				return;
@@ -284,7 +307,7 @@ const WebSocketServer = function () {
 				}
 			});
 
-			if (! fs.statSync( file_name ).isFile()) {
+			if (!fs.statSync( file_name ).isFile()) {
 				color_log( COLORS.ERROR, 'http:', 'Not a file ' + file_name );
 				return_http_error( response, 404 );
 				return;
@@ -369,7 +392,7 @@ const WebSocketServer = function () {
 
 	function global_error_handler (error) {
 		color_log(
-			COLORS.ERROR, STRINGS.MASTER_CONTROL+':',
+			COLORS.ERROR, STRINGS.MCP + ':',
 			COLORS.WARNING + STRINGS.GLOBAL_ERROR_HANDLER,
 			dump(error),
 		);
@@ -445,10 +468,6 @@ const WebSocketServer = function () {
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.init' );
 
-		function get_full_access (access_token) {
-			return self;
-		}
-
 		return new Promise( async (done)=>{
 			console.log( '.' + '-'.repeat(78) );
 			console.log( '|', COLORS.BOOT + PROGRAM_NAME + ' ' + PROGRAM_VERSION + COLORS.DEFAULT );
@@ -475,8 +494,7 @@ const WebSocketServer = function () {
 			console.log( "'" + '-'.repeat(78) );
 
 			self.reloader      = await new AppReloader({
-				getFullAccess : get_full_access,
-				triggerExit   : self.exit,
+				escalatePrivileges: escalate_privileges,
 			});
 
 			done();

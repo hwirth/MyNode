@@ -21,7 +21,7 @@ const EMPTY = {};
 const { Router } = require( APP_PATH + '/router.js' );
 
 
-module.exports = function AppReloader (callbacks) {
+module.exports = function AppReloader (callback) {
 	const self = this;
 
 	this.isAppReloader
@@ -74,6 +74,18 @@ module.exports = function AppReloader (callbacks) {
 	} // get_file_times
 
 
+
+	function invalidate_require_cache () {
+		const app_path = path.resolve( APP_PATH );
+		Object.keys( require.cache ).forEach( (key)=>{
+			if (key.slice(0, app_path.length) == app_path) {
+				delete require.cache[key];
+			}
+		});
+
+	} // invalidate_require_cache
+
+
 	function re_require_modules (socket) {
 
 		const RELOAD_TIME = '| (re)load time'
@@ -113,6 +125,8 @@ module.exports = function AppReloader (callbacks) {
 				);
 
 			});
+
+			invalidate_require_cache();
 
 			// Trigger force reloading all files
 			const app_path = path.resolve( APP_PATH );
@@ -163,15 +177,14 @@ module.exports = function AppReloader (callbacks) {
 			reload_required,
 		);
 
-		if (! reload_required) return;
+		if (!reload_required) return;
 
 		// Re-instantiate  Router
 		const MAIN_MODULE = {
 			url            : APP_PATH + '/router.js',
 			persistentData : self.persistentData,
 			callbacks      : {
-				getFullAccess : callbacks.getFullAccess,
-				triggerExit   : callbacks.triggerExit,
+				escalatePrivileges: callback.escalatePrivileges,
 			},
 		};
 
@@ -185,6 +198,8 @@ module.exports = function AppReloader (callbacks) {
 			color_log( COLORS.ERROR, '- /ERROR ' + '-'.repeat(50) );
 		}
 
+		let success = true;//...
+
 		try {
 			// Reload and reinstantiate main module
 			self.router =
@@ -196,12 +211,15 @@ module.exports = function AppReloader (callbacks) {
 				MAIN_MODULE.callbacks,
 
 			).catch( (error)=>{
+				success = false;//...
 				show_error( error, 'AppReloader-reload_modules:',
 					'await new require().Router()' + COLORS.STRONG + '.catch()',
 				);
+				invalidate_require_cache();
 			});
 
 		} catch (error) {
+			success = false;//...
 			show_error( error, 'AppReloader-reload_modules:',
 				COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
 			);
@@ -210,7 +228,7 @@ module.exports = function AppReloader (callbacks) {
 				const message = {
 					request  : { reloadSource: EMPTY },
 					success  : false,
-					response : error.message,
+					response : error.stack,
 				};
 
 				try {
@@ -218,12 +236,15 @@ module.exports = function AppReloader (callbacks) {
 
 				} catch (error) {
 					color_log( COLORS.ERROR, 'Another edge case:', error.message, message );
+					invalidate_require_cache();
 				}
 			}
 		}
 
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );
+
+		return success;
 
 	} // reload_modules
 
@@ -260,8 +281,12 @@ module.exports = function AppReloader (callbacks) {
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
-			await reload_modules( socket );
-			self.router.onMessage( socket, client_address, message );
+			const success = reload_modules( socket );
+			if (success) {
+				self.router.onMessage( socket, client_address, message );
+			} else {
+				socket.send( JSON.stringify({ MCP: 'END OF LINE!' }) );
+			}
 
 		}
 

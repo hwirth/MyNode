@@ -6,6 +6,7 @@
 "use strict";
 
 const { SETTINGS        } = require( '../server/config.js' );
+const { STRINGS         } = require( '../server/constants.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS         } = require( './constants.js' );
@@ -55,7 +56,7 @@ const PROTOCOL_DESCRIPTION = (`
 `); // PROTOCOL_DESCRIPTION
 
 
-module.exports = function AccessControl (persistent, callbacks) {
+module.exports = function AccessControl (persistent, callback) {
 	const self = this;
 
 	this.rules;
@@ -182,7 +183,7 @@ module.exports = function AccessControl (persistent, callbacks) {
 			const has_colon  = (pos_colon  >= 0);
 			const has_equals = (pos_equals >= 0);
 
-			if (! has_colon) {
+			if (!has_colon) {
 				throw new Error(
 					'No group in line '
 					+ line.source
@@ -282,7 +283,7 @@ module.exports = function AccessControl (persistent, callbacks) {
 
 		rules.forEach( (rule)=>{
 			rule.groups.forEach( (group)=>{
-				if (! new_rules[group]) new_rules[group] = [];
+				if (!new_rules[group]) new_rules[group] = [];
 				new_rules[group].push( rule.tokens );
 			});
 		});

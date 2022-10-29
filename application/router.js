@@ -1,4 +1,4 @@
-// protocols.js
+// router.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -10,10 +10,11 @@ const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS         } = require( './constants.js' );
 
+
 const WebSocketClient = require( './client.js' );
 
 
-module.exports.Router = function (persistent, callbacks) {
+module.exports.Router = function (persistent, callback) {
 	const self = this;
 
 	this.protocols;
@@ -95,7 +96,7 @@ module.exports.Router = function (persistent, callbacks) {
 		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Protocols.onMessage:', client_address, message );
 
 		const client = self.protocols.session.getClientByAddress( client_address );
-		if (! client) {
+		if (!client) {
 			color_log( COLORS.ERROR, 'ERROR', 'Protocols.onMessage: Unknown client:', client_address );
 			return;
 		}
@@ -142,7 +143,7 @@ module.exports.Router = function (persistent, callbacks) {
 			if (protocol_name == 'tag') return;
 
 			// Registered protocol?
-			if (! self.protocols[protocol_name]) {
+			if (!self.protocols[protocol_name]) {
 				rejected_commands.push( protocol_name + '.*' );
 
 				if (DEBUG.PROTOCOLS) color_log(
@@ -174,7 +175,7 @@ module.exports.Router = function (persistent, callbacks) {
 					= self.protocols[protocol_name].requestHandlers[command_name]
 					;
 
-					if (! request_handler) {
+					if (!request_handler) {
 						rejected_commands.push( combined_name );
 
 						if (DEBUG.PROTOCOLS) color_log(
@@ -249,15 +250,14 @@ module.exports.Router = function (persistent, callbacks) {
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
 		const SessionHandler = require( './session.js' );
 		const AccessControl  = require( './access.js' );
-		const MasterControl  = require( './mcp/mcp_main.js' );
-		const ChatServer     = require( './chat/chat_main.js' );
+		const MasterControl  = require( './mcp/main.js' );
+		const ChatServer     = require( './chat/main.js' );
 
 		const registered_callbacks = {
 			getUpTime              : ()=>{ return self.protocols.server.getUpTime(); },
 			getProtocols           : ()=>self.protocols,
 			getAllPersistentData   : ()=>persistent,
-			getFullAccess          : callbacks.getFullAccess,
-			triggerExit            : callbacks.triggerExit,
+			escalatePrivileges     : callback.escalatePrivileges,
 			getProtocolDescription : (show_line_numbers)=>{
 				return self.protocols.access
 				.getProtocolDescription( show_line_numbers );
@@ -273,7 +273,7 @@ module.exports.Router = function (persistent, callbacks) {
 					'getUpTime',
 					'getProtocols',
 					'getAllPersistentData',
-					'getFullAccess',
+					'escalatePrivileges',
 					'triggerExit',
 					'getProtocolDescription',
 				],
@@ -283,7 +283,7 @@ module.exports.Router = function (persistent, callbacks) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 		const load_requests = Object.keys( registered_protocols ).map( (protocol_name)=>{
-			if (! persistent[protocol_name]) {
+			if (!persistent[protocol_name]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
 				persistent[protocol_name] = {};
 			}

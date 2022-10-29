@@ -5,12 +5,10 @@
 
 "use strict";
 
-const reRequire = require( 're-require-module' ).reRequire;
-//...reRequire( './constants.js' );
-
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
+
 const { REASONS, RESULT, ID_SERVER } = require( './constants.js' );
 
 

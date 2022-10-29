@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { DEBUG } from './client_main.js';
+import { DEBUG } from './main.js';
 
 const CONNECTION_TIMEOUT_MS = 5000;
 
@@ -49,7 +49,7 @@ export const WebSocketClient = function (parameters = {}) {
 		const ws = new WebSocket( parameters.url );
 
 		function log (caption, data) {
-			if (! DEBUG.WEBSOCKET) return;
+			if (!DEBUG.WEBSOCKET) return;
 
 			console.groupCollapsed( caption );
 			console.log( data );

@@ -1,4 +1,4 @@
-// main.js
+// client: main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -57,7 +57,7 @@ export const Application = function () {
 
 
 	function on_websocket_open (event, socket)  {
-		self.debugConsole.print( 'Connected to ' + WS_URL, 'success' );
+		self.debugConsole.print( 'CEP: Connected to ' + WS_URL, 'cep' );
 
 		boot_sequence.forEach( (request)=>{
 			socket.send( request );
@@ -67,8 +67,8 @@ export const Application = function () {
 
 
 	function on_websocket_close (event, socket)  {
-		document.querySelector( '.debug_console .prompt' ).classList.add( 'disabled' );
-		self.debugConsole.print( 'Connection terminated', 'error' );
+		//...document.querySelector( '.debug_console .prompt' ).classList.add( 'disabled' );
+		self.debugConsole.print( 'CEP: Connection lost', 'cep' );
 
 	} // on_websocket_close
 
@@ -89,7 +89,7 @@ export const Application = function () {
 
 
 	function on_websocket_error (event, socket) {
-		self.debugConsole.print( 'Connection error', 'error' );
+		self.debugConsole.print( 'CEP: Connection error', 'cep' );
 
 	} // on_websocket_error
 
@@ -124,7 +124,7 @@ export const Application = function () {
 		return (`
 <header>
 	<h1>
-		<a href="/" title="Go to the home page"><img src="spielwiese.png" alt="Site icon"></a>
+		<a href="/" title="Go to the home page"><img src="/images/spielwiese.png" alt="Site icon"></a>
 		spielwiese
 		<small>research group</small>
 	</h1>
@@ -213,6 +213,7 @@ addEventListener( 'load', async ()=>{
 	document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
 
 	console.log( 'body.onLoad: new Application' );
+
 	await new Application();
 
 	document.querySelectorAll( '.noscript' ).forEach( (element)=>{

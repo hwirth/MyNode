@@ -5,13 +5,5 @@
 
 "use strict";
 
-module.exports = {
-	STRINGS: {
-		MASTER_CONTROL       : 'MCP',
-		GLOBAL_ERROR_HANDLER : 'Fatal system failure:',
-		END_OF_LINE          : 'END OF LINE.',
-	}
-};
-
 
 //EOF

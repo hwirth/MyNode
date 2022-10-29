@@ -1,48 +1,18 @@
 /*** spielwiese.css ***/
 
-* { margin:0; padding:0; box-sizing:border-box; font-size:1rem; }
-
-@font-face {
-	font-family: 'gothic';
-	src: url('/fonts/gothic.woff') format('woff');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'fa-regular';
-	src: url('/fonts/fa-regular-400.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'fa-brands';
-	src: url('/fonts/fa-brands-400.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'fa-solid';
-	src: url('/fonts/fa-solid-900.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-
-
 :root {
 	color-scheme:light dark; /* both supported */
 
-	--font-family : sans-serif;
+	--font-family          : sans-serif;
+	--terminal-font-family : terminal;
+	--NOBRACKETS_terminal-font-family : mode7;
+	--DISABLED_terminal-font-family : seti;
+	--DISABLED_terminal-font-family : crt;
 
 	--page-width   : 64rem;
 	--body-padding : max(1.5rem, calc((100vw - var(--page-width)) / 2));
 
-
 	--text-color        : #000;
-
 	--body-bg           : #f0f0f0;
 	--body-border       : solid 0.25em #5d7860;
 	--body-border-width : 0.35em 0;
@@ -75,7 +45,29 @@
 	--button-bg           : #333;
 	--button-submit-color : #fff;
 	--button-submit-bg    : #383;
+
+	--console-request-color  : #3a1;
+	--console-response-color : #69f;
+	--console-notice-color   : #48f;
+	--console-warning-color  : #fc0;
+	--console-error-color    : #e20;
+	--console-success-color  : #0f0;
+	--console-cep-color      : #cf0;
+	--console-mcp-color      : var(--console-response-color);
+
+	--console-input-color      : var(--console-request-color);
+	--console-separator-color  : #a60;
+	--console-separator-border : dashed 1px var(--console-separator-color);
+
+	--Xrequest-hover-background  : #210;
+	--request-hover-color       : #af0;
+	--Xresponse-hover-background : #123;
+	--response-hover-color      : #0af;
+
+	--console-line-height: 1rem;
+	--tab-size: 3;
 }
+
 
 body.dark_mode {
 	--text-color        : #ffe;
@@ -109,7 +101,72 @@ body.dark_mode {
 	--button-bg         : #383;
 }
 
+
+/* FONTS */
+
+@font-face {
+	font-family: 'terminal';
+	src: url('/fonts/WhiteRabbit.woff')  format('woff');
+	src: url('/fonts/WhiteRabbit.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'mode7';
+	src: url('/fonts/ModeSeven.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'seti';
+	src: url('/fonts/SETIPERU.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'crt';
+	src: url('/fonts/DIGIT.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'gothic';
+	src: url('/fonts/gothic.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'fa-regular';
+	src: url('/fonts/fa-regular-400.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'fa-brands';
+	src: url('/fonts/fa-brands-400.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'fa-solid';
+	src: url('/fonts/fa-solid-900.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+
 /* PAGE LAYOUT */
+
+* { margin:0; padding:0; box-sizing:border-box; font-size:1rem; }
 
 html { background:var(--bg-html); }
 
@@ -164,6 +221,7 @@ footer { background:var(--bg-footer); text-align:center; padding:var(--footer-pa
 
 footer span::after { content: ' - '; }
 footer span:last-child::after { display:none; }
+
 
 /* GENERIC */
 
@@ -221,64 +279,79 @@ Xbutton.login { background: var(--button-bg); color:var(--button-color); }
 Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
 
 
-/* PAGE SPECIFIC */
-
-article.lobby {
-	text-align:center;
-	justify-self:center;
-	align-self:center;
-}
+/* DEBUG CONSOLE */
 
 .debug_console {
 	position:absolute; bottom:0; left:0; z-index:999;
-	width:100%;
-	background:#000; color:#fff;
-	line-height:1.4rem;
-	font-size:1rem;
-	transition:height 0.1s ease-in-out;
-	height:0;
-	tab-size:4;
+	display:grid; grid-template-rows:auto 1fr min-content;
+	width:100%; height:0; transition:height 0.1s ease-in-out;
+	overflow:hidden;
+	background-color:#000;
+	background-image:url(/images/hack.png);
+	Xbackground-size:65%;
+	background-repeat:no-repeat;
+	background-position:center;
+	color:#fff;
 }
-.debug_console.active {
-	display:grid; grid-template-rows:1fr min-content;
-	height:100%;
-}
+.debug_console.active { height:100%; }
+.debug_console :focus { outline:none; }
 
 .debug_console .output {
 	padding-bottom:0.1em;
+	overflow-y:auto;
+	white-space:pre-wrap;
+}
+.debug_console .prompt span,
+.debug_console .input,
+.debug_console .output pre {
+	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--console-line-height);
+	tab-size:var(--tab-size);
 }
 
-.debug_console .output > * {
-	border-top:dashed 1px #444;
-	margin:0.25em 0;
-}
+.debug_console .separators pre {
+	border-bottom:var(--console-separator-border);
+	padding-top:0.25em; padding-bottom:0.25em; }
 
-.debug_console .prompt.disabled {
-	display:none;
-}
+.debug_console pre.request  { color:var(--console-request-color)  ; white-space:normal;   }
+.debug_console pre.response { color:var(--console-response-color) ; white-space:pre-wrap; }
+.debug_console pre.success  { color:var(--console-success-color)  ; }
+.debug_console pre.failure  { color:var(--console-error-color)    ; }
+.debug_console pre.cep      { color:var(--console-cep-color)      ; }
+.debug_console pre.mcp      { color:var(--console-mcp-color)      ; }
 
-.debug_console .prompt .buttons {
+X.debug_console pre.request:hover  { background:var(--request-hover-background)  ; color:var(--request-hover-color)  ; }
+X.debug_console pre.response:hover { background:var(--response-hover-background) ; color:var(--response-hover-color) ; }
+X.debug_console pre.mcp:hover      { color:#f00; }
+
+
+X.debug_console .prompt { display:grid; grid-template-columns:min-content 1fr; }
+X.debug_console .prompt.disabled { display:none; }
+
+
+.debug_console .input  {
+	width:100%; border:none; padding:0em;
+	background:transparent; color:var(--console-cep-color);
+	resize:none;
+	caret-shape:block;
+	Xcaret-shape:bar;
+	Xcaret-shape:unserscore;
+	caret-color: #ff0;
+}
+.debug_console .input.request { color:var(--console-input-color); }
+
+
+.debug_console .buttons {
+	background:#fff2;
+	flex-grow:1;
 	display:flex;
 	flex-wrap:wrap;
-	flex-direction:row-reverse;
+	Xflex-direction:row-reverse;
 	width:100%;
 }
-.debug_console .prompt button {
-	flex-grow:1;
+.debug_console button {
 	margin:1px; padding:0.1em 0.5em 0.2em;
 	border:none;
 }
-
-.debug_console .output { overflow-y:scroll; border-bottom:solid 1px #444; font-family:monospace,monospace; }
-.debug_console .input  { width:100%; border:none; background:transparent; color:#fff; resize:none; }
-.debug_console .input:focus { outline:none; }
-
-.debug_console > pre { border-bottom:dashed 1px #444; padding:0.25em 0.5em; }
-.debug_console .request  { color:#4a2; }
-.debug_console .response { color:#48c; }
-
-.debug_console .success { color: #0f0; }
-.debug_console .error { color: #f00; }
 
 
 /*EOF*/

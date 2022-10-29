@@ -134,6 +134,12 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] onclick everywhere --> focus
+[ ] mcp inspect: <path>, maxDepth: <depth>
+[ ] Normal responses only contain collapsable text. 'tag: <id>' request non-collapsible content of recent response
+[ ] console single click: text --> elements.input
+[ ] protocols --> services
+[ ] client.respond --> return
 [ ] {} ==> EMPTY
 [ ] Timeout after logout not cleared
 [ ] server reset: clear persistent
@@ -376,7 +382,7 @@ module.exports = function Client (persistent) {
 		const new_file_times = get_file_times();
 
 		return Object.keys( self.fileTimes ).find( (file_name)=>{
-			if (! self.loadedModules[ file_name ]) return true;
+			if (!self.loadedModules[ file_name ]) return true;
 
 			const file_time   = self.fileTimes[ file_name ];
 			const module_time = self.loadedModules[ file_name ];

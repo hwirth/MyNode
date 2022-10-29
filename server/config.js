@@ -76,7 +76,7 @@ const SETTINGS = {
 
 	// Upper case chars are also allowed
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.?&%=-+/:[]',   // http server white list
-	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz1234567890_[]()@-/äöüß',   // Chat name white list
+	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789_[]()@-/äöüß',   // Chat name white list
 
 	TIMEOUT: {
 		SOCKET_CLOSE : 100,

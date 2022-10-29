@@ -16,15 +16,23 @@
 	}
 </style>
 <script class="noscript">
+	const errors = ['error', 'unhandledRejection', 'uncaughtException'];
+	const apply = (event, method) => { return method(event, on_error) };
+	errors.forEach( error => apply(error, addEventListener) );
 	function splash_status (text) { document.querySelector( 'div.noscript p').innerHTML = text; };
+	function on_error (error) {
+		errors.forEach( error => apply(error, removeEventListener) );
+		splash_status( error.message );
+		console.log( error );
+	}
 </script>
-<script src="client_main.js" type="module"></script>
+<script src="main.js" type="module"></script>
 </head><body class="initializing">
 
 	<div class="noscript">
 		<div>
 			<h1>
-				<img src="spielwiese.png" alt="Site icon">
+				<img src="/images/spielwiese.png" alt="Site icon">
 				<br>
 				spielwiese
 			</h1>

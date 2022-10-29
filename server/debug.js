@@ -46,8 +46,6 @@ const DEBUG = {                                                // What to log
 
 	PARSE_RULES               : DEBUG_ENABLED && !false,
 
-	BOOT_TIME                 : Date.now(),
-
 }; // DEBUG
 
 
@@ -106,6 +104,7 @@ const COLORS = {
 	ADDRESS      : ANSI_COLORS.GREEN,
 
 	MCP          : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
+	TOKEN        : ANSI_COLORS.BRIGHT  + ANSI_COLORS.CYAN,
 
 	RESET        : ANSI_COLORS.RESET,
 	EXIT         : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
@@ -176,7 +175,7 @@ function color_log (colors = '', heading = '', ...text) {
 			const pos  = file_name.lastIndexOf( '/' );
 			const path = file_name.substr( 0, pos + 1 );
 
-			if (! fs.existsSync( path )) {
+			if (!fs.existsSync( path )) {
 				console.log( 'debug.js: color_log: Attempting to create directory "' + path + '"' );
 				fs.mkdirSync( path, { recursive: true } );
 			}

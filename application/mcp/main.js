@@ -1,17 +1,18 @@
-// mcp_main.js
+// mcp: main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
 
-const { SETTINGS        } = require( '../../server/config.js' );
-const { DEBUG, COLORS   } = require( '../../server/debug.js' );
-const { color_log, dump } = require( '../../server/debug.js' );
-const { REASONS, RESULT } = require( '../constants.js' );
+const { SETTINGS          } = require( '../../server/config.js' );
+const { DEBUG, COLORS     } = require( '../../server/debug.js' );
+const { color_log, dump   } = require( '../../server/debug.js' );
+
+const { RESPONSE, REASONS, RESULT, STRINGS } = require( '../constants.js' );
 
 
-module.exports = function MasterControlProgram (persistent, callbacks) {
+module.exports = function MasterControlProgram (persistent, callback) {
 	const self = this;
 
 
@@ -19,10 +20,10 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 // UPTIME
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	if (! persistent.serverStartTime) persistent.serverStartTime =  DEBUG.BOOT_TIME;
+	if (!persistent.serverStartTime) persistent.serverStartTime = Date.now() - process.uptime();
 
 	function get_uptime (formatted = false) {
-		const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
+		const milliseconds = process.uptime(); //Date.now() - persistent.serverStartTime + 0*99999999999;
 
 		if (formatted) {
 			let seconds = Math.floor( milliseconds / 1000 );
@@ -57,22 +58,6 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// VERIFY ACCESS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	let current_access_token = create_new_access_token();
-
-	function create_new_access_token () {
-		return Math.floor( Math.random() * 900 ) + 100;
-	}
-
-	function token_is_valid (token) {
-		return (token == current_access_token);
-
-	} // token_is_valid
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -85,18 +70,24 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 			dump( client ),
 		);
 
-		callbacks
-		.getFullAccess( 'secret$token' )
+		callback
+		.escalatePrivileges( 'secret$token' )
 		.then( ()=>app.exit )
 		;
-
-		//...callbacks.triggerExit();
 
 	}; // restart
 
 
 	this.requestHandlers.inspect = function (client, request_id, parameters) {
-		let target = callbacks.getFullAccess();
+		let target = callback.escalatePrivileges( request_id.token || DEBUG.MCPTOKEN );
+
+		function respond_error () {
+			client.respond( RESULT.FAILURE, request_id, STRINGS.YOU_SHOULDNT_HAVE );
+		}
+
+		if (!target) {
+			respond_error();
+		}
 
 		if (Object.keys(parameters).length > 0) {
 	let count = 0;
@@ -106,13 +97,12 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 
 			if (parameters) {
 				path.find( (token)=>{
-
-
 					if (target[ token ]) {
 						target = target[token];
 	console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
 					} else {
-						client.respond( false, request_id, REASONS.YOU_SHOULDNT_HAVE );
+						respond_error();
+						return;
 					}
 				});
 			}
@@ -124,7 +114,8 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 		default       :  result = target;                 break;
 		}
 
-		client.respond( true, request_id, { [parameters]: result }  );
+		if (!parameters) parameters = 'master';
+		client.respond( RESULT.SUCCESS, request_id, { [parameters]: result }  );
 
 	}; // inspect
 
@@ -136,7 +127,7 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 					client.respond(
 						RESULT.SUCCESS,
 						request_id,
-						callbacks.getAllPersistentData(),
+						callback.getAllPersistentData(),
 					);
 				} else {
 					client.respond(
@@ -158,7 +149,7 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 						heapUsed : Math.floor(heap / 1024**2 * 100) / 100 + ' MiB',
 						access   : {
 							rules: (
-								callbacks
+								callback
 								.getProtocolDescription( /*show_line_numbers*/false )
 								.split( '\n' )
 							),
@@ -177,11 +168,23 @@ module.exports = function MasterControlProgram (persistent, callbacks) {
 	}; // status
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
 	this.onMessage = function (...parameters) {
-		color_log( COLORS.MCP, 'MCP:', ...parameters.map( (parameter)=>{
-			return Object.keys( parameter );
-		}));
-	}
+		if (DEBUG.MCP) color_log(
+			COLORS.MCP,
+			STRINGS.MCP + ' ' + STRINGS.MASTER_CONTROL + ':',
+			...parameters.map( (parameter)=>{
+				switch (typeof parameter) {
+					case 'object' : return '\n',Object.keys( parameter );  break;
+					default       : return '\n',parameter;                 break;
+				}
+			}),
+		);
+
+	} // onMessage
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
