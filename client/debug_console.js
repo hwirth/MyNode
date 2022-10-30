@@ -13,36 +13,21 @@ const BANG = BANGS[0];
 
 const BUTTON_SCRIPTS = {
 	'stat'    : BANG + 'session\n\tstatus',
-	'root'     : BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
-	'sec'     : BANG + 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
-	'logout'  : BANG + 'session\n\tlogout',
+	'root'    : BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
+	'user'    : BANG + 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
+	'out'     : BANG + 'session\n\tlogout',
 	'/w'      : BANG + 'session\n\twho',
-	'/k root'  : BANG + 'session\n\tkick\n\t\tusername: root',
-	'/k sec'  : BANG + 'session\n\tkick\n\t\tusername: sec',
+	'kroot'   : BANG + 'session\n\tkick\n\t\tusername: root',
+	'kuser'   : BANG + 'session\n\tkick\n\t\tusername: sec',
 	'mcp'     : BANG + 'mcp\n\tstatus',
-	'restart' : BANG + 'mcp\n\trestart',
-	/*
-	'status'     : 'session\n\tstatus',
-	'login root'  : 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
-	'login sec'  : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
-	'logout'     : 'session\n\tlogout',
-	'who'        : 'session\n\twho',
-	'kick root'   : 'session\n\tkick\n\t\tusername: root',
-	'kick sec'   : 'session\n\tkick\n\t\tusername: sec',
-	'mcp status' : 'mcp\n\tstatus',
-	'persistent' : 'mcp\n\tstatus\n\t\tpersistent',
-	'restart'    : 'mcp\n\trestart',
-	*/
+	'rst'     : BANG + 'mcp\n\trestart',
 };
 
 const TUTORIAL_SCRIPT = [
 	BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
 	BANG + 'session\n\tstatus',
 	BANG + 'mcp\n\tinspect',
-	BANG + 'mcp\n\tinspect: reloader',
 	BANG + 'mcp\n\tinspect: reloader.persistentData',
-	BANG + 'mcp\n\tinspect: reloader.persistentData.session',
-	BANG + 'mcp\n\tinspect: reloader.persistentData.session.accounts',
 	BANG + 'mcp\n\tstatus',
 ];
 

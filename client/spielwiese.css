@@ -301,6 +301,7 @@ button.submit {  background: var(--button-submit-bg); color:var(--button-submit-
 }
 .debug_console pre > div { white-space:pre; Xpadding-right:2em; }
 
+code,
 .debug_console button,
 .debug_console .prompt span,
 .debug_console .input,
@@ -378,20 +379,26 @@ code.curlyC   { color:#bbb; }
 
 
 html {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background-color:#000;
 	background-size: 300% 300%;
 	background-image: linear-gradient(
 		-45deg,
-		rgba(59,173,227,1) 0%,
-		rgba(87,111,230,1) 25%,
-		rgba(152,68,183,1) 51%,
-		rgba(255,53,127,1) 100%
+		rgba(59,173,227,0.1) 0%,
+		rgba(87,111,230,0.1) 25%,
+		rgba(152,68,183,0.1) 51%,
+		rgba(255,53,127,0.1) 100%
 	);
-	animation: AnimateBG 20s ease infinite;
+	animation: AnimateBG 180s ease infinite;
 	overflow:hidden;
-	background:#000;
 }
 
-body { padding:300px; }
+body { padding:300px; background:none; }
 
 .debug-console button { background:none; border:none; }
 

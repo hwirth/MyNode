@@ -10,8 +10,8 @@ const path = require( 'path' );
 
 const DEV_SERVER = true || (os.hostname() == 'labor');
 
-const PROGRAM_NAME    = 'Spielwiese Websocket Server';
-const PROGRAM_VERSION = 'v0.0.4p';
+const PROGRAM_NAME    = 'MASTER CONTROL PROTOCOL';
+const PROGRAM_VERSION = 'v0.0.5p';
 
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
 const config_file = {};   // Dictionary of parsed values, used for exporting in this file via SETTINGS[], etc.
