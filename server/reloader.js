@@ -73,7 +73,7 @@ module.exports = function AppReloader (callback) {
 
 
 	function invalidate_require_cache () {
-		const app_path = path.resolve( APP_PATH );
+		const app_path = path.resolve( SETTINGS.APP_PATH );
 		Object.keys( require.cache ).forEach( (key)=>{
 			if (key.slice(0, app_path.length) == app_path) {
 				delete require.cache[key];
@@ -126,7 +126,7 @@ module.exports = function AppReloader (callback) {
 			invalidate_require_cache();
 
 			// Trigger force reloading all files
-			const app_path = path.resolve( APP_PATH );
+			const app_path = path.resolve( SETTINGS.APP_PATH );
 			Object.keys( require.cache ).forEach( (key)=>{
 				if (key.slice(0, app_path.length) == app_path) {
 					delete require.cache[key];
@@ -177,8 +177,8 @@ module.exports = function AppReloader (callback) {
 		if (!reload_required) return;
 
 		// Re-instantiate  Router
-		const main_module = {
-			url        : SETTINGS.APP_PATH + + SETTINGS.MAIN_MODULE,
+		const MAIN_MODULE = {
+			url        : SETTINGS.MAIN_MODULE,
 			persistent : self.persistent,
 			callbacks  : {
 				escalatePrivileges: callback.escalatePrivileges,
@@ -201,11 +201,11 @@ module.exports = function AppReloader (callback) {
 			// Reload and reinstantiate main module
 			self.router =
 			await new require(
-				main_module.url
+				MAIN_MODULE.url
 
 			).Router(
-				main_module.persistent,
-				main_module.callbacks,
+				MAIN_MODULE.persistent,
+				MAIN_MODULE.callbacks,
 
 			).catch( (error)=>{
 				success = false;//...
@@ -269,11 +269,11 @@ module.exports = function AppReloader (callback) {
 	this.onMessage = function (socket, client_address, json_string) {
 		let message = null;
 
-		try {
+		//try {
 			message = JSON.parse( String(json_string) );
-		} catch (error) {
+		//} catch (error) {
 			color_log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
-		}
+		//}
 
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 

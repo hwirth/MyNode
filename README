@@ -135,6 +135,7 @@ $ npm install ws follow-redirects re-require-module
 6. TODO
 =======
 [ ] whoami
+[ ] Paths? whoami --> mcp status whoami
 [ ] onclick everywhere --> focus
 [ ] mcp inspect: <path>, maxDepth: <depth>
 [ ] Normal responses only contain collapsable text. 'tag: <id>' request non-collapsible content of recent response
@@ -347,7 +348,7 @@ module.exports = function Client (persistent) {
 		const stat_requests = [];
 
 		await new Promise( (done)=>{
-			glob( APP_PATH + '/**/*.js', (error, matches)=>{
+			glob( SETTINGS.APP_PATH + '/**/*.js', (error, matches)=>{
 				if (error) color_log(
 					COLORS.ERROR,
 					'AppReloader-get_file_times:',
@@ -472,7 +473,7 @@ module.exports = function Client (persistent) {
 		if (nr_reloaded_files === 0) return;
 
 		const MAIN_MODULE = {
-			url            : APP_PATH + '/protocols.js',
+			url            : SETTINGS.APP_PATH + '/protocols.js',
 			persistentData : self.persistentData,
 			callbacks      : { triggerExit : callbacks.triggerExit },
 		};
@@ -608,3 +609,35 @@ try {
 				],
 			},
 		};
+
+
+
+
+
+	app.prototype.interface = {
+		mcp: {
+			system: {
+				status :null
+
+			},
+			devices: {
+				cpu :null
+				gpu :null
+				storage :null
+				network :null
+				usb :null
+				midi :null
+				audio :null
+				video :null
+				vr :null
+				ar :null
+
+			}
+			connections: {
+				ssh: {
+					hio: "-p 7899 mcp@192.168.12.7"
+				}
+			}
+		}
+		help :null
+	}

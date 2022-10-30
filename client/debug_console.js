@@ -13,21 +13,21 @@ const BANG = BANGS[0];
 
 const BUTTON_SCRIPTS = {
 	'stat'    : BANG + 'session\n\tstatus',
-	'hmw'     : BANG + 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+	'root'     : BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
 	'sec'     : BANG + 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
 	'logout'  : BANG + 'session\n\tlogout',
 	'/w'      : BANG + 'session\n\twho',
-	'/k hmw'  : BANG + 'session\n\tkick\n\t\tusername: hmw',
+	'/k root'  : BANG + 'session\n\tkick\n\t\tusername: root',
 	'/k sec'  : BANG + 'session\n\tkick\n\t\tusername: sec',
 	'mcp'     : BANG + 'mcp\n\tstatus',
 	'restart' : BANG + 'mcp\n\trestart',
 	/*
 	'status'     : 'session\n\tstatus',
-	'login hmw'  : 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+	'login root'  : 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
 	'login sec'  : 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
 	'logout'     : 'session\n\tlogout',
 	'who'        : 'session\n\twho',
-	'kick hmw'   : 'session\n\tkick\n\t\tusername: hmw',
+	'kick root'   : 'session\n\tkick\n\t\tusername: root',
 	'kick sec'   : 'session\n\tkick\n\t\tusername: sec',
 	'mcp status' : 'mcp\n\tstatus',
 	'persistent' : 'mcp\n\tstatus\n\t\tpersistent',
@@ -36,7 +36,7 @@ const BUTTON_SCRIPTS = {
 };
 
 const TUTORIAL_SCRIPT = [
-	BANG + 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
+	BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
 	BANG + 'session\n\tstatus',
 	BANG + 'mcp\n\tinspect',
 	BANG + 'mcp\n\tinspect: reloader',

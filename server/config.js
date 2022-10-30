@@ -54,14 +54,15 @@ parse_config_file();
 // SETTINGS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;
-
+let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep
 const SETTINGS = {
 	DEV_SERVER: DEV_SERVER,
 	BASE_DIR: base_dir,
 
+	INSTALL_GEH : true,
+
 	APP_PATH    : '../application/',
-	MAIN_MODULE : 'router.js',
+	MAIN_MODULE : '../application/router.js',
 
 	LOG: {
 		FILE_NAME     : config_file.LOG_FILE_NAME,                // File name for log output
@@ -91,9 +92,6 @@ const SETTINGS = {
 }; // SETTINGS
 
 
-module.exports.SETTINGS   = SETTINGS;
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // FROM CONFIG FILE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -115,10 +113,6 @@ const HTTPS_OPTIONS = {
 const WSS_OPTIONS = {
 	port : config_file.WS_PORT,
 };
-
-module.exports.SSL_KEYS      = SSL_KEYS;
-module.exports.HTTPS_OPTIONS = HTTPS_OPTIONS;
-module.exports.WSS_OPTIONS   = WSS_OPTIONS;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -152,6 +146,10 @@ const MIME_TYPES = {
 }; // MIME_TYPES
 
 
+module.exports.SETTINGS = SETTINGS;
+module.exports.SSL_KEYS = SSL_KEYS;
+module.exports.HTTPS_OPTIONS = HTTPS_OPTIONS;
+module.exports.WSS_OPTIONS = WSS_OPTIONS;
 module.exports.EXIT_CODES = EXIT_CODES;
 module.exports.MIME_TYPES = MIME_TYPES;
 

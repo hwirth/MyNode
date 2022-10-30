@@ -106,7 +106,7 @@ module.exports.Router = function (persistent, callback) {
 			//	error,
 			//	Object.getOwnPropertyNames( error ),   //... SODD
 			//)
-console.log( 'ERRRRRRRR', typeof error, error );
+//console.log( 'ERRRRRRRR', typeof error, error );
 			if (typeof error != 'error') {
 				send_as_json( socket, {
 					tag: message.tag,
@@ -150,7 +150,6 @@ console.log( 'ERRRRRRRR', typeof error, error );
 		// Main level keys designate target protocol, second level a command
 		// Since keys in objects must be unique, each command can only be used once
 		Object.keys( message ).forEach( (protocol_name)=>{
-try {
 			if (protocol_name == 'tag') return;
 
 			// Registered protocol?
@@ -209,7 +208,7 @@ try {
 						log_persistent( 'onMessage:', 'PRE COMMAND: ' );
 						const request_arguments = message[ protocol_name ][ command_name ];
 
-						try {
+						//try {
 							request_handler(
 								client,
 								request_id,
@@ -217,24 +216,21 @@ try {
 							);
 							//... How do I catch, when I accidentially
 							//... forgot to await something in there?
-console.log( 'RESILT', result instanceof Promise );
+//console.log( 'RESILT', result instanceof Promise );
 
-						} catch (error) {
-console.log( '>>>>>>>>>', typeof error, dump(error) );
-console.log( typeof request_handler );
-console.log( '>>>>>>' );
-console.log( request_handler.toString() );
-console.log( '>>>>>>' );
-							send_error( error );
-						}
+						//} catch (error) {
+//console.log( '>>>>>>>>>', typeof error, dump(error) );
+//console.log( typeof request_handler );
+//console.log( '>>>>>>' );
+//console.log( request_handler.toString() );
+//console.log( '>>>>>>' );
+						//	send_error( error );
+						//}
 
 						log_persistent( 'onMessage:', 'POST COMMAND: ' );
 					}
 				});
 			}
-} catch (error) {
-	color_log( COLORS.ERROR, 'ERROR:', 'Router.onMessage:1:', error );
-}
 		});
 
 		color_log(

@@ -416,10 +416,13 @@ if (error == undefined) return;
 
 
 	function install_error_handler() {
+		if (!SETTINGS.INSTALL_GEH) return;
+
 		color_log( COLORS.WSS, 'WebSocketServer:', 'Setting up error handler' );
 
 		process.on( 'uncaughtException'  , global_error_handler );
 		process.on( 'unhandledRejection' , global_error_handler );
+
 		process.on( 'SIGINT',  self.exit );
 		process.on( 'SIGQUIT', self.exit );
 		process.on( 'SIGTERM', self.exit );
@@ -499,13 +502,13 @@ if (error == undefined) return;
 			console.log( '.' + '-'.repeat(78) );
 			console.log( '| APPLICATION' );
 			console.log( "'" + '-'.repeat(78) );
-try {
+//try {
 			self.reloader      = await new AppReloader({
 				escalatePrivileges: escalate_privileges,
 			});
-} catch (error) {
-	color_log( COLORS.MCP, 'MCP:', 'ROOT_LOAD_FAILED' );
-}
+//} catch (error) {
+//	color_log( COLORS.MCP, 'MCP:', 'ROOT_LOAD_FAILED' );
+//}
 			done();
 		});
 

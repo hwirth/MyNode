@@ -78,8 +78,8 @@ module.exports = function MasterControl (persistent, callback) {
 	}; // restart
 
 
-	this.request.inspect = function (client, request_id, parameters) {
-		let target = callback.escalatePrivileges( request_id.token || DEBUG.MCPTOKEN );
+	this.request.inspect = async function (client, request_id, parameters) {
+		let target = await callback.escalatePrivileges( request_id.token || DEBUG.MCPTOKEN );
 
 		function respond_error () {
 			client.respond( RESULT.FAILURE, request_id, STRINGS.YOU_SHOULDNT_HAVE );
@@ -177,7 +177,7 @@ module.exports = function MasterControl (persistent, callback) {
 	this.onMessage = function (...parameters) {
 		if (DEBUG.MCP) color_log(
 			COLORS.MCP,
-			STRINGS.MCP + ' ' + STRINGS.MASTER_CONTROL + ':',
+			'MASTER CONTROL:',
 			...parameters.map( (parameter)=>{
 				switch (typeof parameter) {
 					case 'object' : return '\n',Object.keys( parameter );  break;

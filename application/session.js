@@ -348,14 +348,14 @@ module.exports = function SessionHandler (persistent, callback) {
 			// "Load from database"
 			const data = {
 				accounts: {
-					hmw: {
+					'root': {
 						password: 'pass1',
 						groups: [
 							'admin',
 						],
 						maxIdleTime: 0,
 					},
-					sec: {
+					'a User': {
 						password: 'pass2',
 					},
 				}, // accounts

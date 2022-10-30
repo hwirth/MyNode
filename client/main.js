@@ -27,7 +27,7 @@ export const Application = function () {
 		{
 			session: {
 				login: {
-					username : 'hmw',
+					username : 'root',
 					password : 'pass1',
 				},
 				status: {},
@@ -41,7 +41,7 @@ export const Application = function () {
 					persistent: {},
 				},
 				kick: {
-					username: 'hmw',
+					username: 'root',
 				},
 			},
 		},
