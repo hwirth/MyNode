@@ -15,8 +15,8 @@ export const DEBUG = {
 const WS_URL = 'wss://spielwiese.central-dogma.at:1337';
 
 
-export const Application = function () {
-	const self = this;
+const Application = function () {
+	const app = self = this;
 
 	this.webSocketClient;
 	this.debugConsole;
@@ -120,59 +120,16 @@ export const Application = function () {
 	}; // exit
 
 
-	function create_markup () {
-		return (`
-<header>
-	<h1>
-		<a href="/" title="Go to the home page"><img src="/images/spielwiese.png" alt="Site icon"></a>
-		spielwiese
-		<small>research group</small>
-	</h1>
-</header>
-
-<nav class="path_menu">
-	<a href="#">Home</a>
-</nav>
-
-<nav class="main_menu">
-	<a href="//spielwiese.central-dogma.at:443/" title="Load this web page via Apache">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/" title="Load this web page directly from the node.js server">Node</a>
-</nav>
-
-<article>
-	<h2>Heading</h2>
-	<p>Some text...</p>
-</article>
-
-<footer>
-	<span>spielwiese.central-dogma.at</span>
-	<span>copy(l)eft 2022</span>
-	<span><a href="mailto:spielwiese.hmw@gmx.net">spielwiese.hmw@gmx.net</a></span>
-</footer>
-
-<button
-	style="position:absolute;bottom:2px;left:2px;z-index:999;"
-	onclick="document.body.classList.toggle('dark_mode')"
-	title="Toggle between light and dark mode"
->D/L Mode</button>
-		`);
-
-	} // create_markup
-
-
 	this.init = async function () {
 		console.log( 'Application.init' );
 		splash_status( 'Connecting...' );
-
-		//...document.body.innerHTML = create_markup();
 
 		self.debugConsole = await new DebugConsole({
 			getUrl      : ()=>WS_URL,
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
 		});
-		self.debugConsole.toggle();
-		//...self.debugConsole.elements.input.value = 'session\n\tlogin\n\t\tusername: \n\t\tpassword: ';
+		//...self.debugConsole.toggle();
 		self.debugConsole.elements.input.focus();
 
 		boot_sequence.forEach( (request)=>{
@@ -193,9 +150,7 @@ export const Application = function () {
 	}; // init
 
 
-	// Initialize the object asynchronously
-	// Makes sure, a reference to this instance is returned to  const app = await new Application();
-	return self.init().then( ()=>self );
+	return self.init().then( ()=>self );   // const app = await new Application()
 
 }; // Application
 

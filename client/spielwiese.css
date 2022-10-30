@@ -402,9 +402,12 @@ code.curlyC   { color:#bbb; }
 
 
 
+/*** QUICK EXPERIMENT ***/
+
+
 html {
 	overflow:hidden;
-	transform:scale(1.7);
+	transform:scale(1);
 	background-size: 900% 300%;
 	background-color: #000;
 	background-image: linear-gradient(
@@ -412,22 +415,22 @@ html {
 		rgba(0,127,255,1) 0%,
 		rgba(255,0,127,1) 100%
 	);
-	animation: AnimateGRADIENT 20s ease infinite;
+	animation: GRADIENT 20s ease infinite;
 }
 
 body {
 	animation: AnimateBG 91s ease infinite;
-	transform: rotateX(20deg) scale(1.25);
+	Xtransform: rotateX(20deg) scale(1);
 	perspective-origin: top center;
 	Xperspective: 1000px;
 
-	width: 100%;
-	height: 110vh;
+	width: 100vmax%;
+	aspect-ratio:calc(4/3);
 	Xdisplay: flex;
 	Xalign-items: center;
 	Xjustify-content: center;
 
-	animation: AnimateROT2 91s ease infinite;
+	animation: BODY 91s ease infinite;
 
 	background-color:#0008;
 	background-image:url(/images/mcp.png);
@@ -439,22 +442,23 @@ body {
 }
 
 .debug_console {
-	padding:15vmax;
-	animation: AnimateROT22 91s ease infinite;
+	box-sizing:border-box;
+	padding:10em 15em;
+	animation: CONSOLE 91s ease infinite;
 	background:none;
 }
 .debug_console .buttons { background:none; }
 .debug_console button { border:none; }
 .debug_console .output { overflow:hidden; }
 
-@keyframes AnimateGRADIENT {
-	 00% { background-position:  0% 50%; }
+@keyframes GRADIENT {
+	  0% { background-position:  0% 50%; }
 	 50% { background-position:100% 50%; }
 	100% { background-position:  0% 50%; }
 }
 @keyframes AnimateBG {
 	--s:1;
-	 00% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
+	  0% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
 	 11% {                               transform:scale(calc(var(--s) + 0.085)); }
 	 22% {                               transform:scale(calc(var(--s) + 0.37)); }
 	 33% {                               transform:scale(calc(var(--s) + 0.93)); }
@@ -465,17 +469,18 @@ body {
 	100% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
 }
 @keyframes AnimateROT1 {
-	 00% { transform: rotateZ( 1deg) rotate(-90deg); }
+	  0% { transform: rotateZ( 1deg) rotate(-90deg); }
 	 50% { transform: rotateZ(-1deg) rotate(+90deg); }
 	100% { transform: rotateZ( 1deg) rotate(-90deg); }
 }
-@keyframes AnimateROT2 {
-	 00% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
+@keyframes BODY {
+	  0% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
 	 50% { transform: rotateZ(-10deg); background-position: 50% 50%; transform:scale(0.9); }
 	100% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
 }
-@keyframes AnimateROT22 {
-	 00% { transform: rotateZ(-1deg); transform:scale(0.75); }
-	 50% { transform: rotateZ( 1deg); transform:scale(0.74); }
-	100% { transform: rotateZ(-1deg); transform:scale(0.70); }
+@keyframes CONSOLE {
+	--s:1;
+	  0% { transform: rotateZ(-1deg); transform:scale(calc(0.75 + var(--s))); }
+	 50% { transform: rotateZ( 1deg); transform:scale(calc(0.74 + var(--s))); }
+	100% { transform: rotateZ(-1deg); transform:scale(calc(0.70 + var(--s)))); }
 }

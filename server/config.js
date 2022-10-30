@@ -54,7 +54,8 @@ parse_config_file();
 // SETTINGS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep
+const base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep
+
 const SETTINGS = {
 	DEV_SERVER: DEV_SERVER,
 	BASE_DIR: base_dir,

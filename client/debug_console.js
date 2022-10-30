@@ -284,7 +284,7 @@ export const DebugConsole = function (callback) {
 		)
 		//.replace(/&/g, '&amp;')
 		//.replace(/</g, '&lt;')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')//...
 		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
 		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
 		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
@@ -729,9 +729,7 @@ console.log( 'message_html', message_html );
 	}; // init
 
 
-	// Initialize the object asynchronously
-	// Makes sure, a reference to this instance is returned to  const app = await new Application();
-	self.init().then( ()=>self );
+	self.init().then( ()=>self );   // const console = await new DebugConsole()
 
 }; // DebugConsole
 
