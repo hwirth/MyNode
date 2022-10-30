@@ -419,95 +419,6 @@ console.log( 'message_html', message_html );
 		self.elements.input.addEventListener( 'keyup', adjust_textarea );
 
 
-		// SEND
-
-		self.requestId = 0;
-
-		self.elements.send.addEventListener( 'click', ()=>{
-			let text = self.elements.input.value.trim();
-			const has_bang = cmd => BANGS.filter( b => b == bang ).length > 0;
-			let bang = null;
-			if (has_bang) {
-				bang = text.charAt(0);
-				text = text.slice(1).trim();
-			}
-
-			if (!bang) {
-				event.preventDefault();
-				self.elements.input.focus();
-				return;
-			}
-
-			if (bang == '>') {
-				callback.send( text_to_request(text, ++self.requestId) );
-				return;
-			}
-
-
-			// PARSE MACROS
-
-			const COMMAND_SYNTAX = [
-				{
-					syntax: 'session login username: * password: *',
-					create: (username, password)=>{
-						return {
-							tag: ++self.requestId,
-							session: {
-								login: {
-									username: username,
-									password: password,
-								},
-							},
-						};
-					},
-				},{
-					syntax: 'session logout',
-					create: ()=>{
-						return {
-							tag: ++self.requestId,
-							session: {
-								logout: {
-								}
-							},
-						};
-					},
-				},
-			];
-/*
-	.session login username: sec password: pass2
-*/
-			const request = COMMAND_SYNTAX.find( (request, index)=>{
-				const syntax     = request.syntax.split(' ');
-				const parameters = [];
-				let synthesized  = '';
-				text.split(' ').forEach( (word, index)=>{
-					if (syntax[index] == '*') {
-						parameters.push( word );
-						synthesized += ' ' + word;
-					} else {
-						synthesized += ' ' + syntax[index];
-					}
-				});
-				synthesized = synthesized.trim();
-
-				const translate = (index, ...params) => COMMAND_SYNTAX[index].create(...params);
-				const translated = translate( index, ...parameters );
-
-				console.log( 'X', text );
-				console.log( 'S', synthesized );
-				console.log( 'P', parameters );
-				console.log( 'T', translated );
-
-				if (text == synthesized) {
-					callback.send( translated );
-					return true;
-				} else {
-					return false;
-				}
-			});
-		});
-
-
 		// KEYBOARD
 
         	self.elements.input.addEventListener( 'keydown', (event)=>{
@@ -521,7 +432,6 @@ console.log( 'message_html', message_html );
 				// Execute command with any modifyer+Enter
 				event.preventDefault();
 				self.elements.send.click();
-				self.elements.input.focus();
 
 			} else if (event.keyCode == 9 || event.which == 9) {
 				// Insert TAB character instead of leaving the textarea
@@ -656,6 +566,98 @@ console.log( 'message_html', message_html );
 			}
 		});
 
+
+
+		// SEND
+
+		self.requestId = 0;
+
+		self.elements.send.addEventListener( 'click', ()=>{
+			let text = self.elements.input.value.trim();
+			const has_bang = cmd => BANGS.filter( b => b == bang ).length > 0;
+			let bang = null;
+			if (has_bang) {
+				bang = text.charAt(0);
+				text = text.slice(1).trim();
+			}
+
+			if (!bang) {
+				//event.preventDefault();
+				//self.elements.input.focus();
+				//return;
+			}
+
+			if (bang == '>') {
+				callback.send( text_to_request(text, ++self.requestId) );
+				return;
+			}
+
+
+			// PARSE MACROS
+
+			const COMMAND_SYNTAX = [
+				{
+					syntax: 'session login username: * password: *',
+					create: (username, password)=>{
+						return {
+							tag: ++self.requestId,
+							session: {
+								login: {
+									username: username,
+									password: password,
+								},
+							},
+						};
+					},
+				},{
+					syntax: 'session logout',
+					create: ()=>{
+						return {
+							tag: ++self.requestId,
+							session: {
+								logout: {
+								}
+							},
+						};
+					},
+				},
+			];
+/*
+	.session login username: sec password: pass2
+*/
+			const request = COMMAND_SYNTAX.find( (request, index)=>{
+				const syntax     = request.syntax.split(' ');
+				const parameters = [];
+				let synthesized  = '';
+				text.split(' ').forEach( (word, index)=>{
+					if (syntax[index] == '*') {
+						parameters.push( word );
+						synthesized += ' ' + word;
+					} else {
+						synthesized += ' ' + syntax[index];
+					}
+				});
+				synthesized = synthesized.trim();
+
+				const translate = (index, ...params) => COMMAND_SYNTAX[index].create(...params);
+				const translated = translate( index, ...parameters );
+
+				console.log( 'X', text );
+				console.log( 'S', synthesized );
+				console.log( 'P', parameters );
+				console.log( 'T', translated );
+
+				if (text == synthesized) {
+					callback.send( translated );
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+
+			console.log( request );
+		});
 
 
 		// DOUBLE CLICK

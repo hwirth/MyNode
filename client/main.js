@@ -129,7 +129,7 @@ const Application = function () {
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
 		});
-		//...self.debugConsole.toggle();
+		self.debugConsole.toggle();
 		self.debugConsole.elements.input.focus();
 
 		boot_sequence.forEach( (request)=>{
@@ -165,7 +165,7 @@ addEventListener( 'load', async ()=>{
 	splash_status( 'Initializing...' );
 
 	const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
-	document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
+	//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
 
 	console.log( 'body.onLoad: new Application' );
 

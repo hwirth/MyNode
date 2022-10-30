@@ -9,16 +9,12 @@ const fs   = require( 'fs' );
 const path = require( 'path' );
 
 const DEV_SERVER = true || (os.hostname() == 'labor');
-module.exports.DEV_SERVER = DEV_SERVER;
 
 const PROGRAM_NAME    = 'Spielwiese Websocket Server';
 const PROGRAM_VERSION = 'v0.0.4p';
 
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
 const config_file = {};   // Dictionary of parsed values, used for exporting in this file via SETTINGS[], etc.
-
-module.exports.PROGRAM_NAME    = PROGRAM_NAME;
-module.exports.PROGRAM_VERSION = PROGRAM_VERSION;
 
 
 function parse_config_file () {
@@ -54,14 +50,13 @@ parse_config_file();
 // SETTINGS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-const base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep
+let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;
 
 const SETTINGS = {
-	DEV_SERVER: DEV_SERVER,
-	BASE_DIR: base_dir,
+	DEV_SERVER : DEV_SERVER,
+	INSTALL_GEH : true,   // Global error and unhandled rejection handler
 
-	INSTALL_GEH : true,
-
+	BASE_DIR    : base_dir,
 	APP_PATH    : '../application/',
 	MAIN_MODULE : '../application/router.js',
 
@@ -79,13 +74,13 @@ const SETTINGS = {
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
 	},
 
-	// Upper case chars are also allowed
+	// Upper case chars are also accepted
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.?&%=-+/:[]',   // http server white list
 	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789_[]()@-/äöüß',   // Chat name white list
 
 	TIMEOUT: {
 		SOCKET_CLOSE : 100,
-		PING         : 2000,
+		PING         : 2000,   //...ws has this?
 		LOGIN        : 5*1000,
 		IDLE         : 5*1000,
 	},
@@ -147,12 +142,15 @@ const MIME_TYPES = {
 }; // MIME_TYPES
 
 
-module.exports.SETTINGS = SETTINGS;
-module.exports.SSL_KEYS = SSL_KEYS;
-module.exports.HTTPS_OPTIONS = HTTPS_OPTIONS;
-module.exports.WSS_OPTIONS = WSS_OPTIONS;
-module.exports.EXIT_CODES = EXIT_CODES;
-module.exports.MIME_TYPES = MIME_TYPES;
+module.exports.PROGRAM_NAME    = PROGRAM_NAME;
+module.exports.PROGRAM_VERSION = PROGRAM_VERSION;
+module.exports.DEV_SERVER = DEV_SERVER;
+module.exports.SETTINGS        = SETTINGS;
+module.exports.SSL_KEYS        = SSL_KEYS;
+module.exports.HTTPS_OPTIONS   = HTTPS_OPTIONS;
+module.exports.WSS_OPTIONS     = WSS_OPTIONS;
+module.exports.EXIT_CODES      = EXIT_CODES;
+module.exports.MIME_TYPES      = MIME_TYPES;
 
 
 //EOF

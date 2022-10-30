@@ -44,10 +44,10 @@
 	--button-color        : #fff;
 	--button-bg           : #333;
 	--button-submit-color : #fff;
-	--button-submit-bg    : #383;
+	--button-submit-bg    : #c50;
 
 	--console-chat-color     : #fff;
-	--console-request-color  : #3a1;
+	--console-request-color  : #ca0;
 	--console-response-color : #69f;
 	--console-notice-color   : #48f;
 	--console-warning-color  : #fc0;
@@ -237,28 +237,6 @@ a:focus  { color:var(--a-focus); }
 h1 { font-size:1.35em; }
 h2 { font-size:1.1em; }
 
-form {
-	Xbackground:#fff;
-	Xborder-radius:var(--input-radius);
-	Xpadding:1em;
-	Xborder:solid 1px #888;
-}
-
-form .combined > :first-child  {
-	--w: var(--input-border-width);
-	border-width:var(--w) 0 var(--w) var(--w);
-	border-radius:var(--input-radius) 0 0 var(--input-radius);
-}
-form .combined > :last-child {
-	--w: var(--input-border-width);
-	border-width:var(--w) var(--w) var(--w) 0;
-	border-radius:0 var(--input-radius) var(--input-radius) 0;
-}
-form .combined { font-size:0; }
-form .combined > * { font-size:1rem; }
-
-label > .caption::after { content:': '; }
-label > div { margin:0.5em 0; }
 
 input {
 	border:var(--input-border);
@@ -279,17 +257,15 @@ button {
 	white-space:nowrap;
 }
 button.submit {  background: var(--button-submit-bg); color:var(--button-submit-color); }
-Xbutton.login { background: var(--button-bg); color:var(--button-color); }
-Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
 
 
 /* DEBUG CONSOLE */
 
 .debug_console {
-	position:absolute; top:0; left:0; z-index:999;
+	position:absolute; bottom:0; left:0; z-index:999;
 	display:grid; grid-template-rows:auto 1fr min-content;
 	width:100%; height:0; transition:height 0.1s ease-in-out;
-	padding:2px;
+	padding:5em;
 	overflow:hidden;
 	Xbackground-color:#000;
 	background-image:url(/images/mcp.png);
@@ -305,7 +281,7 @@ Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
 
 .debug_console .output {
 	padding-bottom:0.1em;
-	overflow-y:auto;
+	overflow-y:hidden;
 	white-space:pre-wrap;
 }
 
@@ -363,7 +339,6 @@ X.debug_console .prompt.disabled { display:none; }
 	Xcaret-shape:bar;
 	Xcaret-shape:unserscore;
 	caret-color: #ff0;
-	overflow:scroll-y;
 }
 .debug_console .input.request { color:var(--console-input-color); }
 
@@ -402,85 +377,32 @@ code.curlyC   { color:#bbb; }
 
 
 
-/*** QUICK EXPERIMENT ***/
-
-
 html {
-	overflow:hidden;
-	transform:scale(1);
-	background-size: 900% 300%;
-	background-color: #000;
+	background-size: 300% 300%;
 	background-image: linear-gradient(
-		-90deg,
-		rgba(0,127,255,1) 0%,
-		rgba(255,0,127,1) 100%
+		-45deg,
+		rgba(59,173,227,1) 0%,
+		rgba(87,111,230,1) 25%,
+		rgba(152,68,183,1) 51%,
+		rgba(255,53,127,1) 100%
 	);
-	animation: GRADIENT 20s ease infinite;
+	animation: AnimateBG 20s ease infinite;
+	overflow:hidden;
+	background:#000;
 }
 
-body {
-	animation: AnimateBG 91s ease infinite;
-	Xtransform: rotateX(20deg) scale(1);
-	perspective-origin: top center;
-	Xperspective: 1000px;
+body { padding:300px; }
 
-	width: 100vmax%;
-	aspect-ratio:calc(4/3);
-	Xdisplay: flex;
-	Xalign-items: center;
-	Xjustify-content: center;
+.debug-console button { background:none; border:none; }
 
-	animation: BODY 91s ease infinite;
-
-	background-color:#0008;
-	background-image:url(/images/mcp.png);
-	Xbackground-size:cover;
-	Xbackground-size:calc(864px / 100vh);
-	background-repeat:no-repeat;
-	Xbackground-position:center;
-	Xbackground-size:190vmin;
-}
-
-.debug_console {
-	box-sizing:border-box;
-	padding:10em 15em;
-	animation: CONSOLE 91s ease infinite;
-	background:none;
-}
-.debug_console .buttons { background:none; }
-.debug_console button { border:none; }
-.debug_console .output { overflow:hidden; }
-
-@keyframes GRADIENT {
-	  0% { background-position:  0% 50%; }
-	 50% { background-position:100% 50%; }
-	100% { background-position:  0% 50%; }
-}
 @keyframes AnimateBG {
-	--s:1;
-	  0% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
-	 11% {                               transform:scale(calc(var(--s) + 0.085)); }
-	 22% {                               transform:scale(calc(var(--s) + 0.37)); }
-	 33% {                               transform:scale(calc(var(--s) + 0.93)); }
-	 50% { background-position:100% 50%; transform:scale(calc(var(--s) + 0.21)); }
-	 66% {                               transform:scale(calc(var(--s) + 0.010)); }
-	 77% {                               transform:scale(calc(var(--s) + 0.025)); }
-	 88% {                               transform:scale(calc(var(--s) + 0.050)); }
-	100% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
-}
-@keyframes AnimateROT1 {
-	  0% { transform: rotateZ( 1deg) rotate(-90deg); }
-	 50% { transform: rotateZ(-1deg) rotate(+90deg); }
-	100% { transform: rotateZ( 1deg) rotate(-90deg); }
-}
-@keyframes BODY {
-	  0% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
-	 50% { transform: rotateZ(-10deg); background-position: 50% 50%; transform:scale(0.9); }
-	100% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
-}
-@keyframes CONSOLE {
-	--s:1;
-	  0% { transform: rotateZ(-1deg); transform:scale(calc(0.75 + var(--s))); }
-	 50% { transform: rotateZ( 1deg); transform:scale(calc(0.74 + var(--s))); }
-	100% { transform: rotateZ(-1deg); transform:scale(calc(0.70 + var(--s)))); }
+	 00% { background-position:  0% 50%; transform:scale(1.075); }
+	 11% {                               transform:scale(1.050); }
+	 22% {                               transform:scale(1.025); }
+	 33% {                               transform:scale(1.010); }
+	 50% { background-position:100% 50%; transform:scale(1.000); }
+	 66% {                               transform:scale(1.010); }
+	 77% {                               transform:scale(1.025); }
+	 88% {                               transform:scale(1.050); }
+	100% { background-position:  0% 50%; transform:scale(1.075); }
 }

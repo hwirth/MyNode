@@ -82,6 +82,7 @@ const Main = function () {
 	}
 
 	function escalate_privileges (access_token) {
+return Promise.resolve();
 		return new Promise( (resolve, reject)=>{
 			const token_confirmed = (access_token === current_access_token);
 			current_access_token = String( create_new_access_token() ).split('').join(' ');
