@@ -164,7 +164,7 @@ export const Application = function () {
 		console.log( 'Application.init' );
 		splash_status( 'Connecting...' );
 
-		document.body.innerHTML = create_markup();
+		//...document.body.innerHTML = create_markup();
 
 		self.debugConsole = await new DebugConsole({
 			getUrl      : ()=>WS_URL,

@@ -8,7 +8,7 @@
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
-const { REASONS, RESULT } = require( './constants.js' );
+const { REASONS, RESULT, STRINGS } = require( './constants.js' );
 
 const WebSocketClient = require( './client.js' );
 
@@ -114,9 +114,9 @@ module.exports = function SessionHandler (persistent, callback) {
 // RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.requestHandlers = {};
+	this.request = {};
 
-	this.requestHandlers.login = function (client, request_id, parameters) {
+	this.request.login = function (client, request_id, parameters) {
 		if (client.login) {
 			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, dump(client) );
 			client.respond( RESULT.FAILURE, request_id, REASONS.ALREADY_LOGGED_IN );
@@ -172,7 +172,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	}; // login
 
 
-	this.requestHandlers.logout = function (client, request_id, parameters) {
+	this.request.logout = function (client, request_id, parameters) {
 		if (client.login) {
 			color_log( COLORS.COMMAND, '<session.logout>', client.login );
 			client.login = false;
@@ -185,7 +185,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	}; // logout
 
 
-	this.requestHandlers.who = function (client, request_id, parameters) {
+	this.request.who = function (client, request_id, parameters) {
 
 		//... session who {multiclients, idles, ...}
 		//... session who {filter, sort, sort:{reverse:{}} }
@@ -214,7 +214,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	}; // who
 
 
-	this.requestHandlers.kick = async function (client, request_id, parameters) {
+	this.request.kick = async function (client, request_id, parameters) {
 		if (!client.inGroup( 'admin' )) {
 			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
 			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
@@ -278,14 +278,14 @@ module.exports = function SessionHandler (persistent, callback) {
 
 		if (parameters.username) {
 			if (self.getClientByName( parameters.username )) {
-				self.requestHandlers.kick( client, parameters );
+				self.request.kick( client, parameters );
 			}
 		}
 
 	}; // kick
 
 
-	this.requestHandlers.status = function (client, request_id, parameters) {
+	this.request.status = function (client, request_id, parameters) {
 		if (Object.keys(parameters).length == 0) {
 			client.respond( RESULT.SUCCESS, request_id, {client: client} );
 
@@ -304,7 +304,25 @@ module.exports = function SessionHandler (persistent, callback) {
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.exit' );
 
-		return Promise.resolve();
+		return new Promise( (done)=>{
+			Object.keys( persistent.clients ).forEach( (address)=>{
+				const client = persistent.clients[address];
+
+				try {
+					client.send({
+						success      : RESULT.NONE,
+						response     : STRINGS.RESTARTING_SERVER,
+						MCP          : 'END_OF_LINE',
+					});
+
+				} catch (error) {
+					color_log( COLORS.INSTANCE, 'SessionHandler.exit:', error.message );
+					color_log( COLORS.ERROR, 'ERROR:', '"shutdown"-->socket', message );
+				}
+			});
+
+			setTimeout( done, SETTINGS.TIMEOUT.SOCKET_CLOSE );
+		});
 
 	}; // exit
 

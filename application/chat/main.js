@@ -10,7 +10,10 @@ const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, RESULT } = require( '../constants.js' );
 
 
-module.exports = function ChatServer (persistent_data) {
+RESULT.CHAT = 'chat';
+
+
+module.exports = function ChatServer (persistent_data, callback) {
 	const self = this;
 
 
@@ -18,18 +21,41 @@ module.exports = function ChatServer (persistent_data) {
 // RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.requestHandlers = {};
+	this.request = {};
 
-	this.requestHandlers.test = function (client, request_id, parameters) {
+	this.request.say = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
-			'<chat.test>',
+			'<chat.say>',
 			dump( client ),
 		);
 
-		client.respond( RESULT.NONE, request_id, 'niy' );
+		if (client.login) {
+			const message       = parameters;
+			const t0            = Date.now();
+			const everyone      = callback.getAllClients();
+			const authenticated = client => client.login;
 
-	}; // test
+			everyone.filter( authenticated )
+			.forEach( recipient =>
+				recipient.respond(
+					RESULT.CHAT,
+					login_id,
+					{
+						time   : t0,
+						sender : client.login.userName,
+						text   : message,
+					},
+				)
+			);
+
+			client.respond( RESULT.SUCCESS, request_id, RESULT.INSUFFICIENT_PERMS );
+
+		} else {
+			client.respond( RESULT.FAILURE, request_id, RESULT.INSUFFICIENT_PERMS );
+		}
+
+	}; // say
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

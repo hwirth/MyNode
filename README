@@ -134,6 +134,7 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] whoami
 [ ] onclick everywhere --> focus
 [ ] mcp inspect: <path>, maxDepth: <depth>
 [ ] Normal responses only contain collapsable text. 'tag: <id>' request non-collapsible content of recent response

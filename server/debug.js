@@ -46,6 +46,8 @@ const DEBUG = {                                                // What to log
 
 	PARSE_RULES               : DEBUG_ENABLED && !false,
 
+	BOOT_TIME                 : Date.now(),
+
 }; // DEBUG
 
 
@@ -103,11 +105,13 @@ const COLORS = {
 	SOCKET       : ANSI_COLORS.YELLOW,
 	ADDRESS      : ANSI_COLORS.GREEN,
 
-	MCP          : ANSI_COLORS.BRIGHT  + ANSI_COLORS.BLUE,
+	MCP          : ANSI_COLORS.STRONG  + ANSI_COLORS.BLUE,
 	TOKEN        : ANSI_COLORS.BRIGHT  + ANSI_COLORS.CYAN,
 
 	RESET        : ANSI_COLORS.RESET,
 	EXIT         : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
+
+	SHUT_DOWN    : ANSI_COLORS.BRIGHT  + ANSI_COLORS.YELLOW,
 
 }; // COLORS
 
@@ -128,11 +132,14 @@ module.exports.COLORS        = COLORS;
 function color_log (colors = '', heading = '', ...text) {
 	if (colors == '\n') return console.log();
 
+try {
 	heading = String( heading );
-
+} catch (error) {
+console.log( 'color_log: HEADING' );//...
+}
 	function format_uptime (milliseconds) {
 		const seconds = Math.floor( milliseconds / 1000 );
-		const frac = ms => '000'.slice( String(ms).length ) + ms;
+		const frac = ms => '000'.slice( String(ms).length ) + String(ms);
 		return seconds + '.' + frac( milliseconds % 1000 );
 	}
 
@@ -220,16 +227,23 @@ function color_log (colors = '', heading = '', ...text) {
 
 
 function dump (data) {
-	return (
-		(data instanceof Error)? (
+	if (typeof data == 'undefined') return 'dump undefined';
+
+	if (data instanceof Error) {
+		return (
 			'Error: "'
 			+ data.message
 			+ '"\nStack: '
 			+ data.stack
-		):(
-			JSON.parse( JSON.stringify(data) )
-		)
-	);
+		);
+	}
+
+	if (typeof data == 'undefined') {
+		return null;
+	}
+
+
+	return JSON.parse( JSON.stringify(data) )
 
 } // dump
 

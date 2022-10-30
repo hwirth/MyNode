@@ -25,7 +25,7 @@ module.exports.REASONS = {
 	NOT_LOGGED_IN               : 'Not logged in',
 	ALREADY_LOGGED_IN           : 'Already logged in',
 	LOGIN_TIMED_OUT             : 'Login timeout',            //... Say "Connection failed"
-	IDLE_TIMEOUT                : 'Idle t imeout',
+	IDLE_TIMEOUT                : 'Idle timeout',
 	SUCCESSFULLY_LOGGED_IN      : 'Logged in',
 	SUCCESSFULLY_LOGGED_OUT     : 'Logged out',
 	KICKED_USER                 : 'Kicked user NAME, address: ADDRESS',
@@ -35,8 +35,10 @@ module.exports.REASONS = {
 }; // RESPONSES
 
 const STRINGS = {
-	MCP                  : 'MCP',
-	GLOBAL_ERROR_HANDLER : 'FATAL SYSTEM FAILURE:',
+	MASTER_CONTROL       : 'MASTER_CONTROL',
+	GLOBAL_ERROR_HANDLER : 'GLOBAL SYSTEM FAILURE:',
+	SYSTEM_ERROR         : 'SYSTEM FAILURE:',
+	RESTARTING_SERVER    : 'THE SYSTEM IS SHUTTING DOWN',
 	YOU_SHOULDNT_HAVE    : "YOU SHOULDN'T HAVE COME BACK, FLYNN",
 	END_OF_LINE          : 'END OF LINE.',
 

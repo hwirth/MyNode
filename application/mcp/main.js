@@ -12,7 +12,7 @@ const { color_log, dump   } = require( '../../server/debug.js' );
 const { RESPONSE, REASONS, RESULT, STRINGS } = require( '../constants.js' );
 
 
-module.exports = function MasterControlProgram (persistent, callback) {
+module.exports = function MasterControl (persistent, callback) {
 	const self = this;
 
 
@@ -32,7 +32,7 @@ module.exports = function MasterControlProgram (persistent, callback) {
 			let days    = Math.floor( hours        / 24   );   hours   -= 24 * days;
 			let weeks   = Math.floor( days         / 7    );   days    -=  7 * weeks;
 			let years   = Math.floor( weeks        / 52   );   weeks   -= 52 * years;  //...
-			let millis  = milliseconds % 1000;
+			let millis  = Math.floor( milliseconds % 1000 );
 
 			function leading (value, digits) {
 				const string = String( value );
@@ -47,7 +47,7 @@ module.exports = function MasterControlProgram (persistent, callback) {
 					+ leading( hours  , 2 ) + 'h'
 					+ leading( minutes, 2 ) + 'm'
 					+ leading( seconds, 2 ) + '.'
-					+ leading( millis, 3 )  + 's'
+					+ leading( millis , 3 ) + 's'
 			);
 
 		} else {
@@ -61,9 +61,9 @@ module.exports = function MasterControlProgram (persistent, callback) {
 // RESULT HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.requestHandlers = {};
+	this.request = {};
 
-	this.requestHandlers.restart = function (client, request_id, parameters) {
+	this.request.restart = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<server.restart>',
@@ -78,7 +78,7 @@ module.exports = function MasterControlProgram (persistent, callback) {
 	}; // restart
 
 
-	this.requestHandlers.inspect = function (client, request_id, parameters) {
+	this.request.inspect = function (client, request_id, parameters) {
 		let target = callback.escalatePrivileges( request_id.token || DEBUG.MCPTOKEN );
 
 		function respond_error () {
@@ -108,19 +108,21 @@ module.exports = function MasterControlProgram (persistent, callback) {
 			}
 		}
 
-		var result;
+		if (typeof target == 'undefined') target = 'undefined';
+
+		let Xresult = null;
 		switch (typeof target) {
 		case 'object' :  result = Object.keys( target );  break;
 		default       :  result = target;                 break;
 		}
 
 		if (!parameters) parameters = 'master';
-		client.respond( RESULT.SUCCESS, request_id, { [parameters]: result }  );
+		client.respond( RESULT.SUCCESS, request_id, result );
 
 	}; // inspect
 
 
-	this.requestHandlers.status = function (client, request_id, parameters) {
+	this.request.status = function (client, request_id, parameters) {
 		if (parameters.persistent || (parameters.persistent === null)) {
 			if (client.login) {
 				if (client.inGroup( 'admin' )) {

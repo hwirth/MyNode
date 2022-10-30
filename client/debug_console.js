@@ -8,7 +8,7 @@
 const EXTRA_LINES = 0;
 const MIN_LINES = 0;
 
-const BANGS = [':', '>', '!'];
+const BANGS = ['>', ':', '!', '.', ';', '/'];
 const BANG = BANGS[0];
 
 const BUTTON_SCRIPTS = {
@@ -35,7 +35,7 @@ const BUTTON_SCRIPTS = {
 	*/
 };
 
-const SPEED_SCRIPT = [
+const TUTORIAL_SCRIPT = [
 	BANG + 'session\n\tlogin\n\t\tusername: hmw\n\t\tpassword: pass1',
 	BANG + 'session\n\tstatus',
 	BANG + 'mcp\n\tinspect',
@@ -266,17 +266,50 @@ export const DebugConsole = function (callback) {
 
 
 	this.print = function (message, class_name) {
-		const message_html = (typeof message == 'string')
-		? message
-		: request_to_text( message )
+		let t = -1;
+		const cnames = [
+			'slash', 'period', 'colon', 'semi','curlyO',
+			'bracketO', 'parensO', 'parensC', 'bracketC','curlyC',
+			'true', 'false', 'null'
+		];
+		const tokens = [
+			'/', '.', ':', ';', '{',
+			'[', '(', ')', ']', '}',
+			'true', 'false', 'null'
+		];
+		const message_html = (
+			(typeof message == 'string')
+			? message
+			: request_to_text( message )
+		)
+		//.replace(/&/g, '&amp;')
+		//.replace(/</g, '&lt;')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
+		.split('\n')
+		.map( line => '<div>'+line+'</div>' )
+		.join('')
 		;
-
+console.log()
+console.log(message_html)
+console.log()
 		if (message.MCP) class_name = 'mcp'; //...new_element.classList.add( 'mcp' );
 
 		const new_element = document.createElement( 'pre' );
 		new_element.className = class_name;
 		new_element.innerHTML = message_html;
-
+console.log( 'message_html', message_html );
 		//self.elements.console.insertBefore( new_element, self.elements.prompt );
 		self.elements.output.appendChild( new_element );
 		scroll_down();
@@ -392,18 +425,20 @@ export const DebugConsole = function (callback) {
 
 		self.elements.send.addEventListener( 'click', ()=>{
 			let text = self.elements.input.value.trim();
-			const has_bang = cmd => BANGS.filter( bang => text.charAt(0) == bang ).length > 0;
-			if (has_bang) text = text.slice(1).trim();
+			const has_bang = cmd => BANGS.filter( b => b == bang ).length > 0;
+			let bang = null;
+			if (has_bang) {
+				bang = text.charAt(0);
+				text = text.slice(1).trim();
+			}
 
-console.log( 'TX', text );
-
-			if (!text) {
+			if (!bang) {
 				event.preventDefault();
 				self.elements.input.focus();
 				return;
 			}
 
-			if (!has_bang) {
+			if (bang == '>') {
 				callback.send( text_to_request(text, ++self.requestId) );
 				return;
 			}
@@ -411,53 +446,73 @@ console.log( 'TX', text );
 
 			// PARSE MACROS
 
-// :session login username: sec password: pass2
-			const command_syntax = [
+			const COMMAND_SYNTAX = [
 				{
 					syntax: 'session login username: * password: *',
-					create: (username, password)=>{ return {
-						session: {
-							login: {
-								username: username,
-								password: password,
-							}
-						},
-					}},
+					create: (username, password)=>{
+						return {
+							tag: ++self.requestId,
+							session: {
+								login: {
+									username: username,
+									password: password,
+								},
+							},
+						};
+					},
+				},{
+					syntax: 'session logout',
+					create: ()=>{
+						return {
+							tag: ++self.requestId,
+							session: {
+								logout: {
+								}
+							},
+						};
+					},
 				},
 			];
-
-			const request = command_syntax.find( (request, index)=>{
+/*
+	.session login username: sec password: pass2
+*/
+			const request = COMMAND_SYNTAX.find( (request, index)=>{
 				const syntax     = request.syntax.split(' ');
 				const parameters = [];
 				let synthesized  = '';
 				text.split(' ').forEach( (word, index)=>{
-					if (syntax[index] == '*') parameters.push( word );
-					synthesized += ' ' + word;
+					if (syntax[index] == '*') {
+						parameters.push( word );
+						synthesized += ' ' + word;
+					} else {
+						synthesized += ' ' + syntax[index];
+					}
 				});
 				synthesized = synthesized.trim();
 
-				const translate = (index, ...params) => command_syntax[index].create(...params);
+				const translate = (index, ...params) => COMMAND_SYNTAX[index].create(...params);
 				const translated = translate( index, ...parameters );
 
-				console.log( text );
-				console.log( synthesized );
+				console.log( 'X', text );
+				console.log( 'S', synthesized );
+				console.log( 'P', parameters );
+				console.log( 'T', translated );
 
 				if (text == synthesized) {
-					translated.tag = ++self.requestId;
 					callback.send( translated );
 					return true;
 				} else {
 					return false;
 				}
 			});
-
-
 		});
 
 
 		// KEYBOARD
 
         	self.elements.input.addEventListener( 'keydown', (event)=>{
+
+
 			if (['Shift', 'Ctrl', 'Alt'].indexOf(event.key) == 0) {
 				adjust_textarea();
 			}
@@ -542,15 +597,76 @@ console.log( 'TX', text );
 		});
 
 
+		// KEYBOARD BEEP
+
+		let nr_active_sounds = 0;
+		addEventListener('keydown', (event) => {
+
+			// Chromium crashes after I type fast for a few seconds
+			// Limiting number of sounds does not help:
+			if (nr_active_sounds > 5) return;
+
+			let context = new(window.AudioContext || window.webkitAudioContext)();
+			let square_wave = context.createOscillator();
+			let envelope = context.createGain();
+			let volume = context.createGain();
+			let destination = context.destination;
+			let t0 = context.currentTime;
+
+			square_wave.type = "square";
+			square_wave.frequency.value = 440 * 4;
+			square_wave.detune.value = 0;
+			envelope.gain.value = 0.0;
+			volume.gain.value = 0.05;
+
+			square_wave
+			.connect(envelope)
+			.connect(volume)
+			.connect(destination)
+			;
+
+			// Envelope
+			var t1;
+			const v = 0.5;
+			envelope.gain.setValueAtTime         (0.0, t1 = t0);
+			envelope.gain.linearRampToValueAtTime(1.0, t1 = t0 + v * 0.01);
+			envelope.gain.linearRampToValueAtTime(0.1, t1 = t0 + v * 0.09);
+			envelope.gain.linearRampToValueAtTime(0.0, t1 = t0 + v * 0.50);
+
+			//square_wave.addEventListener('ended', on_ended);
+			square_wave.onended = on_ended;
+			square_wave.start();
+			square_wave.stop(t1);
+
+			console.log('beep:', ++nr_active_sounds);
+
+			function on_ended(event) {
+				console.log('on_ended:', nr_active_sounds--);
+				square_wave.disconnect(envelope);
+				envelope.disconnect(volume);
+				volume.disconnect(context.destination);
+
+				context
+				= square_wave
+				= envelope
+				= volume
+				= destination
+				= null
+				;
+			}
+		});
+
+
+
 		// DOUBLE CLICK
 
-		self.elements.input.value = SPEED_SCRIPT[0];
+		self.elements.input.value = TUTORIAL_SCRIPT[0];
 		adjust_textarea();
 
 		function next_script_entry (shift = true) {
 			if (!callback.isConnected()) return 'connect: ' + callback.getUrl();
-			const script = (shift) ? SPEED_SCRIPT.shift() : SPEED_SCRIPT[0] ;
-			return (SPEED_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
+			const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
+			return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
 
 		} // next_script_entry
 

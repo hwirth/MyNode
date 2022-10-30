@@ -60,6 +60,9 @@ const SETTINGS = {
 	DEV_SERVER: DEV_SERVER,
 	BASE_DIR: base_dir,
 
+	APP_PATH    : '../application/',
+	MAIN_MODULE : 'router.js',
+
 	LOG: {
 		FILE_NAME     : config_file.LOG_FILE_NAME,                // File name for log output
 		TO_CONSOLE    : (config_file.LOG_TO_CONSOLE == 'true'),   // Whether color_log() outputs to STDOUT
@@ -124,7 +127,7 @@ module.exports.WSS_OPTIONS   = WSS_OPTIONS;
 
 const EXIT_CODES = {
 	UNKNOWN                 : -2,
-	RESULT_RESTART         : -1,
+	REQUEST_RESTART         : -1,
 	EXIT                    : 0,
 	PORT_IN_USE             : 1,
 	CANT_DROP_PRIVILEGES    : 2,

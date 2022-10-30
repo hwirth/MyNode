@@ -3,8 +3,8 @@
 :root {
 	color-scheme:light dark; /* both supported */
 
-	--font-family          : sans-serif;
-	--terminal-font-family : terminal;
+	--font-family          : crt;
+	--terminal-font-family : crt;
 	--NOBRACKETS_terminal-font-family : mode7;
 	--DISABLED_terminal-font-family : seti;
 	--DISABLED_terminal-font-family : crt;
@@ -46,13 +46,14 @@
 	--button-submit-color : #fff;
 	--button-submit-bg    : #383;
 
+	--console-chat-color     : #fff;
 	--console-request-color  : #3a1;
 	--console-response-color : #69f;
 	--console-notice-color   : #48f;
 	--console-warning-color  : #fc0;
 	--console-error-color    : #e20;
 	--console-success-color  : #0f0;
-	--console-cep-color      : #cf0;
+	--console-cep-color      : #cc0;
 	--console-mcp-color      : var(--console-response-color);
 
 	--console-input-color      : var(--console-request-color);
@@ -89,8 +90,8 @@ body.dark_mode {
 
 	--header-padding-top : 0.5rem;
 	--header-padding-btm : 0.5rem;
-	--menu-padding   : 0.5rem;
-	--footer-padding : var(--menu-padding) var(--body-padding);
+	--menu-padding       : 0.5rem;
+	--footer-padding     : var(--menu-padding) var(--body-padding);
 
 	--input-color       : #000;
 	--input-bg          : #fff;
@@ -162,6 +163,9 @@ body.dark_mode {
 	font-style: normal;
 	font-display: swap;
 }
+
+
+
 
 
 /* PAGE LAYOUT */
@@ -285,10 +289,12 @@ Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
 	position:absolute; bottom:0; left:0; z-index:999;
 	display:grid; grid-template-rows:auto 1fr min-content;
 	width:100%; height:0; transition:height 0.1s ease-in-out;
+	padding:2px;
 	overflow:hidden;
-	background-color:#000;
-	background-image:url(/images/hack.png);
-	Xbackground-size:65%;
+	Xbackground-color:#000;
+	background-image:url(/images/mcp.png);
+	background-size:cover;
+	background-size:calc(864px / 100vh);
 	background-repeat:no-repeat;
 	background-position:center;
 	color:#fff;
@@ -296,17 +302,38 @@ Xbutton.logout { background: var(--button-bg); color:var(--button-color); }
 .debug_console.active { height:100%; }
 .debug_console :focus { outline:none; }
 
+
 .debug_console .output {
 	padding-bottom:0.1em;
 	overflow-y:auto;
 	white-space:pre-wrap;
 }
+
+.debug_console .output {
+	Xdisplay:flex;
+	Xflex-direction:column;
+	Xflex-wrap:wrap;
+	XXXflex-basis: 0;
+	XXXflex-wrap:wrap-reverse;
+	XXXalign-items: end;
+	Xalign-content:flex-start;
+	Xjustify-content:start;
+	height:100%;
+	overflow-x:hidden;
+	overflow-x:auto;
+	Xscroll-behavior: smooth;
+}
+.debug_console pre > div { white-space:pre; Xpadding-right:2em; }
+
+.debug_console button,
 .debug_console .prompt span,
 .debug_console .input,
 .debug_console .output pre {
 	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--console-line-height);
 	tab-size:var(--tab-size);
+	padding-bottom:1em;
 }
+.debug_console .buttons button { padding:0 0.3em; }
 
 .debug_console .separators pre {
 	border-bottom:var(--console-separator-border);
@@ -330,12 +357,13 @@ X.debug_console .prompt.disabled { display:none; }
 
 .debug_console .input  {
 	width:100%; border:none; padding:0em;
-	background:transparent; color:var(--console-cep-color);
+	background:transparent; color:var(--console-chat-color);
 	resize:none;
 	caret-shape:block;
 	Xcaret-shape:bar;
 	Xcaret-shape:unserscore;
 	caret-color: #ff0;
+	overflow:scroll-y;
 }
 .debug_console .input.request { color:var(--console-input-color); }
 
@@ -353,5 +381,101 @@ X.debug_console .prompt.disabled { display:none; }
 	border:none;
 }
 
+code          { color:#cba; }
+code.true     { color:#6e3; }
+code.false    { color:#f31; }
+code.null     { color:#4ef; }/*
+code.period   { color:#ccc; }
+code.colon    { color:#ccc; }
+code.semi     { color:#ccc; }
+code.slash    { color:#ccc; }
+code.curlyO   { color:#fff; }
+code.bracketO { color:#eee; }
+code.parensO  { color:#ccc; }
+code.parensC  { color:#ddd; }
+code.bracketC { color:#ccc; }
+code.curlyC   { color:#bbb; }
+*/
+
 
 /*EOF*/
+
+
+
+html {
+	overflow:hidden;
+	transform:scale(1.7);
+	background-size: 900% 300%;
+	background-color: #000;
+	background-image: linear-gradient(
+		-90deg,
+		rgba(0,127,255,1) 0%,
+		rgba(255,0,127,1) 100%
+	);
+	animation: AnimateGRADIENT 20s ease infinite;
+}
+
+body {
+	animation: AnimateBG 91s ease infinite;
+	transform: rotateX(20deg) scale(1.25);
+	perspective-origin: top center;
+	Xperspective: 1000px;
+
+	width: 100%;
+	height: 110vh;
+	Xdisplay: flex;
+	Xalign-items: center;
+	Xjustify-content: center;
+
+	animation: AnimateROT2 91s ease infinite;
+
+	background-color:#0008;
+	background-image:url(/images/mcp.png);
+	Xbackground-size:cover;
+	Xbackground-size:calc(864px / 100vh);
+	background-repeat:no-repeat;
+	Xbackground-position:center;
+	Xbackground-size:190vmin;
+}
+
+.debug_console {
+	padding:15vmax;
+	animation: AnimateROT22 91s ease infinite;
+	background:none;
+}
+.debug_console .buttons { background:none; }
+.debug_console button { border:none; }
+.debug_console .output { overflow:hidden; }
+
+@keyframes AnimateGRADIENT {
+	 00% { background-position:  0% 50%; }
+	 50% { background-position:100% 50%; }
+	100% { background-position:  0% 50%; }
+}
+@keyframes AnimateBG {
+	--s:1;
+	 00% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
+	 11% {                               transform:scale(calc(var(--s) + 0.085)); }
+	 22% {                               transform:scale(calc(var(--s) + 0.37)); }
+	 33% {                               transform:scale(calc(var(--s) + 0.93)); }
+	 50% { background-position:100% 50%; transform:scale(calc(var(--s) + 0.21)); }
+	 66% {                               transform:scale(calc(var(--s) + 0.010)); }
+	 77% {                               transform:scale(calc(var(--s) + 0.025)); }
+	 88% {                               transform:scale(calc(var(--s) + 0.050)); }
+	100% { background-position:  0% 50%; transform:scale(calc(var(--s) + 0.075)); }
+}
+@keyframes AnimateROT1 {
+	 00% { transform: rotateZ( 1deg); }
+	 50% { transform: rotateZ(-1deg); }
+	100% { transform: rotateZ( 1deg); }
+}
+@keyframes AnimateROT2 {
+	 00% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
+	 50% { transform: rotateZ(-10deg); background-position: 50% 50%; transform:scale(0.9); }
+	100% { transform: rotateZ( 10deg); background-position:  0% 50%; transform:scale(1); }
+}
+@keyframes AnimateROT22 {
+	 00% { transform: rotateZ(-1deg); transform:scale(0.75); }
+	 50% { transform: rotateZ( 1deg); transform:scale(0.74); }
+	100% { transform: rotateZ(-1deg); transform:scale(0.70); }
+}

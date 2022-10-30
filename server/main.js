@@ -11,7 +11,7 @@ const {
 	MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
 
 } = require( './config.js' );
-const { STRINGS         } = require( '../server/constants.js' );
+const { STRINGS         } = require( '../application/constants.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 
@@ -24,10 +24,10 @@ const http      = require( 'follow-redirects' ).http;
 const https     = require( 'https' );
 const WebSocket = require( 'ws' );
 
-const EXIT_MESSAGE = 'END OF LINE.';
+const EXIT_MESSAGE = STRINGS.END_OF_LINE;
 
 
-const WebSocketServer = function () {
+const Main = function () {
 	const self = this;
 
 	this.isTheApp;//...
@@ -82,15 +82,18 @@ const WebSocketServer = function () {
 	}
 
 	function escalate_privileges (access_token) {
-		const token_confirmed = (access_token === current_access_token);
-		current_access_token = String( create_new_access_token() ).split('').join(' ');
+		return new Promise( (resolve, reject)=>{
+			const token_confirmed = (access_token === current_access_token);
+			current_access_token = String( create_new_access_token() ).split('').join(' ');
 
-		color_log( COLORS.MCP, 'MCP .' + '='.repeat(14) + '.' );
-		color_log( COLORS.MCP, 'MCP | TOKEN:', COLORS.TOKEN + current_access_token, COLORS.MCP + '|' );
-		color_log( COLORS.MCP, "MCP '" + '='.repeat(14) + "'" );
+			color_log( COLORS.MCP, 'MCP .' + '='.repeat(14) + '.' );
+			color_log( COLORS.MCP, 'MCP | TOKEN:', COLORS.TOKEN + current_access_token, COLORS.MCP + '|' );
+			color_log( COLORS.MCP, "MCP '" + '='.repeat(14) + "'" );
 
-		return (token_confirmed) ? self : null;
+			if (token_confirmed) resolve();
+		});
 	}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENT RELAYS
@@ -394,11 +397,15 @@ const WebSocketServer = function () {
 		color_log(
 			COLORS.ERROR, STRINGS.MCP + ':',
 			COLORS.WARNING + STRINGS.GLOBAL_ERROR_HANDLER,
-			dump(error),
 		);
+		console.trace();
+		console.log( error );
+
+if (error == undefined) return;
 
 		if (SETTINGS.ERROR_SHUT_DOWN) {
 			self.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
+			console.log( EXIT_MESSAGE );
 
 		} else {
 			console.log( EXIT_MESSAGE );
@@ -430,7 +437,7 @@ const WebSocketServer = function () {
 		if (event == 'SIGINT') console.log();
 
 		console.log( '.' + '-'.repeat(78) );
-		console.log( '| SHUTTING DOWN' );
+		console.log( '| ' + COLORS.RESET + COLORS.SHUT_DOWN + 'SHUTTING DOWN' + COLORS.RESET );
 		console.log( "'" + '-'.repeat(78) );
 
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.exit' );
@@ -492,11 +499,13 @@ const WebSocketServer = function () {
 			console.log( '.' + '-'.repeat(78) );
 			console.log( '| APPLICATION' );
 			console.log( "'" + '-'.repeat(78) );
-
+try {
 			self.reloader      = await new AppReloader({
 				escalatePrivileges: escalate_privileges,
 			});
-
+} catch (error) {
+	color_log( COLORS.MCP, 'MCP:', 'ROOT_LOAD_FAILED' );
+}
 			done();
 		});
 
@@ -506,7 +515,7 @@ const WebSocketServer = function () {
 	return self.init().then( ()=>self );   // const server = await new WebSocketServer()
 	//... Why does it require a return here, but not with the other object templates in this project??
 
-}; // WebSocketServer
+}; // Main
 
 
 
@@ -517,7 +526,7 @@ const WebSocketServer = function () {
 const time_label = '| ' + COLORS.BOOT + 'ONLINE' + COLORS.DEFAULT + '. Boot time';
 console.time( time_label );
 
-new WebSocketServer().then( ()=>{
+new Main().then( ()=>{
 	console.log( '.' + '-'.repeat(78) );
 	console.timeEnd( time_label );
 	console.log( "'" + '-'.repeat(78) );

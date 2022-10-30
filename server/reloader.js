@@ -15,10 +15,7 @@ const { SETTINGS      } = require( './config.js' );
 const { DEBUG, COLORS } = require( './debug.js' );
 const { color_log     } = require( './debug.js' );
 
-const APP_PATH = '../application';
 const EMPTY = {};
-
-const { Router } = require( APP_PATH + '/router.js' );
 
 
 module.exports = function AppReloader (callback) {
@@ -28,7 +25,7 @@ module.exports = function AppReloader (callback) {
 
 	this.fileTimes;
 	this.router;
-	this.persistentData;
+	this.persistent;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -41,7 +38,7 @@ module.exports = function AppReloader (callback) {
 
 		await new Promise( (done)=>{
 
-			const g = glob( APP_PATH + '/**/*.js', (error, matches)=>{
+			const g = glob( SETTINGS.APP_PATH + '/**/*.js', (error, matches)=>{
 				if (error) color_log(
 					COLORS.ERROR,
 					'AppReloader-get_file_times:',
@@ -180,10 +177,10 @@ module.exports = function AppReloader (callback) {
 		if (!reload_required) return;
 
 		// Re-instantiate  Router
-		const MAIN_MODULE = {
-			url            : APP_PATH + '/router.js',
-			persistentData : self.persistentData,
-			callbacks      : {
+		const main_module = {
+			url        : SETTINGS.APP_PATH + + SETTINGS.MAIN_MODULE,
+			persistent : self.persistent,
+			callbacks  : {
 				escalatePrivileges: callback.escalatePrivileges,
 			},
 		};
@@ -204,11 +201,11 @@ module.exports = function AppReloader (callback) {
 			// Reload and reinstantiate main module
 			self.router =
 			await new require(
-				MAIN_MODULE.url
+				main_module.url
 
 			).Router(
-				MAIN_MODULE.persistentData,
-				MAIN_MODULE.callbacks,
+				main_module.persistent,
+				main_module.callbacks,
 
 			).catch( (error)=>{
 				success = false;//...
@@ -226,7 +223,7 @@ module.exports = function AppReloader (callback) {
 
 			if (socket) {
 				const message = {
-					request  : { reloadSource: EMPTY },
+					reloader : {},
 					success  : false,
 					response : error.stack,
 				};
@@ -269,7 +266,7 @@ module.exports = function AppReloader (callback) {
 	}; // onDisconnect
 
 
-	this.onMessage = async function (socket, client_address, json_string) {
+	this.onMessage = function (socket, client_address, json_string) {
 		let message = null;
 
 		try {
@@ -281,11 +278,22 @@ module.exports = function AppReloader (callback) {
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
-			const success = reload_modules( socket );
+			let success = false;
+			try {
+				success = reload_modules( socket );
+			} catch (error) {
+				socket.send( JSON.stringify({ MCP: 'RELOAD_FAILED' }) );
+			}
+
 			if (success) {
-				self.router.onMessage( socket, client_address, message );
+				try {
+					self.router.onMessage( socket, client_address, message );
+
+				} catch (error) {
+					color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
+				}
 			} else {
-				socket.send( JSON.stringify({ MCP: 'END OF LINE!' }) );
+				socket.send( JSON.stringify({ MCP: 'ROUTER_FAILED' }) );
 			}
 
 		}
@@ -301,10 +309,14 @@ module.exports = function AppReloader (callback) {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.exit' );
 
 		if (self.router) {
-			return self.router.exit();
-		} else {
-			return Promise.resolve();
+			return self.router.exit().then( ()=>{
+				console.log( '.' + '-'.repeat(78) );
+				console.log( '| APPLICATIONS UNLOADED' );
+				console.log( "'" + '-'.repeat(78) );
+			});
 		}
+
+		return Promise.resolve();
 
 	}; // exit
 
@@ -313,7 +325,7 @@ module.exports = function AppReloader (callback) {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
 
 		return new Promise( async (done)=>{
-			self.persistentData = {};
+			self.persistent = {};
 			self.fileTimes = { previous: {}, current: {} };
 
 			await reload_modules();
