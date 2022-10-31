@@ -241,8 +241,8 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.toggleConsole = function () {
-		self.elements.console.classList.toggle( 'active' );
-		if (self.elements.console.classList.contains( 'active' )) {
+		self.elements.terminal.classList.toggle( 'active' );
+		if (self.elements.terminal.classList.contains( 'active' )) {
 			self.elements.input.focus();
 		} else {
 			self.elements.input.blur();
@@ -253,7 +253,7 @@ export const DebugConsole = function (callback) {
 
 	this.toggleOverflow = function () {
 		console.log('OOO');
-		self.elements.console.classList.toggle( 'overflow' );
+		self.elements.terminal.classList.toggle( 'overflow' );
 
 	}; // toggleOverflow
 
@@ -302,7 +302,7 @@ export const DebugConsole = function (callback) {
 		new_element.className = class_name;
 		new_element.innerHTML = message_html;
 
-		//self.elements.console.insertBefore( new_element, self.elements.prompt );
+		//self.elements.terminal.insertBefore( new_element, self.elements.prompt );
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
@@ -340,13 +340,13 @@ export const DebugConsole = function (callback) {
 */
 		const container = document.querySelector( '.terminal' );
 		self.elements = {
-			console  : container,
-			output   : container.querySelector( '.output' ),
-			prompt   : container.querySelector( '.prompt' ),
-			input    : container.querySelector( '.input' ),
+			terminal : container,
+			output   : container.querySelector( '.output'   ),
+			prompt   : container.querySelector( '.prompt'   ),
+			input    : container.querySelector( '.input'    ),
 			controls : container.querySelector( '.controls' ),
-			buttons  : container.querySelector( '.buttons' ),
-			send     : container.querySelector( '.submit' ),
+			buttons  : container.querySelector( '.buttons'  ),
+			send     : container.querySelector( '.submit'   ),
 		};
 
 		self.history = new History({
@@ -392,16 +392,16 @@ export const DebugConsole = function (callback) {
 
 		let accept_click = null;
 
-		self.elements.console.addEventListener( 'mousemove', (event)=>{
+		self.elements.terminal.addEventListener( 'mousemove', (event)=>{
 			if (event.target.classList.contains( 'debug_console' )) {
 				self.elements.input.focus();
 				accept_click = null;
 			}
 		});
-		self.elements.console.addEventListener( 'mousedown', (event)=>{
+		self.elements.terminal.addEventListener( 'mousedown', (event)=>{
 			accept_click = event.target.classList.contains( 'debug_console' );
 		});
-		self.elements.console.addEventListener( 'mouseup', (event)=>{
+		self.elements.terminal.addEventListener( 'mouseup', (event)=>{
 			if (accept_click && event.target.classList.contains( 'debug_console' )) {
 				self.elements.input.focus();
 				accept_click = null;
