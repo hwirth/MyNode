@@ -135,6 +135,7 @@ $ npm install ws follow-redirects re-require-module
 6. TODO
 =======
 [ ] Restore session after page reload (allows browsing the web page while playing)
+[ ] DEFCON
 [ ] /clear
 [ ] JSON message single string: special format
 [ ] whoami

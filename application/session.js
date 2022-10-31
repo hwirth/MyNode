@@ -350,7 +350,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			const data = {
 				accounts: {
 					'root': {
-						password: 'pass1',
+						password: '12345',
 						groups: [
 							'admin',
 						],

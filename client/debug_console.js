@@ -14,7 +14,7 @@ const BANG_REQUEST = '';//'>';
 
 const BUTTON_SCRIPTS = {
 	'stat'    : BANG_REQUEST + 'session status',
-	'root'    : BANG_REQUEST + 'session login username: root password: pass1',
+	'root'    : BANG_REQUEST + 'session login username: root password: 12345',
 	'user'    : BANG_REQUEST + 'session login username: user password: pass2',
 	'out'     : BANG_REQUEST + 'session logout',
 	'who'     : BANG_REQUEST + 'session who',
@@ -25,7 +25,7 @@ const BUTTON_SCRIPTS = {
 };
 
 const TUTORIAL_SCRIPT = [
-	BANG_REQUEST + 'session login username: root password: pass1',
+	BANG_REQUEST + 'session login username: root password: 12345',
 	BANG_REQUEST + 'session status',
 	BANG_REQUEST + 'mcp inspect',
 	BANG_REQUEST + 'mcp inspect: reloader.persistentData',
@@ -463,20 +463,30 @@ export const DebugConsole = function (callback) {
 			const cursor_end  = input.selectionStart == input.value.length -1;
 
 			const KEYBOARD_SHORTCUTS = [{
-				event     : 'keyup',
-				key       : 'b',
-				modifiers : ['ctrl'],
-				action    : ()=>{ self.elements.output.classList.toggle('separators'); },
+				event     : 'keydown',
+				key       : 'a',
+				modifiers : ['alt'],
+				action    : ()=>{ self.elements.terminal.classList.toggle('animated'); },
+			},{
+				event     : 'keydown',
+				key       : 'c',
+				modifiers : ['alt'],
+				action    : ()=>{ self.elements.output.classList.toggle('compressed'); },
 			},{
 				event     : 'keydown',
 				key       : 'd',
-				modifiers : ['ctrl'],
+				modifiers : ['alt'],
 				action    : self.toggleConsole,
 			},{
 				event     : 'keydown',
 				key       : 'o',
-				modifiers : ['ctrl'],
+				modifiers : ['alt'],
 				action    : self.toggleOverflow,
+			},{
+				event     : 'keydown',
+				key       : 's',
+				modifiers : ['alt'],
+				action    : ()=>{ self.elements.output.classList.toggle('separators'); },
 			},{
 				event     : 'keydown',
 				key       : '#',
@@ -485,7 +495,7 @@ export const DebugConsole = function (callback) {
 			},{
 				event     : 'keyup,keypress,keydown',
 				code      : 'BackQuote',
-				modifiers : [],
+				modifiers : ['shift','ctrl','alt'],
 				action    : self.toggle,
 			},{
 				event     : 'keydown',
@@ -506,6 +516,8 @@ export const DebugConsole = function (callback) {
 				if (is_event && is_key && modifiers(shortcut)) {
 					event.stopPropagation();
 					event.preventDefault();
+
+					console.log( 'KBD', is_key, is_event, shortcut );
 
 					shortcut.action( event );
 				}
@@ -921,6 +933,15 @@ return
 				return;
 			}
 		});
+
+
+
+		// CLOCK
+
+		setInterval( ()=>{
+			document.querySelector( '.time').innerText = new Date().toUTCString();
+
+		}, 1000);
 
 
 		return Promise.resolve();

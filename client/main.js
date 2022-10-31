@@ -23,17 +23,17 @@ const Application = function () {
 
 
 	const boot_sequence = [
-	/*
 		{
 			session: {
 				login: {
 					username : 'root',
-					password : 'pass1',
+					password : '12345',
 				},
 				status: {},
-				logout: {},
+				who: {},
 			},
 		},
+	/*
 		{
 
 			session: {
@@ -135,7 +135,7 @@ const Application = function () {
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
 		});
-		self.debugConsole.toggleConsole();
+		//...self.debugConsole.toggleConsole();
 		self.debugConsole.elements.input.focus();
 
 		boot_sequence.forEach( (request)=>{
