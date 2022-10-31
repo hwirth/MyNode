@@ -57,7 +57,7 @@ const Application = function () {
 
 
 	function on_websocket_open (event, socket)  {
-		self.debugConsole.print( 'CEP: Connected to ' + WS_URL, 'cep' );
+		self.debugConsole.print( 'Connected to ' + WS_URL, 'cep' );
 
 		boot_sequence.forEach( (request)=>{
 			socket.send( request );
@@ -68,7 +68,7 @@ const Application = function () {
 
 	function on_websocket_close (event, socket)  {
 		//...document.querySelector( '.debug_console .prompt' ).classList.add( 'disabled' );
-		self.debugConsole.print( 'CEP: Connection lost', 'cep' );
+		self.debugConsole.print( 'Connection lost', 'cep' );
 
 	} // on_websocket_close
 
@@ -89,7 +89,7 @@ const Application = function () {
 
 
 	function on_websocket_error (event, socket) {
-		self.debugConsole.print( 'CEP: Connection error', 'cep' );
+		self.debugConsole.print( 'Connection error', 'cep' );
 
 	} // on_websocket_error
 

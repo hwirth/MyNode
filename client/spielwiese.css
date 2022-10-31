@@ -264,16 +264,16 @@ button.submit {  background: var(--button-submit-bg); color:var(--button-submit-
 /* DEBUG CONSOLE */
 
 textarea, code,
-.debug_console button,
-.debug_console .prompt span,
-.debug_console .input,
-.debug_console .output pre {
+.terminal button,
+.terminal .prompt span,
+.terminal .input,
+.terminal .output pre {
 	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--console-line-height);
 	tab-size:var(--tab-size);
 	padding-bottom:1em;
 }
 
-.debug_console {
+.terminal {
 	position:absolute; bottom:0; left:0; z-index:999;
 	display:grid; grid-template-rows:auto 1fr min-content;
 	width:100%; height:0; transition:height 0.1s ease-in-out;
@@ -287,11 +287,11 @@ textarea, code,
 	background-position:center;
 	color:#fff;
 }
-.debug_console.active { height:100%; }
-.debug_console :focus { outline:none; }
+.terminal.active { height:100%; }
+.terminal :focus { outline:none; }
 
 
-.debug_console .output {
+.terminal .output {
 	padding-bottom:0.1em;
 	overflow-y:hidden;
 	white-space:pre-wrap;
@@ -300,35 +300,35 @@ textarea, code,
 	overflow-y:scroll;
 	Xscroll-behavior: smooth;
 }
-.debug_console.overflow .output { Xoverflow-y:hidden; }
+.terminal.overflow .output { Xoverflow-y:hidden; }
 
-X.debug_console pre > div { white-space:pre; Xpadding-right:2em; }
+X.terminal pre > div { white-space:pre; Xpadding-right:2em; }
 
-.debug_console .buttons button { padding:0 0.3em; }
+.terminal .buttons button { padding:0 0.3em; }
 
-.debug_console .separators pre {
+.terminal .separators pre {
 	border-bottom:var(--console-separator-border);
 	padding-top:0.25em; padding-bottom:0.25em; }
 
-	.debug_console pre.request div { display:inline-block; margin-right:0.45em; }
+	.terminal pre.request div { display:inline-block; margin-right:0.45em; }
 
-.debug_console pre.request  { color:var(--console-request-color)  ; white-space:normal;   }
-.debug_console pre.response { color:var(--console-response-color) ; white-space:pre-wrap; }
-.debug_console pre.success  { color:var(--console-success-color)  ; }
-.debug_console pre.failure  { color:var(--console-error-color)    ; }
-.debug_console pre.cep      { color:var(--console-cep-color)      ; }
-.debug_console pre.mcp      { color:var(--console-mcp-color)      ; }
+.terminal pre.request  { color:var(--console-request-color)  ; white-space:normal;   }
+.terminal pre.response { color:var(--console-response-color) ; white-space:pre-wrap; }
+.terminal pre.success  { color:var(--console-success-color)  ; }
+.terminal pre.failure  { color:var(--console-error-color)    ; }
+.terminal pre.cep      { color:var(--console-cep-color)      ; }
+.terminal pre.mcp      { color:var(--console-mcp-color)      ; }
 
-X.debug_console pre.request:hover  { background:var(--request-hover-background)  ; color:var(--request-hover-color)  ; }
-X.debug_console pre.response:hover { background:var(--response-hover-background) ; color:var(--response-hover-color) ; }
-X.debug_console pre.mcp:hover      { color:#f00; }
-
-
-X.debug_console .prompt { display:grid; grid-template-columns:min-content 1fr; }
-X.debug_console .prompt.disabled { display:none; }
+X.terminal pre.request:hover  { background:var(--request-hover-background)  ; color:var(--request-hover-color)  ; }
+X.terminal pre.response:hover { background:var(--response-hover-background) ; color:var(--response-hover-color) ; }
+X.terminal pre.mcp:hover      { color:#f00; }
 
 
-.debug_console .input  {
+X.terminal .prompt { display:grid; grid-template-columns:min-content 1fr; }
+X.terminal .prompt.disabled { display:none; }
+
+
+.terminal .input  {
 	width:100%; border:none; padding:0em;
 	background:transparent; color:var(--console-chat-color);
 	resize:none;
@@ -337,10 +337,10 @@ X.debug_console .prompt.disabled { display:none; }
 	Xcaret-shape:unserscore;
 	caret-color: #ff0;
 }
-.debug_console .input.request { color:var(--console-input-color); }
+.terminal .input.request { color:var(--console-input-color); }
 
 
-.debug_console .buttons {
+.terminal .buttons {
 	background:#fff2;
 	flex-grow:1;
 	display:flex;
@@ -348,7 +348,7 @@ X.debug_console .prompt.disabled { display:none; }
 	Xflex-direction:row-reverse;
 	width:100%;
 }
-.debug_console button {
+.terminal button {
 	margin:1px; padding:0.1em 0.5em 0.2em;
 	border:none;
 }
@@ -383,7 +383,7 @@ html {
 
 	background-size: 300% 300%;
 	background-color:#000;
-	background-image: linear-gradient(
+	Xbackground-image: linear-gradient(
 		45deg,
 		rgba(  0,  0,255,1) 0%,
 		rgba(255,  0,  0,1) 100%
@@ -406,9 +406,9 @@ html {
 
 body { padding:300px; background:none; }
 .debug-console button { background:none; border:none; }
-.debug_console .output * > * { position:relative; }
+.terminal .output * > * { position:relative; }
 
-.debug_console .output * > * {
+.terminal .output * > * {
 	animation: LINES 13s ease infinite;
 	transform-origin: left;
 }

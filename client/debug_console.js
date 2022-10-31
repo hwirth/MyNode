@@ -276,8 +276,8 @@ export const DebugConsole = function (callback) {
 			? message
 			: request_to_text( message )
 		)
-		//.replace(/&/g, '&amp;')
-		//.replace(/</g, '&lt;')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
 		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')//...
 		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
 		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
@@ -322,7 +322,7 @@ export const DebugConsole = function (callback) {
 
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
-
+/*
 		const HTML = (`
 			<div class="output" ></div>
 			<div class="prompt" >
@@ -337,20 +337,24 @@ export const DebugConsole = function (callback) {
 		new_element.className = 'debug_console';
 		new_element.innerHTML = HTML;
 		document.body.appendChild( new_element );
+*/
+		const container = document.querySelector( '.terminal' );
+		self.elements = {
+			console  : container,
+			output   : container.querySelector( '.output' ),
+			prompt   : container.querySelector( '.prompt' ),
+			input    : container.querySelector( '.input' ),
+			controls : container.querySelector( '.controls' ),
+			buttons  : container.querySelector( '.buttons' ),
+			send     : container.querySelector( '.submit' ),
+		};
 
 		self.history = new History({
 			forward : ()=>{},
 			back    : ()=>{},
 		});
 
-		self.elements = {
-			console : new_element,
-			output  : new_element.querySelector( '.output' ),
-			prompt  : new_element.querySelector( '.prompt' ),
-			input   : new_element.querySelector( '.input' ),
-			buttons : new_element.querySelector( '.buttons' ),
-			send    : new_element.querySelector( '.submit' ),
-		};
+		self.elements.controls.addEventListener( 'submit', e => e.preventDefault() );
 
 
 		function adjust_textarea () {
@@ -695,7 +699,7 @@ return
 
 			if (! valid_request) {
 				self.print( text, 'request' );
-				self.print( 'CEP: Malformed request', 'cep' );
+				self.print( 'Malformed request', 'cep' );
 			}
 */
 
@@ -847,14 +851,14 @@ return
 
 			if (! request) {
 				self.print( text, 'request' );
-				self.print( 'CEP: Malformed request', 'cep' );
+				self.print( 'Malformed request', 'cep' );
 			}
 		});
 
 
 		// DOUBLE CLICK
 
-		self.elements.input.value = TUTORIAL_SCRIPT[0];
+		//self.elements.input.value = TUTORIAL_SCRIPT[0];
 		adjust_textarea();
 
 		function next_script_entry (shift = true) {
@@ -865,7 +869,7 @@ return
 		} // next_script_entry
 
 		addEventListener( 'dblclick', (event)=>{
-			if (!event.target.closest('.debug_console')) return;
+			if (!event.target.closest('.terminal')) return;
 
 			const shift = event.shiftKey;
 			const ctrl = event.ctrlKey;
