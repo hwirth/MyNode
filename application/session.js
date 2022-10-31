@@ -80,7 +80,8 @@ module.exports = function SessionHandler (persistent, callback) {
 			return;
 		}
 
-		persistent.clients[client_address] = await new WebSocketClient( socket, client_address );
+		persistent.clients[client_address] =
+			await new WebSocketClient( socket, client_address, { mcp: callback.mcp } );
 
 	}; // onConnect
 
@@ -141,7 +142,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			client.respond(
 				RESULT.FAILURE,
 				request_id,
-				REASONS.USER_UNKNOWN.replace('NAME', parameters.username)
+				REASONS.USERNAME_UNKNOWN.replace('NAME', parameters.username)
 			);
 
 		} else {
@@ -355,7 +356,7 @@ module.exports = function SessionHandler (persistent, callback) {
 						],
 						maxIdleTime: 0,
 					},
-					'a User': {
+					'user': {
 						password: 'pass2',
 					},
 				}, // accounts

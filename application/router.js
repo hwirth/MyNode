@@ -25,8 +25,8 @@ module.exports.Router = function (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function log_persistent (event_name, caption = '') {
-		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
-			COLORS.PROTOCOLS,
+		if (DEBUG.ROUTER_PERSISTENT_DATA) color_log(
+			COLORS.ROUTER,
 			'Router.' + event_name + ':',
 			caption + 'persistent:',
 			persistent, //.clients,
@@ -39,11 +39,11 @@ module.exports.Router = function (persistent, callback) {
 		const stringified_json = JSON.stringify( data, null, '\t' );
 
 		if (DEBUG.MESSAGE_OUT) color_log(
-			COLORS.PROTOCOLS,
+			COLORS.ROUTER,
 			'Router-send_as_json:',
 			JSON.parse( stringified_json ),
 		);
-		//if (DEBUG.MESSAGE_OUT) color_log( COLORS.PROTOCOLS, 'send_as_json:', data );
+		//if (DEBUG.MESSAGE_OUT) color_log( COLORS.ROUTER, 'send_as_json:', data );
 		if (socket.send) socket.send( stringified_json );
 
 	} // send_as_json //... Redundant with same function in  SessionHandler()
@@ -54,7 +54,7 @@ module.exports.Router = function (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = function (socket, client_address) {
-		if (DEBUG.CONNECT) color_log( COLORS.PROTOCOLS, 'Router.onConnect:', client_address );
+		if (DEBUG.CONNECT) color_log( COLORS.ROUTER, 'Router.onConnect:', client_address );
 
 		self.protocols.session.onConnect( socket, client_address );   // Will create new WebSocketClient()
 
@@ -64,7 +64,7 @@ module.exports.Router = function (persistent, callback) {
 
 
 	this.onDisconnect = function (socket, client_address) {
-		if (DEBUG.DISCONNECT) color_log( COLORS.PROTOCOLS, 'Router.onDisconnect:', client_address );
+		if (DEBUG.DISCONNECT) color_log( COLORS.ROUTER, 'Router.onDisconnect:', client_address );
 
 		self.protocols.session.onDisconnect( socket, client_address );
 
@@ -93,8 +93,6 @@ module.exports.Router = function (persistent, callback) {
 	this.onMessage = function (socket, client_address, message) {
 		const request_id = message;
 
-		if (DEBUG.MESSAGE_IN) color_log( COLORS.PROTOCOLS, 'Router.onMessage:', client_address, message );
-
 		const client = self.protocols.session.getClientByAddress( client_address );
 		if (!client) {
 			color_log( COLORS.ERROR, 'ERROR', 'Router.onMessage: Unknown client:', client_address );
@@ -102,16 +100,11 @@ module.exports.Router = function (persistent, callback) {
 		}
 
 		function send_error (error) {
-			//let stringified_error = JSON.stringify(
-			//	error,
-			//	Object.getOwnPropertyNames( error ),   //... SODD
-			//)
-//console.log( 'ERRRRRRRR', typeof error, error );
 			if (typeof error != 'error') {
 				send_as_json( socket, {
-					tag: message.tag,
-					success: false,
-					response: error,
+					tag      : message.tag,
+					success  : false,
+					response : error,
 				});
 				return;
 			}
@@ -156,7 +149,7 @@ module.exports.Router = function (persistent, callback) {
 			if (!self.protocols[protocol_name]) {
 				rejected_commands.push( protocol_name + '.*' );
 
-				if (DEBUG.PROTOCOLS) color_log(
+				if (DEBUG.ROUTER) color_log(
 					COLORS.ERROR,
 					'Router.onMessage:',
 					'unknown protocol:',
@@ -167,8 +160,8 @@ module.exports.Router = function (persistent, callback) {
 				// A protocol request can contain several commands
 				const message_commands = message[protocol_name];
 
-				if (DEBUG.PROTOCOLS) color_log(
-					COLORS.PROTOCOLS,
+				if (DEBUG.ROUTER) color_log(
+					COLORS.ROUTER,
 					'Router.onMessage:',
 					'protocol_commands:',
 					self.protocols[protocol_name],
@@ -188,7 +181,7 @@ module.exports.Router = function (persistent, callback) {
 					if (!request_handler) {
 						rejected_commands.push( combined_name );
 
-						if (DEBUG.PROTOCOLS) color_log(
+						if (DEBUG.ROUTER) color_log(
 							COLORS.ERROR,
 							'Router.onMessage:',
 							'unknown command:',
@@ -198,8 +191,8 @@ module.exports.Router = function (persistent, callback) {
 					} else {
 						handled_commands.push( combined_name );
 
-						if (DEBUG.PROTOCOLS) color_log(
-							COLORS.PROTOCOLS,
+						if (DEBUG.ROUTER) color_log(
+							COLORS.ROUTER,
 							'Router.onMessage:',
 							'request_handler: ',
 							request_handler
@@ -234,7 +227,7 @@ module.exports.Router = function (persistent, callback) {
 		});
 
 		color_log(
-			COLORS.PROTOCOLS,
+			COLORS.ROUTER,
 			'Router.onMessage:',
 			(handled_commands.length ? COLORS.DEFAULT : COLORS.ERROR)
 			+ 'nr_handled_commands'
@@ -282,6 +275,7 @@ module.exports.Router = function (persistent, callback) {
 		const ChatServer     = require( './chat/main.js' );
 
 		const registered_callbacks = {
+			mcp                    : ()=>{ return self.protocols.mcp },
 			getUpTime              : ()=>{ return self.protocols.server.getUpTime(); },
 			getProtocols           : ()=>self.protocols,
 			getAllPersistentData   : ()=>persistent,
@@ -293,9 +287,9 @@ module.exports.Router = function (persistent, callback) {
 		};
 
 		const registered_protocols = {
-			session : { template: SessionHandler },
+			session : { template: SessionHandler, callbacks: ['mcp'] },
 			access  : { template: AccessControl },
-			//...mc     : { template: MCP, callbacks: Object.keys(registered_callbacks) },
+			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
 			mcp     : { template: MasterControl,
 				callbacks : [
 					'getUpTime',

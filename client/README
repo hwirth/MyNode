@@ -134,6 +134,8 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] /clear
+[ ] JSON message single string: special format
 [ ] whoami
 [ ] Paths? whoami --> mcp status whoami
 [ ] onclick everywhere --> focus

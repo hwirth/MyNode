@@ -9,26 +9,27 @@ const EXTRA_LINES = 0;
 const MIN_LINES = 0;
 
 const BANGS = ['>', ':', '!', '.', ';', '/'];
-const BANG = BANGS[0];
+
+const BANG_REQUEST = '';//'>';
 
 const BUTTON_SCRIPTS = {
-	'stat'    : BANG + 'session\n\tstatus',
-	'root'    : BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
-	'user'    : BANG + 'session\n\tlogin\n\t\tusername: sec\n\t\tpassword: pass2',
-	'out'     : BANG + 'session\n\tlogout',
-	'/w'      : BANG + 'session\n\twho',
-	'kroot'   : BANG + 'session\n\tkick\n\t\tusername: root',
-	'kuser'   : BANG + 'session\n\tkick\n\t\tusername: sec',
-	'mcp'     : BANG + 'mcp\n\tstatus',
-	'rst'     : BANG + 'mcp\n\trestart',
+	'stat'    : BANG_REQUEST + 'session status',
+	'root'    : BANG_REQUEST + 'session login username: root password: pass1',
+	'user'    : BANG_REQUEST + 'session login username: user password: pass2',
+	'out'     : BANG_REQUEST + 'session logout',
+	'who'     : BANG_REQUEST + 'session who',
+	'kroot'   : BANG_REQUEST + 'session kick username: root',
+	'kuser'   : BANG_REQUEST + 'session kick username: sec',
+	'MCP'     : BANG_REQUEST + 'mcp status',
+	'rst'     : BANG_REQUEST + 'mcp restart',
 };
 
 const TUTORIAL_SCRIPT = [
-	BANG + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: pass1',
-	BANG + 'session\n\tstatus',
-	BANG + 'mcp\n\tinspect',
-	BANG + 'mcp\n\tinspect: reloader.persistentData',
-	BANG + 'mcp\n\tstatus',
+	BANG_REQUEST + 'session login username: root password: pass1',
+	BANG_REQUEST + 'session status',
+	BANG_REQUEST + 'mcp inspect',
+	BANG_REQUEST + 'mcp inspect: reloader.persistentData',
+	BANG_REQUEST + 'mcp status',
 ];
 
 
@@ -239,7 +240,7 @@ export const DebugConsole = function (callback) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.toggle = function () {
+	this.toggleConsole = function () {
 		self.elements.console.classList.toggle( 'active' );
 		if (self.elements.console.classList.contains( 'active' )) {
 			self.elements.input.focus();
@@ -248,6 +249,13 @@ export const DebugConsole = function (callback) {
 		}
 
 	}; // toggle
+
+
+	this.toggleOverflow = function () {
+		console.log('OOO');
+		self.elements.console.classList.toggle( 'overflow' );
+
+	}; // toggleOverflow
 
 
 	this.print = function (message, class_name) {
@@ -262,6 +270,7 @@ export const DebugConsole = function (callback) {
 			'[', '(', ')', ']', '}',
 			'true', 'false', 'null'
 		];
+
 		const message_html = (
 			(typeof message == 'string')
 			? message
@@ -286,15 +295,13 @@ export const DebugConsole = function (callback) {
 		.map( line => '<div>'+line+'</div>' )
 		.join('')
 		;
-console.log()
-console.log(message_html)
-console.log()
+
 		if (message.MCP) class_name = 'mcp'; //...new_element.classList.add( 'mcp' );
 
 		const new_element = document.createElement( 'pre' );
 		new_element.className = class_name;
 		new_element.innerHTML = message_html;
-console.log( 'message_html', message_html );
+
 		//self.elements.console.insertBefore( new_element, self.elements.prompt );
 		self.elements.output.appendChild( new_element );
 		scroll_down();
@@ -435,68 +442,96 @@ console.log( 'message_html', message_html );
 			}
         	});
 
-		['keydown', 'keypress', 'keyup'].forEach( (event_name)=>{
-			addEventListener( event_name, (event)=>{
-				const shift = event.shiftKey;
-				const ctrl = event.ctrlKey;
-				const alt = event.altKey;
 
-				const input = self.elements.input;
-				const cursor_pos1 = input.selectionStart == 0;
-				const cursor_end  = input.selectionStart == input.value.length -1;
 
-				[{ // Keyboard event definitions
-					event     : 'keyup',
-					key       : 'b',
-					modifiers : ctrl && !shift && !alt,
-					action    : ()=>{ self.elements.output.classList.toggle('separators') },
-				},{
-					event     : 'keydown',
-					key       : 'd',
-					modifiers : ctrl && !shift && !alt,
-					action    : self.toggle,
-				},{
-					event     : 'keydown',
-					key       : '#',
-					modifiers : ctrl && !shift && !alt,
-					action    : self.toggle,
-				},{
-					event     : 'keyup,keypress,keydown',
-					code      : 'BackQuote',
-					modifiers : !ctrl && !shift && !alt,
-					action    : self.toggle,
-				},{
-					event     : 'keydown',
-					key       : 'ArrowUp',
-					modifiers : !ctrl && !shift && !alt && cursor_pos1,
-					action    : ()=>{ self.elements.input.value = self.history.back(); },
-				},{
-					event     : 'keydown',
-					key       : 'ArrowDown',
-					modifiers : !ctrl && !shift && !alt && cursor_end,
-					action    : ()=>{ self.elements.input.value = self.history.forward(); },
-				}]
-				.forEach( (shortcut)=>{
-					const is_key = (event.key === shortcut.key) || (event.code === shortcut.code);
-					if (is_key && (shortcut.modifiers)) {
-						event.stopPropagation();
-						event.preventDefault();
-					const is_event = (shortcut.event.split(',').indexOf( event_name ) >= 0);
-						if (is_event) {
-							shortcut.action( event );
-						}
-					}
-				});
+		['keydown', 'keypress', 'keyup' ].forEach( event =>
+			addEventListener(
+				event, on_keyboard_event, {passive: false},
+		));
 
-			}, {passive: false} );
-		});
+		function on_keyboard_event (event) {
+			const shift = event.shiftKey;
+			const ctrl = event.ctrlKey;
+			const alt = event.altKey;
+
+			const input = self.elements.input;
+			const cursor_pos1 = input.selectionStart == 0;
+			const cursor_end  = input.selectionStart == input.value.length -1;
+
+			const KEYBOARD_SHORTCUTS = [{
+				event     : 'keyup',
+				key       : 'b',
+				modifiers : ['ctrl'],
+				action    : ()=>{ self.elements.output.classList.toggle('separators'); },
+			},{
+				event     : 'keydown',
+				key       : 'd',
+				modifiers : ['ctrl'],
+				action    : self.toggleConsole,
+			},{
+				event     : 'keydown',
+				key       : 'o',
+				modifiers : ['ctrl'],
+				action    : self.toggleOverflow,
+			},{
+				event     : 'keydown',
+				key       : '#',
+				modifiers : ['ctrl'],
+				action    : self.toggle,
+			},{
+				event     : 'keyup,keypress,keydown',
+				code      : 'BackQuote',
+				modifiers : [],
+				action    : self.toggle,
+			},{
+				event     : 'keydown',
+				key       : 'ArrowUp',
+				modifiers : ['cursorPos1'],
+				action    : ()=>{ self.elements.input.value = self.history.back(); },
+			},{
+				event     : 'keydown',
+				key       : 'ArrowDown',
+				modifiers : ['cursorEnd'],
+				action    : ()=>{ self.elements.input.value = self.history.forward(); },
+			}];
+
+			KEYBOARD_SHORTCUTS.forEach( (shortcut)=>{
+				const is_key = (event.key === shortcut.key) || (event.code === shortcut.code);
+				const is_event = (shortcut.event.split(',')).indexOf( event.type ) >= 0;
+
+				if (is_event && is_key && modifiers(shortcut)) {
+					event.stopPropagation();
+					event.preventDefault();
+
+					shortcut.action( event );
+				}
+			});
+
+			function modifiers (shortcut) {
+				const modifiers = shortcut.modifiers;
+				const requires = {
+					shift      : modifiers.indexOf('shift') >= 0,
+					ctrl       : modifiers.indexOf('ctrl') >= 0,
+					alt        : modifiers.indexOf('alt') >= 0,
+					cursorPos1 : modifiers.indexOf('cursorPos1') >= 0,
+					cursorEnd  : modifiers.indexOf('cursorEnd') >= 0,
+				};
+
+				return (
+					event.shiftKey == requires.shift
+				&&	event.ctrlKey == requires.ctrl
+				&&	event.altKey == requires.alt
+				);
+			}
+
+		} // on_keyboard_event
 
 
 		// KEYBOARD BEEP
 
 		let nr_active_sounds = 0;
 		addEventListener('keydown', (event) => {
-
+return
 			// Chromium crashes after I type fast for a few seconds
 			// Limiting number of sounds does not help:
 			if (nr_active_sounds > 5) return;
@@ -536,7 +571,7 @@ console.log( 'message_html', message_html );
 			console.log('beep:', ++nr_active_sounds);
 
 			function on_ended(event) {
-				console.log('on_ended:', nr_active_sounds--);
+//console.log('on_ended:', nr_active_sounds--);
 				square_wave.disconnect(envelope);
 				envelope.disconnect(volume);
 				volume.disconnect(context.destination);
@@ -558,34 +593,118 @@ console.log( 'message_html', message_html );
 		self.requestId = 0;
 
 		self.elements.send.addEventListener( 'click', ()=>{
-			let text = self.elements.input.value.trim();
-			const has_bang = cmd => BANGS.filter( b => b == bang ).length > 0;
+
+			function execute (data) {
+				const command
+				= (typeof data == 'string')
+				? text_to_request(data)
+				: data
+				;
+
+				command.tag = ++self.requestId;
+
+				callback.send( command );
+				self.elements.input.value = '';
+				self.elements.input.focus();
+			}
+
+			let text = self.elements.input.value;
 			let bang = null;
+			const has_bang = BANGS.find( bang => text.charAt(0) == bang );
 			if (has_bang) {
 				bang = text.charAt(0);
 				text = text.slice(1).trim();
-			}
 
-			if (!bang) {
-				//event.preventDefault();
-				//self.elements.input.focus();
-				//return;
-			}
-
-			if (bang == '>') {
-				callback.send( text_to_request(text, ++self.requestId) );
+				execute( text );
 				return;
 			}
 
 
-			// PARSE MACROS
+			text = text.replace(/\s\s+/g, ' ').trim();
+			//string.replace(/\s\s+/g, ' ');
+			//string.replace(/  +/g, ' ');
 
+/*
+
+			// Syntax: 'session login username:* password:*\tadditional parameter:*'
+			// matches: session login username:user password:pass additional parameter:text
+			//
+			//   session
+			//     login
+			//       username: user
+			//       password: pass
+			//     additional
+			//       parameter: text
+
+			const COMMAND_SYNTAX = [
+				'session login username:* password:*',
+				'session login username:* password:* \tlogout',
+				'session logout',
+				'session status',
+				'session who',
+			];
+
+			function create_json (command, parameters, syntax) {
+				const tokens = {
+					command : command.split(' '),
+					syntax  : syntax.split(' '),
+				};
+
+				let indentation = '';
+				let result      = '';
+
+				tokens.command.forEach( (token, index) => {
+					result += indentaion + token;
+
+					const has_colon = tokens.syntax[index].indexOf('\t') >= 0;
+					const has_tab = tokens.syntax[index].indexOf('\t') >= 0;
+					if (has_tab) {
+					}
+				});
+				return text_to_command( result );
+			}
+
+			const command = text;
+			const valid_request = COMMAND_SYNTAX.find( (syntax, index) => {
+				const words      = command.split(' ');
+				const parameters = [];
+				let synthesized  = '';
+
+				syntax
+				.replace('\t', ' ')
+				.replace('*', ' *')
+				.split(' ').forEach( (token, index)=>{
+					if (token == '*') {
+						parameters.push( words[index] );
+						synthesized += ' ' + words[index];
+					} else {
+						synthesized += ' ' + token;
+					}
+				});
+
+				synthesized = synthesized.trim();
+
+				if (synthesized == command) {
+					const translated = create_json( command, parameters, syntax );
+					execute( translated );
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+			if (! valid_request) {
+				self.print( text, 'request' );
+				self.print( 'CEP: Malformed request', 'cep' );
+			}
+*/
+
+			// PARSE MACROS
 			const COMMAND_SYNTAX = [
 				{
 					syntax: 'session login username: * password: *',
 					create: (username, password)=>{
 						return {
-							tag: ++self.requestId,
 							session: {
 								login: {
 									username: username,
@@ -594,54 +713,142 @@ console.log( 'message_html', message_html );
 							},
 						};
 					},
-				},{
+				},
+				{
 					syntax: 'session logout',
 					create: ()=>{
 						return {
-							tag: ++self.requestId,
 							session: {
-								logout: {
-								}
+								logout: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session status',
+					create: ()=>{
+						return {
+							session: {
+								status: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session who',
+					create: ()=>{
+						return {
+							session: {
+								who: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session kick username: *',
+					create: (name)=>{
+						return {
+							session: {
+								kick: {
+									username: name,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session kick address: *',
+					create: (address)=>{
+						return {
+							session: {
+								kick: {
+									address: address,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp status',
+					create: ()=>{
+						return {
+							mcp: {
+								status: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp inspect',
+					create: (param)=>{
+						return {
+							mcp: {
+								inspect: param,
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp inspect reloader',
+					create: (param)=>{
+						return {
+							mcp: {
+								inspect: {
+									reloader: param,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp restart',
+					create: ()=>{
+						return {
+							mcp: {
+								restart: {},
 							},
 						};
 					},
 				},
 			];
-/*
-	.session login username: sec password: pass2
-*/
+
+
 			const request = COMMAND_SYNTAX.find( (request, index)=>{
-				const syntax     = request.syntax.split(' ');
+				const syntax = request.syntax.split(' ');
+
 				const parameters = [];
 				let synthesized  = '';
-				text.split(' ').forEach( (word, index)=>{
+				const words = text.split(' ');
+				syntax.forEach( (_, index)=>{
 					if (syntax[index] == '*') {
-						parameters.push( word );
-						synthesized += ' ' + word;
+						parameters.push( words[index] );
+						synthesized += ' ' + words[index];
 					} else {
 						synthesized += ' ' + syntax[index];
 					}
 				});
 				synthesized = synthesized.trim();
 
-				const translate = (index, ...params) => COMMAND_SYNTAX[index].create(...params);
-				const translated = translate( index, ...parameters );
-
-				console.log( 'X', text );
-				console.log( 'S', synthesized );
-				console.log( 'P', parameters );
-				console.log( 'T', translated );
 
 				if (text == synthesized) {
-					callback.send( translated );
+					const translated = COMMAND_SYNTAX[index].create(...parameters)
+
+					console.log( 'X', text );
+					console.log( 'S', synthesized );
+					console.log( 'T', translated );
+					console.log( 'P', parameters );
+
+					execute( translated );
 					return true;
 				} else {
 					return false;
 				}
 			});
 
-
-			console.log( request );
+			if (! request) {
+				self.print( text, 'request' );
+				self.print( 'CEP: Malformed request', 'cep' );
+			}
 		});
 
 
@@ -674,7 +881,8 @@ console.log( 'message_html', message_html );
 
 				self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
 				self.elements.send.click();
-				self.elements.input.value = previous_value;
+				//self.elements.input.value = previous_value;
+				self.elements.input.value = '';
 
 				return;
 

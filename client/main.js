@@ -119,17 +119,23 @@ const Application = function () {
 
 	}; // exit
 
-
 	this.init = async function () {
 		console.log( 'Application.init' );
-		splash_status( 'Connecting...' );
+
+		function delay (ms) {
+			return new Promise( done => setTimeout(done, ms) );
+		}
+
+		//await delay(500);
+		show_status( 'Connecting' );
+		//await delay(1500);
 
 		self.debugConsole = await new DebugConsole({
 			getUrl      : ()=>WS_URL,
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
 		});
-		self.debugConsole.toggle();
+		self.debugConsole.toggleConsole();
 		self.debugConsole.elements.input.focus();
 
 		boot_sequence.forEach( (request)=>{
@@ -147,6 +153,9 @@ const Application = function () {
 			debugConsole: self.debugConsole,
 		});
 
+		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
+		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
+
 	}; // init
 
 
@@ -161,13 +170,7 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 addEventListener( 'load', async ()=>{
-	//document.querySelector( 'div.noscript p').innerText = 'Initializing...';
-	splash_status( 'Initializing...' );
-
-	const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
-	//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
-
-	console.log( 'body.onLoad: new Application' );
+	show_status( 'Initializing' );
 
 	await new Application();
 
@@ -175,8 +178,7 @@ addEventListener( 'load', async ()=>{
 		element.parentNode.removeChild( element );
 	});
 
-	console.log( 'body.onLoad: Application initialized' );
-	document.body.classList.remove( 'initializing' );
+	document.querySelector( 'html' ).classList.remove( 'init' );
 });
 
 

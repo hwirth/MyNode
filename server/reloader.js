@@ -266,36 +266,33 @@ module.exports = function AppReloader (callback) {
 	}; // onDisconnect
 
 
-	this.onMessage = function (socket, client_address, json_string) {
+	this.onMessage = async function (socket, client_address, json_string) {
 		let message = null;
 
 		//try {
 			message = JSON.parse( String(json_string) );
 		//} catch (error) {
-			color_log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
+		//	color_log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
 		//}
 
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
-			let success = false;
 			try {
-				success = reload_modules( socket );
+				await reload_modules( socket );
+
 			} catch (error) {
-				socket.send( JSON.stringify({ MCP: 'RELOAD_FAILED' }) );
+				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
+				socket.send( JSON.stringify({ 'RELOAD MODULE ERROR': {} }) );
 			}
 
-			if (success) {
-				try {
-					self.router.onMessage( socket, client_address, message );
+			try {
+				self.router.onMessage( socket, client_address, message );
 
-				} catch (error) {
-					color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
-				}
-			} else {
-				socket.send( JSON.stringify({ MCP: 'ROUTER_FAILED' }) );
+			} catch (error) {
+				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
+				socket.send( JSON.stringify({ 'MODULE ERROR': {} }) );
 			}
-
 		}
 
 	}; // onMessage

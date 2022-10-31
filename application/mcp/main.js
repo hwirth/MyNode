@@ -17,7 +17,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// UPTIME
+// INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	if (!persistent.serverStartTime) persistent.serverStartTime = Date.now() - process.uptime();
@@ -57,8 +57,13 @@ module.exports = function MasterControl (persistent, callback) {
 	} // get_uptime
 
 
+	this.approve = function (command) {
+		return true;
+	}
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// RESULT HANDLERS
+// REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.request = {};
@@ -180,8 +185,8 @@ module.exports = function MasterControl (persistent, callback) {
 			'MASTER CONTROL:',
 			...parameters.map( (parameter)=>{
 				switch (typeof parameter) {
-					case 'object' : return '\n',Object.keys( parameter );  break;
-					default       : return '\n',parameter;                 break;
+					case 'object' : return '\n' + Object.keys( parameter );  break;
+					default       : return '\n' + parameter;                 break;
 				}
 			}),
 		);

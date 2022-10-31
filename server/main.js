@@ -142,6 +142,8 @@ return Promise.resolve();
 			EXTRA_HEADER_DASHES,
 		);
 
+		if (DEBUG.MESSAGE_IN) color_log( COLORS.MESSAGE_IN, '', JSON.parse(String( json_string )) );
+
 		await self.reloader.onMessage( socket, client_address, json_string );
 
 		if (DEBUG.MESSAGE) end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr ); else console.log();

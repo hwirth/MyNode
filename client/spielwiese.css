@@ -1,5 +1,6 @@
 /*** spielwiese.css ***/
 
+html { font-size:21px; }
 :root {
 	color-scheme:light dark; /* both supported */
 
@@ -48,7 +49,7 @@
 
 	--console-chat-color     : #fff;
 	--console-request-color  : #ca0;
-	--console-response-color : #69f;
+	--console-response-color : #67f;
 	--console-notice-color   : #48f;
 	--console-warning-color  : #fc0;
 	--console-error-color    : #e20;
@@ -66,7 +67,8 @@
 	--response-hover-color      : #0af;
 
 	--console-line-height: 1rem;
-	--tab-size: 3;
+	--tab-size: 4;
+	--input-tab-size: 8; X:var(--tab-size);
 }
 
 
@@ -173,7 +175,6 @@ body.dark_mode {
 * { margin:0; padding:0; box-sizing:border-box; font-size:1rem; }
 
 html { background:var(--bg-html); }
-
 body {
 	display:grid;
 	grid-template-areas:
@@ -202,6 +203,7 @@ header { background:var(--bg-header); padding-top:var(--header-padding-top); pad
 .debug header { padding-top:0.5em; }
 header > * { display:inline; }
 header img { height:2em; }
+.init header img { height:unset; }
 header small { font-weight:normal; font-size:0.85em; }
 
 nav { font-size:0; }
@@ -261,6 +263,16 @@ button.submit {  background: var(--button-submit-bg); color:var(--button-submit-
 
 /* DEBUG CONSOLE */
 
+textarea, code,
+.debug_console button,
+.debug_console .prompt span,
+.debug_console .input,
+.debug_console .output pre {
+	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--console-line-height);
+	tab-size:var(--tab-size);
+	padding-bottom:1em;
+}
+
 .debug_console {
 	position:absolute; bottom:0; left:0; z-index:999;
 	display:grid; grid-template-rows:auto 1fr min-content;
@@ -283,38 +295,22 @@ button.submit {  background: var(--button-submit-bg); color:var(--button-submit-
 	padding-bottom:0.1em;
 	overflow-y:hidden;
 	white-space:pre-wrap;
-}
-
-.debug_console .output {
-	Xdisplay:flex;
-	Xflex-direction:column;
-	Xflex-wrap:wrap;
-	XXXflex-basis: 0;
-	XXXflex-wrap:wrap-reverse;
-	XXXalign-items: end;
-	Xalign-content:flex-start;
-	Xjustify-content:start;
 	height:100%;
 	overflow-x:hidden;
-	overflow-x:auto;
+	overflow-y:scroll;
 	Xscroll-behavior: smooth;
 }
-.debug_console pre > div { white-space:pre; Xpadding-right:2em; }
+.debug_console.overflow .output { Xoverflow-y:hidden; }
 
-code,
-.debug_console button,
-.debug_console .prompt span,
-.debug_console .input,
-.debug_console .output pre {
-	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--console-line-height);
-	tab-size:var(--tab-size);
-	padding-bottom:1em;
-}
+X.debug_console pre > div { white-space:pre; Xpadding-right:2em; }
+
 .debug_console .buttons button { padding:0 0.3em; }
 
 .debug_console .separators pre {
 	border-bottom:var(--console-separator-border);
 	padding-top:0.25em; padding-bottom:0.25em; }
+
+	.debug_console pre.request div { display:inline-block; margin-right:0.45em; }
 
 .debug_console pre.request  { color:var(--console-request-color)  ; white-space:normal;   }
 .debug_console pre.response { color:var(--console-response-color) ; white-space:pre-wrap; }
@@ -385,31 +381,43 @@ html {
 	align-items: center;
 	justify-content: center;
 
-	background-color:#000;
 	background-size: 300% 300%;
+	background-color:#000;
 	background-image: linear-gradient(
-		-45deg,
-		rgba(59,173,227,0.1) 0%,
-		rgba(87,111,230,0.1) 25%,
-		rgba(152,68,183,0.1) 51%,
-		rgba(255,53,127,0.1) 100%
+		45deg,
+		rgba(  0,  0,255,1) 0%,
+		rgba(255,  0,  0,1) 100%
 	);
-	animation: AnimateBG 180s ease infinite;
-	overflow:hidden;
+
+	animation: HTML 30s ease infinite;
+	overflow: hidden;
+}
+@keyframes HTML {
+	 00% { background-position:  0%   0%; transform:scale(1.075); }
+	 11% { background-position:  0%   0%; transform:scale(1.050); }
+	 22% { background-position: 70%  70%; transform:scale(1.025); }
+	 33% { background-position: 30%  50%; transform:scale(1.010); }
+	 50% { background-position:100% 100%; transform:scale(1.000); }
+	 66% { background-position: 50%  55%; transform:scale(1.010); }
+	 77% { background-position: 70%  65%; transform:scale(1.025); }
+	 88% { background-position:  0%   0%; transform:scale(1.050); }
+	100% { background-position:  0%   0%; transform:scale(1.075); }
 }
 
 body { padding:300px; background:none; }
-
 .debug-console button { background:none; border:none; }
+.debug_console .output * > * { position:relative; }
 
-@keyframes AnimateBG {
-	 00% { background-position:  0% 50%; transform:scale(1.075); }
-	 11% {                               transform:scale(1.050); }
-	 22% {                               transform:scale(1.025); }
-	 33% {                               transform:scale(1.010); }
-	 50% { background-position:100% 50%; transform:scale(1.000); }
-	 66% {                               transform:scale(1.010); }
-	 77% {                               transform:scale(1.025); }
-	 88% {                               transform:scale(1.050); }
-	100% { background-position:  0% 50%; transform:scale(1.075); }
+.debug_console .output * > * {
+	animation: LINES 13s ease infinite;
+	transform-origin: left;
 }
+@keyframes LINES {
+	 00% { transform:scale(0.99) rotate( 0.10deg); }
+	 50% { transform:scale(1.01) rotate(-0.10deg); }
+	100% { transform:scale(0.99) rotate( 0.11deg); }
+}
+
+
+
+
