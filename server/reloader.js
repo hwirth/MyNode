@@ -283,7 +283,7 @@ module.exports = function AppReloader (callback) {
 
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
-				socket.send( JSON.stringify({ 'RELOAD MODULE ERROR': {} }) );
+				socket.send( JSON.stringify({ 'MODULE ERROR 1': {} }) );
 			}
 
 			try {
@@ -291,7 +291,8 @@ module.exports = function AppReloader (callback) {
 
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
-				socket.send( JSON.stringify({ 'MODULE ERROR': {} }) );
+				const report = error.stack.replace( new RegExp( SETTINGS.BASE_DIR, 'g' ), '', );
+				socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
 			}
 		}
 

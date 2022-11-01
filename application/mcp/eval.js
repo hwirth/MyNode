@@ -1,4 +1,4 @@
-// chat: main.js
+// eval.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -8,9 +8,6 @@
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, RESULT } = require( '../constants.js' );
-
-
-RESULT.CHAT = 'chat';
 
 
 module.exports = function ChatServer (persistent_data, callback) {
@@ -23,10 +20,10 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 	this.request = {};
 
-	this.request.say = function (client, request_id, parameters) {
+	this.request.js = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
-			'<chat.say>',
+			'<eval.js>',
 			dump( client ),
 		);
 
@@ -36,7 +33,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 			const everyone      = callback.getAllClients();
 			const authenticated = client => client.login;
 
-			everyone.filter( authenticated ).forEach( recipient =>
+			everyone.filter( authenticated )
+			.forEach( recipient =>
 				recipient.respond(
 					RESULT.CHAT,
 					login_id,

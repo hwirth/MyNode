@@ -278,6 +278,7 @@ module.exports.Router = function (persistent, callback) {
 			mcp                    : ()=>{ return self.protocols.mcp },
 			getUpTime              : ()=>{ return self.protocols.server.getUpTime(); },
 			getProtocols           : ()=>self.protocols,
+			getAllClients          : ()=>{ return persistent.session.clients; },
 			getAllPersistentData   : ()=>persistent,
 			escalatePrivileges     : callback.escalatePrivileges,
 			getProtocolDescription : (show_line_numbers)=>{
@@ -300,7 +301,11 @@ module.exports.Router = function (persistent, callback) {
 					'getProtocolDescription',
 				],
 			},
-			chat    : { template: ChatServer },
+			chat    : { template: ChatServer,
+				callbacks : [
+					'getAllClients',
+				],
+			},
 		};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 

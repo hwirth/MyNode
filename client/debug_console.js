@@ -5,6 +5,9 @@
 
 "use strict";
 
+import { History } from './history.js';
+
+
 const EXTRA_LINES = 0;
 const MIN_LINES = 0;
 
@@ -31,66 +34,6 @@ const TUTORIAL_SCRIPT = [
 	BANG_REQUEST + 'mcp inspect: reloader.persistentData',
 	BANG_REQUEST + 'mcp status',
 ];
-
-
-export const History = function (callback) {
-	const self = this;
-
-	this.entries;
-	this.currentEntry;
-
-	this.add = function (new_entry) {
-		const existing_index = self.entries.indexOf( new_entry );
-		if (existing_index >= 0) {
-			self.entries.splice( existing_index, 1 );
-		}
-
-		self.entries.push( new_entry );
-		self.currentEntry = self.entries.length - 1;
-
-	}; // add
-
-	this.back = function () {
-		--self.currentEntry;
-
-		if (self.currentEntry < 0) {
-			self.currentEntry = self.entries.length - 1;
-		}
-
-		callback.back();
-
-		return self.entries[self.currentEntry];
-
-	}; // goBack
-
-	this.forward = function () {
-		++self.currentEntry;
-
-		if (self.currentEntry >= self.entries.length) {
-			self.currentEntry = 0;
-		}
-
-		callback.forward();
-
-		return self.entries[self.currentEntry];
-
-	}; // goForward
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// CONSTRUCTOR
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.init = function () {
-		self.entries = [];
-		self.currentEntry = -1;
-
-	}; // init
-
-
-	self.init();
-
-}; // History
 
 
 export const DebugConsole = function (callback) {
@@ -349,10 +292,7 @@ export const DebugConsole = function (callback) {
 			send     : container.querySelector( '.submit'   ),
 		};
 
-		self.history = new History({
-			forward : ()=>{},
-			back    : ()=>{},
-		});
+		self.history = new History(self.elements.prompt);
 
 		self.elements.controls.addEventListener( 'submit', e => e.preventDefault() );
 
@@ -392,43 +332,107 @@ export const DebugConsole = function (callback) {
 
 		let accept_click = null;
 
+		function focus (clear_accept = true) {
+			if (clear_accept) accept_click = null;
+		}
+
 		self.elements.terminal.addEventListener( 'mousemove', (event)=>{
-			if (event.target.classList.contains( 'debug_console' )) {
-				self.elements.input.focus();
-				accept_click = null;
-			}
+			if (event.target.classList.contains( 'debug_console' )) focus();
 		});
 		self.elements.terminal.addEventListener( 'mousedown', (event)=>{
 			accept_click = event.target.classList.contains( 'debug_console' );
 		});
 		self.elements.terminal.addEventListener( 'mouseup', (event)=>{
-			if (accept_click && event.target.classList.contains( 'debug_console' )) {
-				self.elements.input.focus();
-				accept_click = null;
-			}
+			if (accept_click && event.target.classList.contains( 'debug_console' )) focus();
 		});
 		self.elements.input.addEventListener( 'change', adjust_textarea );
 		self.elements.input.addEventListener( 'input', adjust_textarea );
-		self.elements.input.addEventListener( 'mousemove', ()=>{
-			self.elements.input.focus();
-		});
+		self.elements.input.addEventListener( 'mousemove', ()=>focus(false) );
 		self.elements.input.addEventListener( 'keyup', adjust_textarea );
 
 
-		// KEYBOARD
+		// DOUBLE CLICK
+
+		//self.elements.input.value = TUTORIAL_SCRIPT[0];
+		adjust_textarea();
+
+		function next_script_entry (shift = true) {
+			if (!callback.isConnected()) return 'connect: ' + callback.getUrl();
+			const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
+			return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
+
+		} // next_script_entry
+
+		addEventListener( 'dblclick', (event)=>{
+			if (!event.target.closest('.terminal')) return;
+
+			const shift = event.shiftKey;
+			const ctrl = event.ctrlKey;
+			const alt = event.altKey;
+
+			const connected = callback.isConnected();
+
+			if (event.target.tagName == 'BUTTON') {
+				// MACROS
+
+				event.preventDefault();
+				const previous_value = self.elements.input.value;
+
+				self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
+				self.elements.send.click();
+				//self.elements.input.value = previous_value;
+				self.elements.input.value = '';
+
+				return;
+
+			} else if (connected && (!shift && !ctrl && !alt)) {
+				// SCRIPT
+
+				self.elements.input.value = next_script_entry();
+
+				self.elements.send.click();
+
+				self.elements.input.value = next_script_entry( false );
+
+				adjust_textarea();
+				self.elements.input.focus();
+
+				return;
+
+			} else if (connected) {
+				// CONNECT
+
+				event.preventDefault();
+
+				const tags    = line => line.slice(0, 5) != 'tag: ';
+				const success = line => line.slice(0, 9) != 'success: ';
+				self.elements.input.value = event.target.innerHTML
+					.split('\n').filter( tags ).filter( success ).join('\n')
+				;
+
+				adjust_textarea();
+				self.elements.input.focus();
+
+				return;
+			}
+		});
+
+
+		/// KEYBOARD ///
+
+		// TAB and ENTER
 
         	self.elements.input.addEventListener( 'keydown', (event)=>{
-
-
 			if (['Shift', 'Ctrl', 'Alt'].indexOf(event.key) == 0) {
 				adjust_textarea();
 			}
 
-			if (event.keyCode == 13 && (event.shiftKey || event.ctrlKey || event.altKey)) {
-				// Execute command with any modifyer+Enter
+			if (event.keyCode == 13 && (!event.shiftKey || event.ctrlKey || event.altKey)) {
+				// Execute command
 				event.preventDefault();
 				self.elements.send.click();
-
+			} else if (event.keyCode == 13 && ( event.shiftKey || event.ctrlKey || event.altKey)) {
+				//  Enter newline with any modifyer+Return
 			} else if (event.keyCode == 9 || event.which == 9) {
 				// Insert TAB character instead of leaving the textarea
 				event.preventDefault();
@@ -447,6 +451,7 @@ export const DebugConsole = function (callback) {
         	});
 
 
+		// SHORTCUTS
 
 		['keydown', 'keypress', 'keyup' ].forEach( event =>
 			addEventListener(
@@ -466,7 +471,7 @@ export const DebugConsole = function (callback) {
 				event     : 'keydown',
 				key       : 'a',
 				modifiers : ['alt'],
-				action    : ()=>{ self.elements.terminal.classList.toggle('animated'); },
+				action    : ()=>{ document.querySelector('html').classList.toggle('animated'); },
 			},{
 				event     : 'keydown',
 				key       : 'c',
@@ -547,7 +552,8 @@ export const DebugConsole = function (callback) {
 
 		let nr_active_sounds = 0;
 		addEventListener('keydown', (event) => {
-return
+			if (!SETTINGS.KBD_BEEP) return;
+
 			// Chromium crashes after I type fast for a few seconds
 			// Limiting number of sounds does not help:
 			if (nr_active_sounds > 5) return;
@@ -604,7 +610,7 @@ return
 
 
 
-		// SEND
+		/// SEND ///
 
 		self.requestId = 0;
 
@@ -715,7 +721,8 @@ return
 			}
 */
 
-			// PARSE MACROS
+			/// PARSE MACROS ///
+
 			const COMMAND_SYNTAX = [
 				{
 					syntax: 'session login username: * password: *',
@@ -780,6 +787,16 @@ return
 								kick: {
 									address: address,
 								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'chat say: *',
+					create: ()=>{
+						return {
+							chat: {
+								say: {},
 							},
 						};
 					},
@@ -866,74 +883,6 @@ return
 				self.print( 'Malformed request', 'cep' );
 			}
 		});
-
-
-		// DOUBLE CLICK
-
-		//self.elements.input.value = TUTORIAL_SCRIPT[0];
-		adjust_textarea();
-
-		function next_script_entry (shift = true) {
-			if (!callback.isConnected()) return 'connect: ' + callback.getUrl();
-			const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
-			return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
-
-		} // next_script_entry
-
-		addEventListener( 'dblclick', (event)=>{
-			if (!event.target.closest('.terminal')) return;
-
-			const shift = event.shiftKey;
-			const ctrl = event.ctrlKey;
-			const alt = event.altKey;
-
-			const connected = callback.isConnected();
-
-			if (event.target.tagName == 'BUTTON') {
-				// MACROS
-
-				event.preventDefault();
-				const previous_value = self.elements.input.value;
-
-				self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
-				self.elements.send.click();
-				//self.elements.input.value = previous_value;
-				self.elements.input.value = '';
-
-				return;
-
-			} else if (connected && (!shift && !ctrl && !alt)) {
-				// SCRIPT
-
-				self.elements.input.value = next_script_entry();
-
-				self.elements.send.click();
-
-				self.elements.input.value = next_script_entry( false );
-
-				adjust_textarea();
-				self.elements.input.focus();
-
-				return;
-
-			} else if (connected) {
-				// CONNECT
-
-				event.preventDefault();
-
-				const tags    = line => line.slice(0, 5) != 'tag: ';
-				const success = line => line.slice(0, 9) != 'success: ';
-				self.elements.input.value = event.target.innerHTML
-					.split('\n').filter( tags ).filter( success ).join('\n')
-				;
-
-				adjust_textarea();
-				self.elements.input.focus();
-
-				return;
-			}
-		});
-
 
 
 		// CLOCK

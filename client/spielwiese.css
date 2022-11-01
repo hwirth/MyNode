@@ -174,9 +174,12 @@ body.dark_mode {
 * { margin:0; padding:0; box-sizing:border-box; font-size:1rem; }
 
 html, body { width:100%; height:100%; }
-:not(.init) body { background: #000 url(/images/bg_grid3.jpg); background-size:calc(100% / 3) calc(100% / 3); }
+:not(.init) body {
+	background: #000 url(/images/bg_grid.jpg); background-size:calc(100% / 3) calc(100% / 3);
+	background-size:cover;
+}
 :not(.init) body::after {
-	content:'spielwiese'; color:#fc0;
+	content:'-Screen locked-'; color:#fc0; text-transform:uppercase;
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
 	display:flex; align-items:center; Xjustify-content:center;
 	height:100%; width:calc(100% - 1em);
@@ -184,6 +187,7 @@ html, body { width:100%; height:100%; }
 	background: url(/images/tron_poster.png);
 	background-position:center;
 	background-repeat:no-repeat;
+	background-size:auto 100%;
 }
 X:not(.init) body::before {
 	content:'';
@@ -269,9 +273,10 @@ body { text-shadow:none; }
 	background-position: center;
 }
 
+
 .terminal .output::before {
 	content:'';
-	position:absolute; top:50%; left:50%; transform:translate(-50%,-55%); z-index:-1;
+	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
 	width:320px; height:240px;
 	background-image:url(/images/bit.gif);
 	box-shadow:inset 0 0 0 20px #000;
@@ -381,21 +386,25 @@ X.terminal .prompt.disabled { display:none; }
 
 /* ANIMATIONS */
 
-/* Line wobble */
-.animated.terminal .output { padding-left:0.5em; }
-.animated.terminal .output * > * {
-	transform-origin: left;
-	animation: LINES 13s ease infinite;
+/* Beam */
+:not(.init).animated body::after {
+	animation: BEAM 2s linear infinite;
 }
-@keyframes LINES {
-	 00% { transform:scale(0.99) rotate( 0.1deg); }
-	 50% { transform:scale(1.01) rotate(-0.1deg); }
-	100% { transform:scale(0.99) rotate( 0.1deg); }
+@keyframes BEAM {
+	   0% { opacity:0.9; }
+	   4% { opacity:1.0; }
+	   5% { opacity:0.8; }
+	  12% { opacity:1.0; }
+	  13% { opacity:0.9; }
+	  90% { opacity:0.9; }
+	  90% { opacity:1.0; }
+	 100% { opacity:0.9; }
 }
+
 
 
 /* Background */
-.animated.terminal::after {
+:not(.init).animated .terminal::after {
 	animation: MCP_GLOW 180s linear infinite;
 }
 @keyframes MCP_GLOW {
@@ -407,9 +416,8 @@ X.terminal .prompt.disabled { display:none; }
 	100% { opacity:1; }
 }
 
-
 /* Bit */
-.animated.terminal .output::before {
+:not(.init).animated .terminal .output::before {
 	animation: BIT_GLOW 180s linear infinite;
 }
 @keyframes BIT_GLOW {
@@ -421,9 +429,20 @@ X.terminal .prompt.disabled { display:none; }
 	100% { opacity:1; }
 }
 
+/* Line wobble */
+X:not(.init).animated .terminal .output { padding-left:0.5em; }
+:not(.init).animated .terminal .output * > * {
+	transform-origin: left;
+	animation: LINES 13s ease infinite;
+}
+@keyframes LINES {
+	 00% { transform:scale(0.99) rotate( 0.1deg); }
+	 50% { transform:scale(1.01) rotate(-0.1deg); }
+	100% { transform:scale(0.99) rotate( 0.1deg); }
+}
 
 /* MCP */
-.animated.terminal::before {
+:not(.init).animated .active.terminal::before {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background-image: url(/images/mcp.jpg);
 	background-size: cover;

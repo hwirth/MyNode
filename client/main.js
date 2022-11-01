@@ -122,14 +122,27 @@ const Application = function () {
 	this.init = async function () {
 		console.log( 'Application.init' );
 
-		function delay (ms) {
-			return new Promise( done => setTimeout(done, ms) );
-		}
 
-		//await delay(500);
-		show_status( 'Connecting' );
-		//await delay(1500);
+document.body.innerHTML = (`
+	<main class="terminal">
+		<section class="compressed output"></section>
+		<textarea class="input"></textarea>
+		<form class="controls">
+			<section class="buttons">
+				<button class="submit" title="Shortcut: [Shift]+[Enter]">Run</button>
+			</section>
+			<section class="status">
+				<span class="time">12:23:02.2</span>
+				<span class="connection_status warning">OFFLINE</span>
+			</section>
+		</form>
+	</main>
 
+	<footer class="main_menu">
+		<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+		<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+	</footer>
+`).trim();
 		self.debugConsole = await new DebugConsole({
 			getUrl      : ()=>WS_URL,
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
@@ -171,6 +184,12 @@ const Application = function () {
 
 addEventListener( 'load', async ()=>{
 	show_status( 'Initializing' );
+
+	function delay (ms) { return new Promise( done => setTimeout(done, ms) ); }
+
+	//await delay(500);
+	show_status( 'Connecting' );
+	//await delay(1500);
 
 	await new Application();
 
