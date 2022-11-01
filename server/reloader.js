@@ -71,7 +71,6 @@ module.exports = function AppReloader (callback) {
 	} // get_file_times
 
 
-
 	function invalidate_require_cache () {
 		const app_path = path.resolve( SETTINGS.APP_PATH );
 		Object.keys( require.cache ).forEach( (key)=>{

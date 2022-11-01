@@ -180,6 +180,14 @@ like  client.send(data)  - e.g.  session.sendToClient( client.address, data );
 callbacks.sendToClient( client.address, data ); - Have session.js "publish" its methods (globally? To certain modules)
 
 
+6.2. Error handling
+-------------------
+* async forEach,
+* forEach( asnyc (entry)=>...
+* Nesting try/catch
+* Forgetting that some function is async
+
+
 
 
 
@@ -650,3 +658,307 @@ try {
 		}
 		help :null
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+		/// SEND ///
+
+		self.requestId = 0;
+
+		self.elements.send.addEventListener( 'click', ()=>{
+
+			function execute (data) {
+				const command
+				= (typeof data == 'string')
+				? text_to_request(data)
+				: data
+				;
+
+				command.tag = ++self.requestId;
+
+				callback.send( command );
+				self.elements.input.value = '';
+				self.elements.input.focus();
+			}
+
+			let text = self.elements.input.value;
+			execute( text.trim() );
+			return;
+/*
+			let bang = null;
+			const has_bang = BANGS.find( bang => text.charAt(0) == bang );
+			if (has_bang) {
+				bang = text.charAt(0);
+				text = text.slice(1).trim();
+
+				execute( text );
+				return;
+			}
+
+
+			text = text.replace(/\s\s+/g, ' ').trim();
+			//string.replace(/\s\s+/g, ' ');
+			//string.replace(/  +/g, ' ');
+*/
+/*
+
+			// Syntax: 'session login username:* password:*\tadditional parameter:*'
+			// matches: session login username:user password:pass additional parameter:text
+			//
+			//   session
+			//     login
+			//       username: user
+			//       password: pass
+			//     additional
+			//       parameter: text
+
+			const COMMAND_SYNTAX = [
+				'session login username:* password:*',
+				'session login username:* password:* \tlogout',
+				'session logout',
+				'session status',
+				'session who',
+			];
+
+			function create_json (command, parameters, syntax) {
+				const tokens = {
+					command : command.split(' '),
+					syntax  : syntax.split(' '),
+				};
+
+				let indentation = '';
+				let result      = '';
+
+				tokens.command.forEach( (token, index) => {
+					result += indentaion + token;
+
+					const has_colon = tokens.syntax[index].indexOf('\t') >= 0;
+					const has_tab = tokens.syntax[index].indexOf('\t') >= 0;
+					if (has_tab) {
+					}
+				});
+				return text_to_command( result );
+			}
+
+			const command = text;
+			const valid_request = COMMAND_SYNTAX.find( (syntax, index) => {
+				const words      = command.split(' ');
+				const parameters = [];
+				let synthesized  = '';
+
+				syntax
+				.replace('\t', ' ')
+				.replace('*', ' *')
+				.split(' ').forEach( (token, index)=>{
+					if (token == '*') {
+						parameters.push( words[index] );
+						synthesized += ' ' + words[index];
+					} else {
+						synthesized += ' ' + token;
+					}
+				});
+
+				synthesized = synthesized.trim();
+
+				if (synthesized == command) {
+					const translated = create_json( command, parameters, syntax );
+					execute( translated );
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+			if (! valid_request) {
+				self.print( text, 'request' );
+				self.print( 'Malformed request', 'cep' );
+			}
+*/
+
+			/// PARSE MACROS ///
+
+			const COMMAND_SYNTAX = [
+				{
+					syntax: 'session login username: * password: *',
+					create: (username, password)=>{
+						return {
+							session: {
+								login: {
+									username: username,
+									password: password,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session logout',
+					create: ()=>{
+						return {
+							session: {
+								logout: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session status',
+					create: ()=>{
+						return {
+							session: {
+								status: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session who',
+					create: ()=>{
+						return {
+							session: {
+								who: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session kick username: *',
+					create: (name)=>{
+						return {
+							session: {
+								kick: {
+									username: name,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'session kick address: *',
+					create: (address)=>{
+						return {
+							session: {
+								kick: {
+									address: address,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'chat say: *',
+					create: (text)=>{
+						return {
+							chat: {
+								say: text,
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp status',
+					create: ()=>{
+						return {
+							mcp: {
+								status: {},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp inspect',
+					create: (param)=>{
+						return {
+							mcp: {
+								inspect: param,
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp inspect reloader',
+					create: (param)=>{
+						return {
+							mcp: {
+								inspect: {
+									reloader: param,
+								},
+							},
+						};
+					},
+				},
+				{
+					syntax: 'mcp restart',
+					create: ()=>{
+						return {
+							mcp: {
+								restart: {},
+							},
+						};
+					},
+				},
+			];
+
+
+			const request = COMMAND_SYNTAX.find( (request, index)=>{
+				const syntax = request.syntax.split(' ');
+
+				const parameters = [];
+				let synthesized  = '';
+				const words = text.split(' ');
+				syntax.forEach( (_, index)=>{
+					if (syntax[index] == '*') {
+						parameters.push( words[index] );
+						synthesized += ' ' + words[index];
+					} else {
+						synthesized += ' ' + syntax[index];
+					}
+				});
+				synthesized = synthesized.trim();
+
+
+				if (text == synthesized) {
+					const translated = COMMAND_SYNTAX[index].create(...parameters)
+
+					console.log( 'X', text );
+					console.log( 'S', synthesized );
+					console.log( 'T', translated );
+					console.log( 'P', parameters );
+
+					execute( translated );
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+			if (! request) {
+				self.print( text, 'request' );
+				self.print( 'Malformed request', 'cep' );
+			}
+		});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

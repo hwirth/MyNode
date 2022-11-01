@@ -404,12 +404,12 @@ X.terminal .prompt.disabled { display:none; }
 	animation: MCP_GLOW 180s linear infinite;
 }
 @keyframes MCP_GLOW {
-	 00% { opacity:1; }
+	 00% { opacity:1.0; }
 	 55% { opacity:0.9; }
-	 56% { opacity:0; }
+	 56% { opacity:0.0; }
 	 58% { opacity:0.8; }
-	 60% { opacity:1; }
-	100% { opacity:1; }
+	 60% { opacity:1.0; }
+	100% { opacity:1.0; }
 }
 
 /* Bit */
@@ -457,7 +457,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 	 66% { transform:scale(1.25) rotate( 2deg) }
 	 77% { transform:scale(1.10) rotate( 0deg) }
 	 88% { transform:scale(1.03) rotate(-1deg) }
-	100% { transform:scale(1.00) rotate( 0deg); }
+	100% { transform:scale(1.00) rotate( 0deg) }
 }
 
 

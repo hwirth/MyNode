@@ -103,19 +103,11 @@ module.exports.Router = function (persistent, callback) {
 		function send_error (error) {
 			if (typeof error != 'error') {
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
-				send_as_json( socket, { '\nROUTER ERROR\n': report });
+				send_as_json( socket, { '\nROUTER ERROR 0\n': report });
 				return;
 			}
 
-			let stringified_error = error.stack
-			.replace( /\\n/g, '\n' )
-			.replace( /\n    /g, '\n' )
-			.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' )
-			;
-			const report = error.stack.replace(
-				new RegExp(SETTINGS.BASE_DIR, 'g'),
-				'',
-			);
+			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
 			const new_message = {
 				tag      : request_id.tag,
 				success  : false,
@@ -123,7 +115,7 @@ module.exports.Router = function (persistent, callback) {
 			};
 
 			if (client.login && client.inGroup( 'admin' )) {
-				color_log( COLORS.ERROR, 'ERROR Router.onMessage' );
+				color_log( COLORS.ERROR, 'ERROR Router.onMessage:1' );
 				new_message.response = report;
 			} else {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:2:', error );
@@ -203,10 +195,9 @@ module.exports.Router = function (persistent, callback) {
 						const request_arguments = message[ protocol_name ][ command_name ];
 
 						try {
+							//... How do I catch, when I accidentially
+							//... forgot to await something in there?
 							if (request_handler.constructor.name === 'AsyncFunction') {
-								//... How do I catch, when I accidentially
-								//... forgot to await something in there?
-
 								const result = await request_handler(
 									client,
 									request_id,
@@ -217,14 +208,9 @@ module.exports.Router = function (persistent, callback) {
 										new RegExp(SETTINGS.BASE_DIR, 'g'),
 										'',
 									);
-									color_log(
-										COLORS.ERROR,
-										'Router.onMessage:',
-										'request_handler().catch():',
-										report,
-									);
 									send_error( error );
 								});
+
 							} else {
 								const result = request_handler(
 									client,
@@ -237,11 +223,6 @@ module.exports.Router = function (persistent, callback) {
 							const report = error.replace(
 								new RegExp(SETTINGS.BASE_DIR, 'g'),
 								'',
-							);
-							color_log(
-								COLORS.ERROR,
-								'Router.onMessage:',
-								report
 							);
 							send_error( error );
 						}
@@ -289,7 +270,7 @@ module.exports.Router = function (persistent, callback) {
 	}; // exit
 
 
-	this.init = function () {
+	this.init = async function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Router.init' );
 
 		self.protocols = {};
@@ -335,7 +316,7 @@ module.exports.Router = function (persistent, callback) {
 		};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-		const load_requests = Object.keys( registered_protocols ).map( (protocol_name)=>{
+		const load_requests = Object.keys( registered_protocols ).map( async (protocol_name)=>{
 			if (!persistent[protocol_name]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
 				persistent[protocol_name] = {};
@@ -349,12 +330,7 @@ module.exports.Router = function (persistent, callback) {
 				new_callbacks[name] = registered_callbacks[name];
 			});
 
-			return new Promise( async (done)=>{
-				self.protocols[protocol_name] =
-					await new protocol.template( data, new_callbacks )
-				;
-				done();
-			});
+			return self.protocols[protocol_name] = await new protocol.template( data, new_callbacks );
 		});
 
 		return Promise.allSettled( load_requests );
@@ -362,7 +338,7 @@ module.exports.Router = function (persistent, callback) {
 	}; // init
 
 
-	return self.init().then( ()=>self );   // const protocols = await new Router();
+	return self.init().then( ()=>self );   // const router = await new Router();
 
 }; // Router
 
