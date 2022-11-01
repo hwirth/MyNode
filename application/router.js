@@ -131,7 +131,7 @@ module.exports.Router = function (persistent, callback) {
 		const handled_commands = [];
 		const rejected_commands = [];
 
-		function call_request_handler (protocol_name, command_name) {
+		async function call_request_handler (protocol_name, command_name) {
 			const combined_name = protocol_name + '.' + command_name;
 			const request_handler = self.protocols[protocol_name].request[command_name];
 
@@ -162,7 +162,8 @@ module.exports.Router = function (persistent, callback) {
 					//... How do I catch, when I accidentially
 					//... forgot to await something in there?
 					if (request_handler.constructor.name === 'AsyncFunction') {
-						request_handler(
+console.log( 'AWAIT', combined_name );
+						await request_handler(
 							client,
 							request_id,
 							request_arguments
@@ -176,6 +177,7 @@ module.exports.Router = function (persistent, callback) {
 						});
 
 					} else {
+console.log( 'SYNC', combined_name );
 						try {
 							request_handler(
 								client,
@@ -230,7 +232,7 @@ module.exports.Router = function (persistent, callback) {
 					COLORS.ROUTER,
 					'Router.onMessage:',
 					'protocol_commands:',
-					self.protocols[protocol_name],
+					Object.keys( message[protocol_name] ),
 				);
 
 				if (protocol.onMessage) {

@@ -186,7 +186,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	}; // logout
 
 
-	this.request.who = function (client, request_id, parameters) {
+	this.request.who = async function (client, request_id, parameters) {
 
 		//... session who {multiclients, idles, ...}
 		//... session who {filter, sort, sort:{reverse:{}} }
@@ -211,6 +211,8 @@ module.exports = function SessionHandler (persistent, callback) {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
 			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
+
+		return new Promise( done => setTimeout( done, 4000 ) );
 
 	}; // who
 
