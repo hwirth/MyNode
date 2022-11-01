@@ -31,7 +31,6 @@ module.exports = function ChatServer (persistent_data, callback) {
 		);
 
 		if (client.login) {
-console.log( 'PARA', parameters );
 			const message       = parameters;
 			const t0            = Date.now();
 			const all_clients   = callback.getAllClients();
@@ -39,7 +38,7 @@ console.log( 'PARA', parameters );
 
 			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
 				all_clients[recipient].respond(
-					RESULT.CHAT,
+					RESULT.NONE,
 					request_id,
 					{
 						time   : t0,

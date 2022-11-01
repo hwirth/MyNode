@@ -30,7 +30,7 @@ export const History = function (input_element, callback = {}) {
 			self.currentEntry = self.entries.length - 1;
 		}
 
-		callback.back();
+		if (callback.back) callback.back();
 
 		return self.entries[self.currentEntry];
 
@@ -43,7 +43,7 @@ export const History = function (input_element, callback = {}) {
 			self.currentEntry = 0;
 		}
 
-		callback.forward();
+		if (callback.forward) callback.forward();
 
 		return self.entries[self.currentEntry];
 

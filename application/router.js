@@ -91,7 +91,7 @@ module.exports.Router = function (persistent, callback) {
 		return lut;
 	}
 
-	this.onMessage = function (socket, client_address, message) {
+	this.onMessage = async function (socket, client_address, message) {
 		const request_id = message;
 
 		const client = self.protocols.session.getClientByAddress( client_address );
@@ -103,7 +103,7 @@ module.exports.Router = function (persistent, callback) {
 		function send_error (error) {
 			if (typeof error != 'error') {
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
-				send_as_json( socket, { '\nROUTER ERROR': report });
+				send_as_json( socket, { '\nROUTER ERROR\n': report });
 				return;
 			}
 
@@ -112,7 +112,10 @@ module.exports.Router = function (persistent, callback) {
 			.replace( /\n    /g, '\n' )
 			.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' )
 			;
-
+			const report = error.stack.replace(
+				new RegExp(SETTINGS.BASE_DIR, 'g'),
+				'',
+			);
 			const new_message = {
 				tag      : request_id.tag,
 				success  : false,
@@ -121,7 +124,7 @@ module.exports.Router = function (persistent, callback) {
 
 			if (client.login && client.inGroup( 'admin' )) {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage' );
-				new_message.response = stringified_error;
+				new_message.response = report;
 			} else {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:2:', error );
 			}
@@ -140,7 +143,7 @@ module.exports.Router = function (persistent, callback) {
 		// JSON format: { <protocol>: { <command>: { <request> }}}
 		// Main level keys designate target protocol, second level a command
 		// Since keys in objects must be unique, each command can only be used once
-		Object.keys( message ).forEach( (protocol_name)=>{
+		await Object.keys( message ).forEach( async (protocol_name)=>{
 			if (protocol_name == 'tag') return;
 
 			// Registered protocol?
@@ -169,7 +172,7 @@ module.exports.Router = function (persistent, callback) {
 					self.protocols[protocol_name].onMessage( socket, client_address, message );
 				}
 
-				Object.keys( message_commands ).forEach( (command_name)=>{
+				await Object.keys( message_commands ).forEach( async (command_name)=>{
 					const combined_name = protocol_name + '.' + command_name;
 
 					const request_handler
@@ -199,24 +202,49 @@ module.exports.Router = function (persistent, callback) {
 						log_persistent( 'onMessage:', 'PRE COMMAND: ' );
 						const request_arguments = message[ protocol_name ][ command_name ];
 
-						//try {
-							request_handler(
-								client,
-								request_id,
-								request_arguments
-							);
-							//... How do I catch, when I accidentially
-							//... forgot to await something in there?
-//console.log( 'RESILT', result instanceof Promise );
+						try {
+							if (request_handler.constructor.name === 'AsyncFunction') {
+								//... How do I catch, when I accidentially
+								//... forgot to await something in there?
 
-						//} catch (error) {
-//console.log( '>>>>>>>>>', typeof error, dump(error) );
-//console.log( typeof request_handler );
-//console.log( '>>>>>>' );
-//console.log( request_handler.toString() );
-//console.log( '>>>>>>' );
-						//	send_error( error );
-						//}
+								const result = await request_handler(
+									client,
+									request_id,
+									request_arguments
+
+								).catch( (error)=>{
+									const report = error.stack.replace(
+										new RegExp(SETTINGS.BASE_DIR, 'g'),
+										'',
+									);
+									color_log(
+										COLORS.ERROR,
+										'Router.onMessage:',
+										'request_handler().catch():',
+										report,
+									);
+									send_error( error );
+								});
+							} else {
+								const result = request_handler(
+									client,
+									request_id,
+									request_arguments
+								);
+							}
+
+						} catch (error) {
+							const report = error.replace(
+								new RegExp(SETTINGS.BASE_DIR, 'g'),
+								'',
+							);
+							color_log(
+								COLORS.ERROR,
+								'Router.onMessage:',
+								report
+							);
+							send_error( error );
+						}
 
 						log_persistent( 'onMessage:', 'POST COMMAND: ' );
 					}

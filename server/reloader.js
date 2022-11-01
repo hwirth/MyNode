@@ -135,7 +135,7 @@ module.exports = function AppReloader (callback) {
 		}
 
 		if (socket && Object.keys( file_name_report ).length) {
-			socket.send( JSON.stringify({ reloader: file_name_report }, null, '\t') );
+			socket.send( JSON.stringify({ 'MODULE RELOAD': file_name_report }, null, '\t') );
 		}
 
 
@@ -223,7 +223,7 @@ module.exports = function AppReloader (callback) {
 
 			if (socket) {
 				const message = {
-					reloader : {},
+					'MODULE ERROR 3' : {},
 					success  : false,
 					response : error.stack,
 				};

@@ -29,11 +29,19 @@ const Application = function () {
 					username : 'root',
 					password : '12345',
 				},
+			},
+		},
+	/*
+		{
+			session: {
+				login: {
+					username : 'root',
+					password : '12345',
+				},
 				status: {},
 				who: {},
 			},
 		},
-	/*
 		{
 
 			session: {
@@ -67,7 +75,7 @@ const Application = function () {
 
 
 	function on_websocket_close (event, socket)  {
-		//...document.querySelector( '.debug_console .prompt' ).classList.add( 'disabled' );
+		//...document.querySelector( '.terminal .prompt' ).classList.add( 'disabled' );
 		self.debugConsole.print( 'Connection lost', 'cep' );
 
 	} // on_websocket_close
@@ -122,29 +130,29 @@ const Application = function () {
 	this.init = async function () {
 		console.log( 'Application.init' );
 
+		document.body.innerHTML = (`
+<main class="terminal">
+	<section class="output"></section>
+	<textarea class="input"></textarea>
+	<form class="controls">
+		<section class="buttons">
+			<button class="submit" title="Shortcut: [Shift]+[Enter]">Run</button>
+		</section>
+		<section class="status">
+			<span class="time">12:23:02.2</span>
+			<span class="connection_status warning">OFFLINE</span>
+		</section>
+	</form>
+</main>
 
-document.body.innerHTML = (`
-	<main class="terminal">
-		<section class="compressed output"></section>
-		<textarea class="input"></textarea>
-		<form class="controls">
-			<section class="buttons">
-				<button class="submit" title="Shortcut: [Shift]+[Enter]">Run</button>
-			</section>
-			<section class="status">
-				<span class="time">12:23:02.2</span>
-				<span class="connection_status warning">OFFLINE</span>
-			</section>
-		</form>
-	</main>
+<footer class="main_menu">
+	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+</footer>
+		`).trim();
 
-	<footer class="main_menu">
-		<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
-		<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-	</footer>
-`).trim();
 		self.debugConsole = await new DebugConsole({
-			getUrl      : ()=>WS_URL,
+			getURL      : ()=>WS_URL,
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
 		});

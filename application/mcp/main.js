@@ -75,6 +75,11 @@ module.exports = function MasterControl (persistent, callback) {
 			dump( client ),
 		);
 
+		if (!client.login) {
+			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			return;
+		}
+
 		callback
 		.escalatePrivileges( 'secret$token' )
 		.then( ()=>app.exit )
@@ -84,6 +89,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 	this.request.inspect = async function (client, request_id, parameters) {
+console.log( 'MCP INSPECT' );
 		let target = await callback.escalatePrivileges( request_id.token || DEBUG.MCPTOKEN );
 
 		function respond_error () {
@@ -97,14 +103,14 @@ module.exports = function MasterControl (persistent, callback) {
 		if (Object.keys(parameters).length > 0) {
 	let count = 0;
 			const path = parameters.split('.');
-	console.log( 'path:', path );
-	console.log( ++count, 'target:', typeof target );
+console.log( 'path:', path );
+console.log( ++count, 'target:', typeof target );
 
 			if (parameters) {
 				path.find( (token)=>{
 					if (target[ token ]) {
 						target = target[token];
-	console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
+console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
 					} else {
 						respond_error();
 						return;
@@ -165,7 +171,11 @@ module.exports = function MasterControl (persistent, callback) {
 						settings: SETTINGS,
 					},
 				);
+
+			} else {
+				client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			}
+
 
 		} else {
 			const command = Object.keys( parameters )[0];

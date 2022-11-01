@@ -311,9 +311,8 @@ module.exports = function SessionHandler (persistent, callback) {
 
 				try {
 					client.send({
-						success      : RESULT.NONE,
-						response     : STRINGS.RESTARTING_SERVER,
-						MCP          : 'END_OF_LINE',
+						[STRINGS.RESTARTING_SERVER]: {},
+						'END OF LINE.': {},
 					});
 
 				} catch (error) {

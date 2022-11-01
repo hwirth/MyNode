@@ -396,15 +396,22 @@ return Promise.resolve();
 
 // ERROR HANDLER /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function global_error_handler (error) {
-		color_log(
-			COLORS.ERROR, STRINGS.MCP + ':',
-			COLORS.WARNING + STRINGS.GLOBAL_ERROR_HANDLER,
-		);
+	async function global_error_handler (error) {
+		color_log( COLORS.WARNING, STRINGS.GLOBAL_ERROR_HANDLER, error.message );
 		console.trace();
 		console.log( error );
 
-if (error == undefined) return;
+		if (error == undefined) return;
+
+		const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
+		const clients = self.reloader.persistent.session.clients;
+		Object.keys( clients ).forEach( (address)=>{
+			const client = clients[address];
+			client.send({ 'FATAL SYSTEM FAILURE\n': report });
+		});
+
+		await new Promise( done => setTimeout(done, 1000) );
+
 
 		if (SETTINGS.ERROR_SHUT_DOWN) {
 			self.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
