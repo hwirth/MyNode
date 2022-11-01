@@ -31,15 +31,16 @@ module.exports = function ChatServer (persistent_data, callback) {
 		);
 
 		if (client.login) {
+console.log( 'PARA', parameters );
 			const message       = parameters;
 			const t0            = Date.now();
-			const everyone      = callback.getAllClients();
-			const authenticated = client => client.login;
+			const all_clients   = callback.getAllClients();
+			const authenticated = client_address => all_clients[client_address].login;
 
-			everyone.filter( authenticated ).forEach( recipient =>
-				recipient.respond(
+			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
+				all_clients[recipient].respond(
 					RESULT.CHAT,
-					login_id,
+					request_id,
 					{
 						time   : t0,
 						sender : client.login.userName,

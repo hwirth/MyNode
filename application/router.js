@@ -43,7 +43,8 @@ module.exports.Router = function (persistent, callback) {
 			'Router-send_as_json:',
 			JSON.parse( stringified_json ),
 		);
-		//if (DEBUG.MESSAGE_OUT) color_log( COLORS.ROUTER, 'send_as_json:', data );
+
+		//...if (DEBUG.MESSAGE_OUT) color_log( COLORS.ROUTER, 'send_as_json:', data );
 		if (socket.send) socket.send( stringified_json );
 
 	} // send_as_json //... Redundant with same function in  SessionHandler()
@@ -101,11 +102,8 @@ module.exports.Router = function (persistent, callback) {
 
 		function send_error (error) {
 			if (typeof error != 'error') {
-				send_as_json( socket, {
-					tag      : message.tag,
-					success  : false,
-					response : error,
-				});
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
+				send_as_json( socket, { '\nROUTER ERROR': report });
 				return;
 			}
 

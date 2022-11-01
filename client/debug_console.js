@@ -793,10 +793,10 @@ export const DebugConsole = function (callback) {
 				},
 				{
 					syntax: 'chat say: *',
-					create: ()=>{
+					create: (text)=>{
 						return {
 							chat: {
-								say: {},
+								say: text,
 							},
 						};
 					},
