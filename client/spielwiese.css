@@ -338,15 +338,15 @@ X.terminal .prompt.disabled { display:none; }
 	flex-grow:1;
 	flex-wrap:wrap;
 	Xflex-direction:row-reverse;
-	align-items:center; justify-content:center;
+	Xalign-items:center; Xjustify-content:center;
 	width:100%;
 	Xpadding:0.3em 0.5 0.2em;
 	background:#fff2;
 	border-radius:5px;
 }
 
-.terminal .buttons {}
-.terminal .status { flex-grow:1; text-align:right; color:#fff; }
+.terminal .buttons { flex-grow:1; text-align:left; }
+.terminal .status  { flex-grow:1; text-align:right; color:#fff; }
 
 .terminal .status .time {
 	Xfont-variant-numeric: normal;

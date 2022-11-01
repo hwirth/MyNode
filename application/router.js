@@ -91,6 +91,7 @@ module.exports.Router = function (persistent, callback) {
 		return lut;
 	}
 
+
 	this.onMessage = async function (socket, client_address, message) {
 		const request_id = message;
 
@@ -130,29 +131,101 @@ module.exports.Router = function (persistent, callback) {
 		const handled_commands = [];
 		const rejected_commands = [];
 
+		function call_request_handler (protocol_name, command_name) {
+			const combined_name = protocol_name + '.' + command_name;
+			const request_handler = self.protocols[protocol_name].request[command_name];
+
+			if (!request_handler) {
+				rejected_commands.push( combined_name );
+
+				if (DEBUG.ROUTER) color_log(
+					COLORS.ERROR,
+					'Router.onMessage:',
+					'unknown command:',
+					combined_name,
+				);
+
+			} else {
+				handled_commands.push( combined_name );
+
+				if (DEBUG.ROUTER) color_log(
+					COLORS.ROUTER,
+					'Router.onMessage:',
+					'request_handler: ',
+					request_handler
+				);
+
+				log_persistent( 'onMessage:', 'PRE COMMAND: ' );
+				const request_arguments = message[ protocol_name ][ command_name ];
+
+				try {
+					//... How do I catch, when I accidentially
+					//... forgot to await something in there?
+					if (request_handler.constructor.name === 'AsyncFunction') {
+						request_handler(
+							client,
+							request_id,
+							request_arguments
+
+						).catch( (error)=>{
+							const report = error.stack.replace(
+								new RegExp(SETTINGS.BASE_DIR, 'g'),
+								'',
+							);
+							send_error( error );
+						});
+
+					} else {
+						try {
+							request_handler(
+								client,
+								request_id,
+								request_arguments
+							);
+
+						} catch (error) {
+							send_error( error );
+						}
+					}
+
+				} catch (error) {
+					const report = error.replace(
+						new RegExp(SETTINGS.BASE_DIR, 'g'),
+						'',
+					);
+					send_error( error );
+				}
+
+				log_persistent( 'onMessage:', 'POST COMMAND: ' );
+			}
+
+		} // call_request_handler
+
 
 		// A message can have several protocol requests.
 		// JSON format: { <protocol>: { <command>: { <request> }}}
 		// Main level keys designate target protocol, second level a command
 		// Since keys in objects must be unique, each command can only be used once
-		await Object.keys( message ).forEach( async (protocol_name)=>{
-			if (protocol_name == 'tag') return;
 
-			// Registered protocol?
-			if (!self.protocols[protocol_name]) {
-				rejected_commands.push( protocol_name + '.*' );
+		const addressed_protocols = Object.entries( message );
+
+		const requests_processed
+		= addressed_protocols
+		.filter( ([protocol_name]) => protocol_name != 'tag' )
+		.map( async ([protocol_name, protocol_command_names]) => {
+			const protocol = self.protocols[protocol_name];
+
+			if (!protocol) {
+				rejected_commands.push( protocol_name );
 
 				if (DEBUG.ROUTER) color_log(
-					COLORS.ERROR,
+					COLORS.WARNING,
 					'Router.onMessage:',
 					'unknown protocol:',
 					protocol_name,
 				);
 
 			} else {
-				// A protocol request can contain several commands
-				const message_commands = message[protocol_name];
-
 				if (DEBUG.ROUTER) color_log(
 					COLORS.ROUTER,
 					'Router.onMessage:',
@@ -160,78 +233,26 @@ module.exports.Router = function (persistent, callback) {
 					self.protocols[protocol_name],
 				);
 
-				if (self.protocols[protocol_name].onMessage) {
-					self.protocols[protocol_name].onMessage( socket, client_address, message );
+				if (protocol.onMessage) {
+					protocol.onMessage( socket, client_address, message );
 				}
 
-				await Object.keys( message_commands ).forEach( async (command_name)=>{
-					const combined_name = protocol_name + '.' + command_name;
+				const commands = Object.keys( message[protocol_name] );
 
-					const request_handler
-					= self.protocols[protocol_name].request[command_name]
-					;
-
-					if (!request_handler) {
-						rejected_commands.push( combined_name );
-
-						if (DEBUG.ROUTER) color_log(
-							COLORS.ERROR,
-							'Router.onMessage:',
-							'unknown command:',
-							combined_name,
-						);
-
-					} else {
-						handled_commands.push( combined_name );
-
-						if (DEBUG.ROUTER) color_log(
-							COLORS.ROUTER,
-							'Router.onMessage:',
-							'request_handler: ',
-							request_handler
-						);
-
-						log_persistent( 'onMessage:', 'PRE COMMAND: ' );
-						const request_arguments = message[ protocol_name ][ command_name ];
-
-						try {
-							//... How do I catch, when I accidentially
-							//... forgot to await something in there?
-							if (request_handler.constructor.name === 'AsyncFunction') {
-								const result = await request_handler(
-									client,
-									request_id,
-									request_arguments
-
-								).catch( (error)=>{
-									const report = error.stack.replace(
-										new RegExp(SETTINGS.BASE_DIR, 'g'),
-										'',
-									);
-									send_error( error );
-								});
-
-							} else {
-								const result = request_handler(
-									client,
-									request_id,
-									request_arguments
-								);
-							}
-
-						} catch (error) {
-							const report = error.replace(
-								new RegExp(SETTINGS.BASE_DIR, 'g'),
-								'',
-							);
-							send_error( error );
-						}
-
-						log_persistent( 'onMessage:', 'POST COMMAND: ' );
-					}
-				});
+				await commands.reduce( async (prev, command_name)=>{
+					// Enforce execution order on second level (commands)
+					await prev;
+					return call_request_handler(protocol_name, command_name);
+				}, Promise.resolve());
 			}
-		});
+
+		});/*.reduce( async (prev, next)=>{
+			// Enforce execution order on top level (protocols)
+			await prev;
+			return next;
+		});*/
+
+		await Promise.allSettled( requests_processed );
 
 		color_log(
 			COLORS.ROUTER,
@@ -330,7 +351,7 @@ module.exports.Router = function (persistent, callback) {
 				new_callbacks[name] = registered_callbacks[name];
 			});
 
-			return self.protocols[protocol_name] = await new protocol.template( data, new_callbacks );
+			self.protocols[protocol_name] = await new protocol.template( data, new_callbacks );
 		});
 
 		return Promise.allSettled( load_requests );

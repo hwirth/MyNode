@@ -41,8 +41,8 @@ const DEBUG = {                                                // What to log
 	RELOADER                  : DEBUG_ENABLED && false,   // Report changed and re-required files
 	RELOADER_TIMES            : DEBUG_ENABLED && false,   // Debug reloader itself
 
-	PROTOCOLS                 : DEBUG_ENABLED && false,
-	PROTOCOLS_PERSISTENT_DATA : DEBUG_ENABLED && false,
+	ROUTER                    : DEBUG_ENABLED && !false,
+	ROUTER_PERSISTENT_DATA    : DEBUG_ENABLED && false,
 
 	PARSE_RULES               : DEBUG_ENABLED && !false,
 

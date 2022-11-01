@@ -32,7 +32,7 @@ module.exports = function SessionHandler (persistent, callback) {
 
 
  	function log_persistent () {
-		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
+		if (DEBUG.ROUTER_PERSISTENT_DATA) color_log(
 			COLORS.PROTOCOL,
 			'<session>',
 			'persistent:',
@@ -146,7 +146,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			);
 
 		} else {
-			const password_correct = (user_record.password === parameters.password);
+			const password_correct = (user_record.password == parameters.password);
 
 			if (password_correct) {
 				client.clearLoginTimeout();
@@ -247,7 +247,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			return;
 		}
 
-		if (DEBUG.PROTOCOLS_PERSISTENT_DATA) color_log(
+		if (DEBUG.ROUTER_PERSISTENT_DATA) color_log(
 			COLORS.SESSION,
 			'<session.kick>',
 			'Terminating connection to ',

@@ -287,7 +287,7 @@ module.exports = function AppReloader (callback) {
 			}
 
 			try {
-				self.router.onMessage( socket, client_address, message );
+				await self.router.onMessage( socket, client_address, message );
 
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
