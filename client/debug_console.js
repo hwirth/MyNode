@@ -88,12 +88,12 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'ArrowUp',
 		modifiers : ['cursorPos1'],
-		action    : ()=>{ self.elements.input.value = self.history.back(); },
+		action    : ()=>{ self.history.forward(); },
 	},{
 		event     : 'keydown',
 		key       : 'ArrowDown',
 		modifiers : ['cursorEnd'],
-		action    : ()=>{ self.elements.input.value = self.history.forward(); },
+		action    : ()=>{ self.history.back(); },
 	}];
 
 
@@ -456,11 +456,11 @@ export const DebugConsole = function (callback) {
 		}
 
 		const input = self.elements.input;
-		const cursor_pos1 = input.selectionStart == 0;
-		const cursor_end  = input.selectionStart == input.value.length -1;
+		const cursor_pos1 = (input.value.length == 0) || (input.selectionStart == 0);
+		const cursor_end  = (input.value.length == 0) || (input.selectionStart == input.value.length);
 
 		KEYBOARD_SHORTCUTS.forEach( (shortcut)=>{
-			const is_key = (event.key === shortcut.key) || (event.code === shortcut.code);
+			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
 			const is_event = (shortcut.event.split(',')).indexOf( event.type ) >= 0;
 
 			if (is_event && is_key && modifiers(shortcut)) {
@@ -481,11 +481,18 @@ export const DebugConsole = function (callback) {
 				cursorEnd  : modifiers.indexOf( 'cursorEnd'  ) >= 0,
 			};
 
-			return (
-				event.shiftKey == requires.shift
-			&&	event.ctrlKey == requires.ctrl
-			&&	event.altKey == requires.alt
-			);
+			let key_matches
+			=  event.shiftKey == requires.shift
+			&& event.ctrlKey == requires.ctrl
+			&& event.altKey == requires.alt
+			;
+
+			if (input.value.length > 0) {
+				key_matches &= (cursor_pos1 == requires.cursorPos1);
+				key_matches &= (cursor_end == requires.cursorEnd);
+			}
+
+			return key_matches;
 		}
 
 	} // on_keyboard_event
@@ -565,6 +572,7 @@ export const DebugConsole = function (callback) {
 			command.tag = ++self.requestId;
 
 			callback.send( command );
+			self.history.add( self.elements.input.value.trim() );
 
 			self.elements.input.value = '';
 			focus_prompt();
@@ -574,7 +582,8 @@ export const DebugConsole = function (callback) {
 
 	} // on_send_click
 
-const start_time = new Date();
+
+	const start_time = new Date();
 	function start_clock () {
 
 		function get_formatted_time () {
@@ -588,6 +597,7 @@ const start_time = new Date();
 				second  : '2-digit',
 				//fractionalSecondDigits: '3',
 				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
+				hour12  : false,
 
 			}).format(new Date());
 			//...new Date().toUTCString();
@@ -653,7 +663,7 @@ const start_time = new Date();
 			send     : container.querySelector( '.submit'   ),
 		};
 
-		self.history = new History(self.elements.prompt);
+		self.history = new History( self.elements.input );
 
 
 		// Disable <form> submission
@@ -686,6 +696,7 @@ const start_time = new Date();
 
 		// CLICK
 		self.elements.terminal.addEventListener( 'click', on_click_copy );
+
 
 		// DOUBLE CLICK
 		//...self.elements.input.value = TUTORIAL_SCRIPT[0];

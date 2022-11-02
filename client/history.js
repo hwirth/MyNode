@@ -30,9 +30,9 @@ export const History = function (input_element, callback = {}) {
 			self.currentEntry = self.entries.length - 1;
 		}
 
-		if (callback.back) callback.back();
-
-		return self.entries[self.currentEntry];
+		const start = input_element.selectionStart;
+		input_element.value = self.entries[self.currentEntry];
+		set_selection( start );
 
 	}; // goBack
 
@@ -43,11 +43,27 @@ export const History = function (input_element, callback = {}) {
 			self.currentEntry = 0;
 		}
 
-		if (callback.forward) callback.forward();
-
-		return self.entries[self.currentEntry];
+		const start = input_element.selectionStart;
+		input_element.value = self.entries[self.currentEntry];
+		set_selection( start );
 
 	}; // goForward
+
+
+	function set_selection (start_before) {
+		if (start_before == 0) {
+			input_element.selectionStart
+			= input_element.selectionEnd
+			= 0
+			;
+		} else {
+			input_element.selectionStart
+			= input_element.selectionEnd
+			= input_element.value.length
+			;
+		}
+
+	}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

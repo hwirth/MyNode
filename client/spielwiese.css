@@ -436,7 +436,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 
 /* Background */
 :not(.init).animated .terminal::after {
-	animation: MCP_GLOW 180s linear infinite; /*grid3*/
+	animation: MCP_GLOW 360s linear infinite; /*grid3*/
 }
 @keyframes MCP_GLOW {
 	  0% { opacity:1.0; }
@@ -456,7 +456,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 
 /* Bit */
 :not(.init).animated .terminal .output::before {
-	animation: BIT_GLOW 180s linear infinite; /*bit.gif*/
+	animation: BIT_GLOW 360s linear infinite; /*bit.gif*/
 }
 @keyframes BIT_GLOW {
 	 00% { opacity:1; }

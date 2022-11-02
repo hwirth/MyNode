@@ -6,7 +6,7 @@
 "use strict";
 
 export const DEBUG = {
-	KEYBOARD_EVENTS: !false,
+	KEYBOARD_EVENTS: false,
 };
 
 export const SETTINGS = {
