@@ -389,8 +389,10 @@ export const DebugConsole = function (callback) {
 
 			self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
 			self.elements.send.click();
+
 			//self.elements.input.value = previous_value;
-			self.elements.input.value = '';
+			//self.elements.input.value = '';
+			//focus_prompt();
 
 			return;
 
@@ -563,18 +565,66 @@ export const DebugConsole = function (callback) {
 			command.tag = ++self.requestId;
 
 			callback.send( command );
+
 			self.elements.input.value = '';
-			self.elements.input.focus();
+			focus_prompt();
 		}
 
-		let text = self.elements.input.value;
-		execute( text.trim() );
+		execute( self.elements.input.value.trim() );
 
 	} // on_send_click
 
+const start_time = new Date();
+	function start_clock () {
 
-	function on_clock_interval () {
-		document.querySelector( '.time').innerText = new Date().toUTCString();
+		function get_formatted_time () {
+			return Intl.DateTimeFormat( navigator.language, {
+				weekday : 'short',
+				year    : 'numeric',
+				month   : 'short',
+				day     : 'numeric',
+				hour    : '2-digit',
+				minute  : '2-digit',
+				second  : '2-digit',
+				//fractionalSecondDigits: '3',
+				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
+
+			}).format(new Date());
+			//...new Date().toUTCString();
+		}
+
+		function current_second () {
+			return Math.floor( Date.now() / 1000 );
+		}
+
+		function update_clock () {
+			if (!true) {
+				const elapsed = new Date() - start_time;
+				const s180 = Math.floor(elapsed / 1000) % 180;
+				const percent = Math.floor(s180 / 1.8)
+				document.querySelector( '.time').innerText = percent;
+			} else {
+				document.querySelector( '.time').innerText = get_formatted_time();
+				return current_second();
+			}
+		}
+
+		let recent_second = 0;
+		function narrow_wait () {
+			if (current_second() != recent_second) {
+				recent_second = update_clock();
+				long_wait();
+			} else {
+				setTimeout( narrow_wait );
+			}
+		}
+
+		function long_wait () {
+			const remaining_ms = 1000 - Date.now() % 1000;
+			setTimeout( narrow_wait, remaining_ms - 50 );
+		}
+
+		long_wait();
 
 	} // on_clock_interval
 
@@ -656,7 +706,7 @@ export const DebugConsole = function (callback) {
 
 
 		// CLOCK
-		setInterval( on_clock_interval, 1000);
+		start_clock();
 
 		self.print( 'CEP-' + CEP_VERSION + '^acdos READY.\n', 'cep' );
 		self.print( 'connect: ' + callback.getURL(), 'request' );

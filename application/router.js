@@ -162,7 +162,7 @@ module.exports.Router = function (persistent, callback) {
 					//... How do I catch, when I accidentially
 					//... forgot to await something in there?
 					if (request_handler.constructor.name === 'AsyncFunction') {
-console.log( 'AWAIT', combined_name );
+						if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
 						await request_handler(
 							client,
 							request_id,
@@ -177,7 +177,7 @@ console.log( 'AWAIT', combined_name );
 						});
 
 					} else {
-console.log( 'SYNC', combined_name );
+						if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'SYNC', combined_name );
 						try {
 							request_handler(
 								client,
@@ -239,8 +239,7 @@ console.log( 'SYNC', combined_name );
 					protocol.onMessage( socket, client_address, message );
 				}
 
-				const commands = Object.keys( message[protocol_name] );
-
+				const commands = Object.keys( protocol_command_names );
 				await commands.reduce( async (prev, command_name)=>{
 					// Enforce execution order on second level (commands)
 					await prev;
@@ -248,11 +247,13 @@ console.log( 'SYNC', combined_name );
 				}, Promise.resolve());
 			}
 
-		});/*.reduce( async (prev, next)=>{
+			return Promise.resolve();
+
+		})/*.reduce( async (prev, next)=>{
 			// Enforce execution order on top level (protocols)
 			await prev;
 			return next;
-		});*/
+		})*/;
 
 		await Promise.allSettled( requests_processed );
 

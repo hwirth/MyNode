@@ -338,14 +338,14 @@ X.terminal .prompt.disabled { display:none; }
 	flex-grow:1;
 	flex-wrap:wrap;
 	Xflex-direction:row-reverse;
-	Xalign-items:center; Xjustify-content:center;
+	align-items:center; justify-content:center;
 	width:100%;
 	Xpadding:0.3em 0.5 0.2em;
 	background:#fff2;
 	border-radius:5px;
 }
 
-.terminal .buttons { flex-grow:1; text-align:left; }
+.terminal .buttons { flex-grow:1; Xtext-align:left; }
 .terminal .status  { flex-grow:1; text-align:right; color:#fff; }
 
 .terminal .status .time {
@@ -399,32 +399,6 @@ X.terminal .prompt.disabled { display:none; }
 	 100% { opacity:1.0; }
 }
 
-/* Background */
-:not(.init).animated .terminal::after {
-	animation: MCP_GLOW 180s linear infinite;
-}
-@keyframes MCP_GLOW {
-	 00% { opacity:1.0; }
-	 55% { opacity:0.9; }
-	 56% { opacity:0.0; }
-	 58% { opacity:0.8; }
-	 60% { opacity:1.0; }
-	100% { opacity:1.0; }
-}
-
-/* Bit */
-:not(.init).animated .terminal .output::before {
-	animation: BIT_GLOW 180s linear infinite;
-}
-@keyframes BIT_GLOW {
-	 00% { opacity:1; }
-	 19% { opacity:1; }
-	 20% { opacity:0; }
-	 60% { opacity:0; }
-	 61% { opacity:1; }
-	100% { opacity:1; }
-}
-
 /* Line wobble */
 X:not(.init).animated .terminal .output { padding-left:0.5em; }
 :not(.init).animated .terminal .output * > * {
@@ -458,6 +432,46 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 	 77% { transform:scale(1.10) rotate( 0deg) }
 	 88% { transform:scale(1.03) rotate(-1deg) }
 	100% { transform:scale(1.00) rotate( 0deg) }
+}
+
+/* Background */
+:not(.init).animated .terminal::after {
+	animation: MCP_GLOW 180s linear infinite; /*grid3*/
+}
+@keyframes MCP_GLOW {
+	  0% { opacity:1.0; }
+
+	 25% { opacity:1.0; }
+	 26% { opacity:0.85; }
+	 43% { opacity:0.75; }
+	 45% { opacity:1.0; }
+
+	 50% { opacity:1.0; }
+	 50.4% { opacity:0.0; }
+	 52% { opacity:0.7; }
+	 58% { opacity:1.0; }
+
+	100% { opacity:1.0; }
+}
+
+/* Bit */
+:not(.init).animated .terminal .output::before {
+	animation: BIT_GLOW 180s linear infinite; /*bit.gif*/
+}
+@keyframes BIT_GLOW {
+	 00% { opacity:1; }
+
+	 23% { opacity:1; }
+	 24% { opacity:0; }
+	 45% { opacity:0; }
+	 46% { opacity:1; }
+
+	 48% { opacity:1; }
+	 49% { opacity:0; }
+	 59% { opacity:0; }
+	 60% { opacity:1; }
+
+	100% { opacity:1; }
 }
 
 

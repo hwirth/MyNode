@@ -23,7 +23,8 @@ module.exports = function MasterControl (persistent, callback) {
 	if (!persistent.serverStartTime) persistent.serverStartTime = Date.now() - process.uptime();
 
 	function get_uptime (formatted = false) {
-		const milliseconds = process.uptime(); //Date.now() - persistent.serverStartTime + 0*99999999999;
+		const milliseconds = process.uptime() * 1000;
+		//const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
 
 		if (formatted) {
 			let seconds = Math.floor( milliseconds / 1000 );

@@ -212,7 +212,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
-		return new Promise( done => setTimeout( done, 4000 ) );
+		//...return new Promise( done => setTimeout( done, 4000 ) );
 
 	}; // who
 
