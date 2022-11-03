@@ -5,6 +5,9 @@
 
 "use strict";
 
+import * as DUMMY_SamJs from './samjs.js';
+
+
 import { WebSocketClient } from './websocket.js';
 import { DebugConsole    } from './debug_console.js';
 
@@ -20,7 +23,6 @@ const Application = function () {
 
 	this.webSocketClient;
 	this.debugConsole;
-
 
 	const boot_sequence = [
 		{
@@ -63,6 +65,9 @@ const Application = function () {
 	]; // boot_sequence
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_websocket_open (event, socket)  {
 		self.debugConsole.print( 'Connected to ' + WS_URL, 'cep' );
@@ -83,9 +88,16 @@ const Application = function () {
 
 	function on_websocket_message (event, socket) {
 		// handle response
-		const request = JSON.parse( event.data );
+		const message = JSON.parse( event.data );
 
-		self.debugConsole.print( request, 'response' );
+		if (message.response && message.response.sender && message.response.chat) {
+			self.debugConsole.print({
+				[message.response.sender]: message.response.chat,
+			}, 'chat');
+		} else {
+			self.debugConsole.print( message, 'response' );
+		}
+
 	/*
 		if (boot_sequence.length > 0) {
 			socket.send( boot_sequence[0] );
@@ -116,6 +128,70 @@ const Application = function () {
 		}
 
 	} // on_console_send
+
+
+	function on_console_print (message, class_name) {
+		if (['response', 'chat'].indexOf(class_name) < 0) return;
+		//if (!message.response) return;
+
+		const text = JSON.stringify( message , null, '\t' );
+		//if (typeof text != 'string') return;
+
+		const allowed = 'abcdefghijklmnopqrstuvwxyz012345678 ';
+		sam_speak(
+			text
+			.trim()
+			.replace( /: /g , ' ' )
+			.replace( /,/g  , ' ' )
+			.replace( /\n/g , 'PAUSE'  )
+			.replace( /\./g , ' dot '  )
+			.replace( /:/g  , ' colon' )
+			.split('')
+			.filter( char => allowed.indexOf(char.toLowerCase()) >= 0)
+			.join('')
+		);
+	}
+
+
+	this.sam = new SamJs({
+		singmode : !false,   //false
+		pitch    : 50,      //64
+		speed    : 72,      //72
+		mouth    : 128,     //128
+		throat   : 128,     //128
+		volume   : 0.1,     //1 I added a volume option to sam.js, but it's not all to pretty
+
+	});
+
+	function sam_speak (text, options = {}) {
+		if (self.audioContext.state == 'suspended') {
+			self.audioContext.resume();
+
+			if (self.audioContext.state == 'suspended') {
+				setTimeout( ()=>sam_speak(text, options), 100 );
+				return;
+			}
+		}
+
+		/*
+		   * @param {Boolean} [options.singmode] Default false.
+		   * @param {Number}  [options.pitch]    Default 64.
+		   * @param {Number}  [options.speed]    Default 72.
+		   * @param {Number}  [options.mouth]    Default 128.
+		   * @param {Number}  [options.throat]   Default 128.
+		*/
+
+
+		text.split( 'PAUSE' ).reduce( async (prev, next, index, parts)=>{
+			await prev;
+			const part = parts[index].trim();
+			return new Promise( async (done)=>{
+				if (part != '') await self.sam.speak( parts[index] );
+				setTimeout( done, 150 );
+			});
+		});
+	}
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -155,9 +231,13 @@ const Application = function () {
 			getURL      : ()=>WS_URL,
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
+			onPrint     : on_console_print,
+			speak       : sam_speak,
 		});
 		//...self.debugConsole.toggleConsole();
 		self.debugConsole.elements.input.focus();
+
+		self.audioContext = self.debugConsole.audioContext;
 
 		boot_sequence.forEach( (request)=>{
 			self.debugConsole.history.add( self.debugConsole.requestToText(request) );

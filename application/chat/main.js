@@ -23,6 +23,51 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 	this.request = {};
 
+	this.request.nick = function (client, request_id, parameters) {
+		color_log(
+			COLORS.PROTOCOL,
+			'<chat.nick>',
+			dump( client ),
+		);
+
+		if (client.login) {
+			const new_nick      = parameters;
+			const t0            = Date.now();
+			const all_clients   = callback.getAllClients();
+			const authenticated = client_address => all_clients[client_address].login;
+
+			//... check nick validity
+
+			const nick_before = client.login.nickName;
+			client.login.nickName = new_nick;
+
+			const message
+			= (nick_before)
+			? nick_before +' is now known as ' + new_nick
+			: client.login.userName + ' chose the nick name ' + new_nick
+			;
+
+			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
+				all_clients[recipient].respond(
+					RESULT.NONE,
+					request_id,
+					{
+						time   : t0,
+						sender : client.login.nickName,
+						chat   : message,
+					},
+				)
+			);
+
+			client.respond( RESULT.SUCCESS, request_id, RESULT.INSUFFICIENT_PERMS );
+
+		} else {
+			client.respond( RESULT.FAILURE, request_id, RESULT.INSUFFICIENT_PERMS );
+		}
+
+
+	}; // request.nick
+
 	this.request.say = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
@@ -42,8 +87,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 					request_id,
 					{
 						time   : t0,
-						sender : client.login.userName,
-						text   : message,
+						sender : client.login.nickName || client.login.userName,
+						chat   : message,
 					},
 				)
 			);
@@ -54,7 +99,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 			client.respond( RESULT.FAILURE, request_id, RESULT.INSUFFICIENT_PERMS );
 		}
 
-	}; // say
+	}; // request.say
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

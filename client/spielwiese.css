@@ -1,11 +1,11 @@
 /*** spielwiese.css ***/
 
-html { font-size:21px; }
+Xhtml { font-size:21px; }
 :root {
 	color-scheme:light dark; /* both supported */
 
-	--font-family          : crt;
-	--terminal-font-family : crt;
+	--font-family          : terminal;
+	--terminal-font-family : var(--font-family);;
 	--NOBRACKETS_terminal-font-family : mode7;
 	--DISABLED_terminal-font-family : seti;
 	--DISABLED_terminal-font-family : crt;
@@ -56,6 +56,7 @@ html { font-size:21px; }
 	--console-success-color  : #0f0;
 	--console-cep-color      : #cc0;
 	--console-mcp-color      : var(--console-response-color);
+	--console-chat-color     : #fff;
 
 	--console-input-color      : var(--console-request-color);
 	--console-separator-color  : #a60;
@@ -180,8 +181,13 @@ html, body { width:100%; height:100%; }
 	Xbackground-size:cover;
 	background-size:100% 100%;
 }
-:not(.init) body::after {
+html:not(.init)::after {
 	content:'-Screen locked-'; color:#fc0; text-transform:uppercase;
+	position:absolute; top:50%; left:1em;
+	transform:translate(0,-50%);
+}
+:not(.init) body::after {
+	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
 	display:flex; align-items:center; Xjustify-content:center;
 	height:100%; width:calc(100% - 1em);
@@ -257,12 +263,11 @@ body { text-shadow:none; }
 
 .terminal {
 	position:absolute; bottom:0; left:0; z-index:999;
-	display:grid; grid-template-rows:auto 1fr min-content;
+	display:grid; grid-auto-rows:auto 1fr min-content; Xgrid-auto-rows:auto min-content min-content;
 	width:100%; height:0%;
 	padding:0;
 	overflow:hidden;
 	background:#003;
-	Xtransition:height 0.1s ease-in-out;
 	transition:all 0.1s ease-in-out;
 }
 .terminal.active { height:100%; padding:var(--terminal-padding); }
@@ -271,7 +276,7 @@ body { text-shadow:none; }
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background: #000 url(/images/bg_grid3.jpg);
 	background-size: cover;
-	background-size: 100% 100%;
+	background-size: auto 100%;
 	background-position: center;
 }
 
@@ -294,7 +299,7 @@ body { text-shadow:none; }
 }
 .terminal.overflow .output { overflow-y:hidden; }
 
-.terminal .output pre { padding-bottom:1em; }
+.terminal .output pre { padding-bottom:1em; white-space:pre-wrap; }
 .terminal .separators pre {
 	border-bottom:var(--console-separator-border);
 	padding-top:0.25em; padding-bottom:0.25em;
@@ -306,6 +311,12 @@ body { text-shadow:none; }
 .terminal pre.failure  { color:var(--console-error-color)    ; }
 .terminal pre.cep      { color:var(--console-cep-color)      ; }
 .terminal pre.mcp      { color:var(--console-mcp-color)      ; }
+.terminal pre.chat     { color:var(--console-chat-color)     ; padding-left:1.75em; position:relative; }
+.terminal pre.chat::before {
+	content:'';
+	position:absolute; left:0;
+	width:1em; height:1em; background:#fff;
+}
 
 .terminal .output.compressed pre.response { white-space:pre-wrap; }
 .terminal .output.compressed pre.request { white-space:normal; }
@@ -316,10 +327,6 @@ X.terminal pre.request:hover  { background:var(--request-hover-background)  ; co
 X.terminal pre.response:hover { background:var(--response-hover-background) ; color:var(--response-hover-color) ; }
 X.terminal pre.mcp:hover      { color:#f00; }
 
-
-
-X.terminal .prompt { display:grid; grid-template-columns:min-content 1fr; }
-X.terminal .prompt.disabled { display:none; }
 
 .terminal .input  {
 	width:100%; border:none; padding:0em;
@@ -390,13 +397,14 @@ X.terminal .prompt.disabled { display:none; }
 
 /* Beam */
 :not(.init).animated body::after {
-	animation: BEAM 0.01s ease-in-out infinite;
+	animation: BEAM 0.02s ease-in-out infinite;
 }
 @keyframes BEAM {
-	   0% { opacity:1.0; }
+	   0% { opacity:1.0; filter:hue-rotate(0deg); }
+	  80% {              filter:hue-rotate(190deg); }
 	  86% { opacity:1.0; }
 	  93% { opacity:0.7; }
-	 100% { opacity:1.0; }
+	 100% { opacity:1.0; filter:hue-rotate(0deg); }
 }
 
 /* Line wobble */
@@ -416,7 +424,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background-image: url(/images/mcp.jpg);
 	background-size: cover;
-	background-size: calc(864px / 100vh);
+	background-size: auto 100%;
 	background-repeat: no-repeat;
 	background-position: center;
 	filter:contrast(1.5) brightness(0.5);

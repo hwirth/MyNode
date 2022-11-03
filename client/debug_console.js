@@ -43,6 +43,7 @@ export const DebugConsole = function (callback) {
 	const self = this;
 
 	this.history;
+	this.audioContext;
 
 	this.requestToText = request_to_text;
 	this.textToRequest = text_to_request;
@@ -103,6 +104,7 @@ export const DebugConsole = function (callback) {
 
 	function scroll_down () {
 		self.elements.output.scrollBy(0, 99999);
+
 	} // scroll_down
 
 
@@ -245,7 +247,6 @@ export const DebugConsole = function (callback) {
 
 
 	this.toggleOverflow = function () {
-		console.log('OOO');
 		self.elements.terminal.classList.toggle( 'overflow' );
 
 	}; // toggleOverflow
@@ -299,6 +300,7 @@ export const DebugConsole = function (callback) {
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
+		if (callback.onPrint) callback.onPrint(message, class_name);
 
 	}; // print
 
@@ -308,14 +310,15 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function adjust_textarea () {
-		const is_request = (self.elements.input.value.charAt(0) == '>');
+		//...const is_request = (self.elements.input.value.charAt(0) == '>');
+		const is_request = (self.elements.input.value.indexOf('\n') >= 0);
 		self.elements.input.classList.toggle( 'request', is_request );
 
 		const lines = self.elements.input.value.split('\n');
 		const nr_lines = (lines.length > 0) ? lines.length : 1;
 		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
 
-		scroll_down();
+		self.elements.input.style.height = (self.elements.input.rows + 1) + 'em';
 
 	} // adjust_textarea
 
@@ -418,14 +421,11 @@ export const DebugConsole = function (callback) {
 			adjust_textarea();
 		}
 
-		if (
-			event.keyCode == 13 && ( event.shiftKey || event.ctrlKey || event.altKey)
-		||	(event.code == 'NumpadEnter')
-		) {
+		if (event.keyCode == 13 && (!event.shiftKey && !event.ctrlKey && !event.altKey)) {
 			// Execute command with any modifyer+Return
 			event.preventDefault();
 			self.elements.send.click();
-		} else if (event.keyCode == 13 && (!event.shiftKey || event.ctrlKey || event.altKey)) {
+		} else if (event.keyCode == 13 && (event.shiftKey || event.ctrlKey || event.altKey)) {
 			//  Enter newline
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
@@ -507,7 +507,9 @@ export const DebugConsole = function (callback) {
 		// Limiting number of sounds does not help:
 		if (nr_active_sounds > 5) return;
 
-		let context = new(window.AudioContext || window.webkitAudioContext)();
+		let context = self.audioContext;
+		if (context.state != 'running') context.resume();
+
 		let square_wave = context.createOscillator();
 		let envelope = context.createGain();
 		let volume = context.createGain();
@@ -561,24 +563,24 @@ export const DebugConsole = function (callback) {
 
 
 	function on_send_click (event) {
+		const text = self.elements.input.value.trim();
 
-		function execute (data) {
-			const command
-			= (typeof data == 'string')
-			? text_to_request(data)
-			: data
-			;
+		const command
+		= (text.indexOf('\n') >= 0)
+		? text_to_request( text )
+		: {
+			chat: {
+				say: text,
+			},
+		};
 
-			command.tag = ++self.requestId;
+		command.tag = ++self.requestId;
+		callback.send( command );
 
-			callback.send( command );
-			self.history.add( self.elements.input.value.trim() );
+		self.history.add( text );
 
-			self.elements.input.value = '';
-			focus_prompt();
-		}
-
-		execute( self.elements.input.value.trim() );
+		self.elements.input.value = '';
+		focus_prompt();
 
 	} // on_send_click
 
@@ -664,6 +666,7 @@ export const DebugConsole = function (callback) {
 		};
 
 		self.history = new History( self.elements.input );
+		self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
 
 
 		// Disable <form> submission
@@ -709,6 +712,15 @@ export const DebugConsole = function (callback) {
 		['keydown', 'keypress', 'keyup' ].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
 		);
+
+
+		function on_input_change () {
+			adjust_textarea();
+			scroll_down();
+		}
+
+		self.elements.input.addEventListener( 'input', on_input_change );
+		self.elements.input.addEventListener( 'chante', on_input_change );
 
 
 		// SEND

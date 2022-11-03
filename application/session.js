@@ -200,7 +200,11 @@ module.exports = function SessionHandler (persistent, callback) {
 			for (let address in clients) {
 				clients[address]
 				= (clients[address].login)
-				? { userName: clients[address].login.userName }
+				? {
+					userName: clients[address].login.userName,
+					nickName: clients[address].login.nickName,
+
+				}
 				: { login: false }
 				;
 			}

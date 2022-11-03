@@ -14,6 +14,7 @@ export const History = function (input_element, callback = {}) {
 
 	this.add = function (new_entry) {
 		const existing_index = self.entries.indexOf( new_entry );
+
 		if (existing_index >= 0) {
 			self.entries.splice( existing_index, 1 );
 		}
@@ -26,12 +27,16 @@ export const History = function (input_element, callback = {}) {
 	this.back = function () {
 		--self.currentEntry;
 
+		const start = input_element.selectionStart;
+
 		if (self.currentEntry < 0) {
 			self.currentEntry = self.entries.length - 1;
+			//...input_element.value = '';
+			input_element.value = self.entries[self.currentEntry];
+		} else {
+			input_element.value = self.entries[self.currentEntry];
 		}
 
-		const start = input_element.selectionStart;
-		input_element.value = self.entries[self.currentEntry];
 		set_selection( start );
 
 	}; // goBack
@@ -39,12 +44,15 @@ export const History = function (input_element, callback = {}) {
 	this.forward = function () {
 		++self.currentEntry;
 
+		const start = input_element.selectionStart;
+
 		if (self.currentEntry >= self.entries.length) {
 			self.currentEntry = 0;
+			input_element.value = '';
+		} else {
+			input_element.value = self.entries[self.currentEntry];
 		}
 
-		const start = input_element.selectionStart;
-		input_element.value = self.entries[self.currentEntry];
 		set_selection( start );
 
 	}; // goForward
