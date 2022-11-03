@@ -60,7 +60,7 @@ Xhtml { font-size:21px; }
 
 	--console-input-color      : var(--console-request-color);
 	--console-separator-color  : #a60;
-	--console-separator-border : none;X:dashed 1px var(--console-separator-color);
+	--console-separator-border : dashed 1px var(--console-separator-color);
 
 	--Xrequest-hover-background  : #210;
 	--request-hover-color       : #af0;
@@ -301,8 +301,8 @@ body { text-shadow:none; }
 
 .terminal .output pre { padding-bottom:1em; white-space:pre-wrap; }
 .terminal .separators pre {
-	border-bottom:var(--console-separator-border);
-	padding-top:0.25em; padding-bottom:0.25em;
+	Xborder-bottom:var(--console-separator-border);
+	padding-top:0; padding-bottom:0;
 }
 
 .terminal pre.request  { color:var(--console-request-color)  ; white-space:pre-wrap; }
@@ -321,11 +321,6 @@ body { text-shadow:none; }
 .terminal .output.compressed pre.response { white-space:pre-wrap; }
 .terminal .output.compressed pre.request { white-space:normal; }
 .terminal .output.compressed pre.request div { display:inline-block; margin-right:0.45em; }
-
-
-X.terminal pre.request:hover  { background:var(--request-hover-background)  ; color:var(--request-hover-color)  ; }
-X.terminal pre.response:hover { background:var(--response-hover-background) ; color:var(--response-hover-color) ; }
-X.terminal pre.mcp:hover      { color:#f00; }
 
 
 .terminal .input  {

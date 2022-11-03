@@ -153,34 +153,19 @@ const Application = function () {
 	}
 
 
-	this.sam = new SamJs({
-		singmode : !false,   //false
-		pitch    : 50,      //64
-		speed    : 72,      //72
-		mouth    : 128,     //128
-		throat   : 128,     //128
-		volume   : 0.1,     //1 I added a volume option to sam.js, but it's not all to pretty
-
-	});
-
 	function sam_speak (text, options = {}) {
-		if (self.audioContext.state == 'suspended') {
-			self.audioContext.resume();
+		if (!self.getAudioContext()) return;
 
-			if (self.audioContext.state == 'suspended') {
-				setTimeout( ()=>sam_speak(text, options), 100 );
-				return;
-			}
+		if (!self.sam) {
+			self.sam = new SamJs({
+				singmode : !false,   //false
+				pitch    : 50,      //64
+				speed    : 72,      //72
+				mouth    : 128,     //128
+				throat   : 128,     //128
+				volume   : 0.1,     //1 I added a volume option to sam.js, but it's not all to pretty
+			});
 		}
-
-		/*
-		   * @param {Boolean} [options.singmode] Default false.
-		   * @param {Number}  [options.pitch]    Default 64.
-		   * @param {Number}  [options.speed]    Default 72.
-		   * @param {Number}  [options.mouth]    Default 128.
-		   * @param {Number}  [options.throat]   Default 128.
-		*/
-
 
 		text.split( 'PAUSE' ).reduce( async (prev, next, index, parts)=>{
 			await prev;
@@ -237,7 +222,7 @@ const Application = function () {
 		//...self.debugConsole.toggleConsole();
 		self.debugConsole.elements.input.focus();
 
-		self.audioContext = self.debugConsole.audioContext;
+		self.getAudioContext = ()=>self.debugConsole.audioContext;
 
 		boot_sequence.forEach( (request)=>{
 			self.debugConsole.history.add( self.debugConsole.requestToText(request) );

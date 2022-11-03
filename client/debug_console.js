@@ -59,7 +59,7 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'c',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.output.classList.toggle('compressed'); },
+		action    : ()=>{ self.elements.output.classList.toggle('compressed'); scroll_down(); },
 	},{
 		event     : 'keydown',
 		key       : 'd',
@@ -69,32 +69,27 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'o',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggleOverflow(); }
+		action    : ()=>{ self.elements.terminal.classList.toggle( 'overflow' ); }
 	},{
-		event     : 'keydown',
+		event     : 'keypress',
 		key       : 's',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.output.classList.toggle('separators'); },
+		action    : ()=>{ self.elements.output.classList.toggle('separators'); scroll_down(); },
 	},{
 		event     : 'keydown',
 		key       : '#',
 		modifiers : ['ctrl'],
 		action    : ()=>{ self.toggleConsole(); },
 	},{
-		event     : 'keyup,keypress,keydown',
-		code      : 'Backquote',
-		modifiers : [],
-		action    : ()=>{ self.toggleConsole(); },
-	},{
 		event     : 'keydown',
 		key       : 'ArrowUp',
 		modifiers : ['cursorPos1'],
-		action    : ()=>{ self.history.forward(); },
+		action    : ()=>{ self.history.back(); },
 	},{
 		event     : 'keydown',
 		key       : 'ArrowDown',
 		modifiers : ['cursorEnd'],
-		action    : ()=>{ self.history.back(); },
+		action    : ()=>{ self.history.forward(); },
 	}];
 
 
@@ -235,7 +230,7 @@ export const DebugConsole = function (callback) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.toggleConsole = function () {
+	this.toggleConsole = function (event) {
 		self.elements.terminal.classList.toggle( 'active' );
 		if (self.elements.terminal.classList.contains( 'active' )) {
 			focus_prompt();
@@ -244,12 +239,6 @@ export const DebugConsole = function (callback) {
 		}
 
 	}; // toggle
-
-
-	this.toggleOverflow = function () {
-		self.elements.terminal.classList.toggle( 'overflow' );
-
-	}; // toggleOverflow
 
 
 	this.print = function (message, class_name) {
@@ -331,12 +320,13 @@ export const DebugConsole = function (callback) {
 	} // next_script_entry
 
 
-	let accept_click = null;
+	let accept_click = null;//... still needed?
 
 	function focus_prompt (clear_accept = true) {
 		adjust_textarea();
+		self.elements.input.focus();
+
 		if (clear_accept) accept_click = null;
-		focus_prompt();
 
 	} // focus_prompt
 
@@ -351,9 +341,14 @@ export const DebugConsole = function (callback) {
 
 		adjust_textarea();
 		scroll_down();
-		focus_prompt();
 
 	} // on_script_button_click
+
+
+	function on_click (event) {
+		if (event.target === self.elements.terminal) focus_prompt();
+
+	} // on_dblclick
 
 
 	function on_dblclick (event) {
@@ -483,19 +478,18 @@ export const DebugConsole = function (callback) {
 
 	function on_keydown_beep (event) {
 		if (!SETTINGS.KBD_BEEP) return;
+		if (!self.audioContext) return;
 
 		// Chromium crashes after I type fast for a few seconds
 		// Limiting number of sounds does not help:
 		if (nr_active_sounds > 5) return;
 
-		let context = self.audioContext;
-		if (context.state != 'running') context.resume();
+		const context = self.audioContext;
 
 		let square_wave = context.createOscillator();
 		let envelope = context.createGain();
 		let volume = context.createGain();
 		let destination = context.destination;
-		let t0 = context.currentTime;
 
 		square_wave.type = "square";
 		square_wave.frequency.value = 440 * 4;
@@ -510,25 +504,26 @@ export const DebugConsole = function (callback) {
 		;
 
 		// Envelope
-		var t1;
+		const t0 = context.currentTime;
 		const v = 0.2;
+		var t1;
 		envelope.gain.setValueAtTime         (0.0, t1 = t0);
 		envelope.gain.linearRampToValueAtTime(1.0, t1 = t0 + v * 0.01);
-		envelope.gain.linearRampToValueAtTime(0.1, t1 = t0 + v * 0.09);
-		envelope.gain.linearRampToValueAtTime(0.0, t1 = t0 + v * 0.50);
+		envelope.gain.linearRampToValueAtTime(0.1, t1 = t0 + v * 0.10);
+		envelope.gain.linearRampToValueAtTime(0.0, t1 = t0 + v * 1.00);
 
 		//square_wave.addEventListener('ended', on_ended);
 		square_wave.onended = on_ended;
 		square_wave.start();
 		square_wave.stop(t1);
 
-		console.log('beep:', ++nr_active_sounds);
+		++nr_active_sounds;
 
 		function on_ended(event) {
 			square_wave.disconnect(envelope);
 			envelope.disconnect(volume);
 			volume.disconnect(context.destination);
-
+		/*
 			context
 			= square_wave
 			= envelope
@@ -536,7 +531,7 @@ export const DebugConsole = function (callback) {
 			= destination
 			= null
 			;
-
+		*/
 			--nr_active_sounds
 		}
 
@@ -646,15 +641,31 @@ export const DebugConsole = function (callback) {
 			send     : container.querySelector( '.submit'   ),
 		};
 
-		self.history = new History( self.elements.input );
-		self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
+		self.history = new History( self.elements.input, {
+			onInputChanged: ()=>{
+console.log( 'oic' );
+				adjust_textarea();
+				scroll_down();
+			},
+		});
+
+
+		function activate_audio () {
+			self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
+			if (self.audioContext.state == 'suspended') self.audioContext.resume();
+			removeEventListener( 'keyup', activate_audio );
+			removeEventListener( 'mouseup', activate_audio );
+		}
+		addEventListener( 'keypress', activate_audio );
+		addEventListener( 'mouseup', activate_audio );
 
 
 		// Disable <form> submission
-		self.elements.controls.addEventListener( 'submit', e => e.preventDefault() );
+		self.elements.controls.addEventListener( 'submit', event => event.preventDefault() );
 
 
 		// Create buttons
+		self.elements.buttons.innerHTML = self.elements.buttons.innerHTML.trim();
 		Object.keys( BUTTON_SCRIPTS ).forEach( (key)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
@@ -668,36 +679,35 @@ export const DebugConsole = function (callback) {
 
 
 		// REFOCUS PROMPT
-		self.elements.terminal.addEventListener( 'mousemove', (event)=>{
-			if (event.target.classList.contains( 'terminal' )) focus_prompt();
-		});
-		self.elements.terminal.addEventListener( 'mouseup', focus_prompt );
-		self.elements.input.addEventListener( 'change'    , adjust_textarea         );
-		self.elements.input.addEventListener( 'input'     , adjust_textarea         );
-		self.elements.input.addEventListener( 'mousemove' , ()=>focus_prompt(false) );
-		self.elements.input.addEventListener( 'keyup'     , adjust_textarea         );
+		self.elements.terminal.addEventListener( 'mouseup'   , focus_prompt );
+		self.elements.terminal.addEventListener( 'mousemove' , ()=>focus_prompt(false) );
+		self.elements.input.addEventListener( 'change'    , adjust_textarea );
+		self.elements.input.addEventListener( 'input'     , adjust_textarea );
+		self.elements.input.addEventListener( 'keyup'     , adjust_textarea );
 
 
-		// DOUBLE CLICK
+		// CLICK, DOUBLE CLICK
 		//...self.elements.input.value = TUTORIAL_SCRIPT[0];
+		//addEventListener( 'click', on_click );
 		addEventListener( 'dblclick', on_dblclick );
 
 
 		// KEYBOARD
 		addEventListener('keydown', on_keydown_beep );
-        	self.elements.input.addEventListener( 'keydown', on_keydown );
 		['keydown', 'keypress', 'keyup' ].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
 		);
+        	self.elements.input.addEventListener( 'keydown', on_keydown );
 
 
+	/*
 		function on_input_change () {
 			adjust_textarea();
 			scroll_down();
 		}
-
 		self.elements.input.addEventListener( 'input', on_input_change );
 		self.elements.input.addEventListener( 'chante', on_input_change );
+	*/
 
 
 		// SEND

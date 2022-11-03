@@ -20,58 +20,48 @@ export const History = function (input_element, callback = {}) {
 		}
 
 		self.entries.push( new_entry );
-		self.currentEntry = self.entries.length - 1;
+		self.currentEntry = 0;
 
 	}; // add
+
 
 	this.back = function () {
 		--self.currentEntry;
 
-		const start = input_element.selectionStart;
-
 		if (self.currentEntry < 0) {
 			self.currentEntry = self.entries.length - 1;
-			//...input_element.value = '';
-			input_element.value = self.entries[self.currentEntry];
-		} else {
-			input_element.value = self.entries[self.currentEntry];
 		}
 
-		set_selection( start );
+		input_element.value = self.entries[self.currentEntry] || '';
+		input_element.selectionStart
+		= input_element.selectionEnd
+		= 0
+		;
+
+		if (callback.onInputChanged) callback.onInputChanged();
 
 	}; // goBack
+
 
 	this.forward = function () {
 		++self.currentEntry;
 
-		const start = input_element.selectionStart;
-
 		if (self.currentEntry >= self.entries.length) {
 			self.currentEntry = 0;
-			input_element.value = '';
-		} else {
-			input_element.value = self.entries[self.currentEntry];
+		}
+		if (self.currentEntry < 0) {
+			self.currentEntry = 0;
 		}
 
-		set_selection( start );
+		input_element.value = self.entries[self.currentEntry] || '';
+		input_element.selectionStart
+		= input_element.selectionEnd
+		= input_element.value.length
+		;
+
+		if (callback.onInputChanged) callback.onInputChanged();
 
 	}; // goForward
-
-
-	function set_selection (start_before) {
-		if (start_before == 0) {
-			input_element.selectionStart
-			= input_element.selectionEnd
-			= 0
-			;
-		} else {
-			input_element.selectionStart
-			= input_element.selectionEnd
-			= input_element.value.length
-			;
-		}
-
-	}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
