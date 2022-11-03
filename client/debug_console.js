@@ -238,7 +238,7 @@ export const DebugConsole = function (callback) {
 	this.toggleConsole = function () {
 		self.elements.terminal.classList.toggle( 'active' );
 		if (self.elements.terminal.classList.contains( 'active' )) {
-			self.elements.input.focus();
+			focus_prompt();
 		} else {
 			self.elements.input.blur();
 		}
@@ -336,7 +336,7 @@ export const DebugConsole = function (callback) {
 	function focus_prompt (clear_accept = true) {
 		adjust_textarea();
 		if (clear_accept) accept_click = null;
-		self.elements.input.focus();
+		focus_prompt();
 
 	} // focus_prompt
 
@@ -345,31 +345,13 @@ export const DebugConsole = function (callback) {
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function on_click_copy (event) {
-		if (!callback.isConnected()) return;
-
-		const target = event.target.closest( '.output > pre' );
-		if (!target) return;
-
-		event.preventDefault();
-
-		const tags    = line => line.slice(0, 5) != 'tag: ';
-		const success = line => line.slice(0, 9) != 'success: ';
-		self.elements.input.value = target.innerText
-			.split('\n').filter( tags ).filter( success ).join('\n')
-		;
-
-		adjust_textarea();
-		self.elements.input.focus();
-
-		return;
-	}
-
-
 	function on_script_button_click (event) {
 		event.preventDefault();
 		self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
+
 		adjust_textarea();
+		scroll_down();
+		focus_prompt();
 
 	} // on_script_button_click
 
@@ -406,8 +388,7 @@ export const DebugConsole = function (callback) {
 			self.elements.send.click();
 			self.elements.input.value = next_script_entry( false );
 
-			adjust_textarea();
-			self.elements.input.focus();
+			focus_prompt();
 
 			return;
 
@@ -695,10 +676,6 @@ export const DebugConsole = function (callback) {
 		self.elements.input.addEventListener( 'input'     , adjust_textarea         );
 		self.elements.input.addEventListener( 'mousemove' , ()=>focus_prompt(false) );
 		self.elements.input.addEventListener( 'keyup'     , adjust_textarea         );
-
-
-		// CLICK
-		self.elements.terminal.addEventListener( 'click', on_click_copy );
 
 
 		// DOUBLE CLICK
