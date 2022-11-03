@@ -260,10 +260,12 @@ module.exports.Router = function (persistent, callback) {
 		color_log(
 			COLORS.ROUTER,
 			'Router.onMessage:',
-			(handled_commands.length ? COLORS.DEFAULT : COLORS.ERROR)
-			+ 'nr_handled_commands'
+			(rejected_commands.length ? COLORS.ERROR : COLORS.DEFAULT)
+			+ 'Commands handled/rejected:'
 			+ COLORS.DEFAULT
 			, handled_commands.length
+			, '/'
+			, rejected_commands.length
 		);
 
 		const debug_message = { protocols: {} };

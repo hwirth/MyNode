@@ -643,7 +643,6 @@ export const DebugConsole = function (callback) {
 
 		self.history = new History( self.elements.input, {
 			onInputChanged: ()=>{
-console.log( 'oic' );
 				adjust_textarea();
 				scroll_down();
 			},
