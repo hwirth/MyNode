@@ -5,9 +5,6 @@
 
 "use strict";
 
-import * as DUMMY_SamJs from './samjs.js';
-
-
 import { WebSocketClient } from './websocket.js';
 import { DebugConsole    } from './debug_console.js';
 
@@ -130,55 +127,6 @@ const Application = function () {
 	} // on_console_send
 
 
-	function on_console_print (message, class_name) {
-		if (['response', 'chat'].indexOf(class_name) < 0) return;
-		//if (!message.response) return;
-
-		const text = JSON.stringify( message , null, '\t' );
-		//if (typeof text != 'string') return;
-
-		const allowed = 'abcdefghijklmnopqrstuvwxyz012345678 ';
-		sam_speak(
-			text
-			.trim()
-			.replace( /: /g , ' ' )
-			.replace( /,/g  , ' ' )
-			.replace( /\n/g , 'PAUSE'  )
-			.replace( /\./g , ' dot '  )
-			.replace( /:/g  , ' colon' )
-			.split('')
-			.filter( char => allowed.indexOf(char.toLowerCase()) >= 0)
-			.join('')
-		);
-	}
-
-
-	function sam_speak (text, options = {}) {
-		if (!self.getAudioContext()) return;
-
-		if (!self.sam) {
-			self.sam = new SamJs({
-				singmode : !false,   //false
-				pitch    : 50,      //64
-				speed    : 72,      //72
-				mouth    : 128,     //128
-				throat   : 128,     //128
-				volume   : 0.1,     //1 I added a volume option to sam.js, but it's not all to pretty
-			});
-		}
-
-		text.split( 'PAUSE' ).reduce( async (prev, next, index, parts)=>{
-			await prev;
-			const part = parts[index].trim();
-			return new Promise( async (done)=>{
-				if (part != '') await self.sam.speak( parts[index] );
-				setTimeout( done, 150 );
-			});
-		});
-	}
-
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -188,41 +136,15 @@ const Application = function () {
 
 	}; // exit
 
+
 	this.init = async function () {
 		console.log( 'Application.init' );
-
-		document.body.innerHTML = (`
-<main class="terminal">
-	<section class="output"></section>
-	<textarea class="input"></textarea>
-	<form class="controls">
-		<section class="buttons">
-			<button class="submit" title="Shortcut: [Shift]+[Enter]">Run</button>
-		</section>
-		<section class="status">
-			<span class="time">12:23:02.2</span>
-			<span class="connection_status warning">OFFLINE</span>
-		</section>
-	</form>
-</main>
-
-<footer class="main_menu">
-	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-</footer>
-		`).trim();
 
 		self.debugConsole = await new DebugConsole({
 			getURL      : ()=>WS_URL,
 			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
 			send        : on_console_send,
-			onPrint     : on_console_print,
-			speak       : sam_speak,
 		});
-		//...self.debugConsole.toggleConsole();
-		self.debugConsole.elements.input.focus();
-
-		self.getAudioContext = ()=>self.debugConsole.audioContext;
 
 		boot_sequence.forEach( (request)=>{
 			self.debugConsole.history.add( self.debugConsole.requestToText(request) );

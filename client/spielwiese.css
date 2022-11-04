@@ -42,32 +42,34 @@ Xhtml { font-size:21px; }
 	--input-border-width : 1px;
 	--input-radius       : 0.2rem;
 
-	--button-color        : #fff;
-	--button-bg           : #333;
-	--button-submit-color : #fff;
-	--button-submit-bg    : #c50;
+	--button-color         : #fff;
+	--button-bg            : #555;
+	--button-submit-color  : #fff;
+	--button-submit-bg     : #c50;
+	--button-enabled-color : #fff;
+	--button-enabled-bg    : #280;
 
-	--console-chat-color     : #fff;
-	--console-request-color  : #ca0;
-	--console-response-color : #78f;
-	--console-notice-color   : #48f;
-	--console-warning-color  : #fc0;
-	--console-error-color    : #e20;
-	--console-success-color  : #0f0;
-	--console-cep-color      : #cc0;
-	--console-mcp-color      : var(--console-response-color);
-	--console-chat-color     : #fff;
+	--terminal-chat-color     : #fff;
+	--terminal-request-color  : #ca0;
+	--terminal-response-color : #78f;
+	--terminal-notice-color   : #48f;
+	--terminal-warning-color  : #fc0;
+	--terminal-error-color    : #e20;
+	--terminal-success-color  : #0f0;
+	--terminal-cep-color      : #cc0;
+	--terminal-mcp-color      : var(--terminal-response-color);
+	--terminal-chat-color     : #fff;
 
-	--console-input-color      : var(--console-request-color);
-	--console-separator-color  : #a60;
-	--console-separator-border : dashed 1px var(--console-separator-color);
+	--terminal-input-color      : var(--terminal-request-color);
+	--terminal-separator-color  : #a60;
+	--terminal-separator-border : dashed 1px var(--terminal-separator-color);
 
 	--Xrequest-hover-background  : #210;
 	--request-hover-color       : #af0;
 	--Xresponse-hover-background : #123;
 	--response-hover-color      : #0af;
 
-	--console-line-height: 1rem;
+	--terminal-line-height: 1rem;
 	--tab-size: 4;
 	--input-tab-size: 8; X:var(--tab-size);
 
@@ -236,7 +238,6 @@ button {
 	padding:0.25em 0.0025em;
 	white-space:nowrap;
 }
-button.submit { background: var(--button-submit-bg); color:var(--button-submit-color); }
 
 footer { display:none; }
 
@@ -250,7 +251,7 @@ textarea, code,
 .terminal span,
 .terminal .input,
 .terminal .output pre {
-	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--console-line-height);
+	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
 	text-shadow:
 		 1px  0px #0008,
@@ -263,7 +264,7 @@ body { text-shadow:none; }
 
 .terminal {
 	position:absolute; bottom:0; left:0; z-index:999;
-	display:grid; grid-auto-rows:auto 1fr min-content; Xgrid-auto-rows:auto min-content min-content;
+	display:grid; grid-auto-rows:min-content auto 1fr min-content; Xgrid-auto-rows:auto min-content min-content;
 	width:100%; height:0%;
 	padding:0;
 	overflow:hidden;
@@ -289,6 +290,7 @@ body { text-shadow:none; }
 	box-shadow:inset 0 0 0 20px #000;
 }
 .terminal .output {
+	margin-top:1em;
 	padding-bottom:0.1em;
 	overflow-y:hidden;
 	white-space:pre-wrap;
@@ -301,17 +303,17 @@ body { text-shadow:none; }
 
 .terminal .output pre { padding-bottom:1em; white-space:pre-wrap; }
 .terminal .separators pre {
-	Xborder-bottom:var(--console-separator-border);
+	Xborder-bottom:var(--terminal-separator-border);
 	padding-top:0; padding-bottom:0;
 }
 
-.terminal pre.request  { color:var(--console-request-color)  ; white-space:pre-wrap; }
-.terminal pre.response { color:var(--console-response-color) ; white-space:pre-wrap; }
-.terminal pre.success  { color:var(--console-success-color)  ; }
-.terminal pre.failure  { color:var(--console-error-color)    ; }
-.terminal pre.cep      { color:var(--console-cep-color)      ; }
-.terminal pre.mcp      { color:var(--console-mcp-color)      ; }
-.terminal pre.chat     { color:var(--console-chat-color)     ; padding-left:1.75em; position:relative; }
+.terminal pre.request  { color:var(--terminal-request-color)  ; white-space:pre-wrap; }
+.terminal pre.response { color:var(--terminal-response-color) ; white-space:pre-wrap; }
+.terminal pre.success  { color:var(--terminal-success-color)  ; }
+.terminal pre.failure  { color:var(--terminal-error-color)    ; }
+.terminal pre.cep      { color:var(--terminal-cep-color)      ; }
+.terminal pre.mcp      { color:var(--terminal-mcp-color)      ; }
+.terminal pre.chat     { color:var(--terminal-chat-color)     ; padding-left:1.75em; position:relative; }
 .terminal pre.chat::before {
 	content:'';
 	position:absolute; left:0;
@@ -325,17 +327,17 @@ body { text-shadow:none; }
 
 .terminal .input  {
 	width:100%; border:none; padding:0em;
-	background:transparent; color:var(--console-chat-color);
+	background:transparent; color:var(--terminal-chat-color);
 	resize:none;
 	caret-shape:block;
 	Xcaret-shape:bar;
 	Xcaret-shape:unserscore;
 	caret-color: #ff0;
 }
-.terminal .input.request { color:var(--console-input-color); }
+.terminal .input.request { color:var(--terminal-input-color); }
 
 
-.terminal .controls {
+.terminal form {
 	display:inline-flex;
 	flex-grow:1;
 	flex-wrap:wrap;
@@ -347,8 +349,21 @@ body { text-shadow:none; }
 	border-radius:5px;
 }
 
-.terminal .buttons { flex-grow:1; Xtext-align:left; }
-.terminal .status  { flex-grow:1; text-align:right; color:#fff; }
+.terminal form section { font-size:0; }
+.terminal form section > * { font-size:1rem; }
+.terminal form > :first-child { flex-grow:1; text-align:left; }
+.terminal form > :last-child  { flex-grow:1; text-align:right; color:#fff; }
+
+.terminal :is(span, button) { margin:2px 1px; padding:0.1em 0.5em; border:none; vertical-align:middle; }
+.terminal button:hover { filter:brightness(1.5); }
+.terminal button.submit { background:var(--button-submit-bg); color:var(--button-submit-color); }
+.terminal button.enabled {
+	box-shadow:
+		inset 0 0 0 2px var(--button-enabled-bg)/*,
+		0 0 0 2px var(--button-enabled-bg)*/
+	;
+	color:var(--button-enabled-color);
+}
 
 .terminal .status .time {
 	Xfont-variant-numeric: normal;
@@ -364,8 +379,6 @@ body { text-shadow:none; }
 }
 
 
-.terminal :is(span, button) { margin:2px 1px; padding:0.1em 0.5em; border:none; vertical-align:middle; }
-.terminal button:hover { filter:brightness(1.5); }
 
 
 .terminal code      { color:#fcb; }
@@ -391,7 +404,7 @@ body { text-shadow:none; }
 /* ANIMATIONS */
 
 /* Beam */
-:not(.init).animated body::after {
+:not(.init).animate body::after {
 	animation: BEAM 0.02s ease-in-out infinite;
 }
 @keyframes BEAM {
@@ -403,8 +416,8 @@ body { text-shadow:none; }
 }
 
 /* Line wobble */
-X:not(.init).animated .terminal .output { padding-left:0.5em; }
-:not(.init).animated .terminal .output * > * {
+X:not(.init).animate .terminal .output { padding-left:0.5em; }
+:not(.init).animate .terminal .output * > * {
 	transform-origin: left;
 	Xanimation: LINES 57s ease infinite;
 }
@@ -415,7 +428,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 }
 
 /* MCP */
-:not(.init).animated .active.terminal::before {
+:not(.init).animate .active.terminal::before {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background-image: url(/images/mcp.jpg);
 	background-size: cover;
@@ -438,7 +451,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 }
 
 /* Background */
-:not(.init).animated .terminal::after {
+:not(.init).animate .terminal::after {
 	animation: MCP_GLOW 360s linear infinite; /*grid3*/
 }
 @keyframes MCP_GLOW {
@@ -458,7 +471,7 @@ X:not(.init).animated .terminal .output { padding-left:0.5em; }
 }
 
 /* Bit */
-:not(.init).animated .terminal .output::before {
+:not(.init).animate .terminal .output::before {
 	animation: BIT_GLOW 360s linear infinite; /*bit.gif*/
 }
 @keyframes BIT_GLOW {

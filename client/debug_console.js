@@ -5,6 +5,8 @@
 
 "use strict";
 
+import * as DUMMY_SamJs from './samjs.js';
+
 import { SETTINGS, DEBUG } from './config.js';
 import { History         } from './history.js';
 
@@ -44,6 +46,7 @@ export const DebugConsole = function (callback) {
 
 	this.history;
 	this.audioContext;
+	this.toggles;
 
 	this.requestToText = request_to_text;
 	this.textToRequest = text_to_request;
@@ -54,7 +57,7 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'a',
 		modifiers : ['alt'],
-		action    : ()=>{ document.querySelector('html').classList.toggle('animated'); },
+		action    : ()=>{ self.toggle( 'animations' ); },
 	},{
 		event     : 'keydown',
 		key       : 'c',
@@ -64,14 +67,24 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'd',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggleConsole(); },
+		action    : ()=>{ self.toggle( 'terminal' ); },
+	},{
+		event     : 'keydown',
+		key       : 'k',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggle( 'keyBeep' ); },
+	},{
+		event     : 'keydown',
+		key       : 'm',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggle( 'sam' ); },
 	},{
 		event     : 'keydown',
 		key       : 'o',
 		modifiers : ['alt'],
 		action    : ()=>{ self.elements.terminal.classList.toggle( 'overflow' ); }
 	},{
-		event     : 'keypress',
+		event     : 'keydown',
 		key       : 's',
 		modifiers : ['alt'],
 		action    : ()=>{ self.elements.output.classList.toggle('separators'); scroll_down(); },
@@ -79,7 +92,7 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : '#',
 		modifiers : ['ctrl'],
-		action    : ()=>{ self.toggleConsole(); },
+		action    : ()=>{ self.toggle( 'terminal' ); },
 	},{
 		event     : 'keydown',
 		key       : 'ArrowUp',
@@ -101,6 +114,38 @@ export const DebugConsole = function (callback) {
 		self.elements.output.scrollBy(0, 99999);
 
 	} // scroll_down
+
+
+	function sam_speak (text) {
+		if (!self.audioContext) return;
+		if (!self.toggles.sam) return;
+
+		if (!self.sam) {
+			self.sam = new SamJs({
+				singmode : !false,   //false
+				pitch    : 50,       //64
+				speed    : 72,       //72
+				mouth    : 128,      //128
+				throat   : 128,      //128
+				volume   : 0.1,      //1 I added a volume option to sam.js, but it's not all to pretty
+			});
+		}
+
+		text
+		.split( 'PAUSE' )
+		.reduce( async (prev, next, index, parts)=>{
+			await prev;
+			const part = parts[index].trim();
+			return new Promise( async (done)=>{
+				if (self.toggles.sam) {
+					if (part != '') await self.sam.speak( parts[index] );
+					setTimeout( done, 150 );
+				} else {
+					done();
+				}
+			});
+		}, Promise.resolve());
+	}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -227,75 +272,7 @@ export const DebugConsole = function (callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// INTERFACE
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.toggleConsole = function (event) {
-		self.elements.terminal.classList.toggle( 'active' );
-		if (self.elements.terminal.classList.contains( 'active' )) {
-			focus_prompt();
-		} else {
-			self.elements.input.blur();
-		}
-
-	}; // toggle
-
-
-	this.print = function (message, class_name) {
-		let t = -1;
-		const cnames = [
-			'slash', 'period', 'colon', 'semi','curlyO',
-			'bracketO', 'parensO', 'parensC', 'bracketC','curlyC',
-			'true', 'false', 'null'
-		];
-		const tokens = [
-			'/', '.', ':', ';', '{',
-			'[', '(', ')', ']', '}',
-			'true', 'false', 'null'
-		];
-
-		const message_html = (
-			(typeof message == 'string')
-			? message
-			: request_to_text( message )
-		)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')//...
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + cnames[t] + '">' + tokens[t] + '</code>')
-		.split('\n')
-		.map( line => '<div>'+line+'</div>' )
-		.join('')
-		;
-
-		if (message.MCP) class_name = 'mcp'; //...new_element.classList.add( 'mcp' );
-
-		const new_element = document.createElement( 'pre' );
-		new_element.className = class_name;
-		new_element.innerHTML = message_html;
-
-		//self.elements.terminal.insertBefore( new_element, self.elements.prompt );
-		self.elements.output.appendChild( new_element );
-		scroll_down();
-
-		if (callback.onPrint) callback.onPrint(message, class_name);
-
-	}; // print
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENT HELPERS
+// EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function adjust_textarea () {
@@ -331,10 +308,6 @@ export const DebugConsole = function (callback) {
 	} // focus_prompt
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENTS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
 	function on_script_button_click (event) {
 		event.preventDefault();
 		self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
@@ -352,7 +325,7 @@ export const DebugConsole = function (callback) {
 
 
 	function on_dblclick (event) {
-		if (event.target.tagName == 'BODY') return self.toggleConsole();
+		if (event.target.tagName == 'BODY') return self.toggle( 'terminal' );
 		if (!event.target.closest('.terminal')) return;
 
 		const shift = event.shiftKey;
@@ -457,16 +430,18 @@ export const DebugConsole = function (callback) {
 				cursorEnd  : modifiers.indexOf( 'cursorEnd'  ) >= 0,
 			};
 
-			let key_matches
-			=  event.shiftKey == requires.shift
-			&& event.ctrlKey == requires.ctrl
-			&& event.altKey == requires.alt
-			;
+			const ignore_pos1end = true/*
+			=  !requires.cursorPos1 && !requires.cursorEnd
+			|| input.value.length == 0
+			;*/
 
-			if (input.value.length > 0) {
-				key_matches &= (cursor_pos1 == requires.cursorPos1);
-				key_matches &= (cursor_end == requires.cursorEnd);
-			}
+			const key_matches
+			=  (event.shiftKey == requires.shift)
+			&& (event.ctrlKey == requires.ctrl)
+			&& (event.altKey == requires.alt)
+			&& (ignore_pos1end || (cursor_pos1 == requires.cursorPos1))
+			&& (ignore_pos1end || (cursor_end == requires.cursorEnd))
+			;
 
 			return key_matches;
 		}
@@ -479,6 +454,7 @@ export const DebugConsole = function (callback) {
 	function on_keydown_beep (event) {
 		if (!SETTINGS.KBD_BEEP) return;
 		if (!self.audioContext) return;
+		if (!self.toggles.keyBeep) return;
 
 		// Chromium crashes after I type fast for a few seconds
 		// Limiting number of sounds does not help:
@@ -618,6 +594,117 @@ export const DebugConsole = function (callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// INTERFACE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.toggle = function (item) {
+		switch (item) {
+			case 'animations': {
+				const is_enabled = self.elements.html.classList.toggle( 'animate' );
+				self.elements.animations.classList.toggle( 'enabled', is_enabled );
+				break;
+			}
+			case 'keyBeep': {
+				self.toggles.keyBeep = !self.toggles.keyBeep;
+				self.elements.keyBeep.classList.toggle( 'enabled', self.toggles.keyBeep );
+				break;
+			}
+			case 'sam': {
+				self.toggles.sam = !self.toggles.sam;
+				self.elements.sam.classList.toggle( 'enabled', self.toggles.sam );
+				break;
+			}
+			case 'terminal': {
+				const is_enabled = self.elements.terminal.classList.toggle( 'active' );
+				if (is_enabled) focus_prompt();
+				break;
+			}
+			default: {
+				console.log( 'DebugConsole.toggle: Unknown item:', item );
+				throw new Error( 'DebugConsole.toggle: Unknown item' );
+			}
+		}
+
+	}; // toggle
+
+
+	this.toggleConsole = function (event) {
+		self.elements.terminal.classList.toggle( 'active' );
+		if (self.elements.terminal.classList.contains( 'active' )) {
+			focus_prompt();
+		} else {
+			self.elements.input.blur();
+		}
+
+	}; // toggle
+
+
+	this.print = function (message, class_name) {
+		let t = -1;
+		const class_names = [
+			'slash', 'period', 'colon', 'semi','curlyO',
+			'bracketO', 'parensO', 'parensC', 'bracketC','curlyC',
+			'true', 'false', 'null'
+		];
+		const tokens = [
+			'/', '.', ':', ';', '{',
+			'[', '(', ')', ']', '}',
+			'true', 'false', 'null'
+		];
+
+		const message_html = (
+			(typeof message == 'string')
+			? message
+			: request_to_text( message )
+		)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')//...
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.split('\n')
+		.map( line => '<div>' + line + '</div>' )
+		.join('')
+		;
+
+		if (message.MCP) class_name = 'mcp'; //...new_element.classList.add( 'mcp' );
+
+		const new_element = document.createElement( 'pre' );
+		new_element.className = class_name;
+		new_element.innerHTML = message_html;
+
+		//self.elements.terminal.insertBefore( new_element, self.elements.prompt );
+		self.elements.output.appendChild( new_element );
+		scroll_down();
+
+		const allowed = 'abcdefghijklmnopqrstuvwxyz012345678 ';
+		sam_speak(
+			JSON.stringify( message )
+			.trim()
+			.replace( /: /g , ' ' )
+			.replace( /,/g  , ' ' )
+			.replace( /\n/g , 'PAUSE'   )
+			.replace( /\./g , ' dot '   )
+			.replace( /:/g  , ' colon ' )
+			.split('')
+			.filter( char => allowed.indexOf(char.toLowerCase()) >= 0)
+			.join('')
+		);
+
+	}; // print
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -630,15 +717,56 @@ export const DebugConsole = function (callback) {
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
 
+		self.toggles = {
+			animations : true,
+			keyBeep    : true,
+			sam        : true,
+		};
+
+		document.body.innerHTML = (`
+<main class="terminal">
+	<form class="menu">
+		<section class="buttons">
+		</section>
+		<section class="toggles">
+			<button class="key_beep enabled"   title="Keyboard beep [Alt]+[K]">Kbd</button>
+			<button class="sam enabled"        title="Software Automatic Mouth [Alt]+[M]">SAM</button>
+			<button class="animations enabled" title="Animations [Alt]+[A]">Anim</button>
+		</section>
+	</form>
+	<section class="output"></section>
+	<textarea class="input"></textarea>
+	<form class="status">
+		<section>
+			<button class="submit" title="Shortcut: [Enter]">Run</button>
+		</section>
+		<section class="status">
+			<span class="time">12:23:02.2</span>
+			<span class="connection_status warning">OFFLINE</span>
+		</section>
+	</form>
+</main>
+
+<footer class="main_menu">
+	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+</footer>
+		`).trim();
+
 		const container = document.querySelector( '.terminal' );
 		self.elements = {
-			terminal : container,
-			output   : container.querySelector( '.output'   ),
-			prompt   : container.querySelector( '.prompt'   ),
-			input    : container.querySelector( '.input'    ),
-			controls : container.querySelector( '.controls' ),
-			buttons  : container.querySelector( '.buttons'  ),
-			send     : container.querySelector( '.submit'   ),
+			html       : document.querySelector( 'html' ),
+			terminal   : container,
+			menu       : container.querySelector( 'form.menu'   ),
+			output     : container.querySelector( '.output'     ),
+			prompt     : container.querySelector( '.prompt'     ),
+			input      : container.querySelector( '.input'      ),
+			status     : container.querySelector( 'form.status' ),
+			buttons    : container.querySelector( '.buttons'    ),
+			send       : container.querySelector( '.submit'     ),
+			keyBeep    : container.querySelector( '.key_beep'   ),
+			sam        : container.querySelector( '.sam'        ),
+			animations : container.querySelector( '.animations' ),
 		};
 
 		self.history = new History( self.elements.input, {
@@ -660,11 +788,12 @@ export const DebugConsole = function (callback) {
 
 
 		// Disable <form> submission
-		self.elements.controls.addEventListener( 'submit', event => event.preventDefault() );
+		self.elements.terminal.querySelectorAll( 'form' ).forEach( (form)=>{
+			form.addEventListener( 'submit', event => event.preventDefault() );
+		});
 
 
 		// Create buttons
-		self.elements.buttons.innerHTML = self.elements.buttons.innerHTML.trim();
 		Object.keys( BUTTON_SCRIPTS ).forEach( (key)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
@@ -675,6 +804,17 @@ export const DebugConsole = function (callback) {
 			//...self.elements.buttons.insertBefore( new_button, self.elements.send );
 			self.elements.buttons.appendChild( new_button );
 		});
+
+
+		// Button: SEND
+		self.requestId = 0;
+		self.elements.send.addEventListener( 'click', on_send_click );
+
+
+		// Buttons: Toggles
+		self.elements.sam       .addEventListener( 'click', ()=>self.toggle('sam')        );
+		self.elements.animations.addEventListener( 'click', ()=>self.toggle('animations') );
+		self.elements.keyBeep   .addEventListener( 'click', ()=>self.toggle('keyBeep')    );
 
 
 		// REFOCUS PROMPT
@@ -709,18 +849,11 @@ export const DebugConsole = function (callback) {
 	*/
 
 
-		// SEND
-		self.requestId = 0;
-		self.elements.send.addEventListener( 'click', on_send_click );
-
-
 		// CLOCK
 		start_clock();
 
 		self.print( 'CEP-' + CEP_VERSION + '^acdos READY.\n', 'cep' );
 		self.print( 'connect: ' + callback.getURL(), 'request' );
-
-		adjust_textarea();
 
 		return Promise.resolve();
 

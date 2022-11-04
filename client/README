@@ -124,11 +124,23 @@ Therefore, "relay" functions in the main object are used for instantiation, beca
 things that don't yet exist, when the funcion is declared.
 
 
-
-
 4. Configuration
 ================
 /etc/spielwiese.conf
+
+RUN_AS_USER           spielwiese
+RUN_AS_GROUP          spielwiese
+DOCUMENT_ROOT         /.../htdocs
+
+LOG_TO_CONSOLE        true
+LOG_TO_FILE           false
+LOG_FILE_NAME         /.../spielwiese.log
+
+SSL_PUBLIC_KEY_FILE   /.../spielwiese.crt
+SSL_PRIVATE_KEY_FILE  /.../spielwiese.key
+
+HTTPS_PORT            1337
+WS_PORT               1337
 
 
 5. Installation
@@ -946,6 +958,12 @@ try {
 				self.print( 'Malformed request', 'cep' );
 			}
 		});
+
+
+
+
+
+
 
 
 
