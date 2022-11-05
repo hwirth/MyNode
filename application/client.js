@@ -78,7 +78,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 // CONNECTION AND MESSAGES ///////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.send = function (message) {
-		const approved_message = callback.mcp().approve( message );
+		//const approved_message = callback.mcpApprove( message );
 		const stringified_json = JSON.stringify( message, null, '\t' );
 
 		if (DEBUG.MESSAGE_OUT) color_log(
@@ -90,6 +90,11 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		if (socket.send) socket.send( stringified_json );
 
 	}; // send
+
+
+	this.broadcast = function (message) {
+
+	}; // broadcast
 
 
 	this.closeSocket = function () {

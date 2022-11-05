@@ -17,6 +17,51 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// GRANT ACCESS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	let current_access_token = create_new_access_token();
+
+	function create_new_access_token () {
+		const new_token = String( Math.floor( Math.random() * 900 ) + 100 );
+		const formatted_token = new_token.split('').join(' ');
+
+		color_log( COLORS.MCP, 'MCP .' + '='.repeat(14) + '.' );
+		color_log( COLORS.MCP, 'MCP | TOKEN:', COLORS.TOKEN + formatted_token, COLORS.MCP + '|' );
+		color_log( COLORS.MCP, "MCP '" + '='.repeat(14) + "'" );
+
+		DEBUG.MCPTOKEN = new_token;
+		return new_token;
+	}
+
+
+	funct ion escalate_privileges (client, access_token, execute_this) {
+return Promise.resolve();
+/*
+		return new Promise( async (done)=>{
+			try {
+				await execute_this();
+				done();
+
+			} catch (error) {
+				color_log( COLORS.ERROR, 'ERROR:', 'MasterControl-escalate_privileges:', error );
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+				client.send({ 'ERROR IN ELEVATED CODE\n': report });
+			}
+		});
+
+
+		return new Promise( (resolve, reject)=>{
+			const token_confirmed = (access_token === current_access_token);
+			current_access_token = String( create_new_access_token() ).split('').join(' ');
+
+			if (token_confirmed) resolve();
+		});
+*/
+	} // escalate_privileges
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -81,56 +126,68 @@ module.exports = function MasterControl (persistent, callback) {
 			return;
 		}
 
-		callback
-		.escalatePrivileges( 'secret$token' )
-		.then( ()=>app.exit )
-		;
+		escalate_privileges( client, 'secret$token', callback.triggerExit );
 
 	}; // restart
 
 
-	this.request.inspect = async function (client, request_id, parameters) {
-console.log( 'MCP INSPECT' );
-		let target = await callback.escalatePrivileges( request_id.token || DEBUG.MCPTOKEN );
+	this.request.inspect = function (client, request_id, parameters) {
+/*
+		if (typeof parameters != 'string') {
+			client.respond( RESULT.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
+			return;
+		}
+
+console.log( 'MCP INSPECT', parameters );
+		escalate_privileges(
+			client,
+			request_id.token || DEBUG.MCPTOKEN,
+			execute,
+		);
 
 		function respond_error () {
 			client.respond( RESULT.FAILURE, request_id, STRINGS.YOU_SHOULDNT_HAVE );
 		}
 
-		if (!target) {
-			respond_error();
-		}
+		function execute () {
+			let target = parameters;
 
-		if (Object.keys(parameters).length > 0) {
-	let count = 0;
-			const path = parameters.split('.');
+			if (!target) {
+				respond_error();
+				return;
+			}
+
+			if (Object.keys(parameters).length > 0) {
+		let count = 0;
+				const path = parameters.split('.');
 console.log( 'path:', path );
 console.log( ++count, 'target:', typeof target );
 
-			if (parameters) {
-				path.find( (token)=>{
-					if (target[ token ]) {
-						target = target[token];
+				if (parameters) {
+					path.find( (token)=>{
+						if (target[ token ]) {
+							target = target[token];
 console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
-					} else {
-						respond_error();
-						return;
-					}
-				});
+						} else {
+							respond_error();
+							return;
+						}
+					});
+				}
 			}
+
+			if (typeof target == 'undefined') target = 'undefined';
+
+			let Xresult = null;
+			switch (typeof target) {
+			case 'object' :  result = Object.keys( target );  break;
+			default       :  result = target;                 break;
+			}
+
+			if (!parameters) parameters = 'master';
+			client.respond( RESULT.SUCCESS, request_id, result );
 		}
-
-		if (typeof target == 'undefined') target = 'undefined';
-
-		let Xresult = null;
-		switch (typeof target) {
-		case 'object' :  result = Object.keys( target );  break;
-		default       :  result = target;                 break;
-		}
-
-		if (!parameters) parameters = 'master';
-		client.respond( RESULT.SUCCESS, request_id, result );
-
+*/
 	}; // inspect
 
 

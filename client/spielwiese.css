@@ -294,7 +294,6 @@ body { text-shadow:none; }
 	padding-bottom:0.1em;
 	overflow-y:hidden;
 	white-space:pre-wrap;
-	height:100%;
 	overflow-x:hidden;
 	overflow-y:scroll;
 	Xscroll-behavior: smooth;
@@ -326,7 +325,7 @@ body { text-shadow:none; }
 
 
 .terminal .input  {
-	width:100%; border:none; padding:0em;
+	width:100%; border:none;
 	background:transparent; color:var(--terminal-chat-color);
 	resize:none;
 	caret-shape:block;
@@ -377,8 +376,6 @@ body { text-shadow:none; }
 	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
 }
-
-
 
 
 .terminal code      { color:#fcb; }

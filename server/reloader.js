@@ -176,14 +176,6 @@ module.exports = function AppReloader (callback) {
 		if (!reload_required) return;
 
 		// Re-instantiate  Router
-		const MAIN_MODULE = {
-			url        : SETTINGS.MAIN_MODULE,
-			persistent : self.persistent,
-			callbacks  : {
-				escalatePrivileges: callback.escalatePrivileges,
-			},
-		};
-
 		console.time( 'Init time' );
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
 
@@ -194,38 +186,10 @@ module.exports = function AppReloader (callback) {
 			color_log( COLORS.ERROR, '- /ERROR ' + '-'.repeat(50) );
 		}
 
-		let success = true;//...
-
-		try {
-			// Reload and reinstantiate main module
-			self.router =
-			await new require(
-				MAIN_MODULE.url
-
-			).Router(
-				MAIN_MODULE.persistent,
-				MAIN_MODULE.callbacks,
-
-			).catch( (error)=>{
-				success = false;//...
-				show_error( error, 'AppReloader-reload_modules:',
-					'await new require().Router()' + COLORS.STRONG + '.catch()',
-				);
-				invalidate_require_cache();
-			});
-
-		} catch (error) {
-			success = false;//...
-			show_error( error, 'AppReloader-reload_modules:',
-				COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
-			);
-
+		function report_error (error) {
 			if (socket) {
-				const message = {
-					'MODULE ERROR 3' : {},
-					success  : false,
-					response : error.stack,
-				};
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+				const message = { 'MODULE ERROR 3\n': report };
 
 				try {
 					socket.send( JSON.stringify(message) );
@@ -237,10 +201,47 @@ module.exports = function AppReloader (callback) {
 			}
 		}
 
+		let success = true;
+
+		try {
+			// Reload and reinstantiate main module
+			const MAIN_MODULE = {
+				url        : SETTINGS.MAIN_MODULE,
+				persistent : self.persistent,
+				callbacks  : {
+					triggerExit: callback.triggerExit,
+				},
+			};
+
+			self.router =
+			await new require(
+				MAIN_MODULE.url
+
+			).Router(
+				MAIN_MODULE.persistent,
+				MAIN_MODULE.callbacks,
+
+			).catch( (error)=>{
+				success = false;
+				show_error( error, 'AppReloader-reload_modules:',
+					'await new require().Router()' + COLORS.STRONG + '.catch()',
+				);
+				report_error( error );
+				invalidate_require_cache();
+			});
+
+		} catch (error) {
+			success = false;
+			show_error( error, 'AppReloader-reload_modules:',
+				COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
+			);
+			report_error( error );
+		}
+
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );
 
-		return success;
+		return Promise.resolve( ()=>success );
 
 	} // reload_modules
 
@@ -277,23 +278,37 @@ module.exports = function AppReloader (callback) {
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
+			let success = true;
 			try {
-				await reload_modules( socket );
+				await reload_modules( socket ).catch( ()=>{ success = false; } );
+
+				try {
+					await self.router.onMessage( socket, client_address, message );
+
+				} catch (error) {
+					color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: router.onMessage:', error );
+					const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+					socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
+				}
 
 			} catch (error) {
-				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
+				success = false;
+				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
 				socket.send( JSON.stringify({ 'MODULE ERROR 1': report }) );
 			}
+/*
+			if (success) {
+				try {
+					await self.router.onMessage( socket, client_address, message );
 
-			try {
-				await self.router.onMessage( socket, client_address, message );
-
-			} catch (error) {
-				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage:', error );
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
-				socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
+				} catch (error) {
+					color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: router.onMessage:', error );
+					const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+					socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
+				}
 			}
+*/
 		}
 
 	}; // onMessage

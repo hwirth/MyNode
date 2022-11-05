@@ -70,33 +70,6 @@ const Main = function () {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// GRANT ACCESS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	let current_access_token = create_new_access_token();
-	escalate_privileges( current_access_token );
-
-	function create_new_access_token () {
-		DEBUG.MCPTOKEN = Math.floor( Math.random() * 900 ) + 100;
-		return DEBUG.MCPTOKEN;
-	}
-
-	function escalate_privileges (access_token) {
-return Promise.resolve();
-		return new Promise( (resolve, reject)=>{
-			const token_confirmed = (access_token === current_access_token);
-			current_access_token = String( create_new_access_token() ).split('').join(' ');
-
-			color_log( COLORS.MCP, 'MCP .' + '='.repeat(14) + '.' );
-			color_log( COLORS.MCP, 'MCP | TOKEN:', COLORS.TOKEN + current_access_token, COLORS.MCP + '|' );
-			color_log( COLORS.MCP, "MCP '" + '='.repeat(14) + "'" );
-
-			if (token_confirmed) resolve();
-		});
-	}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENT RELAYS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -403,15 +376,20 @@ return Promise.resolve();
 
 		if (error == undefined) return;
 
-		const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
-		const clients = self.reloader.persistent.session.clients;
-		Object.keys( clients ).forEach( (address)=>{
-			const client = clients[address];
-			client.send({ 'FATAL SYSTEM FAILURE\n': report });
-		});
+		if( self.reloader
+		&&  self.reloader.persistent
+		&&  self.reloader.persistent.session
+		&&  self.reloader.persistent.session.clients
+		) {
+			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+			const clients = self.reloader.persistent.session.clients;
+			Object.keys( clients ).forEach( (address)=>{
+				const client = clients[address];
+				client.send({ 'FATAL SYSTEM FAILURE\n': report });
+			});
 
-		await new Promise( done => setTimeout(done, 1000) );
-
+			await new Promise( done => setTimeout(done, 1000) );
+		}
 
 		if (SETTINGS.ERROR_SHUT_DOWN) {
 			self.exit( EXIT_CODES.GLOBAL_ERROR_HANDLER );
@@ -462,7 +440,10 @@ return Promise.resolve();
 		}
 
 		function cleanup_and_die () {
-			const exit_code = ((typeof event == 'number') ? event : EXIT_CODES.UNKNOWN);
+			let exit_code = EXIT_CODES.UNKNOWN;
+			if (typeof event == 'number') exit_code = event;
+			if (event == 'SIGINT') exit_code = EXIT_CODES.EXIT;
+
 			color_log( COLORS.EXIT, 'EXIT', 'Server terminating with exit code', exit_code );
 
 			process.removeListener( 'uncaughtException'  , global_error_handler );
@@ -502,23 +483,21 @@ return Promise.resolve();
 
 			install_error_handler();
 			drop_privileges();
-			self.wsServer      = create_web_socket({
+			self.wsServer = create_web_socket({
 				onConnect    : self.onConnect,
 				onDisconnect : self.onDisconnect,
 				onMessage    : self.onMessage,
 			});
-			self.httpServer    = create_http_server( self.wsServer );
+			self.httpServer = create_http_server( self.wsServer );
 
 			console.log( '.' + '-'.repeat(78) );
 			console.log( '| APPLICATION' );
 			console.log( "'" + '-'.repeat(78) );
-//try {
-			self.reloader      = await new AppReloader({
-				escalatePrivileges: escalate_privileges,
+
+			self.reloader = await new AppReloader({
+				triggerExit: ()=>self.exit( EXIT_CODES.REQUEST_RESTART ),
 			});
-//} catch (error) {
-//	color_log( COLORS.MCP, 'MCP:', 'ROOT_LOAD_FAILED' );
-//}
+
 			done();
 		});
 

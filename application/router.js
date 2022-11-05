@@ -103,12 +103,12 @@ module.exports.Router = function (persistent, callback) {
 
 		function send_error (error) {
 			if (typeof error != 'error') {
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
 				send_as_json( socket, { '\nROUTER ERROR 0\n': report });
 				return;
 			}
 
-			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '', );
+			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
 			const new_message = {
 				tag      : request_id.tag,
 				success  : false,
@@ -308,12 +308,12 @@ module.exports.Router = function (persistent, callback) {
 		const ChatServer     = require( './chat/main.js' );
 
 		const registered_callbacks = {
-			mcp                    : ()=>{ return self.protocols.mcp },
-			getUpTime              : ()=>{ return self.protocols.server.getUpTime(); },
+			mcpApprove             : (...params)=>{ self.protocols.mcp.approve(...params); },
+			mcpEscalate            : (...params)=>{ self.protocols.mcp.escalate(...params); },
+			triggerExit            : callback.triggerExit,
 			getProtocols           : ()=>self.protocols,
 			getAllClients          : ()=>{ return persistent.session.clients; },
-			getAllPersistentData   : ()=>persistent,
-			escalatePrivileges     : callback.escalatePrivileges,
+			getAllPersistentData   : ()=>{ return persistent; },
 			getProtocolDescription : (show_line_numbers)=>{
 				return self.protocols.access
 				.getProtocolDescription( show_line_numbers );
@@ -321,7 +321,12 @@ module.exports.Router = function (persistent, callback) {
 		};
 
 		const registered_protocols = {
-			session : { template: SessionHandler, callbacks: ['mcp'] },
+			session : { template: SessionHandler,
+				callbacks: [
+					'mcpApprove',
+					'getAllClients',
+				],
+			},
 			access  : { template: AccessControl },
 			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
 			mcp     : { template: MasterControl,
@@ -329,9 +334,8 @@ module.exports.Router = function (persistent, callback) {
 					'getUpTime',
 					'getProtocosl',
 					'getAllPersistentData',
-					'escalatePrivileges',
-					'triggerExit',
 					'getProtocolDescription',
+					'triggerExit',
 				],
 			},
 			chat    : { template: ChatServer,
@@ -356,10 +360,22 @@ module.exports.Router = function (persistent, callback) {
 				new_callbacks[name] = registered_callbacks[name];
 			});
 
-			self.protocols[protocol_name] = await new protocol.template( data, new_callbacks );
+			//try {
+				//self.protocols[protocol_name] = await new protocol.template( data, new_callbacks );
+				self.protocols[protocol_name] =
+					await new protocol.template( data, new_callbacks );
+
+			//} catch (error) {
+			//	color_log( COLORS.ERROR, 'ERROR:', 'Router.init/try:', error );
+				//return Promise.reject( error );
+			//}
 		});
 
 		return Promise.allSettled( load_requests );
+
+		color_log( COLORS.ROUTER, 'Registered protocols:', Object.keys(self.protocols) );
+
+		return Promise.resolve();
 
 	}; // init
 

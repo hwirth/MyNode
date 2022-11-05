@@ -10,7 +10,11 @@ export const DEBUG = {
 };
 
 export const SETTINGS = {
-	KBD_BEEP: true,
+	KEYBOARD_BEEP : true,
+};
+
+export const PRESETS = {
+	KEYBOARD_BEEP : true,
 };
 
 //EOF

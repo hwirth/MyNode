@@ -452,7 +452,7 @@ export const DebugConsole = function (callback) {
 	let nr_active_sounds = 0;
 
 	function on_keydown_beep (event) {
-		if (!SETTINGS.KBD_BEEP) return;
+		if (!SETTINGS.KEYBOARD_BEEP) return;
 		if (!self.audioContext) return;
 		if (!self.toggles.keyBeep) return;
 
@@ -687,17 +687,21 @@ export const DebugConsole = function (callback) {
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
-		const allowed = 'abcdefghijklmnopqrstuvwxyz012345678 ';
+		const allowed = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
 		sam_speak(
-			JSON.stringify( message )
+			JSON.stringify( message, null, '\t' )
 			.trim()
-			.replace( /: /g , ' ' )
-			.replace( /,/g  , ' ' )
-			.replace( /\n/g , 'PAUSE'   )
-			.replace( /\./g , ' dot '   )
-			.replace( /:/g  , ' colon ' )
+			.replace( /: /g , ' '           )
+			.replace( /,/g  , ' '           )
+			.replace( /\t/g , ' '           )
+			.replace( /\n/g , 'PAUSE PAUSE' )
+			.replace( /=/g  , ' equals '    )
+			.replace( /\//g , ' slash '     )
+			.replace( /\\/g , ' backslash ' )
+			.replace( /\./g , ' dot '       )
+			.replace( /:/g  , ' colon '     )
 			.split('')
-			.filter( char => allowed.indexOf(char.toLowerCase()) >= 0)
+			.map( char => (allowed.indexOf(char.toLowerCase()) >= 0) ? char : ' ' )
 			.join('')
 		);
 

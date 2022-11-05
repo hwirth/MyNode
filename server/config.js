@@ -53,7 +53,7 @@ parse_config_file();
 let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;
 
 const SETTINGS = {
-	DEV_SERVER : DEV_SERVER,
+	DEV_SERVER  : DEV_SERVER,
 	INSTALL_GEH : true,   // Global error and unhandled rejection handler
 
 	BASE_DIR    : base_dir,

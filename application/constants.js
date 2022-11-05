@@ -31,6 +31,7 @@ module.exports.REASONS = {
 	KICKED_USER                 : 'Kicked user NAME, address: ADDRESS',
 	KICKED_BY                   : 'Kicked by',
 	USERNAME_UNKNOWN            : 'User NAME unknown',
+	MALFORMED_REQUEST           : 'Malformed request',
 
 }; // RESPONSES
 

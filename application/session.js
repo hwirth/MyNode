@@ -81,7 +81,10 @@ module.exports = function SessionHandler (persistent, callback) {
 		}
 
 		persistent.clients[client_address] =
-			await new WebSocketClient( socket, client_address, { mcp: callback.mcp } );
+			await new WebSocketClient( socket, client_address, {
+				mcpApprove    : callback.mcpApprove,
+				getAllCLients : callback.getAllClients,
+			});
 
 	}; // onConnect
 

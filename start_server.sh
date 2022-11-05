@@ -1,4 +1,11 @@
-#!/bin/sh
+#!/bin/bash
+
+# Prevent systemctl stop from hanging
+trap cleanup exit
+function cleanup () {
+	exit 0
+}
+
 
 nr_crashes=0
 max_crashes=30
