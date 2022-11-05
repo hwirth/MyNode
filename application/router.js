@@ -316,7 +316,7 @@ module.exports.Router = function (persistent, callback) {
 			getAllPersistentData   : ()=>{ return persistent; },
 			getProtocolDescription : (show_line_numbers)=>{
 				return self.protocols.access
-				.getProtocolDescription( show_line_numbers );
+				.getProtocolDescription( show_line_numbers );//...?
 			},
 		};
 
@@ -332,7 +332,7 @@ module.exports.Router = function (persistent, callback) {
 			mcp     : { template: MasterControl,
 				callbacks : [
 					'getUpTime',
-					'getProtocosl',
+					'getProtocols',
 					'getAllPersistentData',
 					'getProtocolDescription',
 					'triggerExit',

@@ -186,23 +186,6 @@ module.exports = function AppReloader (callback) {
 			color_log( COLORS.ERROR, '- /ERROR ' + '-'.repeat(50) );
 		}
 
-		function report_error (error) {
-			if (socket) {
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				const message = { 'MODULE ERROR 3\n': report };
-
-				try {
-					socket.send( JSON.stringify(message) );
-
-				} catch (error) {
-					color_log( COLORS.ERROR, 'Another edge case:', error.message, message );
-					invalidate_require_cache();
-				}
-			}
-		}
-
-		let success = true;
-
 		try {
 			// Reload and reinstantiate main module
 			const MAIN_MODULE = {
@@ -221,27 +204,39 @@ module.exports = function AppReloader (callback) {
 				MAIN_MODULE.persistent,
 				MAIN_MODULE.callbacks,
 
-			).catch( (error)=>{
+			)/*.catch( (error)=>{
 				success = false;
 				show_error( error, 'AppReloader-reload_modules:',
 					'await new require().Router()' + COLORS.STRONG + '.catch()',
 				);
 				report_error( error );
 				invalidate_require_cache();
-			});
+			});*/
 
 		} catch (error) {
-			success = false;
+			invalidate_require_cache();
 			show_error( error, 'AppReloader-reload_modules:',
 				COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
 			);
-			report_error( error );
+
+			if (socket) {
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+				const message = { 'MODULE ERROR 1\n': report };
+
+				try {
+					socket.send( JSON.stringify(message) );
+
+				} catch (error) {
+					color_log( COLORS.ERROR, 'Another edge case:', error.message, message );
+					invalidate_require_cache();
+				}
+			}
 		}
 
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
 		console.timeEnd( 'Init time' );
 
-		return Promise.resolve( ()=>success );
+		//return Promise.resolve( ()=>success );
 
 	} // reload_modules
 
@@ -278,27 +273,14 @@ module.exports = function AppReloader (callback) {
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
-			let success = true;
-
 			try {
 				await reload_modules( socket );
+				await self.router.onMessage( socket, client_address, message );
 
 			} catch (error) {
-				success = false;
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				socket.send( JSON.stringify({ 'MODULE ERROR 1\n': report }) );
-			}
-
-			if (success) {
-				try {
-					await self.router.onMessage( socket, client_address, message );
-
-				} catch (error) {
-					color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: router.onMessage:', error );
-					const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-					socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
-				}
+				socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
 			}
 		}
 
