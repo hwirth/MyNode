@@ -35,7 +35,7 @@ module.exports = function MasterControl (persistent, callback) {
 	}
 
 
-	funct ion escalate_privileges (client, access_token, execute_this) {
+	function escalate_privileges (client, access_token, execute_this) {
 return Promise.resolve();
 /*
 		return new Promise( async (done)=>{

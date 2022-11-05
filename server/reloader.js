@@ -279,25 +279,17 @@ module.exports = function AppReloader (callback) {
 
 		if (message) {
 			let success = true;
+
 			try {
-				await reload_modules( socket ).catch( ()=>{ success = false; } );
-
-				try {
-					await self.router.onMessage( socket, client_address, message );
-
-				} catch (error) {
-					color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: router.onMessage:', error );
-					const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-					socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
-				}
+				await reload_modules( socket );
 
 			} catch (error) {
 				success = false;
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				socket.send( JSON.stringify({ 'MODULE ERROR 1': report }) );
+				socket.send( JSON.stringify({ 'MODULE ERROR 1\n': report }) );
 			}
-/*
+
 			if (success) {
 				try {
 					await self.router.onMessage( socket, client_address, message );
@@ -308,7 +300,6 @@ module.exports = function AppReloader (callback) {
 					socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
 				}
 			}
-*/
 		}
 
 	}; // onMessage
