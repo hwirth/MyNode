@@ -73,6 +73,11 @@ export const DebugConsole = function (callback) {
 		action    : ()=>{ self.toggle( 'terminal' ); },
 	},{
 		event     : 'keydown',
+		key       : 'f',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggle( 'fancy' ); },
+	},{
+		event     : 'keydown',
 		key       : 'k',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggle( 'keyBeep' ); },
@@ -608,6 +613,12 @@ export const DebugConsole = function (callback) {
 				self.elements.html.classList.toggle( 'animate', self.toggles.animations );
 				break;
 			}
+			case 'fancy': {
+				self.toggles.fancy = (new_state !== null) ? new_state : !self.toggles.fancy;
+				self.elements.fancy.classList.toggle( 'enabled', self.toggles.fancy );
+				self.elements.terminal.classList.toggle( 'fancy', self.toggles.fancy );
+				break;
+			}
 			case 'keyBeep': {
 				self.toggles.keyBeep = (new_state !== null) ? new_state : !self.toggles.keyBeep;
 				self.elements.keyBeep.classList.toggle( 'enabled', self.toggles.keyBeep );
@@ -736,9 +747,10 @@ export const DebugConsole = function (callback) {
 		<section class="commands">
 		</section>
 		<section class="toggles">
-			<button class="key_beep enabled"   title="Keyboard beep [Alt]+[K]">Kbd</button>
-			<button class="sam enabled"        title="Software Automatic Mouth [Alt]+[M]">SAM</button>
-			<button class="animations enabled" title="Animations [Alt]+[A]">Anim</button>
+			<button class="animations" title="Animations [Alt]+[A]">Anim</button>
+			<button class="fancy"      title="Fancy styling [Alt]+[F]">Fancy</button>
+			<button class="key_beep"   title="Keyboard beep [Alt]+[K]">Kbd</button>
+			<button class="sam"        title="Software Automatic Mouth [Alt]+[M]">SAM</button>
 		</section>
 	</form>
 	<section class="output"></section>
@@ -771,9 +783,10 @@ export const DebugConsole = function (callback) {
 			status     : container.querySelector( 'form.status' ),
 			commands   : container.querySelector( '.commands'   ),
 			send       : container.querySelector( '.submit'     ),
+			animations : container.querySelector( '.animations' ),
+			fancy      : container.querySelector( '.fancy'      ),
 			keyBeep    : container.querySelector( '.key_beep'   ),
 			sam        : container.querySelector( '.sam'        ),
-			animations : container.querySelector( '.animations' ),
 		};
 
 		self.history = new History( self.elements.input, {
@@ -786,6 +799,7 @@ export const DebugConsole = function (callback) {
 
 		// Load presets
 		self.toggles = {
+			fancy      : PRESETS.FANCY,
 			animations : PRESETS.ANIMATIONS,
 			keyBeep    : PRESETS.KEYBOARD_BEEP,
 			sam        : PRESETS.SAM,
@@ -833,9 +847,10 @@ export const DebugConsole = function (callback) {
 
 
 		// Buttons: Toggles
-		self.elements.sam       .addEventListener( 'click', ()=>self.toggle('sam')        );
 		self.elements.animations.addEventListener( 'click', ()=>self.toggle('animations') );
+		self.elements.fancy     .addEventListener( 'click', ()=>self.toggle('fancy')      );
 		self.elements.keyBeep   .addEventListener( 'click', ()=>self.toggle('keyBeep')    );
+		self.elements.sam       .addEventListener( 'click', ()=>self.toggle('sam')        );
 
 
 		// REFOCUS PROMPT

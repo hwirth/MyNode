@@ -178,7 +178,18 @@ $ npm install ws follow-redirects re-require-module
 #4: Authenticate users before WS connection establishes
 
 
-6.1. Problem with persistence of WebSocketClient instances
+6.1 Git
+-------
+--paginate
+(04:31:00 AM) EdFletcher: hmw[at]: along the same lines, take a look at interactive rebase. it's a very powerful tool
+for reworking commits which encourages you to make many small commits (as you can always rework them later). so in your
+case you could make frequent commits that only touch one or a few files, then arrange them contextually into related
+commits later.
+(04:39:22 AM) EdFletcher: hmw[at]: PlanckWalk: you're both welcome, happy to be able to help! i'm 100% in on the rebase
+workflow myself, so much so that i honestly forget how merge works frequently. this atlassian article is surprisingly
+good at detailing the differences in a digestible way: https://www.atlassian.com/git/tutorials/merging-vs-rebasing
+
+6.2. Problem with persistence of WebSocketClient instances
 ----------------------------------------------------------
 Client connection information is kept in protocols.session.clients{}. Currently, each client entry also has callback
 functions that hide the socket object from the rest of the application program. These client objects are instantiated
@@ -980,3 +991,56 @@ try {
 
 
 
+
+/*
+@font-face {
+	font-family: 'mode7';
+	src: url('/fonts/ModeSeven.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'seti';
+	src: url('/fonts/SETIPERU.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'crt';
+	src: url('/fonts/DIGIT.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'gothic';
+	src: url('/fonts/gothic.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'fa-regular';
+	src: url('/fonts/fa-regular-400.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'fa-brands';
+	src: url('/fonts/fa-brands-400.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'fa-solid';
+	src: url('/fonts/fa-solid-900.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+*/

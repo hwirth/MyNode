@@ -119,57 +119,6 @@ body.dark_mode {
 	font-style: normal;
 	font-display: swap;
 }
-@font-face {
-	font-family: 'mode7';
-	src: url('/fonts/ModeSeven.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'seti';
-	src: url('/fonts/SETIPERU.woff') format('woff');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'crt';
-	src: url('/fonts/DIGIT.woff') format('woff');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: 'gothic';
-	src: url('/fonts/gothic.woff') format('woff');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'fa-regular';
-	src: url('/fonts/fa-regular-400.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'fa-brands';
-	src: url('/fonts/fa-brands-400.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-@font-face {
-	font-family: 'fa-solid';
-	src: url('/fonts/fa-solid-900.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
-}
-
 
 /* PAGE LAYOUT */
 
@@ -183,9 +132,11 @@ html, body { width:100%; height:100%; }
 	background-size:100% 100%;
 }
 html:not(.init)::after {
-	content:'-Screen locked-'; color:#fc0; text-transform:uppercase;
-	position:absolute; top:50%; left:1em;
+	content:'-Screen locked-'; color:#fc0;
 	transform:translate(0,-50%);
+	position:absolute; top:50%; left:1em;
+	font-family:var(--terminal-font-family);
+	text-transform:uppercase;
 }
 :not(.init) body::after {
 	content:'';
@@ -233,13 +184,7 @@ footer { display:none; }
 
 /* DEBUG CONSOLE */
 
-body,
-::before, ::after,
-textarea, code,
-.terminal button,
-.terminal span,
-.terminal .input,
-.terminal .output pre {
+.terminal :is(button, span, textarea, code, ::before, ::after, .input, .output pre) {
 	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
 	text-shadow:
@@ -249,20 +194,19 @@ textarea, code,
 		 0px -1px #0008
 	;
 }
-body { text-shadow:none; }
 
 .terminal {
 	position:absolute; bottom:0; left:0; z-index:999;
-	display:grid; grid-auto-rows:min-content auto 1fr min-content; Xgrid-auto-rows:auto min-content min-content;
+	display:grid; grid-auto-rows:min-content auto 1fr min-content;
 	width:100%; height:0%;
 	padding:0;
 	overflow:hidden;
-	background:#003;
+	background:#002;
 	transition:all 0.1s ease-in-out;
 }
 .terminal.active { height:100%; padding:var(--terminal-padding); }
 .terminal.active :is(header, footer) { display:none; }
-.terminal::after {
+.terminal.fancy::after {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background: #000 url(/images/bg_grid3.jpg);
 	background-size: cover;
@@ -277,7 +221,7 @@ body { text-shadow:none; }
 }
 
 
-.terminal .output::before {
+.terminal.fancy .output::before {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
 	width:130px; height:125px;
@@ -290,7 +234,7 @@ body { text-shadow:none; }
 	white-space:pre-wrap;
 	overflow-x:hidden;
 	overflow-y:scroll;
-	Xscroll-behavior: smooth;
+	scroll-behavior: smooth;
 }
 .terminal.overflow .output { overflow-y:hidden; }
 
@@ -334,10 +278,8 @@ body { text-shadow:none; }
 	display:inline-flex;
 	flex-grow:1;
 	flex-wrap:wrap;
-	Xflex-direction:row-reverse;
 	align-items:center; justify-content:center;
 	width:100%;
-	Xpadding:0.3em 0.5 0.2em;
 	background:#fff2;
 	border-radius:5px;
 }
@@ -404,18 +346,6 @@ body { text-shadow:none; }
 	  86% { opacity:1.0; }
 	  93% { opacity:0.7; }
 	 100% { opacity:1.0; filter:hue-rotate(0deg); }
-}
-
-/* Line wobble */
-X:not(.init).animate .terminal .output { padding-left:0.5em; }
-:not(.init).animate .terminal .output * > * {
-	transform-origin: left;
-	Xanimation: LINES 57s ease infinite;
-}
-@keyframes LINES {
-	 00% { transform:scale(0.99) rotate( 0.1deg); }
-	 50% { transform:scale(1.01) rotate(-0.1deg); }
-	100% { transform:scale(0.99) rotate( 0.1deg); }
 }
 
 /* MCP */

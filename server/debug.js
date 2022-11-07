@@ -28,8 +28,8 @@ const DEBUG = {                                                // What to log
 	BANNER_HEADERS            : DEBUG_ENABLED && !false,   // Group logs for (dis)connect or messages, show counter
 	HTTP_COOKIES              : DEBUG_ENABLED && !false,   // Show cookies on websocket connect
 
-	CONNECT                   : DEBUG_ENABLED && false,    // Trace onConnect
-	DISCONNECT                : DEBUG_ENABLED && false,    // Trace onDisconnect
+	CONNECT                   : DEBUG_ENABLED && !false,    // Trace onConnect
+	DISCONNECT                : DEBUG_ENABLED && !false,    // Trace onDisconnect
 	MESSAGE                   : DEBUG_ENABLED && !false,   // Trace onMessage
 
 	MESSAGE_IN                : DEBUG_ENABLED && !false,   // Show received, onMessage
