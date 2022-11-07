@@ -5,13 +5,15 @@
 
 "use strict";
 
+// This is a node module or something. It installs itself under window.SamJs and cannot be imported normally
+// I think a bundler would change that, but this is from the /dist folder!? I also added a volume option
 import * as DUMMY_SamJs from './samjs.js';
 
-import { SETTINGS, DEBUG } from './config.js';
-import { History         } from './history.js';
+import { SETTINGS, PRESETS, DEBUG } from './config.js';
+import { History                  } from './history.js';
 
 
-const CEP_VERSION = 'v0.0.0α';
+const CEP_VERSION = 'v0.2.1α';
 
 const EXTRA_LINES = 0;
 const MIN_LINES = 0;
@@ -29,7 +31,8 @@ const BUTTON_SCRIPTS = {
 	'kroot'   : BANG_REQUEST + 'session\n\tkick\n\t\tusername: root',
 	'kuser'   : BANG_REQUEST + 'session\n\tkick\n\t\tusername: user',
 	'MCP'     : BANG_REQUEST + 'mcp\n\tstatus',
-	'rst'     : BANG_REQUEST + 'mcp\n\trestart',
+	'rst'     : BANG_REQUEST + 'mcp\n\trestart\n\t\ttoken: ',
+	'token'   : BANG_REQUEST + 'mcp\n\ttoken',
 };
 
 const TUTORIAL_SCRIPT = [
@@ -326,7 +329,7 @@ export const DebugConsole = function (callback) {
 
 	function on_dblclick (event) {
 		if (event.target.tagName == 'BODY') return self.toggle( 'terminal' );
-		if (!event.target.closest('.terminal')) return;
+		if (!event.target.closest('.terminal .commands')) return;
 
 		const shift = event.shiftKey;
 		const ctrl = event.ctrlKey;
@@ -597,25 +600,31 @@ export const DebugConsole = function (callback) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.toggle = function (item) {
+	this.toggle = function (item, new_state = null) {
 		switch (item) {
 			case 'animations': {
-				const is_enabled = self.elements.html.classList.toggle( 'animate' );
-				self.elements.animations.classList.toggle( 'enabled', is_enabled );
+				self.toggles.animations = (new_state !== null) ? new_state : !self.toggles.animations;
+				self.elements.animations.classList.toggle( 'enabled', self.toggles.animations );
+				self.elements.html.classList.toggle( 'animate', self.toggles.animations );
 				break;
 			}
 			case 'keyBeep': {
-				self.toggles.keyBeep = !self.toggles.keyBeep;
+				self.toggles.keyBeep = (new_state !== null) ? new_state : !self.toggles.keyBeep;
 				self.elements.keyBeep.classList.toggle( 'enabled', self.toggles.keyBeep );
 				break;
 			}
 			case 'sam': {
-				self.toggles.sam = !self.toggles.sam;
+				self.toggles.sam = (new_state !== null) ? new_state : !self.toggles.sam;
 				self.elements.sam.classList.toggle( 'enabled', self.toggles.sam );
 				break;
 			}
 			case 'terminal': {
-				const is_enabled = self.elements.terminal.classList.toggle( 'active' );
+				const is_enabled
+				= (new_state !== null)
+				? new_state
+				: self.elements.terminal.classList.toggle( 'active' )
+				;
+				self.elements.terminal.classList.toggle( 'active', is_enabled );
 				if (is_enabled) focus_prompt();
 				break;
 			}
@@ -721,16 +730,10 @@ export const DebugConsole = function (callback) {
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
 
-		self.toggles = {
-			animations : true,
-			keyBeep    : true,
-			sam        : true,
-		};
-
 		document.body.innerHTML = (`
 <main class="terminal">
 	<form class="menu">
-		<section class="buttons">
+		<section class="commands">
 		</section>
 		<section class="toggles">
 			<button class="key_beep enabled"   title="Keyboard beep [Alt]+[K]">Kbd</button>
@@ -766,7 +769,7 @@ export const DebugConsole = function (callback) {
 			prompt     : container.querySelector( '.prompt'     ),
 			input      : container.querySelector( '.input'      ),
 			status     : container.querySelector( 'form.status' ),
-			buttons    : container.querySelector( '.buttons'    ),
+			commands   : container.querySelector( '.commands'   ),
 			send       : container.querySelector( '.submit'     ),
 			keyBeep    : container.querySelector( '.key_beep'   ),
 			sam        : container.querySelector( '.sam'        ),
@@ -781,6 +784,19 @@ export const DebugConsole = function (callback) {
 		});
 
 
+		// Load presets
+		self.toggles = {
+			animations : PRESETS.ANIMATIONS,
+			keyBeep    : PRESETS.KEYBOARD_BEEP,
+			sam        : PRESETS.SAM,
+		};
+
+		Object.keys( self.toggles ).forEach( (item)=>{
+			self.toggle( item, self.toggles[item] );
+		});
+
+
+		// Resume audio context after page load
 		function activate_audio () {
 			self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
 			if (self.audioContext.state == 'suspended') self.audioContext.resume();
@@ -801,12 +817,13 @@ export const DebugConsole = function (callback) {
 		Object.keys( BUTTON_SCRIPTS ).forEach( (key)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
+
 			new_button.className = key;
 			new_button.innerText = name;
 			new_button.title     = 'Double click to execute immediately';
 			new_button.addEventListener( 'click', on_script_button_click );
-			//...self.elements.buttons.insertBefore( new_button, self.elements.send );
-			self.elements.buttons.appendChild( new_button );
+
+			self.elements.commands.appendChild( new_button );
 		});
 
 
@@ -843,14 +860,12 @@ export const DebugConsole = function (callback) {
         	self.elements.input.addEventListener( 'keydown', on_keydown );
 
 
-	/*
 		function on_input_change () {
 			adjust_textarea();
 			scroll_down();
 		}
 		self.elements.input.addEventListener( 'input', on_input_change );
 		self.elements.input.addEventListener( 'chante', on_input_change );
-	*/
 
 
 		// CLOCK

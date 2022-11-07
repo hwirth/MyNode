@@ -10,10 +10,12 @@ function cleanup () {
 nr_crashes=0
 max_crashes=30
 
+debug=--inspect=127.0.0.1:1339
+
 cd server
 
 while [ 1 ] ; do
-	node --trace-warnings main.js
+	node --trace-warnings $debug main.js
 
 	exit_code=$?
 
@@ -28,7 +30,7 @@ while [ 1 ] ; do
 		;;
 	-1|255)
 		# Requested restart
-		echo "$0: Restart requested"
+		echo -e "\n$0: Restart requested\n"
 		nr_crashes=0
 		sleep 1
 

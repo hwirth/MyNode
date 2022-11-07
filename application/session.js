@@ -8,7 +8,7 @@
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
-const { REASONS, RESULT, STRINGS } = require( './constants.js' );
+const { REASONS, STATUS, STRINGS } = require( './constants.js' );
 
 const WebSocketClient = require( './client.js' );
 
@@ -63,6 +63,38 @@ module.exports = function SessionHandler (persistent, callback) {
 	}; // getClientByName
 
 
+	this.broadcast = function (message) {
+		function get_formatted_time () {
+			return Intl.DateTimeFormat( 'en', {
+				weekday : 'short',
+				year    : 'numeric',
+				month   : 'short',
+				day     : 'numeric',
+				hour    : '2-digit',
+				minute  : '2-digit',
+				second  : '2-digit',
+				//fractionalSecondDigits: '3',
+				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
+				hour12  : false,
+
+			}).format(new Date());
+			//...new Date().toUTCString();
+		}
+
+		const bulletin = {
+			'BULLETIN': {},
+			[get_formatted_time().toUpperCase()]: {},
+			...message,
+		};
+
+		const clients = callback.getAllClients();
+		Object.keys( clients ).forEach( (address)=>{
+			clients[address].send( bulletin );
+		});
+
+	}; // broadcast
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -80,10 +112,12 @@ module.exports = function SessionHandler (persistent, callback) {
 			return;
 		}
 
+		self.broadcast({ 'CLIENT CONNECTED': client_address });
+
 		persistent.clients[client_address] =
 			await new WebSocketClient( socket, client_address, {
-				mcpApprove    : callback.mcpApprove,
 				getAllCLients : callback.getAllClients,
+				broadcast     : self.broadcast,
 			});
 
 	}; // onConnect
@@ -101,6 +135,8 @@ module.exports = function SessionHandler (persistent, callback) {
 			);
 			return;
 		}
+
+		self.broadcast({ 'CLIENT DISCONNECTING': client_address });
 
 		await client.exit();
 		delete persistent.clients[client_address];
@@ -123,19 +159,19 @@ module.exports = function SessionHandler (persistent, callback) {
 	this.request.login = function (client, request_id, parameters) {
 		if (client.login) {
 			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, dump(client) );
-			client.respond( RESULT.FAILURE, request_id, REASONS.ALREADY_LOGGED_IN );
+			client.respond( STATUS.FAILURE, request_id, REASONS.ALREADY_LOGGED_IN );
 			return;
 		}
 
 		if (!parameters.username) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
-			client.respond( RESULT.FAILURE, request_id, REASONS.BAD_USERNAME );
+			client.respond( STATUS.FAILURE, request_id, REASONS.BAD_USERNAME );
 			return;
 		}
 
 		if (!parameters.password) {
 			log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
-			client.respond( RESULT.FAILURE, request_id, REASONS.BAD_PASSWORD );
+			client.respond( STATUS.FAILURE, request_id, REASONS.BAD_PASSWORD );
 			return;
 		}
 
@@ -143,7 +179,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		if (!user_record) {
 			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
 			client.respond(
-				RESULT.FAILURE,
+				STATUS.FAILURE,
 				request_id,
 				REASONS.USERNAME_UNKNOWN.replace('NAME', parameters.username)
 			);
@@ -165,11 +201,11 @@ module.exports = function SessionHandler (persistent, callback) {
 				}
 
 				color_log( COLORS.COMMAND, '<session.login>', dump(client) );
-				client.respond( RESULT.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
+				client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
 
 			} else {
 				log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
-				client.respond( RESULT.FAILURE, request_id, REASONS.BAD_PASSWORD );
+				client.respond( STATUS.FAILURE, request_id, REASONS.BAD_PASSWORD );
 			}
 		}
 
@@ -180,10 +216,10 @@ module.exports = function SessionHandler (persistent, callback) {
 		if (client.login) {
 			color_log( COLORS.COMMAND, '<session.logout>', client.login );
 			client.login = false;
-			client.respond( RESULT.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
+			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 		} else {
 			log_warning( 'logout', REASONS.NOT_LOGGED_IN, dump(client) );
-			client.respond( RESULT.FAILURE, request_id, REASONS.NOT_LOGGED_IN );
+			client.respond( STATUS.FAILURE, request_id, REASONS.NOT_LOGGED_IN );
 		}
 
 	}; // logout
@@ -196,7 +232,7 @@ module.exports = function SessionHandler (persistent, callback) {
 
 		if (client.inGroup('admin') ) {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
-			client.respond( RESULT.SUCCESS, request_id, persistent.clients );
+			client.respond( STATUS.SUCCESS, request_id, persistent.clients );
 
 		} else if (client.login) {
 			const clients = JSON.parse( JSON.stringify(persistent.clients, null, '\t') );
@@ -213,10 +249,10 @@ module.exports = function SessionHandler (persistent, callback) {
 			}
 
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent.clients' );
-			client.respond( RESULT.SUCCESS, request_id, clients );
+			client.respond( STATUS.SUCCESS, request_id, clients );
 		} else {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
-			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
 		//...return new Promise( done => setTimeout( done, 4000 ) );
@@ -227,7 +263,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	this.request.kick = async function (client, request_id, parameters) {
 		if (!client.inGroup( 'admin' )) {
 			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
-			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
 
@@ -242,15 +278,15 @@ module.exports = function SessionHandler (persistent, callback) {
 		if (!target_client) {
 			if (parameters.address) {
 				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
-				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_ADDRESS );
+				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS );
 			}
 			else if (parameters.username) {
 				log_warning( 'kick', REASONS.INVALID_USERNAME, dump(client) );
-				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_USERNAME );
+				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			}
 			else {
 				log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, dump(client) );
-				client.respond( RESULT.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
+				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
 			}
 
 			return;
@@ -264,7 +300,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		);
 
 		target_client.respond(
-			RESULT.NONE,
+			STATUS.NONE,
 			request_id,
 			REASONS.KICKED_BY + ' ' + client.login.userName,
 			null,
@@ -277,7 +313,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		await target_client.closeSocket();
 
 		client.respond(
-			RESULT.SUCCESS,
+			STATUS.SUCCESS,
 			request_id,
 			(
 				REASONS.KICKED_USER
@@ -297,11 +333,11 @@ module.exports = function SessionHandler (persistent, callback) {
 
 	this.request.status = function (client, request_id, parameters) {
 		if (Object.keys(parameters).length == 0) {
-			client.respond( RESULT.SUCCESS, request_id, {client: client} );
+			client.respond( STATUS.SUCCESS, request_id, {client: client} );
 
 		} else {
 			const command = Object.keys( parameters )[0];
-			client.respond( RESULT.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
+			client.respond( STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
 		}
 
 	}; // status

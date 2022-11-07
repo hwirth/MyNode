@@ -382,11 +382,19 @@ const Main = function () {
 		&&  self.reloader.persistent.session.clients
 		) {
 			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+		/*
 			const clients = self.reloader.persistent.session.clients;
 			Object.keys( clients ).forEach( (address)=>{
 				const client = clients[address];
-				client.send({ 'FATAL SYSTEM FAILURE\n': report });
+				client.send({ 'FATAL SYSTEM FAILURE': report });
 			});
+		*/
+			try {
+				self.reloader.router.protocols.session.broadcast({ 'FATAL SYSTEM FAILURE': report });
+
+			} catch (error) {
+				color_log( COLORS.ERROR, 'FATAL SYSTEM FAILURE:', 'GEH', error );
+			}
 
 			await new Promise( done => setTimeout(done, 1000) );
 		}
@@ -423,7 +431,7 @@ const Main = function () {
 
 // EXIT //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.exit = function (event) {
+	this.exit = async function (event) {
 		console.time( 'Shutdown time' );
 		if (event == 'SIGINT') console.log();
 
@@ -434,7 +442,7 @@ const Main = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.exit' );
 
 		if (self.reloader.exit) {
-			self.reloader.exit().then( cleanup_and_die );
+			await self.reloader.exit().then( cleanup_and_die );
 		} else {
 			cleanup_and_die();
 		}

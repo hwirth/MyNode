@@ -9,7 +9,7 @@ const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 
-const { REASONS, RESULT, ID_SERVER } = require( './constants.js' );
+const { REASONS, STATUS, ID_SERVER } = require( './constants.js' );
 
 
 module.exports = function WebSocketClient (socket, client_address, callback) {
@@ -54,7 +54,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 	function on_login_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
-		//self.respond( RESULT.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
+		//self.respond( STATUS.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
 		self.send({ 'LOGIN TIMED OUT': {} });
 		self.closeSocket();
 
@@ -63,7 +63,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 	function on_idle_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_idle_timeout:', client_address );
-		self.respond( RESULT.NONE, ID_SERVER, REASONS.IDLE_TIMEOUT );
+		self.respond( STATUS.NONE, ID_SERVER, REASONS.IDLE_TIMEOUT );
 		self.send({ 'IDLE TIMEOUT': {} });
 		self.closeSocket();
 
@@ -78,7 +78,6 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 // CONNECTION AND MESSAGES ///////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.send = function (message) {
-		//const approved_message = callback.mcpApprove( message );
 		const stringified_json = JSON.stringify( message, null, '\t' );
 
 		if (DEBUG.MESSAGE_OUT) color_log(
@@ -93,6 +92,15 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.broadcast = function (message) {
+		if (!self.login) {
+			self.respond( STATUS.FAILURE, null, REASONS.INSUFFICIENT_PERMS );
+			return;
+		}
+
+		callback.broadcast({
+			sender  : self.login.userName,
+			message : message,
+		});
 
 	}; // broadcast
 
@@ -110,12 +118,6 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.respond = function (status, request_id, result) {
-		/*
-		const parts = command.split( '.' ).reverse();
-		parts.forEach( (key)=>{
-			result = { [key]: result };
-		});
-		*/
 		self.send({
 			tag      : request_id.tag,
 			success  : status,

@@ -7,10 +7,10 @@
 
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { color_log, dump } = require( '../../server/debug.js' );
-const { REASONS, RESULT } = require( '../constants.js' );
+const { REASONS, STATUS } = require( '../constants.js' );
 
 
-RESULT.CHAT = 'chat';
+STATUS.CHAT = 'chat';
 
 
 module.exports = function ChatServer (persistent_data, callback) {
@@ -36,7 +36,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 			const all_clients   = callback.getAllClients();
 			const authenticated = client_address => all_clients[client_address].login;
 
-			//... check nick validity
+			//... Check nick validity/availability
 
 			const nick_before = client.login.nickName;
 			client.login.nickName = new_nick;
@@ -47,9 +47,16 @@ module.exports = function ChatServer (persistent_data, callback) {
 			: client.login.userName + ' chose the nick name ' + new_nick
 			;
 
+			client.broadcast({
+				time   : t0,
+				sender : client.login.nickName,
+				chat   : message,
+			});
+
+		/*
 			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
 				all_clients[recipient].respond(
-					RESULT.NONE,
+					STATUS.NONE,
 					request_id,
 					{
 						time   : t0,
@@ -58,15 +65,16 @@ module.exports = function ChatServer (persistent_data, callback) {
 					},
 				)
 			);
+		*/
 
-			client.respond( RESULT.SUCCESS, request_id, RESULT.INSUFFICIENT_PERMS );
+			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
 
 		} else {
-			client.respond( RESULT.FAILURE, request_id, RESULT.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, STATUS.INSUFFICIENT_PERMS );
 		}
 
-
 	}; // request.nick
+
 
 	this.request.say = function (client, request_id, parameters) {
 		color_log(
@@ -83,7 +91,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
 				all_clients[recipient].respond(
-					RESULT.NONE,
+					STATUS.NONE,
 					request_id,
 					{
 						time   : t0,
@@ -93,10 +101,10 @@ module.exports = function ChatServer (persistent_data, callback) {
 				)
 			);
 
-			client.respond( RESULT.SUCCESS, request_id, RESULT.INSUFFICIENT_PERMS );
+			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
 
 		} else {
-			client.respond( RESULT.FAILURE, request_id, RESULT.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, STATUS.INSUFFICIENT_PERMS );
 		}
 
 	}; // request.say

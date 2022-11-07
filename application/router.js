@@ -104,7 +104,8 @@ module.exports.Router = function (persistent, callback) {
 		function send_error (error) {
 			if (typeof error != 'error') {
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				send_as_json( socket, { '\nROUTER ERROR 0\n': report });
+				callback.broadcast({ 'ROUTER ERROR 1': report });
+
 				return;
 			}
 
@@ -122,7 +123,8 @@ module.exports.Router = function (persistent, callback) {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:2:', error );
 			}
 
-			send_as_json( socket, new_message );
+			//...send_as_json( socket, new_message );
+			callback.broadcast({ 'ROUTER ERROR 2': new_message });
 		}
 
 
@@ -156,6 +158,7 @@ module.exports.Router = function (persistent, callback) {
 				);
 
 				log_persistent( 'onMessage:', 'PRE COMMAND: ' );
+
 				const request_arguments = message[ protocol_name ][ command_name ];
 
 				try {
@@ -308,8 +311,6 @@ module.exports.Router = function (persistent, callback) {
 		const ChatServer     = require( './chat/main.js' );
 
 		const registered_callbacks = {
-			mcpApprove             : (...params)=>{ self.protocols.mcp.approve(...params); },
-			mcpEscalate            : (...params)=>{ self.protocols.mcp.escalate(...params); },
 			triggerExit            : callback.triggerExit,
 			getProtocols           : ()=>self.protocols,
 			getAllClients          : ()=>{ return persistent.session.clients; },
@@ -323,11 +324,11 @@ module.exports.Router = function (persistent, callback) {
 		const registered_protocols = {
 			session : { template: SessionHandler,
 				callbacks: [
-					'mcpApprove',
 					'getAllClients',
 				],
 			},
 			access  : { template: AccessControl },
+
 			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
 			mcp     : { template: MasterControl,
 				callbacks : [
@@ -353,27 +354,20 @@ module.exports.Router = function (persistent, callback) {
 			}
 
 			const protocol  = registered_protocols[protocol_name];
-			const data      = persistent     [protocol_name];
+			const data      = persistent[protocol_name];
 
 			const new_callbacks = {};
 			if (protocol.callbacks) protocol.callbacks.forEach( (name)=>{
 				new_callbacks[name] = registered_callbacks[name];
 			});
 
-			//try {
-				//self.protocols[protocol_name] = await new protocol.template( data, new_callbacks );
-				self.protocols[protocol_name] =
-					await new protocol.template( data, new_callbacks );
-
-			//} catch (error) {
-			//	color_log( COLORS.ERROR, 'ERROR:', 'Router.init/try:', error );
-				//return Promise.reject( error );
-			//}
+			self.protocols[protocol_name] =
+				await new protocol.template( data, new_callbacks );
 		});
 
-		return Promise.allSettled( load_requests );
+		await Promise.all( load_requests );
 
-		color_log( COLORS.ROUTER, 'Registered protocols:', Object.keys(self.protocols) );
+		color_log( COLORS.ROUTER, 'Protocols:', Object.keys(self.protocols) );
 
 		return Promise.resolve();
 

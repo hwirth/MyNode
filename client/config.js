@@ -14,7 +14,9 @@ export const SETTINGS = {
 };
 
 export const PRESETS = {
-	KEYBOARD_BEEP : true,
+	KEYBOARD_BEEP : !true,
+	ANIMATIONS    : !true,
+	SAM           : !true,
 };
 
 //EOF

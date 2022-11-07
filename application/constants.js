@@ -5,16 +5,17 @@
 
 "use strict";
 
-const RESULT = {
+const STATUS = {
 	SUCCESS : true,
 	FAILURE : false,
 	NONE    : null,
 
-}; // RESULT
+}; // STATUS
 
 module.exports.REASONS = {
 	UNKNOWN_COMMAND             : 'Unknown command',
 	INTERNAL_ERROR              : 'Internal error',
+	TOKEN_ISSUED                : 'A new token has been issued',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
 	INVALID_REQUEST             : 'Invalid request',
 	INVALID_ADDRESS             : 'Invalid address',
@@ -51,7 +52,7 @@ const ID_SERVER = {
 };
 
 
-module.exports.RESULT    = RESULT;
+module.exports.STATUS    = STATUS;
 module.exports.STRINGS   = STRINGS;
 module.exports.ID_SERVER = ID_SERVER;
 

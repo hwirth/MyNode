@@ -7,7 +7,7 @@
 
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { color_log, dump } = require( '../../server/debug.js' );
-const { REASONS, RESULT } = require( '../constants.js' );
+const { REASONS, STATUS } = require( '../constants.js' );
 
 
 module.exports = function ChatServer (persistent_data, callback) {
@@ -36,7 +36,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 			everyone.filter( authenticated )
 			.forEach( recipient =>
 				recipient.respond(
-					RESULT.CHAT,
+					STATUS.CHAT,
 					login_id,
 					{
 						time   : t0,
@@ -46,10 +46,10 @@ module.exports = function ChatServer (persistent_data, callback) {
 				)
 			);
 
-			client.respond( RESULT.SUCCESS, request_id, RESULT.INSUFFICIENT_PERMS );
+			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
 
 		} else {
-			client.respond( RESULT.FAILURE, request_id, RESULT.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, STATUS.INSUFFICIENT_PERMS );
 		}
 
 	}; // say

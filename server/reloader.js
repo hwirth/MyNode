@@ -82,11 +82,7 @@ module.exports = function AppReloader (callback) {
 	} // invalidate_require_cache
 
 
-	function re_require_modules (socket) {
-
-		const RELOAD_TIME = '| (re)load time'
-
-		console.time( RELOAD_TIME );
+	function some_modules_updated (socket) {
 		const file_name_report = {};   // Response telling user which files were updated
 
 		const changed_files = Object.keys( self.fileTimes.current ).filter( (file_name)=>{
@@ -137,7 +133,6 @@ module.exports = function AppReloader (callback) {
 			socket.send( JSON.stringify({ 'MODULE RELOAD': file_name_report }, null, '\t') );
 		}
 
-
 		const nr_reloaded_files = Object.keys( file_name_report ).length;
 
 		if (DEBUG.RELOADER) color_log(
@@ -147,14 +142,14 @@ module.exports = function AppReloader (callback) {
 			nr_reloaded_files,
 		);
 
-		console.timeEnd( RELOAD_TIME );
-
 		return nr_reloaded_files;
 
-	} // re_require_modules
+	} // some_modules_updated
 
 
 	async function reload_modules (socket) {
+		console.time( '| (re)load time' );
+
 		self.fileTimes.current = await get_file_times();
 
 		if (DEBUG.RELOADER_TIMES) color_log(
@@ -165,7 +160,8 @@ module.exports = function AppReloader (callback) {
 
 
 		// Re-require modules
-		const reload_required = re_require_modules( socket );
+		const reload_required = some_modules_updated( socket );
+
 		if (DEBUG.RELOADER_TIMES) color_log(
 			COLORS.RELOADER,
 			'AppReloader-reload_modules:',
@@ -173,11 +169,13 @@ module.exports = function AppReloader (callback) {
 			reload_required,
 		);
 
-		if (!reload_required) return;
+		if (!reload_required) {
+			console.timeEnd( '| (re)load time' );
+			return;
+		}
 
 		// Re-instantiate  Router
-		console.time( 'Init time' );
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(53) );
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(47) );
 
 		function show_error (error, ...parameters) {
 			color_log( COLORS.ERROR, '- ERROR ' + '-'.repeat(51) );
@@ -188,30 +186,19 @@ module.exports = function AppReloader (callback) {
 
 		try {
 			// Reload and reinstantiate main module
-			const MAIN_MODULE = {
+			const router = {
 				url        : SETTINGS.MAIN_MODULE,
 				persistent : self.persistent,
 				callbacks  : {
-					triggerExit: callback.triggerExit,
+					triggerExit : callback.triggerExit,
+					broadcast   : (...params)=>{ self.router.protocols.session.broadcast(...params); },
 				},
 			};
 
-			self.router =
-			await new require(
-				MAIN_MODULE.url
-
-			).Router(
-				MAIN_MODULE.persistent,
-				MAIN_MODULE.callbacks,
-
-			)/*.catch( (error)=>{
-				success = false;
-				show_error( error, 'AppReloader-reload_modules:',
-					'await new require().Router()' + COLORS.STRONG + '.catch()',
-				);
-				report_error( error );
-				invalidate_require_cache();
-			});*/
+			self.router = await new require( router.url ).Router(
+				router.persistent,
+				router.callbacks,
+			);
 
 		} catch (error) {
 			invalidate_require_cache();
@@ -221,22 +208,36 @@ module.exports = function AppReloader (callback) {
 
 			if (socket) {
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				const message = { 'MODULE ERROR 1\n': report };
+				const message = { 'MODULE ERROR 1': report };
 
 				try {
-					socket.send( JSON.stringify(message) );
+					self.router.protocols.session.broadcast( message );
+					//...socket.send( JSON.stringify(message) );
 
 				} catch (error) {
-					color_log( COLORS.ERROR, 'Another edge case:', error.message, message );
 					invalidate_require_cache();
+
+					try {
+						const clients = self.persistent.session.clients;
+						Object.keys( clients ).forEach( (address)=>{
+							const client = clients[address];
+							client.send({ 'FATAL SYSTEM FAILURE': report });
+						});
+
+					} catch (error) {
+						color_log( COLORS.ERROR, '-'.repeat(59) );
+						color_log( COLORS.ERROR, 'CANNOT REPORT ERROR:', message );
+						color_log( COLORS.ERROR, '-'.repeat(59) );
+						console.log( error );
+					}
+
 				}
 			}
 		}
 
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(52) );
-		console.timeEnd( 'Init time' );
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(46) );
 
-		//return Promise.resolve( ()=>success );
+		console.timeEnd( '| (re)load time' );
 
 	} // reload_modules
 
@@ -280,7 +281,7 @@ module.exports = function AppReloader (callback) {
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				socket.send( JSON.stringify({ 'MODULE ERROR 2\n': report }) );
+				socket.send( JSON.stringify({ 'MODULE ERROR 2': report }) );
 			}
 		}
 

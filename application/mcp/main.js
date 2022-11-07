@@ -9,7 +9,7 @@ const { SETTINGS          } = require( '../../server/config.js' );
 const { DEBUG, COLORS     } = require( '../../server/debug.js' );
 const { color_log, dump   } = require( '../../server/debug.js' );
 
-const { RESPONSE, REASONS, RESULT, STRINGS } = require( '../constants.js' );
+const { RESPONSE, REASONS, STATUS, STRINGS } = require( '../constants.js' );
 
 
 module.exports = function MasterControl (persistent, callback) {
@@ -20,45 +20,196 @@ module.exports = function MasterControl (persistent, callback) {
 // GRANT ACCESS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	let current_access_token = create_new_access_token();
+	let current_access_token = null;
 
 	function create_new_access_token () {
 		const new_token = String( Math.floor( Math.random() * 900 ) + 100 );
 		const formatted_token = new_token.split('').join(' ');
 
-		color_log( COLORS.MCP, 'MCP .' + '='.repeat(14) + '.' );
-		color_log( COLORS.MCP, 'MCP | TOKEN:', COLORS.TOKEN + formatted_token, COLORS.MCP + '|' );
-		color_log( COLORS.MCP, "MCP '" + '='.repeat(14) + "'" );
+		setTimeout( ()=>{
+			// Delay output for nicer log filegue
+			console.log( COLORS.MCP + 'MCP .' + '='.repeat(14) + '.' );
+			console.log( COLORS.MCP + 'MCP | TOKEN:', COLORS.TOKEN + formatted_token, COLORS.MCP + '|' );
+			console.log( COLORS.MCP + "MCP '" + '='.repeat(14) + "'" );
+			console.log( COLORS.DEFAULT );
+		});
 
-		DEBUG.MCPTOKEN = new_token;
+		DEBUG.MCPTOKEN =//...
+		current_access_token = new_token;
+
 		return new_token;
-	}
+
+	} // create_new_access_token
 
 
-	function escalate_privileges (client, access_token, execute_this) {
-return Promise.resolve();
-/*
-		return new Promise( async (done)=>{
-			try {
-				await execute_this();
-				done();
+	function verify_token (provided_token, client) {
+		return (
+			(client.inGroup('admin') || client.inGroup('dev'))
+			&& (provided_token == current_access_token)
+		);
 
-			} catch (error) {
-				color_log( COLORS.ERROR, 'ERROR:', 'MasterControl-escalate_privileges:', error );
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				client.send({ 'ERROR IN ELEVATED CODE\n': report });
+	} // verify_token
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// REQUEST HANDLERS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.request = {};
+
+	this.request.token = function (client, request_id, parameters) {
+		color_log(
+			COLORS.PROTOCOL,
+			'<mcp.token>',
+			dump( client ),
+		);
+
+		if ( !(client.inGroup('admin') || client.inGroup('dev')) ) {
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			return;
+		}
+
+		create_new_access_token();
+
+		client.respond( STATUS.SUCCESS, request_id, REASONS.TOKEN_ISSUED );
+
+	}; // token
+
+
+	this.request.status = function (client, request_id, parameters) {
+		if (parameters.persistent || (parameters.persistent === null)) {
+			if (client.login) {
+				if (client.inGroup( 'admin' )) {
+					client.respond(
+						STATUS.SUCCESS,
+						request_id,
+						callback.getAllPersistentData(),
+					);
+				} else {
+					client.respond(
+						STATUS.SUCCESS,
+						request_id,
+						REASONS.INSUFFICIENT_PERMS,
+					);
+				}
 			}
-		});
+
+		} else if (Object.keys(parameters).length == 0) {
+			if (client.inGroup( 'admin' )) {
+				const memory_usage = process.memoryUsage();
+				const memory_info = Object.entries(memory_usage).reduce( (previous, [key, value]) => {
+					const formatted = Math.floor(value / 1024**2 * 100) / 100 + ' MiB';
+					return { ...previous, [key]: formatted }
+				}, {});
+
+				client.respond(
+					STATUS.SUCCESS,
+					request_id,
+					{
+						upTime   : get_uptime( /*formatted*/true ),
+						memory   : memory_info,
+						access   : {
+							rules: (
+								callback
+								.getProtocolDescription( /*show_line_numbers*/false )
+								.split( '\n' )
+							),
+						},
+						//...debug: DEBUG,
+						settings: SETTINGS,
+					},
+				);
+
+			} else {
+				client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			}
 
 
-		return new Promise( (resolve, reject)=>{
-			const token_confirmed = (access_token === current_access_token);
-			current_access_token = String( create_new_access_token() ).split('').join(' ');
+		} else {
+			const command = Object.keys( parameters )[0];
+			client.respond( STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
+		}
 
-			if (token_confirmed) resolve();
-		});
+	}; // status
+
+
+	this.request.restart = function (client, request_id, parameters) {
+		color_log(
+			COLORS.PROTOCOL,
+			'<mcp.restart>',
+			dump( client ),
+		);
+
+		const provided_token = String( parameters.token || null );
+
+		if (!verify_token( provided_token, client )) {
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			return;
+		}
+
+		callback.triggerExit();
+
+	}; // restart
+
+
+	this.request.inspect = function (client, request_id, parameters) {
+/*
+		if (typeof parameters != 'string') {
+			client.respond( STATUS.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
+			return;
+		}
+
+console.log( 'MCP INSPECT', parameters );
+		escalate_privileges(
+			client,
+			request_id.token || DEBUG.MCPTOKEN,
+			execute,
+		);
+
+		function respond_error () {
+			client.respond( STATUS.FAILURE, request_id, STRINGS.YOU_SHOULDNT_HAVE );
+		}
+
+		function execute () {
+			let target = parameters;
+
+			if (!target) {
+				respond_error();
+				return;
+			}
+
+			if (Object.keys(parameters).length > 0) {
+		let count = 0;
+				const path = parameters.split('.');
+console.log( 'path:', path );
+console.log( ++count, 'target:', typeof target );
+
+				if (parameters) {
+					path.find( (token)=>{
+						if (target[ token ]) {
+							target = target[token];
+console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
+						} else {
+							respond_error();
+							return;
+						}
+					});
+				}
+			}
+
+			if (typeof target == 'undefined') target = 'undefined';
+
+			let Xresult = null;
+			switch (typeof target) {
+			case 'object' :  result = Object.keys( target );  break;
+			default       :  result = target;                 break;
+			}
+
+			if (!parameters) parameters = 'master';
+			client.respond( STATUS.SUCCESS, request_id, result );
+		}
 */
-	} // escalate_privileges
+	}; // inspect
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -103,146 +254,6 @@ return Promise.resolve();
 	} // get_uptime
 
 
-	this.approve = function (command) {
-		return true;
-	}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// REQUEST HANDLERS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.request = {};
-
-	this.request.restart = function (client, request_id, parameters) {
-		color_log(
-			COLORS.PROTOCOL,
-			'<server.restart>',
-			dump( client ),
-		);
-
-		if (!client.login) {
-			client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return;
-		}
-
-		escalate_privileges( client, 'secret$token', callback.triggerExit );
-
-	}; // restart
-
-
-	this.request.inspect = function (client, request_id, parameters) {
-/*
-		if (typeof parameters != 'string') {
-			client.respond( RESULT.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
-			return;
-		}
-
-console.log( 'MCP INSPECT', parameters );
-		escalate_privileges(
-			client,
-			request_id.token || DEBUG.MCPTOKEN,
-			execute,
-		);
-
-		function respond_error () {
-			client.respond( RESULT.FAILURE, request_id, STRINGS.YOU_SHOULDNT_HAVE );
-		}
-
-		function execute () {
-			let target = parameters;
-
-			if (!target) {
-				respond_error();
-				return;
-			}
-
-			if (Object.keys(parameters).length > 0) {
-		let count = 0;
-				const path = parameters.split('.');
-console.log( 'path:', path );
-console.log( ++count, 'target:', typeof target );
-
-				if (parameters) {
-					path.find( (token)=>{
-						if (target[ token ]) {
-							target = target[token];
-console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
-						} else {
-							respond_error();
-							return;
-						}
-					});
-				}
-			}
-
-			if (typeof target == 'undefined') target = 'undefined';
-
-			let Xresult = null;
-			switch (typeof target) {
-			case 'object' :  result = Object.keys( target );  break;
-			default       :  result = target;                 break;
-			}
-
-			if (!parameters) parameters = 'master';
-			client.respond( RESULT.SUCCESS, request_id, result );
-		}
-*/
-	}; // inspect
-
-
-	this.request.status = function (client, request_id, parameters) {
-		if (parameters.persistent || (parameters.persistent === null)) {
-			if (client.login) {
-				if (client.inGroup( 'admin' )) {
-					client.respond(
-						RESULT.SUCCESS,
-						request_id,
-						callback.getAllPersistentData(),
-					);
-				} else {
-					client.respond(
-						RESULT.SUCCESS,
-						request_id,
-						REASONS.INSUFFICIENT_PERMS,
-					);
-				}
-			}
-
-		} else if (Object.keys(parameters).length == 0) {
-			if (client.inGroup( 'admin' )) {
-				const heap = process.memoryUsage().heapUsed;
-				client.respond(
-					RESULT.SUCCESS,
-					request_id,
-					{
-						upTime   : get_uptime( /*formatted*/true ),
-						heapUsed : Math.floor(heap / 1024**2 * 100) / 100 + ' MiB',
-						access   : {
-							rules: (
-								callback
-								.getProtocolDescription( /*show_line_numbers*/false )
-								.split( '\n' )
-							),
-						},
-						//...debug: DEBUG,
-						settings: SETTINGS,
-					},
-				);
-
-			} else {
-				client.respond( RESULT.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			}
-
-
-		} else {
-			const command = Object.keys( parameters )[0];
-			client.respond( RESULT.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
-		}
-
-	}; // status
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -276,6 +287,8 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
+
+		create_new_access_token();
 
 		return Promise.resolve();
 
