@@ -54,7 +54,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 	function on_login_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
-		//self.respond( STATUS.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
+		//...? self.respond( STATUS.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
 		self.send({ 'LOGIN TIMED OUT': {} });
 		self.closeSocket();
 
@@ -82,8 +82,8 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 		if (DEBUG.MESSAGE_OUT) color_log(
 			COLORS.SESSION,
-			'WebSocketClient-send_as_json:',
-			JSON.parse( stringified_json ),
+			'WebSocketClient-send:',
+			JSON.parse( stringified_json ),   // Re-parsing turns it into a single line
 		);
 
 		if (socket.send) socket.send( stringified_json );
@@ -153,14 +153,13 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	this.inGroup = function (...groups) {
 		if (!self.login) return false;
 
-		let in_group = false;
-		[...groups].forEach( (group)=>{
-			in_group |= (self.login.groups.indexOf( group ) >= 0);
-		});
+		const in_at_least_one = (previous, group)=>{
+			return previous || (self.login.groups.indexOf(group) >= 0);
+		}
 
-		return in_group;
+		return [...groups].reduce( in_at_least_one, /*initialValue*/false );
 
-	}; // send
+	}; // inGroup
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

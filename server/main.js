@@ -30,8 +30,6 @@ const EXIT_MESSAGE = STRINGS.END_OF_LINE;
 const Main = function () {
 	const self = this;
 
-	this.isTheApp;//...
-
 	this.httpServer;
 	this.wsServer;
 
@@ -330,7 +328,7 @@ const Main = function () {
 
 			if (request.headers['x-forwarded-for']) {
 				color_log( COLORS.WARNING, 'Unexpected header:', 'x-forwarded-for' );
-				client_address = request.headers['x-forwarded-for'];   //... not tested
+				client_address = request.headers['x-forwarded-for'];   //... Not tested
 
 			} else {
 				client_address
@@ -487,7 +485,7 @@ const Main = function () {
 			console.log( '| SETTINGS          ', SETTINGS );
 		}
 			console.log( "'" + '-'.repeat(78) );
-			//...process.argv.forEach( (value, index)=>console.log( index + ': ' + value ) );
+			//... process.argv.forEach( (value, index)=>console.log( index + ': ' + value ) );
 
 			install_error_handler();
 			drop_privileges();
@@ -513,7 +511,7 @@ const Main = function () {
 
 
 	return self.init().then( ()=>self );   // const server = await new WebSocketServer()
-	//... Why does it require a return here, but not with the other object templates in this project??
+	//...? Why does it require a return here, but not with the other object templates in this project??
 
 }; // Main
 

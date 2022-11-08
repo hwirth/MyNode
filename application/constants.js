@@ -22,11 +22,11 @@ module.exports.REASONS = {
 	INVALID_ADDRESS             : 'Invalid address',
 	INVALID_USERNAME            : 'Invalid username',
 	INVALID_ADDRESS_OR_USERNAME : 'Invalid address or username',
-	BAD_USERNAME                : 'Invalid username',   //... Say "Connection failed" to increase security
-	BAD_PASSWORD                : 'Invalid password',   //... Say "Connection failed"
+	BAD_USERNAME                : 'Invalid username',   //... "Connection failed" should suffice
+	BAD_PASSWORD                : 'Invalid password',   //... "Connection failed"
 	NOT_LOGGED_IN               : 'Not logged in',
 	ALREADY_LOGGED_IN           : 'Already logged in',
-	LOGIN_TIMED_OUT             : 'Login timeout',            //... Say "Connection failed"
+	LOGIN_TIMED_OUT             : 'Login timeout',      //... "Connection failed"
 	IDLE_TIMEOUT                : 'Idle timeout',
 	SUCCESSFULLY_LOGGED_IN      : 'Logged in',
 	SUCCESSFULLY_LOGGED_OUT     : 'Logged out',

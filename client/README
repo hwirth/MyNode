@@ -1,10 +1,10 @@
 ==================================================================================================================119:=
                               SPIELWIESE - copy(l)eft 2022 - spielwiese.central-dogma.at
-                                                  README for v0.0.3p
+                                                  README for v0.0.5p
 ==================================================================================================================119:=
 
 
-*** This README is OUTDATED! ***
+*** At the moment, this   R E A D M E   I S   O U T D A T E D   per definition ***
 
 
 Index
@@ -24,9 +24,18 @@ Index
 
 1. Overview
 ===========
-WebSocketServer deals with connections and redirects messages between client and your business logic, called
-"application" here. Furthermore, it provides automatic hot-reloading of the application code, simply hit ctrl+s and
-reload the web page, or just have the client send the request again.
+ "Spielwiese" is to be a general websocket server fulfilling all needs of my home page (chat, games, tools, etc.).
+Server side code can be edited through the browser client and hot reloaded on the fly.
+
+  WebSocketServer()  deals with connections and communicates messages between client and (what it considers) business
+logic, called "application" here. It also provides automatic hot-reloading and is kept to the viable minimum required
+for that.
+
+ The rest of the Spielwiese is implemented as application, which deals in analysing the request, routing it to the
+appropriate server module ("protocol"), session handling, etc., and a minmal preliminary chat server as placeholder for
+the real payloads. The collection of servers in the  ./application/  directory is called "protocols", payload servers
+live in sub-directories.
+
 
 
 2. File structure
@@ -38,8 +47,9 @@ reload the web page, or just have the client send the request again.
 	./server/config.js           Provides hard coded constants and values from the configuration file
 	./server/reloader.js         Hot code-reloading. Reinstantiates the application for each request
 	./application/               Hot reloadable code, responses to messages from the websocket
-	./application/protocols.js   Calls response handler depending on given protocol and command
+	./application/router.js      Calls according response handler to requested protocol/command
 	./application/session.js     Main protocol, handles accounts and logins
+	./application/client.js
 	./application/chat/chat.js   Custom server protocol, simple text chat
 	./htdocs                     Chat client and a debug thingy
 
@@ -150,6 +160,7 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
+[ ] const report = error.stack.replace(  ...helpers
 [ ] Tabbed mode: Command on modifier+Return
 [ ] Restore session after page reload (allows browsing the web page while playing)
 [ ] DEFCON

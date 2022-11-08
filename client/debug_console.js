@@ -126,7 +126,6 @@ export const DebugConsole = function (callback) {
 
 
 	function adjust_textarea () {
-		//...const is_request = (self.elements.input.value.charAt(0) == '>');
 		const is_request = (self.elements.input.value.indexOf('\n') >= 0);
 		self.elements.input.classList.toggle( 'request', is_request );
 
@@ -295,7 +294,7 @@ export const DebugConsole = function (callback) {
 				const key = lines[index].trim();
 				parent[key] = {};
 				stack.push( parent[key] );
-				//... Expects next line with increased indentation
+				//...? Expects next line with increased indentation
 				++current_indentation;
 
 			} else {

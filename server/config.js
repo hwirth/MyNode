@@ -14,24 +14,17 @@ const PROGRAM_NAME    = 'MASTER CONTROL PROTOCOL';
 const PROGRAM_VERSION = 'v0.0.6p';
 
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
-const config_file = {};   // Dictionary of parsed values, used for exporting in this file via SETTINGS[], etc.
+const config_file = {};   // Dict of parsed values, used for exporting in this file via SETTINGS[], etc.
 
+
+parse_config_file();
 
 function parse_config_file () {
-
 		// Read file and remove comments
-		const lines = fs
-		.readFileSync( CONGIGURATION_FILE, 'utf8' )
-		.split( '\n' )
-		.filter( (line)=>{
-			const pos = (line + '#').indexOf( '#' );
-			line = line.substr( 0, pos );
-			return (
-				(line.trim() != '')
-			);
-		});
+		const empty_lines = line => line.split('#')[0].trim().length > 0;
+		const lines = fs.readFileSync( CONGIGURATION_FILE, 'utf8' ).split( '\n' ).filter( empty_lines );
 
-		// Extract variable names and store values in dictionary
+		// Extract variable names and store values in dict
 		lines.forEach( (line)=>{
 			const words = line.replace( /\t/g, ' ' ).split( ' ' );
 			const variable = words[0];
@@ -42,15 +35,11 @@ function parse_config_file () {
 } // parse_config_file
 
 
-parse_config_file();
-//...console.log( config_file );
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SETTINGS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;
+let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;  // SODD
 
 const SETTINGS = {
 	DEV_SERVER  : DEV_SERVER,
@@ -80,7 +69,7 @@ const SETTINGS = {
 
 	TIMEOUT: {
 		SOCKET_CLOSE : 100,
-		PING         : 2000,   //...ws has this?
+		PING         : 2000,   //... ws has this?
 		LOGIN        : 5*1000,
 		IDLE         : 5*1000,
 	},
@@ -102,7 +91,7 @@ const HTTPS_OPTIONS = {
 	key  : fs.readFileSync( SSL_KEYS.PRIVATE ),
 	cert : fs.readFileSync( SSL_KEYS.PUBLIC ),
 	port : config_file.HTTPS_PORT,                        // 443, if https is running as standalone web server
-	//...agent: new https.Agent({ keepalive: true; }),
+	//...? agent: new https.Agent({ keepalive: true; }),
 };
 
 
@@ -144,7 +133,7 @@ const MIME_TYPES = {
 
 module.exports.PROGRAM_NAME    = PROGRAM_NAME;
 module.exports.PROGRAM_VERSION = PROGRAM_VERSION;
-module.exports.DEV_SERVER = DEV_SERVER;
+module.exports.DEV_SERVER      = DEV_SERVER;
 module.exports.SETTINGS        = SETTINGS;
 module.exports.SSL_KEYS        = SSL_KEYS;
 module.exports.HTTPS_OPTIONS   = HTTPS_OPTIONS;

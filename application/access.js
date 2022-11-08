@@ -11,13 +11,14 @@ const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS         } = require( './constants.js' );
 
+const debug = false;
 DEBUG.PARSE = {
-	SHOW_HEADER  : !false,
-	LINES        : !false,
-	SEPARATED    : !false,
-	TOKENS       : !false,
-	SOURCE       : !false,
-	RULES        : !false,
+	SHOW_HEADER  : debug && !false,
+	LINES        : debug && !false,
+	SEPARATED    : debug && !false,
+	TOKENS       : debug && !false,
+	SOURCE       : debug && !false,
+	RULES        : debug && !false,
 };
 
 const PROTOCOL_DESCRIPTION = (`

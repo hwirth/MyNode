@@ -9,6 +9,12 @@ import { DEBUG } from './main.js';
 
 const CONNECTION_TIMEOUT_MS = 5000;
 
+const SOCKET_STATES = {
+	CONNECTING : 0,   // Socket has been created. The connection is not yet open
+	OPEN       : 1,   // The connection is open and ready to communicate
+	CLOSING    : 2,   // The connection is in the process of closing
+	CLOSED     : 3,   // The connection is closed or couldn't be opened
+};
 
 export const WebSocketClient = function (parameters = {}) {
 	const self = this;
@@ -115,7 +121,7 @@ export const WebSocketClient = function (parameters = {}) {
 
 
 	this.isConnected = function () {
-		return (self.websocket.readyState == 1);//... use a constant
+		return (self.websocket.readyState == SOCKET_STATES.OPEN);
 
 	}; // isConnected
 

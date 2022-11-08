@@ -5,6 +5,7 @@
 
 "use strict";
 
+const Helpers = require( './helpers.js' );
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
@@ -24,8 +25,22 @@ module.exports.Router = function (persistent, callback) {
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	function send_as_json (socket, data) {
+		const stringified_json = JSON.stringify( data, null, '\t' );
+
+		if (DEBUG.MESSAGE_OUT) color_log(
+			COLORS.ROUTER,
+			'Router-send_as_json:',
+			JSON.parse( stringified_json ),   // Re-parsing turns it into a single line
+		);
+
+		if (socket.send) socket.send( stringified_json );
+
+	} // send_as_json
+
+
 	function log_persistent (event_name, caption = '') {
-		if (DEBUG.ROUTER_PERSISTENT_DATA) color_log(
+		color_log(
 			COLORS.ROUTER,
 			'Router.' + event_name + ':',
 			caption + 'persistent:',
@@ -35,101 +50,89 @@ module.exports.Router = function (persistent, callback) {
 	} // log_persistent
 
 
-	function send_as_json (socket, data) {
-		const stringified_json = JSON.stringify( data, null, '\t' );
-
-		if (DEBUG.MESSAGE_OUT) color_log(
-			COLORS.ROUTER,
-			'Router-send_as_json:',
-			JSON.parse( stringified_json ),
-		);
-
-		//...if (DEBUG.MESSAGE_OUT) color_log( COLORS.ROUTER, 'send_as_json:', data );
-		if (socket.send) socket.send( stringified_json );
-
-	} // send_as_json //... Redundant with same function in  SessionHandler()
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = function (socket, client_address) {
-		//...if (DEBUG.CONNECT) color_log( COLORS.ROUTER, 'Router.onConnect:', client_address );
-
-		self.protocols.session.onConnect( socket, client_address );   // Will create new WebSocketClient()
-
-		log_persistent( 'onConnect' );
+		self.protocols.session.onConnect( socket, client_address );   // Will create new  WebSocketClient()
+		if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onConnect' );
 
 	}; // onConnect
 
 
 	this.onDisconnect = function (socket, client_address) {
-		//...if (DEBUG.DISCONNECT) color_log( COLORS.ROUTER, 'Router.onDisconnect:', client_address );
-
 		self.protocols.session.onDisconnect( socket, client_address );
-
-		log_persistent( 'onDisconnect' );
+		if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onDisconnect' );
 
 	}; // onDisconnect
 
 
-	function create_command_lut () {
-		const lut = {};
-
-		Object.keys( self.protocols ).forEach( (protocol_name)=>{
-			const protocol_commands = self.protocols[protocol_name].request;
-
-			if (protocol_commands) {
-				Object.keys( protocol_commands ).forEach( (command_name)=>{
-					const combined = protocol_name + '.' + command_name;
-					lut[combined] = protocol_commands[command_name];
-				});
-			}
-		});
-
-		return lut;
-	}
-
+// ON MESSAGE ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onMessage = async function (socket, client_address, message) {
-		const request_id = message;
+		// A message can contain multiple commands. We will keep track of failures and sucesses,
+		// find the right protocol and pass on the message to the final response handler.
+		// JSON format: { <protocol>: { <command>: { <request> }}}
+		// Main level keys designate target protocol, second level a command
+		// Since keys in objects must be unique, each command can only be used once
+
+		const request_id = message;   //...? Usually .tag is used, but not always
 
 		const client = self.protocols.session.getClientByAddress( client_address );
 		if (!client) {
-			color_log( COLORS.ERROR, 'ERROR', 'Router.onMessage: Unknown client:', client_address );
+			color_log( COLORS.ERROR, 'ERROR', 'Router.onMessage:0: Unknown client:', client_address );
 			callback.broadcast({ 'ROUTER ERROR 0': 'Unknown client in onMessage' });
 			return;
 		}
+
 
 		function send_error (error) {
 			if (typeof error != 'error') {
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
 				callback.broadcast({ 'ROUTER ERROR 1': report });
-
 				return;
 			}
 
-			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
 			const new_message = {
 				tag      : request_id.tag,
 				success  : false,
 				reason   : REASONS.INTERNAL_ERROR,
 			};
 
+			callback.broadcast({ 'ROUTER ERROR 2': new_message });
+
 			if (client.login && client.inGroup( 'admin', 'dev' )) {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:1' );
+
+				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
 				new_message.response = report;
+				callback.broadcast({ 'ROUTER ERROR 2': new_message });
+
 			} else {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:2:', error );
 			}
-
-			//...send_as_json( socket, new_message );
-			callback.broadcast({ 'ROUTER ERROR 2': new_message });
 		}
 
 
 		const command_lut = create_command_lut();
+		function create_command_lut () {
+			const lut = {};
+
+			Object.keys( self.protocols ).forEach( (protocol_name)=>{
+				const protocol_commands = self.protocols[protocol_name].request;
+
+				if (protocol_commands) {
+					Object.keys( protocol_commands ).forEach( (command_name)=>{
+						const combined = protocol_name + '.' + command_name;
+						lut[combined] = protocol_commands[command_name];
+					});
+				}
+			});
+
+			return lut;
+		}
+
 
 		const handled_commands = [];
 		const rejected_commands = [];
@@ -158,7 +161,7 @@ module.exports.Router = function (persistent, callback) {
 					request_handler,
 				);
 
-				log_persistent( 'onMessage:', 'PRE COMMAND: ' );
+				if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'PRE COMMAND: ' );
 
 				const request_arguments = message[ protocol_name ][ command_name ];
 
@@ -167,6 +170,7 @@ module.exports.Router = function (persistent, callback) {
 					//... forgot to await something in there?
 					if (request_handler.constructor.name === 'AsyncFunction') {
 						if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
+
 						await request_handler(
 							client,
 							request_id,
@@ -182,6 +186,7 @@ module.exports.Router = function (persistent, callback) {
 
 					} else {
 						if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'SYNC', combined_name );
+
 						try {
 							request_handler(
 								client,
@@ -202,23 +207,15 @@ module.exports.Router = function (persistent, callback) {
 					send_error( error );
 				}
 
-				log_persistent( 'onMessage:', 'POST COMMAND: ' );
+				if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'POST COMMAND: ' );
 			}
 
 		} // call_request_handler
 
 
-		// A message can have several protocol requests.
-		// JSON format: { <protocol>: { <command>: { <request> }}}
-		// Main level keys designate target protocol, second level a command
-		// Since keys in objects must be unique, each command can only be used once
+		// For each protocol addressed (top level key),  call_request_handler(...);
 
-		const addressed_protocols = Object.entries( message );
-
-		const requests_processed
-		= addressed_protocols
-		.filter( ([protocol_name]) => protocol_name != 'tag' )
-		.map( async ([protocol_name, protocol_command_names]) => {
+		const handler_calls = async ([protocol_name, protocol_command_names]) => {
 			const protocol = self.protocols[protocol_name];
 
 			if (!protocol) {
@@ -253,11 +250,15 @@ module.exports.Router = function (persistent, callback) {
 
 			return Promise.resolve();
 
-		})/*.reduce( async (prev, next)=>{
+		}/*.reduce( async (prev, next)=>{//...? Execution order of protocols currently not quaranteed
 			// Enforce execution order on top level (protocols)
 			await prev;
 			return next;
 		})*/;
+
+		const tags                = ([protocol_name]) => protocol_name != 'tag';
+		const addressed_protocols = Object.entries( message );
+		const requests_processed  = addressed_protocols.filter( tags ).map( handler_calls );
 
 		await Promise.allSettled( requests_processed );
 
@@ -350,6 +351,7 @@ module.exports.Router = function (persistent, callback) {
 		};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+		// Instantiate protocols
 		const load_requests = Object.keys( registered_protocols ).map( async (protocol_name)=>{
 			if (!persistent[protocol_name]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );

@@ -101,8 +101,6 @@ module.exports = function SessionHandler (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = async function (socket, client_address) {
-		//...if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect:', client_address );
-
 		if (persistent.clients[client_address]) {
 			color_log(
 				COLORS.PROTOCOLS,
@@ -255,8 +253,6 @@ module.exports = function SessionHandler (persistent, callback) {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
-
-		//...return new Promise( done => setTimeout( done, 4000 ) );
 
 	}; // who
 

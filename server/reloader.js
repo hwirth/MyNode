@@ -9,7 +9,6 @@ const util      = require( 'util' );
 const fs        = require( 'fs' );
 const path      = require( 'path' );
 const glob      = require( 'glob' );
-//...const reRequire = require( 're-require-module' ).reRequire;
 
 const { SETTINGS      } = require( './config.js' );
 const { DEBUG, COLORS } = require( './debug.js' );
@@ -210,7 +209,6 @@ module.exports = function AppReloader (callback) {
 
 				try {
 					self.router.protocols.session.broadcast( message );
-					//...socket.send( JSON.stringify(message) );
 
 				} catch (error) {
 					try {
@@ -247,7 +245,6 @@ module.exports = function AppReloader (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = async function (socket, client_address) {
-		//...if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect:', client_address );
 		await reload_modules( socket );
 		self.router.onConnect( socket, client_address );
 
@@ -255,7 +252,6 @@ module.exports = function AppReloader (callback) {
 
 
 	this.onDisconnect = async function (socket, client_address) {
-		//...if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect:', client_address );
 		await reload_modules( socket );
 		self.router.onDisconnect( socket, client_address );
 
