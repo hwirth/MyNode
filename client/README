@@ -233,6 +233,37 @@ callbacks.sendToClient( client.address, data ); - Have session.js "publish" its 
 		do
 			<command>
 
+
+
+
+router:
+		const command_lut = create_command_lut();
+		function create_command_lut () {
+			const lut = {};
+
+			Object.keys( self.protocols ).forEach( (protocol_name)=>{
+				const protocol_commands = self.protocols[protocol_name].request;
+
+				if (protocol_commands) {
+					Object.keys( protocol_commands ).forEach( (command_name)=>{
+						const combined = protocol_name + '.' + command_name;
+						lut[combined] = protocol_commands[command_name];
+					});
+				}
+			});
+
+			return lut;
+		}
+
+
+		const handled_commands = [];
+		const rejected_commands = [];
+
+
+
+
+
+
 https://ably.com/blog/web-app-websockets-nodejs
 https://www.freecodecamp.org/news/how-to-secure-your-websocket-connections-d0be0996c556/
 https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-ubuntu-16-04

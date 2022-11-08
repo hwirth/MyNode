@@ -115,25 +115,6 @@ module.exports.Router = function (persistent, callback) {
 		}
 
 
-		const command_lut = create_command_lut();
-		function create_command_lut () {
-			const lut = {};
-
-			Object.keys( self.protocols ).forEach( (protocol_name)=>{
-				const protocol_commands = self.protocols[protocol_name].request;
-
-				if (protocol_commands) {
-					Object.keys( protocol_commands ).forEach( (command_name)=>{
-						const combined = protocol_name + '.' + command_name;
-						lut[combined] = protocol_commands[command_name];
-					});
-				}
-			});
-
-			return lut;
-		}
-
-
 		const handled_commands = [];
 		const rejected_commands = [];
 
