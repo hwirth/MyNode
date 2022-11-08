@@ -44,7 +44,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 	function verify_token (provided_token, client) {
 		return (
-			(client.inGroup('admin') || client.inGroup('dev'))
+			client.inGroup( 'admin', 'dev' )
 			&& (provided_token == current_access_token)
 		);
 
@@ -64,7 +64,7 @@ module.exports = function MasterControl (persistent, callback) {
 			dump( client ),
 		);
 
-		if ( !(client.inGroup('admin') || client.inGroup('dev')) ) {
+		if (!client.inGroup( 'admin', 'dev' )) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
@@ -79,7 +79,7 @@ module.exports = function MasterControl (persistent, callback) {
 	this.request.status = function (client, request_id, parameters) {
 		if (parameters.persistent || (parameters.persistent === null)) {
 			if (client.login) {
-				if (client.inGroup( 'admin' )) {
+				if (client.inGroup( 'admin', 'dev' )) {
 					client.respond(
 						STATUS.SUCCESS,
 						request_id,
@@ -95,7 +95,7 @@ module.exports = function MasterControl (persistent, callback) {
 			}
 
 		} else if (Object.keys(parameters).length == 0) {
-			if (client.inGroup( 'admin' )) {
+			if (client.inGroup( 'admin', 'dev' )) {
 				const memory_usage = process.memoryUsage();
 				const memory_info = Object.entries(memory_usage).reduce( (previous, [key, value]) => {
 					const formatted = Math.floor(value / 1024**2 * 100) / 100 + ' MiB';
@@ -131,6 +131,26 @@ module.exports = function MasterControl (persistent, callback) {
 		}
 
 	}; // status
+
+
+	this.request.reset = function (client, request_id, parameters) {
+		color_log(
+			COLORS.PROTOCOL,
+			'<mcp.reset>',
+			dump( client ),
+		);
+
+		if (!client.inGroup('dev')) {
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			return;
+		}
+
+		callback.broadcast({ [REASONS.PERSISTENCE_RESET]: {} });
+		callback.reset();
+
+		client.respond( STATUS.SUCCESS, request_id, REASONS.PERSISTENCE_RESET );
+
+	}; // reset
 
 
 	this.request.restart = function (client, request_id, parameters) {

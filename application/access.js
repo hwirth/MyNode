@@ -12,12 +12,12 @@ const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS         } = require( './constants.js' );
 
 DEBUG.PARSE = {
-	SHOW_HEADER  : false,
-	LINES        : false,
-	SEPARATED    : false,
-	TOKENS       : false,
-	SOURCE       : false,
-	RULES        : false,
+	SHOW_HEADER  : !false,
+	LINES        : !false,
+	SEPARATED    : !false,
+	TOKENS       : !false,
+	SOURCE       : !false,
+	RULES        : !false,
 };
 
 const PROTOCOL_DESCRIPTION = (`
@@ -137,6 +137,7 @@ module.exports = function AccessControl (persistent, callback) {
 
 
 		if (DEBUG.PARSE.TOKENS) {
+			console.log( '*'.repeat(79) );
 			console.log( 'tokens:', tokens );
 			console.log( '*'.repeat(79) );
 		}

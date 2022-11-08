@@ -28,13 +28,14 @@ const DEBUG = {                                                // What to log
 	BANNER_HEADERS            : DEBUG_ENABLED && !false,   // Group logs for (dis)connect or messages, show counter
 	HTTP_COOKIES              : DEBUG_ENABLED && !false,   // Show cookies on websocket connect
 
-	CONNECT                   : DEBUG_ENABLED && !false,    // Trace onConnect
+	CONNECT                   : DEBUG_ENABLED && false,    // Trace onConnect
 	DISCONNECT                : DEBUG_ENABLED && !false,    // Trace onDisconnect
 	MESSAGE                   : DEBUG_ENABLED && !false,   // Trace onMessage
 
 	MESSAGE_IN                : DEBUG_ENABLED && !false,   // Show received, onMessage
 	MESSAGE_OUT               : DEBUG_ENABLED && !false,   // Show sent, socket.send()
 
+	HTTP_UPGRADE              : DEBUG_ENABLED && false,
 	HTTP_GET_ALL              : DEBUG_ENABLED && !false,   // Log all GET requests
 	HTTP_GET_ROOT             : DEBUG_ENABLED && !false,   // Log GET / requests
 
@@ -43,8 +44,6 @@ const DEBUG = {                                                // What to log
 
 	ROUTER                    : DEBUG_ENABLED && false,
 	ROUTER_PERSISTENT_DATA    : DEBUG_ENABLED && false,
-
-	PARSE_RULES               : DEBUG_ENABLED && !false,
 
 	BOOT_TIME                 : Date.now(),
 

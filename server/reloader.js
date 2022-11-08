@@ -148,7 +148,7 @@ module.exports = function AppReloader (callback) {
 
 
 	async function reload_modules (socket) {
-		console.time( '| (re)load time' );
+		if (DEBUG.RELOADER_TIMES) console.time( '| (re)load time' );
 
 		self.fileTimes.current = await get_file_times();
 
@@ -170,7 +170,7 @@ module.exports = function AppReloader (callback) {
 		);
 
 		if (!reload_required) {
-			console.timeEnd( '| (re)load time' );
+			if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
 			return;
 		}
 
@@ -192,6 +192,7 @@ module.exports = function AppReloader (callback) {
 				callbacks  : {
 					triggerExit : callback.triggerExit,
 					broadcast   : (...params)=>{ self.router.protocols.session.broadcast(...params); },
+					reset       : self.reset,
 				},
 			};
 
@@ -202,9 +203,6 @@ module.exports = function AppReloader (callback) {
 
 		} catch (error) {
 			invalidate_require_cache();
-			show_error( error, 'AppReloader-reload_modules:',
-				COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
-			);
 
 			if (socket) {
 				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
@@ -215,8 +213,6 @@ module.exports = function AppReloader (callback) {
 					//...socket.send( JSON.stringify(message) );
 
 				} catch (error) {
-					invalidate_require_cache();
-
 					try {
 						const clients = self.persistent.session.clients;
 						Object.keys( clients ).forEach( (address)=>{
@@ -230,14 +226,18 @@ module.exports = function AppReloader (callback) {
 						color_log( COLORS.ERROR, '-'.repeat(59) );
 						console.log( error );
 					}
-
 				}
+
+			} else {
+				show_error( error, 'AppReloader-reload_modules:',
+					COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
+				);
 			}
 		}
 
 		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(46) );
 
-		console.timeEnd( '| (re)load time' );
+		if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
 
 	} // reload_modules
 
@@ -247,7 +247,7 @@ module.exports = function AppReloader (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = async function (socket, client_address) {
-		if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect:', client_address );
+		//...if (DEBUG.CONNECT) color_log( COLORS.RELOADER, 'AppReloader.onConnect:', client_address );
 		await reload_modules( socket );
 		self.router.onConnect( socket, client_address );
 
@@ -255,7 +255,7 @@ module.exports = function AppReloader (callback) {
 
 
 	this.onDisconnect = async function (socket, client_address) {
-		if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect:', client_address );
+		//...if (DEBUG.DISCONNECT) color_log( COLORS.RELOADER, 'AppReloader.onDisconnect:', client_address );
 		await reload_modules( socket );
 		self.router.onDisconnect( socket, client_address );
 
@@ -308,15 +308,20 @@ module.exports = function AppReloader (callback) {
 	}; // exit
 
 
+	this.reset = async function () {
+		self.persistent = {};
+		self.fileTimes = { previous: {}, current: {} };
+
+		await reload_modules();
+
+	}; // reset
+
+
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
 
 		return new Promise( async (done)=>{
-			self.persistent = {};
-			self.fileTimes = { previous: {}, current: {} };
-
-			await reload_modules();
-
+			await self.reset();
 			done();
 		});
 

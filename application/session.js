@@ -85,6 +85,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			'BULLETIN': {},
 			[get_formatted_time().toUpperCase()]: {},
 			...message,
+			'END OF LINE.': {},
 		};
 
 		const clients = callback.getAllClients();
@@ -100,7 +101,7 @@ module.exports = function SessionHandler (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = async function (socket, client_address) {
-		if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect:', client_address );
+		//...if (DEBUG.CONNECT) color_log( COLORS.SESSION, 'SessionHandler.onConnect:', client_address );
 
 		if (persistent.clients[client_address]) {
 			color_log(
@@ -230,7 +231,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		//... session who {multiclients, idles, ...}
 		//... session who {filter, sort, sort:{reverse:{}} }
 
-		if (client.inGroup('admin') ) {
+		if (client.inGroup( 'mod', 'admin', 'dev') ) {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
 			client.respond( STATUS.SUCCESS, request_id, persistent.clients );
 
@@ -261,7 +262,7 @@ module.exports = function SessionHandler (persistent, callback) {
 
 
 	this.request.kick = async function (client, request_id, parameters) {
-		if (!client.inGroup( 'admin' )) {
+		if (!client.inGroup( 'mod', 'admin', 'dev' )) {
 			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
@@ -397,6 +398,7 @@ module.exports = function SessionHandler (persistent, callback) {
 						password: '12345',
 						groups: [
 							'admin',
+							'dev',
 						],
 						maxIdleTime: 0,
 					},

@@ -212,7 +212,7 @@ const Main = function () {
 				client_address = client_address.slice( 7 );
 			}
 
-			color_log(
+			if (DEBUG.HTTP_UPGRADE) color_log(
 				COLORS.HTTP,
 				'http_server.onUpgrade:',
 				client_address,

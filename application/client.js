@@ -150,8 +150,15 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	}; // registerActivity
 
 
-	this.inGroup = function (group) {
-		return self.login && (self.login.groups.indexOf( group ) >= 0);
+	this.inGroup = function (...groups) {
+		if (!self.login) return false;
+
+		let in_group = false;
+		[...groups].forEach( (group)=>{
+			in_group |= (self.login.groups.indexOf( group ) >= 0);
+		});
+
+		return in_group;
 
 	}; // send
 

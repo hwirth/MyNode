@@ -77,7 +77,6 @@ const Application = function () {
 
 
 	function on_websocket_close (event, socket)  {
-		//...document.querySelector( '.terminal .prompt' ).classList.add( 'disabled' );
 		self.debugConsole.print( 'Connection lost', 'cep' );
 
 	} // on_websocket_close
@@ -139,6 +138,13 @@ const Application = function () {
 
 	this.init = async function () {
 		console.log( 'Application.init' );
+
+		document.body.innerHTML += (`
+<footer class="main_menu">
+	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+</footer>
+		`);
 
 		self.debugConsole = await new DebugConsole({
 			getURL      : ()=>WS_URL,

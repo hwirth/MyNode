@@ -118,10 +118,39 @@ export const DebugConsole = function (callback) {
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	function focus_prompt (clear_accept = true) {
+		adjust_textarea();
+		self.elements.input.focus();
+
+	} // focus_prompt
+
+
+	function adjust_textarea () {
+		//...const is_request = (self.elements.input.value.charAt(0) == '>');
+		const is_request = (self.elements.input.value.indexOf('\n') >= 0);
+		self.elements.input.classList.toggle( 'request', is_request );
+
+		const lines = self.elements.input.value.split('\n');
+		const nr_lines = (lines.length > 0) ? lines.length : 1;
+		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
+
+		self.elements.input.style.height = (self.elements.input.rows + 1) + 'em';
+
+	} // adjust_textarea
+
+
 	function scroll_down () {
 		self.elements.output.scrollBy(0, 99999);
 
 	} // scroll_down
+
+
+	function next_script_entry (shift = true) {
+		if (!callback.isConnected()) return 'connect: ' + callback.getURL();
+		const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
+		return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
+
+	} // next_script_entry
 
 
 	function sam_speak (text) {
@@ -283,39 +312,6 @@ export const DebugConsole = function (callback) {
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function adjust_textarea () {
-		//...const is_request = (self.elements.input.value.charAt(0) == '>');
-		const is_request = (self.elements.input.value.indexOf('\n') >= 0);
-		self.elements.input.classList.toggle( 'request', is_request );
-
-		const lines = self.elements.input.value.split('\n');
-		const nr_lines = (lines.length > 0) ? lines.length : 1;
-		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
-
-		self.elements.input.style.height = (self.elements.input.rows + 1) + 'em';
-
-	} // adjust_textarea
-
-
-	function next_script_entry (shift = true) {
-		if (!callback.isConnected()) return 'connect: ' + callback.getURL();
-		const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
-		return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
-
-	} // next_script_entry
-
-
-	let accept_click = null;//... still needed?
-
-	function focus_prompt (clear_accept = true) {
-		adjust_textarea();
-		self.elements.input.focus();
-
-		if (clear_accept) accept_click = null;
-
-	} // focus_prompt
-
-
 	function on_script_button_click (event) {
 		event.preventDefault();
 		self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
@@ -326,54 +322,52 @@ export const DebugConsole = function (callback) {
 	} // on_script_button_click
 
 
+	function on_input_change () {
+		adjust_textarea();
+		scroll_down();
+
+	} // on_input_change
+
+
 	function on_click (event) {
-		if (event.target === self.elements.terminal) focus_prompt();
+		//if (event.target === self.elements.terminal) focus_prompt();
 
 	} // on_dblclick
 
 
 	function on_dblclick (event) {
 		if (event.target.tagName == 'BODY') return self.toggle( 'terminal' );
-		if (!event.target.closest('.terminal .commands')) return;
 
 		const shift = event.shiftKey;
 		const ctrl = event.ctrlKey;
 		const alt = event.altKey;
 
 		const connected = callback.isConnected();
+		const commands_clicked = event.target.closest('.terminal .commands');
+		const button_clicked   = event.target.tagName == 'BUTTON';
 
-		if (event.target.tagName == 'BUTTON') {
+		if (commands_clicked && button_clicked) {
 			// MACROS
-
 			event.preventDefault();
 			const previous_value = self.elements.input.value;
-
 			self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
 			self.elements.send.click();
 
-			//self.elements.input.value = previous_value;
-			//self.elements.input.value = '';
-			//focus_prompt();
-
-			return;
-
 		} else if (connected && (!shift && !ctrl && !alt)) {
 			// TUTORIAL SCRIPT
-
 			self.elements.input.value = next_script_entry();
 			self.elements.send.click();
 			self.elements.input.value = next_script_entry( false );
-
 			focus_prompt();
 
-			return;
-
+		} else {
+			focus_prompt();
 		}
 
 	} // on_dblclick
 
 
-	function on_keydown (event) {
+	function on_keydown (event) {//... Move to  on_keyboard_event
 		if (['Shift', 'Ctrl', 'Alt'].indexOf(event.key) == 0) {
 			adjust_textarea();
 		}
@@ -491,10 +485,10 @@ export const DebugConsole = function (callback) {
 		const t0 = context.currentTime;
 		const v = 0.2;
 		var t1;
-		envelope.gain.setValueAtTime         (0.0, t1 = t0);
-		envelope.gain.linearRampToValueAtTime(1.0, t1 = t0 + v * 0.01);
-		envelope.gain.linearRampToValueAtTime(0.1, t1 = t0 + v * 0.10);
-		envelope.gain.linearRampToValueAtTime(0.0, t1 = t0 + v * 1.00);
+		envelope.gain.setValueAtTime         ( 0.0, t1 = t0 );
+		envelope.gain.linearRampToValueAtTime( 1.0, t1 = t0 + v * 0.01 );
+		envelope.gain.linearRampToValueAtTime( 0.1, t1 = t0 + v * 0.10 );
+		envelope.gain.linearRampToValueAtTime( 0.0, t1 = t0 + v * 1.00 );
 
 		//square_wave.addEventListener('ended', on_ended);
 		square_wave.onended = on_ended;
@@ -503,10 +497,10 @@ export const DebugConsole = function (callback) {
 
 		++nr_active_sounds;
 
-		function on_ended(event) {
-			square_wave.disconnect(envelope);
-			envelope.disconnect(volume);
-			volume.disconnect(context.destination);
+		function on_ended (event) {
+			square_wave.disconnect( envelope );
+			envelope.disconnect( volume );
+			volume.disconnect( context.destination );
 		/*
 			context
 			= square_wave
@@ -648,17 +642,6 @@ export const DebugConsole = function (callback) {
 	}; // toggle
 
 
-	this.toggleConsole = function (event) {
-		self.elements.terminal.classList.toggle( 'active' );
-		if (self.elements.terminal.classList.contains( 'active' )) {
-			focus_prompt();
-		} else {
-			self.elements.input.blur();
-		}
-
-	}; // toggle
-
-
 	this.print = function (message, class_name) {
 		let t = -1;
 		const class_names = [
@@ -669,41 +652,33 @@ export const DebugConsole = function (callback) {
 		const tokens = [
 			'/', '.', ':', ';', '{',
 			'[', '(', ')', ']', '}',
-			'true', 'false', 'null'
+			'true', 'false', 'null',
 		];
 
-		const message_html = (
+		let message_html = (
 			(typeof message == 'string')
 			? message
 			: request_to_text( message )
 		)
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')//...
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
-		.split(tokens[++t]).join('<code class="' + class_names[t] + '">' + tokens[t] + '</code>')
+		.replace( /&/g, '&amp;' )
+		.replace( /</g, '&lt;'  )
+		;
+
+		tokens.forEach( (token, index)=>{
+			const html = '<code class="' + class_names[index] + '">' + token + '</code>';
+			message_html = message_html.replaceAll( token, html );
+		});
+
+		message_html = message_html
 		.split('\n')
 		.map( line => '<div>' + line + '</div>' )
 		.join('')
 		;
 
-		if (message.MCP) class_name = 'mcp'; //...new_element.classList.add( 'mcp' );
-
 		const new_element = document.createElement( 'pre' );
 		new_element.className = class_name;
 		new_element.innerHTML = message_html;
 
-		//self.elements.terminal.insertBefore( new_element, self.elements.prompt );
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
@@ -742,8 +717,8 @@ export const DebugConsole = function (callback) {
 		console.log( 'DebugConsole.init' );
 
 		document.body.innerHTML = (`
-<main class="terminal">
-	<form class="menu">
+<form class="terminal">
+	<nav class="menu">
 		<section class="commands">
 		</section>
 		<section class="toggles">
@@ -751,38 +726,34 @@ export const DebugConsole = function (callback) {
 			<button class="fancy"      title="Fancy styling [Alt]+[F]">Fancy</button>
 			<button class="key_beep"   title="Keyboard beep [Alt]+[K]">Kbd</button>
 			<button class="sam"        title="Software Automatic Mouth [Alt]+[M]">SAM</button>
+			<button class="close"      title="Minimize terminal [Alt]+[D]"> x </button>
 		</section>
-	</form>
-	<section class="output"></section>
-	<textarea class="input"></textarea>
-	<form class="status">
+	</nav>
+	<output></output>
+	<textarea></textarea>
+	<nav class="status">
 		<section>
-			<button class="submit" title="Shortcut: [Enter]">Run</button>
+			<button class="submit" title="Shortcut: [Enter]">Enter</button>
 		</section>
-		<section class="status">
+		<section>
 			<span class="time">12:23:02.2</span>
 			<span class="connection_status warning">OFFLINE</span>
 		</section>
-	</form>
-</main>
-
-<footer class="main_menu">
-	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-</footer>
+	</nav>
+</form>
 		`).trim();
 
 		const container = document.querySelector( '.terminal' );
 		self.elements = {
 			html       : document.querySelector( 'html' ),
 			terminal   : container,
-			menu       : container.querySelector( 'form.menu'   ),
-			output     : container.querySelector( '.output'     ),
-			prompt     : container.querySelector( '.prompt'     ),
-			input      : container.querySelector( '.input'      ),
-			status     : container.querySelector( 'form.status' ),
+			menu       : container.querySelector( '.menu'       ),
+			status     : container.querySelector( '.status'     ),
+			output     : container.querySelector( 'output'      ),
+			input      : container.querySelector( 'textarea'    ),
 			commands   : container.querySelector( '.commands'   ),
 			send       : container.querySelector( '.submit'     ),
+			close      : container.querySelector( '.close'      ),
 			animations : container.querySelector( '.animations' ),
 			fancy      : container.querySelector( '.fancy'      ),
 			keyBeep    : container.querySelector( '.key_beep'   ),
@@ -810,6 +781,10 @@ export const DebugConsole = function (callback) {
 		});
 
 
+		// Disable <form> submission
+		self.elements.terminal.addEventListener( 'submit', event => event.preventDefault() );
+
+
 		// Resume audio context after page load
 		function activate_audio () {
 			self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
@@ -819,12 +794,6 @@ export const DebugConsole = function (callback) {
 		}
 		addEventListener( 'keypress', activate_audio );
 		addEventListener( 'mouseup', activate_audio );
-
-
-		// Disable <form> submission
-		self.elements.terminal.querySelectorAll( 'form' ).forEach( (form)=>{
-			form.addEventListener( 'submit', event => event.preventDefault() );
-		});
 
 
 		// Create buttons
@@ -841,33 +810,38 @@ export const DebugConsole = function (callback) {
 		});
 
 
-		// Button: SEND
+		// Button: Send
 		self.requestId = 0;
 		self.elements.send.addEventListener( 'click', on_send_click );
 
 
 		// Buttons: Toggles
+		self.elements.close     .addEventListener( 'click', ()=>self.toggle('terminal')   );
 		self.elements.animations.addEventListener( 'click', ()=>self.toggle('animations') );
 		self.elements.fancy     .addEventListener( 'click', ()=>self.toggle('fancy')      );
 		self.elements.keyBeep   .addEventListener( 'click', ()=>self.toggle('keyBeep')    );
 		self.elements.sam       .addEventListener( 'click', ()=>self.toggle('sam')        );
 
 
-		// REFOCUS PROMPT
-		self.elements.terminal.addEventListener( 'mouseup'   , focus_prompt );
-		self.elements.terminal.addEventListener( 'mousemove' , ()=>focus_prompt(false) );
-		self.elements.input.addEventListener( 'change'    , adjust_textarea );
-		self.elements.input.addEventListener( 'input'     , adjust_textarea );
-		self.elements.input.addEventListener( 'keyup'     , adjust_textarea );
+		// Re-focus prompt
+		self.elements.input   .addEventListener( 'keyup'     , adjust_textarea );
+		self.elements.input   .addEventListener( 'input'     , on_input_change );
+		self.elements.input   .addEventListener( 'change'    , on_input_change );
 
+		self.elements.terminal.addEventListener( 'click', (event)=>{
+			if (event.target === self.elements.terminal) focus_prompt();
+		});
 
-		// CLICK, DOUBLE CLICK
-		//...self.elements.input.value = TUTORIAL_SCRIPT[0];
-		//addEventListener( 'click', on_click );
+		// Click
+		addEventListener( 'mouseup', (event)=>{
+			if ((event.button === 0) && (window.getSelection().type == 'Caret')) focus_prompt();
+		});
+
+		// Double click
 		addEventListener( 'dblclick', on_dblclick );
 
 
-		// KEYBOARD
+		// Keyboard
 		addEventListener('keydown', on_keydown_beep );
 		['keydown', 'keypress', 'keyup' ].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
@@ -875,15 +849,7 @@ export const DebugConsole = function (callback) {
         	self.elements.input.addEventListener( 'keydown', on_keydown );
 
 
-		function on_input_change () {
-			adjust_textarea();
-			scroll_down();
-		}
-		self.elements.input.addEventListener( 'input', on_input_change );
-		self.elements.input.addEventListener( 'chante', on_input_change );
-
-
-		// CLOCK
+		// Clock
 		start_clock();
 
 		self.print( 'CEP-' + CEP_VERSION + '^acdos READY.\n', 'cep' );

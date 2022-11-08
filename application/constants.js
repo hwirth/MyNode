@@ -17,6 +17,7 @@ module.exports.REASONS = {
 	INTERNAL_ERROR              : 'Internal error',
 	TOKEN_ISSUED                : 'A new token has been issued',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
+	PERSISTENCE_RESET           : 'Persistent data have been reloaded',
 	INVALID_REQUEST             : 'Invalid request',
 	INVALID_ADDRESS             : 'Invalid address',
 	INVALID_USERNAME            : 'Invalid username',

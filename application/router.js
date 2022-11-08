@@ -55,7 +55,7 @@ module.exports.Router = function (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onConnect = function (socket, client_address) {
-		if (DEBUG.CONNECT) color_log( COLORS.ROUTER, 'Router.onConnect:', client_address );
+		//...if (DEBUG.CONNECT) color_log( COLORS.ROUTER, 'Router.onConnect:', client_address );
 
 		self.protocols.session.onConnect( socket, client_address );   // Will create new WebSocketClient()
 
@@ -65,7 +65,7 @@ module.exports.Router = function (persistent, callback) {
 
 
 	this.onDisconnect = function (socket, client_address) {
-		if (DEBUG.DISCONNECT) color_log( COLORS.ROUTER, 'Router.onDisconnect:', client_address );
+		//...if (DEBUG.DISCONNECT) color_log( COLORS.ROUTER, 'Router.onDisconnect:', client_address );
 
 		self.protocols.session.onDisconnect( socket, client_address );
 
@@ -98,6 +98,7 @@ module.exports.Router = function (persistent, callback) {
 		const client = self.protocols.session.getClientByAddress( client_address );
 		if (!client) {
 			color_log( COLORS.ERROR, 'ERROR', 'Router.onMessage: Unknown client:', client_address );
+			callback.broadcast({ 'ROUTER ERROR 0': 'Unknown client in onMessage' });
 			return;
 		}
 
@@ -116,7 +117,7 @@ module.exports.Router = function (persistent, callback) {
 				reason   : REASONS.INTERNAL_ERROR,
 			};
 
-			if (client.login && client.inGroup( 'admin' )) {
+			if (client.login && client.inGroup( 'admin', 'dev' )) {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:1' );
 				new_message.response = report;
 			} else {
@@ -154,7 +155,7 @@ module.exports.Router = function (persistent, callback) {
 					COLORS.ROUTER,
 					'Router.onMessage:',
 					'request_handler: ',
-					request_handler
+					request_handler,
 				);
 
 				log_persistent( 'onMessage:', 'PRE COMMAND: ' );
@@ -173,7 +174,7 @@ module.exports.Router = function (persistent, callback) {
 
 						).catch( (error)=>{
 							const report = error.stack.replace(
-								new RegExp(SETTINGS.BASE_DIR, 'g'),
+								new RegExp( SETTINGS.BASE_DIR, 'g' ),
 								'',
 							);
 							send_error( error );
@@ -185,7 +186,7 @@ module.exports.Router = function (persistent, callback) {
 							request_handler(
 								client,
 								request_id,
-								request_arguments
+								request_arguments,
 							);
 
 						} catch (error) {
@@ -195,7 +196,7 @@ module.exports.Router = function (persistent, callback) {
 
 				} catch (error) {
 					const report = error.replace(
-						new RegExp(SETTINGS.BASE_DIR, 'g'),
+						new RegExp( SETTINGS.BASE_DIR, 'g' ),
 						'',
 					);
 					send_error( error );
@@ -260,7 +261,7 @@ module.exports.Router = function (persistent, callback) {
 
 		await Promise.allSettled( requests_processed );
 
-		color_log(
+		if (rejected_commands.length) color_log(
 			COLORS.ROUTER,
 			'Router.onMessage:',
 			(rejected_commands.length ? COLORS.ERROR : COLORS.DEFAULT)
@@ -311,6 +312,7 @@ module.exports.Router = function (persistent, callback) {
 		const ChatServer     = require( './chat/main.js' );
 
 		const registered_callbacks = {
+			reset                  : callback.reset,
 			triggerExit            : callback.triggerExit,
 			getProtocols           : ()=>self.protocols,
 			getAllClients          : ()=>{ return persistent.session.clients; },
@@ -332,6 +334,7 @@ module.exports.Router = function (persistent, callback) {
 			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
 			mcp     : { template: MasterControl,
 				callbacks : [
+					'reset',
 					'getUpTime',
 					'getProtocols',
 					'getAllPersistentData',

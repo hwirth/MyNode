@@ -45,6 +45,8 @@
 	--button-bg            : #555;
 	--button-submit-color  : #fff;
 	--button-submit-bg     : #c50;
+	--button-close-color   : #fff;
+	--button-close-bg      : #c50;
 	--button-enabled-color : #fff;
 	--button-enabled-bg    : #280;
 
@@ -184,7 +186,7 @@ footer { display:none; }
 
 /* DEBUG CONSOLE */
 
-.terminal :is(button, span, textarea, code, ::before, ::after, .input, .output pre) {
+.terminal :is(button, span, code, ::before, ::after, textarea, output pre) {
 	font-family:var(--terminal-font-family); font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
 	text-shadow:
@@ -220,14 +222,19 @@ footer { display:none; }
     }
 }
 
+.terminal ::selection {
+	color:#fff;
+	background:#06c;
+}
 
-.terminal.fancy .output::before {
+
+.terminal.fancy output::before {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
 }
-.terminal .output {
+.terminal output {
 	margin-top:1em;
 	padding-bottom:0.1em;
 	overflow-y:hidden;
@@ -236,9 +243,9 @@ footer { display:none; }
 	overflow-y:scroll;
 	scroll-behavior: smooth;
 }
-.terminal.overflow .output { overflow-y:hidden; }
+.terminal.overflow output { overflow-y:hidden; }
 
-.terminal .output pre { padding-bottom:1em; white-space:pre-wrap; }
+.terminal output pre { padding-bottom:1em; white-space:pre-wrap; }
 .terminal .separators pre {
 	Xborder-bottom:var(--terminal-separator-border);
 	padding-top:0; padding-bottom:0;
@@ -257,12 +264,12 @@ footer { display:none; }
 	width:1em; height:1em; background:#fff;
 }
 
-.terminal .output.compressed pre.response { white-space:pre-wrap; }
-.terminal .output.compressed pre.request { white-space:normal; }
-.terminal .output.compressed pre.request div { display:inline-block; margin-right:0.45em; }
+.terminal output.compressed pre.response { white-space:pre-wrap; }
+.terminal output.compressed pre.request { white-space:normal; }
+.terminal output.compressed pre.request div { display:inline-block; margin-right:0.45em; }
 
 
-.terminal .input  {
+.terminal textarea {
 	width:100%; border:none;
 	background:transparent; color:var(--terminal-chat-color);
 	resize:none;
@@ -271,10 +278,10 @@ footer { display:none; }
 	Xcaret-shape:unserscore;
 	caret-color: #ff0;
 }
-.terminal .input.request { color:var(--terminal-input-color); }
+.terminal textarea.request { color:var(--terminal-input-color); }
 
 
-.terminal form {
+.terminal nav {
 	display:inline-flex;
 	flex-grow:1;
 	flex-wrap:wrap;
@@ -284,14 +291,15 @@ footer { display:none; }
 	border-radius:5px;
 }
 
-.terminal form section { font-size:0; }
-.terminal form section > * { font-size:1rem; }
-.terminal form > :first-child { flex-grow:1; text-align:left; }
-.terminal form > :last-child  { flex-grow:1; text-align:right; color:#fff; }
+.terminal nav section { font-size:0; }
+.terminal nav section > * { font-size:1rem; }
+.terminal nav > :first-child { flex-grow:1; text-align:left; }
+.terminal nav > :last-child  { flex-grow:1; text-align:right; color:#fff; }
 
 .terminal :is(span, button) { margin:2px 1px; padding:0.1em 0.5em; border:none; vertical-align:middle; }
-.terminal button:hover { filter:brightness(1.5); }
-.terminal button.submit { background:var(--button-submit-bg); color:var(--button-submit-color); }
+.terminal button:hover   { filter:brightness(1.5); }
+.terminal button.submit  { background:var(--button-submit-bg); color:var(--button-submit-color); }
+.terminal button.close   { background:var(--button-close-bg); color:var(--button-close-color); }
 .terminal button.enabled {
 	box-shadow:
 		inset 0 0 0 2px var(--button-enabled-bg)/*,
@@ -300,7 +308,7 @@ footer { display:none; }
 	color:var(--button-enabled-color);
 }
 
-.terminal .status .time {
+.terminal .time {
 	Xfont-variant-numeric: normal;
 	Xfont-variant-numeric: ordinal;
 	font-variant-numeric: slashed-zero;
@@ -392,7 +400,7 @@ footer { display:none; }
 }
 
 /* Bit */
-:not(.init).animate .terminal .output::before {
+:not(.init).animate .terminal output::before {
 	animation: BIT_GLOW 360s linear infinite; /*bit.gif*/
 }
 @keyframes BIT_GLOW {
