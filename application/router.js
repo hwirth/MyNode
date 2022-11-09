@@ -231,7 +231,7 @@ module.exports.Router = function (persistent, callback) {
 
 			return Promise.resolve();
 
-		}/*.reduce( async (prev, next)=>{//...? Execution order of protocols currently not quaranteed
+		}/*.reduce( async (prev, next)=>{//...? Execution order of protocols currently not guaranteed
 			// Enforce execution order on top level (protocols)
 			await prev;
 			return next;
