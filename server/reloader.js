@@ -12,9 +12,10 @@ const glob      = require( 'glob' );
 
 const { SETTINGS      } = require( './config.js' );
 const { DEBUG, COLORS } = require( './debug.js' );
-const { color_log     } = require( './debug.js' );
+const { color_log, format_error } = require( './debug.js' );
 
-const EMPTY = {};
+
+const EMPTY = {};//...
 
 
 module.exports = function AppReloader (callback) {
@@ -129,7 +130,7 @@ module.exports = function AppReloader (callback) {
 		}
 
 		if (socket && Object.keys( file_name_report ).length) {
-			socket.send( JSON.stringify({ 'MODULE RELOAD': file_name_report }, null, '\t') );
+			socket.send( JSON.stringify( {'MODULE RELOAD': file_name_report}, null, '\t' ) );
 		}
 
 		const nr_reloaded_files = Object.keys( file_name_report ).length;
@@ -204,8 +205,7 @@ module.exports = function AppReloader (callback) {
 			invalidate_require_cache();
 
 			if (socket) {
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				const message = { 'MODULE ERROR 1': report };
+				const message = { 'RELOAD ERROR': format_error(error) };
 
 				try {
 					self.router.protocols.session.broadcast( message );
@@ -215,7 +215,7 @@ module.exports = function AppReloader (callback) {
 						const clients = self.persistent.session.clients;
 						Object.keys( clients ).forEach( (address)=>{
 							const client = clients[address];
-							client.send({ 'FATAL SYSTEM FAILURE': report });
+							client.send({ 'FATAL SYSTEM FAILURE': format_error(error) });
 						});
 
 					} catch (error) {
@@ -276,8 +276,7 @@ module.exports = function AppReloader (callback) {
 
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				socket.send( JSON.stringify({ 'MODULE ERROR 2': report }) );
+				socket.send( JSON.stringify({ 'RELOADER ERROR 2': format_error(error) }) );
 			}
 		}
 

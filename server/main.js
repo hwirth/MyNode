@@ -11,9 +11,9 @@ const {
 	MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
 
 } = require( './config.js' );
-const { STRINGS         } = require( '../application/constants.js' );
-const { DEBUG, COLORS   } = require( '../server/debug.js' );
-const { color_log, dump } = require( '../server/debug.js' );
+const { STRINGS       } = require( '../application/constants.js' );
+const { DEBUG, COLORS } = require( '../server/debug.js' );
+const { color_log, dump, format_error } = require( '../server/debug.js' );
 
 const AppReloader = require( './reloader.js' );
 
@@ -379,16 +379,10 @@ const Main = function () {
 		&&  self.reloader.persistent.session
 		&&  self.reloader.persistent.session.clients
 		) {
-			const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-		/*
-			const clients = self.reloader.persistent.session.clients;
-			Object.keys( clients ).forEach( (address)=>{
-				const client = clients[address];
-				client.send({ 'FATAL SYSTEM FAILURE': report });
-			});
-		*/
 			try {
-				self.reloader.router.protocols.session.broadcast({ 'FATAL SYSTEM FAILURE': report });
+				self.reloader.router.protocols.session.broadcast({
+					'FATAL SYSTEM FAILURE': format_error( error ),
+				});
 
 			} catch (error) {
 				color_log( COLORS.ERROR, 'FATAL SYSTEM FAILURE:', 'GEH', error );

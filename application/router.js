@@ -5,11 +5,10 @@
 
 "use strict";
 
-const Helpers = require( './helpers.js' );
 const { SETTINGS        } = require( '../server/config.js' );
-const { DEBUG, COLORS   } = require( '../server/debug.js' );
-const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS         } = require( './constants.js' );
+const { DEBUG, COLORS   } = require( '../server/debug.js' );
+const { color_log, dump, format_error } = require( '../server/debug.js' );
 
 
 const WebSocketClient = require( './client.js' );
@@ -82,18 +81,12 @@ module.exports.Router = function (persistent, callback) {
 		const client = self.protocols.session.getClientByAddress( client_address );
 		if (!client) {
 			color_log( COLORS.ERROR, 'ERROR', 'Router.onMessage:0: Unknown client:', client_address );
-			callback.broadcast({ 'ROUTER ERROR 0': 'Unknown client in onMessage' });
+			callback.broadcast({ 'ROUTER ERROR 1': 'Unknown client in onMessage' });
 			return;
 		}
 
 
 		function send_error (error) {
-			if (typeof error != 'error') {
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				callback.broadcast({ 'ROUTER ERROR 1': report });
-				return;
-			}
-
 			const new_message = {
 				tag      : request_id.tag,
 				success  : false,
@@ -105,9 +98,8 @@ module.exports.Router = function (persistent, callback) {
 			if (client.login && client.inGroup( 'admin', 'dev' )) {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:1' );
 
-				const report = error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
-				new_message.response = report;
-				callback.broadcast({ 'ROUTER ERROR 2': new_message });
+				new_message.response = format_error( error );
+				callback.broadcast({ 'ROUTER ERROR 3': new_message });
 
 			} else {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:2:', error );
@@ -132,64 +124,58 @@ module.exports.Router = function (persistent, callback) {
 					combined_name,
 				);
 
-			} else {
-				handled_commands.push( combined_name );
+				return;
+			}
 
-				if (DEBUG.ROUTER) color_log(
-					COLORS.ROUTER,
-					'Router.onMessage:',
-					'request_handler: ',
-					request_handler,
-				);
 
-				if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'PRE COMMAND: ' );
+			handled_commands.push( combined_name );
 
-				const request_arguments = message[ protocol_name ][ command_name ];
+			if (DEBUG.ROUTER) color_log(
+				COLORS.ROUTER,
+				'Router.onMessage:',
+				'request_handler: ',
+				request_handler,
+			);
 
-				try {
-					//... How do I catch, when I accidentially
-					//... forgot to await something in there?
-					if (request_handler.constructor.name === 'AsyncFunction') {
-						if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
+			if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'PRE COMMAND: ' );
 
-						await request_handler(
+			const request_arguments = message[protocol_name][command_name];
+
+			try {
+				//... How do I catch, when I accidentially
+				//... forgot to await something in there?
+				if (request_handler.constructor.name === 'AsyncFunction') {
+					if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
+
+					await request_handler(
+						client,
+						request_id,
+						request_arguments
+
+					).catch( (error)=>{
+						send_error( error );
+					});
+
+				} else {
+					if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'SYNC', combined_name );
+
+					try {
+						request_handler(
 							client,
 							request_id,
-							request_arguments
+							request_arguments,
+						);
 
-						).catch( (error)=>{
-							const report = error.stack.replace(
-								new RegExp( SETTINGS.BASE_DIR, 'g' ),
-								'',
-							);
-							send_error( error );
-						});
-
-					} else {
-						if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'SYNC', combined_name );
-
-						try {
-							request_handler(
-								client,
-								request_id,
-								request_arguments,
-							);
-
-						} catch (error) {
-							send_error( error );
-						}
+					} catch (error) {
+						send_error( error );
 					}
-
-				} catch (error) {
-					const report = error.replace(
-						new RegExp( SETTINGS.BASE_DIR, 'g' ),
-						'',
-					);
-					send_error( error );
 				}
 
-				if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'POST COMMAND: ' );
+			} catch (error) {
+				send_error( error );
 			}
+
+			if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'POST COMMAND: ' );
 
 		} // call_request_handler
 

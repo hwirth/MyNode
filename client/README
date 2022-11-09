@@ -160,7 +160,6 @@ $ npm install ws follow-redirects re-require-module
 
 6. TODO
 =======
-[ ] const report = error.stack.replace(  ...helpers
 [ ] Tabbed mode: Command on modifier+Return
 [ ] Restore session after page reload (allows browsing the web page while playing)
 [ ] DEFCON

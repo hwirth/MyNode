@@ -23,7 +23,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 	this.request = {};
 
-	this.request.nick = function (client, request_id, parameters) {
+	th is.request.nick = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<chat.nick>',

@@ -124,6 +124,12 @@ module.exports.COLORS        = COLORS;
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+function format_error (error) {
+	return error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+
+} // format_error
+
+
 /**
  * color_log
  * Creates nice output to the console while debugging, and/or writes text sans color to a log file.
@@ -248,8 +254,9 @@ function dump (data) {
 } // dump
 
 
-module.exports.color_log = color_log;
-module.exports.dump      = dump;
+module.exports.format_error = format_error;
+module.exports.color_log    = color_log;
+module.exports.dump         = dump;
 
 
 //EOF
