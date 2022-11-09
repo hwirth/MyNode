@@ -234,51 +234,6 @@ footer { display:none; }
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
 }
-.terminal output {
-	margin-top:1em;
-	padding-bottom:0.1em;
-	overflow-y:hidden;
-	white-space:pre-wrap;
-	overflow-x:hidden;
-	overflow-y:scroll;
-	scroll-behavior: smooth;
-}
-.terminal.overflow output { overflow-y:hidden; }
-
-.terminal output pre { padding-bottom:1em; white-space:pre-wrap; }
-.terminal .separators pre {
-	Xborder-bottom:var(--terminal-separator-border);
-	padding-top:0; padding-bottom:0;
-}
-
-.terminal pre.request  { color:var(--terminal-request-color)  ; white-space:pre-wrap; }
-.terminal pre.response { color:var(--terminal-response-color) ; white-space:pre-wrap; }
-.terminal pre.success  { color:var(--terminal-success-color)  ; }
-.terminal pre.failure  { color:var(--terminal-error-color)    ; }
-.terminal pre.cep      { color:var(--terminal-cep-color)      ; }
-.terminal pre.mcp      { color:var(--terminal-mcp-color)      ; }
-.terminal pre.chat     { color:var(--terminal-chat-color)     ; padding-left:1.75em; position:relative; }
-.terminal pre.chat::before {
-	content:'';
-	position:absolute; left:0;
-	width:1em; height:1em; background:#fff;
-}
-
-.terminal output.compressed pre.response { white-space:pre-wrap; }
-.terminal output.compressed pre.request { white-space:normal; }
-.terminal output.compressed pre.request div { display:inline-block; margin-right:0.45em; }
-
-
-.terminal textarea {
-	width:100%; border:none;
-	background:transparent; color:var(--terminal-chat-color);
-	resize:none;
-	caret-shape:block;
-	Xcaret-shape:bar;
-	Xcaret-shape:unserscore;
-	caret-color: #ff0;
-}
-.terminal textarea.request { color:var(--terminal-input-color); }
 
 
 .terminal nav {
@@ -307,6 +262,54 @@ footer { display:none; }
 	;
 	color:var(--button-enabled-color);
 }
+
+
+.terminal output {
+	margin-top:1em;
+	padding-bottom:0.1em;
+	overflow-y:hidden;
+	white-space:pre-wrap;
+	overflow-x:hidden;
+	overflow-y:scroll;
+	scroll-behavior: smooth;
+}
+.terminal.overflow output { overflow-y:hidden; }
+
+.terminal output pre { padding-bottom:1em; white-space:pre-wrap; }
+.terminal .separators pre {
+	border-bottom:var(--terminal-separator-border);
+}
+
+.terminal pre.request  { color:var(--terminal-request-color)  ; white-space:pre-wrap; }
+.terminal pre.response { color:var(--terminal-response-color) ; white-space:pre-wrap; }
+.terminal pre.success  { color:var(--terminal-success-color)  ; }
+.terminal pre.failure  { color:var(--terminal-error-color)    ; }
+.terminal pre.cep      { color:var(--terminal-cep-color)      ; }
+.terminal pre.mcp      { color:var(--terminal-mcp-color)      ; }
+.terminal pre.chat     { color:var(--terminal-chat-color)     ; padding-left:1.75em; position:relative; }
+.terminal pre.chat::before {
+	content:'';
+	position:absolute; left:0;
+	width:1em; height:1em; background:#fff;
+}
+
+.terminal output.compressed pre { padding-top:0; padding-bottom:0; }
+.terminal output.compressed pre.response { white-space:pre-wrap; }
+.terminal output.compressed pre.request { white-space:normal; }
+.terminal output.compressed pre.request div { display:inline-block; margin-right:0.45em; }
+
+
+.terminal textarea {
+	width:100%; border:none;
+	background:transparent; color:var(--terminal-chat-color);
+	resize:none;
+	caret-shape:block;
+	Xcaret-shape:bar;
+	Xcaret-shape:unserscore;
+	caret-color: #ff0;
+}
+.terminal textarea.request { color:var(--terminal-input-color); }
+
 
 .terminal .time {
 	Xfont-variant-numeric: normal;

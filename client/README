@@ -158,8 +158,15 @@ WS_PORT               1337
 $ npm install ws follow-redirects re-require-module
 
 
+6. Debugging
+============
+ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
+
+
+
 6. TODO
 =======
+[ ] Keyboard toggles --> buttons
 [ ] Tabbed mode: Command on modifier+Return
 [ ] Restore session after page reload (allows browsing the web page while playing)
 [ ] DEFCON

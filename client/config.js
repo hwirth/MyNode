@@ -6,18 +6,23 @@
 "use strict";
 
 export const DEBUG = {
-	KEYBOARD_EVENTS: !false,
+	WEBSOCKET       : !false,
+	KEYBOARD_EVENTS : false,
 };
 
 export const SETTINGS = {
 	KEYBOARD_BEEP : true,
+	WS_URL        : 'wss://spielwiese.central-dogma.at:1337',
 };
 
 export const PRESETS = {
+	ANIMATIONS    : !true,
+	COMPRESSED    : true,
 	FANCY         : !true,
 	KEYBOARD_BEEP : !true,
-	ANIMATIONS    : !true,
+	SEPARATORS    : false,
 	SAM           : !true,
+	TERMINAL      : !false,
 };
 
 //EOF

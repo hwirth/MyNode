@@ -20,9 +20,12 @@ const MIN_LINES = 0;
 
 const BANGS = ['>', ':', '!', '.', ';', '/'];
 
-const BANG_REQUEST = '';//'>';
+const BANG_REQUEST = '';//'>';//... Now multline == JSON request
+const BANG_CEP     = '.';
 
 const BUTTON_SCRIPTS = {
+	'connect'    : BANG_CEP + 'connect: ' + SETTINGS.WS_URL,
+	'disconnect' : BANG_CEP + 'disconnect',
 	'stat'    : BANG_REQUEST + 'session\n\tstatus',
 	'root'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:root\n\t\tpassword: 12345',
 	'user'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:user\n\t\tpassword: pass2',
@@ -145,7 +148,7 @@ export const DebugConsole = function (callback) {
 
 
 	function next_script_entry (shift = true) {
-		if (!callback.isConnected()) return 'connect: ' + callback.getURL();
+		if (!callback.isConnected()) return 'connect: ' + SETTINGS.WS_URL;
 		const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
 		return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
 
@@ -329,7 +332,7 @@ export const DebugConsole = function (callback) {
 
 
 	function on_click (event) {
-		//if (event.target === self.elements.terminal) focus_prompt();
+		//...if (event.target === self.elements.terminal) focus_prompt();
 
 	} // on_dblclick
 
@@ -516,23 +519,85 @@ export const DebugConsole = function (callback) {
 
 
 	function on_send_click (event) {
+
+// LOCAL COMMAND /////////////////////////////////////////////////////////////////////////////////////////////////119:/
+		function perform_local (command) {
+			if (command.charAt(0) != BANG_CEP) return false;
+
+			self.print( command, 'request' );
+
+			const token     = command.split(':')[0].slice(1);
+			const parameter = command.slice( token.length + 1 );
+
+			switch (token) {
+			case 'connect':
+				self.elements.connection.classList = 'connection_status success';
+				self.elements.connection.innerText = 'Connected';
+				self.elements.title = SETTINGS.WS_URL;
+				callback.connect( SETTINGS.WS_URL );
+				break;
+
+			case 'disconnect' :
+				self.elements.connection.classList = 'connection_status warning';
+				self.elements.connection.innerText = 'Offline';
+				self.elements.title = '';
+				callback.disconnect();
+				break;
+
+			default: {
+				self.elements.connection.classList = 'connection_status error';
+				self.elements.connection.innerText = 'Error';
+				self.elements.title = 'Unknown command in perform_local()';
+				self.print( 'Unrecognized command', 'cep' );
+				throw new Error( 'DebugConsole-on_send_click-perform_local: Unrecognized command' );
+			break; }
+			}
+
+			return true;
+		}
+/*
+
+			const ws = callback.getWebSocketClient().websocket;
+			ws.addEventListener( 'open'   , ()=>update_status_ui('connection_status success') );
+			ws.addEventListener( 'close'  , ()=>update_status_ui('connection_status warning') );
+			ws.addEventListener( 'error'  , ()=>update_status_ui('connection_status error'  ) );
+			//ws.addEventListener( 'message', ()=>update_status_ui('connection_status message') );
+
+*/
+// JSON REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
+		function send_json (text) {
+			// Multiline command: JSON request
+
+			const request
+			= (text.indexOf('\n') >= 0)
+			? text_to_request( text )
+			: {
+				chat: {
+					say: text,
+				},
+			};
+
+			request.tag = ++self.requestId;
+			callback.send( request );
+
+		}
+
+
 		const text = self.elements.input.value.trim();
+		const is_local  = perform_local( text );
+		const connected = callback.isConnected();
 
-		const command
-		= (text.indexOf('\n') >= 0)
-		? text_to_request( text )
-		: {
-			chat: {
-				say: text,
-			},
-		};
-
-		command.tag = ++self.requestId;
-		callback.send( command );
+		if (!is_local) {
+			if (connected) {
+				send_json( text );
+			} else {
+				self.print( 'NOT CONNECTED.' );
+			}
+		}
 
 		self.history.add( text );
-
 		self.elements.input.value = '';
+
 		focus_prompt();
 
 	} // on_send_click
@@ -606,6 +671,12 @@ export const DebugConsole = function (callback) {
 				self.elements.html.classList.toggle( 'animate', self.toggles.animations );
 				break;
 			}
+			case 'compressed': {
+				self.toggles.compressed = (new_state !== null) ? new_state : !self.toggles.compressed;
+				//...self.elements.compressed.classList.toggle( 'enabled', self.toggles.compressed );
+				self.elements.output.classList.toggle( 'compressed', self.toggles.compressed );
+				break;
+			}
 			case 'fancy': {
 				self.toggles.fancy = (new_state !== null) ? new_state : !self.toggles.fancy;
 				self.elements.fancy.classList.toggle( 'enabled', self.toggles.fancy );
@@ -615,6 +686,12 @@ export const DebugConsole = function (callback) {
 			case 'keyBeep': {
 				self.toggles.keyBeep = (new_state !== null) ? new_state : !self.toggles.keyBeep;
 				self.elements.keyBeep.classList.toggle( 'enabled', self.toggles.keyBeep );
+				break;
+			}
+			case 'separators': {
+				self.toggles.separators = (new_state !== null) ? new_state : !self.toggles.separators;
+				//...self.elements.separators.classList.toggle( 'enabled', self.toggles.separators );
+				self.elements.output.classList.toggle( 'separators', self.toggles.separators );
 				break;
 			}
 			case 'sam': {
@@ -716,7 +793,7 @@ export const DebugConsole = function (callback) {
 		console.log( 'DebugConsole.init' );
 
 		document.body.innerHTML = (`
-<form class="terminal">
+<form class="active terminal">
 	<nav class="menu">
 		<section class="commands">
 		</section>
@@ -736,7 +813,7 @@ export const DebugConsole = function (callback) {
 		</section>
 		<section>
 			<span class="time">12:23:02.2</span>
-			<span class="connection_status warning">OFFLINE</span>
+			<span class="connection warning">OFFLINE</span>
 		</section>
 	</nav>
 </form>
@@ -744,19 +821,21 @@ export const DebugConsole = function (callback) {
 
 		const container = document.querySelector( '.terminal' );
 		self.elements = {
-			html       : document.querySelector( 'html' ),
-			terminal   : container,
-			menu       : container.querySelector( '.menu'       ),
-			status     : container.querySelector( '.status'     ),
-			output     : container.querySelector( 'output'      ),
-			input      : container.querySelector( 'textarea'    ),
-			commands   : container.querySelector( '.commands'   ),
-			send       : container.querySelector( '.submit'     ),
-			close      : container.querySelector( '.close'      ),
+			html     : document.querySelector( 'html' ),
+			terminal : container,
+
 			animations : container.querySelector( '.animations' ),
+			close      : container.querySelector( '.close'      ),
+			commands   : container.querySelector( '.commands'   ),
+			connection : container.querySelector( '.connection' ),
 			fancy      : container.querySelector( '.fancy'      ),
+			input      : container.querySelector( 'textarea'    ),
 			keyBeep    : container.querySelector( '.key_beep'   ),
+			menu       : container.querySelector( '.menu'       ),
+			output     : container.querySelector( 'output'      ),
 			sam        : container.querySelector( '.sam'        ),
+			send       : container.querySelector( '.submit'     ),
+			status     : container.querySelector( '.status'     ),
 		};
 
 		self.history = new History( self.elements.input, {
@@ -764,19 +843,6 @@ export const DebugConsole = function (callback) {
 				adjust_textarea();
 				scroll_down();
 			},
-		});
-
-
-		// Load presets
-		self.toggles = {
-			fancy      : PRESETS.FANCY,
-			animations : PRESETS.ANIMATIONS,
-			keyBeep    : PRESETS.KEYBOARD_BEEP,
-			sam        : PRESETS.SAM,
-		};
-
-		Object.keys( self.toggles ).forEach( (item)=>{
-			self.toggle( item, self.toggles[item] );
 		});
 
 
@@ -795,7 +861,7 @@ export const DebugConsole = function (callback) {
 		addEventListener( 'mouseup', activate_audio );
 
 
-		// Create buttons
+		// Create macro buttons
 		Object.keys( BUTTON_SCRIPTS ).forEach( (key)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
@@ -815,11 +881,27 @@ export const DebugConsole = function (callback) {
 
 
 		// Buttons: Toggles
+		self.toggles = {
+			animations : PRESETS.ANIMATIONS,
+			compressed : PRESETS.COMPRESSED,
+			fancy      : PRESETS.FANCY,
+			keyBeep    : PRESETS.KEYBOARD_BEEP,
+			separators : PRESETS.SEPARATORS,
+			sam        : PRESETS.SAM,
+		};
+		Object.keys( self.toggles ).forEach( (key)=>{
+			if (self.elements[key]) {
+				self.elements[key].addEventListener( 'click', ()=>self.toggle( key ) );
+			}
+			self.toggle( key, self.toggles[key] );
+		});
+		/*
 		self.elements.close     .addEventListener( 'click', ()=>self.toggle('terminal')   );
 		self.elements.animations.addEventListener( 'click', ()=>self.toggle('animations') );
 		self.elements.fancy     .addEventListener( 'click', ()=>self.toggle('fancy')      );
 		self.elements.keyBeep   .addEventListener( 'click', ()=>self.toggle('keyBeep')    );
 		self.elements.sam       .addEventListener( 'click', ()=>self.toggle('sam')        );
+		*/
 
 
 		// Re-focus prompt
@@ -851,8 +933,7 @@ export const DebugConsole = function (callback) {
 		// Clock
 		start_clock();
 
-		self.print( 'CEP-' + CEP_VERSION + '^acdos READY.\n', 'cep' );
-		self.print( 'connect: ' + callback.getURL(), 'request' );
+		self.print( 'CEP-' + CEP_VERSION + '^acdos\nREADY.\n', 'cep' );
 
 		return Promise.resolve();
 

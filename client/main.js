@@ -5,14 +5,9 @@
 
 "use strict";
 
+import { SETTINGS, DEBUG } from './config.js';
 import { WebSocketClient } from './websocket.js';
 import { DebugConsole    } from './debug_console.js';
-
-export const DEBUG = {
-	WEBSOCKET: true,
-};
-
-const WS_URL = 'wss://spielwiese.central-dogma.at:1337';
 
 
 const Application = function () {
@@ -21,7 +16,7 @@ const Application = function () {
 	this.webSocketClient;
 	this.debugConsole;
 
-	const boot_sequence = [
+	const boot_sequence = false && [
 		{
 			session: {
 				login: {
@@ -30,36 +25,37 @@ const Application = function () {
 				},
 			},
 		},
-	/*
-		{
-			session: {
-				login: {
-					username : 'root',
-					password : '12345',
-				},
-				status: {},
-				who: {},
-			},
-		},
-		{
 
-			session: {
-				status: {
-					persistent: {},
-				},
-				kick: {
-					username: 'root',
-				},
-			},
-		},
-		{
-			session : {
-				status: {},
-			},
-			tag : 0,
-		},
-	*/
 	]; // boot_sequence
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HELPERS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	async function connect_to_websocket (ws_url = SETTINGS.WS_URL) {
+		if (self.webSocketClient) {
+			await disconnect_from_websocket( self.webSocketClient );
+		}
+
+		self.webSocketClient = await new WebSocketClient({
+			url    : ws_url,
+			events : {
+				onOpen    : on_websocket_open,
+				onClose   : on_websocket_close,
+				onMessage : on_websocket_message,
+				onError   : on_websocket_error,
+			},
+			debugConsole: self.debugConsole,
+		});
+
+	} // connect_to_websocket
+
+
+	function disconnect_from_websocket (websocket) {
+		return self.webSocketClient.exit().then( ()=>self.webSocketClient = null );
+
+	} // disconnect_from_websocket
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -67,9 +63,9 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_websocket_open (event, socket)  {
-		self.debugConsole.print( 'Connected to ' + WS_URL, 'cep' );
+		self.debugConsole.print( 'Connected to ' + SETTINGS.WS_URL, 'cep' );
 
-		boot_sequence.forEach( (request)=>{
+		if (boot_sequence) boot_sequence.forEach( (request)=>{
 			socket.send( request );
 		});
 
@@ -111,17 +107,9 @@ const Application = function () {
 
 
 	function on_console_send (request) {
-		//console.log( 'on_console_send(): request:', request );
+		console.log( 'on_console_send(): request:', request );
 
-		if (request.connect) {
-			console.log( 'on_console_send: Connecting to', WS_URL );
-			self.webSocketClient.connect( WS_URL );
-		} else if (request.disconnect) {
-			console.log( 'on_console_send: Disconnecting' );
-			self.webSocketClient.disconnect();
-		} else {
-			self.webSocketClient.send( request );
-		}
+		self.webSocketClient.send( request );
 
 	} // on_console_send
 
@@ -146,26 +134,21 @@ const Application = function () {
 </footer>
 		`);
 
+		self.webSocketClient = null;
+
 		self.debugConsole = await new DebugConsole({
-			getURL      : ()=>WS_URL,
-			isConnected : ()=>{ return self.webSocketClient.isConnected(); },
+			getWebSocketClient : ()=>{ return self.webSocketClient; },
+			connect     : connect_to_websocket,
+			disconnect  : disconnect_from_websocket,
 			send        : on_console_send,
+			isConnected : ()=>{ return self.webSocketClient && self.webSocketClient.isConnected(); },
 		});
 
-		boot_sequence.forEach( (request)=>{
+		if (boot_sequence) boot_sequence.forEach( (request)=>{
 			self.debugConsole.history.add( self.debugConsole.requestToText(request) );
 		});
 
-		self.webSocketClient = await new WebSocketClient({
-			url    : WS_URL,
-			events : {
-				onOpen    : on_websocket_open,
-				onClose   : on_websocket_close,
-				onMessage : on_websocket_message,
-				onError   : on_websocket_error,
-			},
-			debugConsole: self.debugConsole,
-		});
+		//...connect_to_websocket();
 
 		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
 		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );

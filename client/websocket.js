@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { DEBUG } from './main.js';
+import { DEBUG } from './config.js';
 
 const CONNECTION_TIMEOUT_MS = 5000;
 
@@ -150,6 +150,8 @@ export const WebSocketClient = function (parameters = {}) {
 
 	this.exit = function () {
 		removeEventListener( 'beforeunload', on_before_unload, false );
+
+		self.websocket.close();
 
 		return Promise.resolve();
 
