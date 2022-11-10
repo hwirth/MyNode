@@ -64,6 +64,7 @@ const Application = function () {
 
 	function on_websocket_open (event, socket)  {
 		self.debugConsole.print( 'Connected to ' + SETTINGS.WS_URL, 'cep' );
+		self.debugConsole.onSocketOpen();
 
 		if (boot_sequence) boot_sequence.forEach( (request)=>{
 			socket.send( request );
@@ -74,6 +75,7 @@ const Application = function () {
 
 	function on_websocket_close (event, socket)  {
 		self.debugConsole.print( 'Connection lost', 'cep' );
+		self.debugConsole.onSocketClose();
 
 	} // on_websocket_close
 
@@ -102,6 +104,7 @@ const Application = function () {
 
 	function on_websocket_error (event, socket) {
 		self.debugConsole.print( 'Connection error', 'cep' );
+		self.debugConsole.onSocketError();
 
 	} // on_websocket_error
 
@@ -148,7 +151,7 @@ const Application = function () {
 			self.debugConsole.history.add( self.debugConsole.requestToText(request) );
 		});
 
-		//...connect_to_websocket();
+		connect_to_websocket();
 
 		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
 		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
@@ -175,7 +178,7 @@ addEventListener( 'load', async ()=>{
 	show_status( 'Connecting' );
 	//await delay(1500);
 
-	await new Application();
+	await new Application().catch( e => console.log(e) );
 
 	document.querySelectorAll( '.noscript' ).forEach( (element)=>{
 		element.parentNode.removeChild( element );

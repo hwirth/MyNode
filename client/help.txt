@@ -1,0 +1,7 @@
+Client endpoint:
+	.connect [&lt;websocket URL>]
+	.disconnect
+	.as username: &lt;username> [password: &lt;password>] connect [&lt;websocket URL>]
+	.help (This page)
+Remote commands:
+	help

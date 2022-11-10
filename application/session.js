@@ -111,7 +111,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			return;
 		}
 
-		self.broadcast({ 'CLIENT CONNECTED': client_address });
+		self.broadcast({ 'CLIENT ATTACHED': client_address });
 
 		persistent.clients[client_address] =
 			await new WebSocketClient( socket, client_address, {
@@ -135,7 +135,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			return;
 		}
 
-		self.broadcast({ 'CLIENT DISCONNECTING': client_address });
+		self.broadcast({ 'CLIENT DETACHED': client_address });
 
 		await client.exit();
 		delete persistent.clients[client_address];
@@ -187,17 +187,41 @@ module.exports = function SessionHandler (persistent, callback) {
 			const password_correct = (user_record.password == parameters.password);
 
 			if (password_correct) {
+
+// client.js /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+				// Make new client object
+
 				client.clearLoginTimeout();
 
+				const new_groups        = (user_record.groups) ? user_record.groups : ['guest'];
+				const new_subscriptions = ['broadcast'];
+				if (user_record.subscriptions) subs.push( ...user_record.subscriptions );
+
+				client.secondFactor
+				=  (typeof parameters.secondFactor == 'undefined')
+				|| (typeof parameters.secondFactor == 'null')
+				? null
+				: callback.verifyToken(
+					parameters.secondFactor,
+					client,
+					/*login_request*/true,
+				);
+
+				delete client.login;   // Ensure last entry
 				client.login = {
-					userName : parameters.username,
-					groups   : (user_record.groups) ? user_record.groups : ['guest'],
+					userName      : parameters.username,
+					groups        : new_groups,
+					subscriptions : new_subscriptions,
 				};
 
-
-				if (typeof user_record.maxIdleTime !== 'undefined') {
+				if( (user_record.maxIdleTime === null)
+				||  (typeof user_record.maxIdleTime !== 'undefined')
+				){
 					client.setIdleTime( user_record.maxIdleTime );
 				}
+
+// /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 				color_log( COLORS.COMMAND, '<session.login>', dump(client) );
 				client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
@@ -228,6 +252,8 @@ module.exports = function SessionHandler (persistent, callback) {
 
 		//... session who {multiclients, idles, ...}
 		//... session who {filter, sort, sort:{reverse:{}} }
+color_log( COLORS.ERROR, 'TEST ERROR.' );
+//throw new Error('TEST ERROR');
 
 		if (client.inGroup( 'mod', 'admin', 'dev') ) {
 			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
@@ -396,7 +422,7 @@ module.exports = function SessionHandler (persistent, callback) {
 							'admin',
 							'dev',
 						],
-						maxIdleTime: 0,
+						maxIdleTime: null,
 					},
 					'user': {
 						password: 'pass2',

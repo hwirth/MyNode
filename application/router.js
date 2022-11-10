@@ -86,24 +86,23 @@ module.exports.Router = function (persistent, callback) {
 		}
 
 
-		function send_error (error) {
+		function send_error (error, catch_mode = '') {
 			const new_message = {
 				tag      : request_id.tag,
 				success  : false,
 				reason   : REASONS.INTERNAL_ERROR,
 			};
 
-			callback.broadcast({ 'ROUTER ERROR 2': new_message });
+			const show_full_report = client.login && client.inGroup( 'admin', 'dev' );
 
-			if (client.login && client.inGroup( 'admin', 'dev' )) {
+			if (show_full_report) {
 				color_log( COLORS.ERROR, 'ERROR Router.onMessage:1' );
-
 				new_message.response = format_error( error );
-				callback.broadcast({ 'ROUTER ERROR 3': new_message });
-
 			} else {
-				color_log( COLORS.ERROR, 'ERROR Router.onMessage:2:', error );
+				color_log( COLORS.ERROR, 'ERROR Router.onMessage-send_error:', error );
 			}
+
+			callback.broadcast({ ['ROUTER ERROR ' + catch_mode + ':']: new_message });
 		}
 
 
@@ -153,7 +152,7 @@ module.exports.Router = function (persistent, callback) {
 						request_arguments
 
 					).catch( (error)=>{
-						send_error( error );
+						send_error( error, 3 );
 					});
 
 				} else {
@@ -167,12 +166,12 @@ module.exports.Router = function (persistent, callback) {
 						);
 
 					} catch (error) {
-						send_error( error );
+						send_error( error, 4 );
 					}
 				}
 
 			} catch (error) {
-				send_error( error );
+				send_error( error, 'T/C:2' );
 			}
 
 			if (DEBUG.ROUTER_PERSISTENT_DATA) log_persistent( 'onMessage:', 'POST COMMAND: ' );
@@ -280,8 +279,10 @@ module.exports.Router = function (persistent, callback) {
 		const ChatServer     = require( './chat/main.js' );
 
 		const registered_callbacks = {
+			broadcast              : (...params)=>{ return self.protocols.session.broadcast(...params); },
 			reset                  : callback.reset,
 			triggerExit            : callback.triggerExit,
+			verifyToken            : (...params)=>{ return self.protocols.mcp.verifyToken(...params); },
 			getProtocols           : ()=>self.protocols,
 			getAllClients          : ()=>{ return persistent.session.clients; },
 			getAllPersistentData   : ()=>{ return persistent; },
@@ -294,6 +295,7 @@ module.exports.Router = function (persistent, callback) {
 		const registered_protocols = {
 			session : { template: SessionHandler,
 				callbacks: [
+					'verifyToken',
 					'getAllClients',
 				],
 			},
@@ -302,6 +304,7 @@ module.exports.Router = function (persistent, callback) {
 			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
 			mcp     : { template: MasterControl,
 				callbacks : [
+					'broadcast',
 					'reset',
 					'getUpTime',
 					'getProtocols',

@@ -166,6 +166,8 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] as [ before | (username,password) [do <command>| continue] ]
+[ ] "MCP asleep"
 [ ] Keyboard toggles --> buttons
 [ ] Tabbed mode: Command on modifier+Return
 [ ] Restore session after page reload (allows browsing the web page while playing)
@@ -229,11 +231,9 @@ callbacks.sendToClient( client.address, data ); - Have session.js "publish" its 
 
 
 
-
-
 7. Code Parking Space (Ignore)
 ==============================
-
+//EOF
 	as
 		username: <name>
 		do
@@ -378,8 +378,6 @@ module.exports = function Client (persistent) {
 
 }; // Client
 
-
-//EOF
 
 
 

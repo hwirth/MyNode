@@ -218,7 +218,12 @@ const Main = function () {
 
 			self.wsServer.handleUpgrade( request, socket, head, (socket)=>{
 				self.wsServer.emit( 'connection', socket, request );
+				socket.send( JSON.stringify({
+					['Welcome on ' + SETTINGS.SERVER_NAME + '.']: {},
+				}) );
 			});
+
+
 
 		}); // onUpgrade
 

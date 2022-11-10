@@ -10,7 +10,7 @@ const path = require( 'path' );
 
 const DEV_SERVER = true || (os.hostname() == 'labor');
 
-const PROGRAM_NAME    = 'MASTER CONTROL PROTOCOL';
+const PROGRAM_NAME    = 'MyNode';
 const PROGRAM_VERSION = 'v0.0.6p';
 
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
@@ -40,8 +40,20 @@ function parse_config_file () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_dir.join( path.sep ) + path.sep;  // SODD
+const server_name = (config_file.SERVER_NAME || PROGRAM_VERSION);
 
 const SETTINGS = {
+	SERVER_NAME: (`
+ __  __       _   _           _
+|  \\/  |_   _| \\ | | ___   __| | ___
+| |\\/| | | | |  \\| |/ _ \\ / _\` |/ _ \\
+| |  | | |_| | |\\  | (_) | (_| |  __/
+|_|  |_|\\__, |_| \\_|\\___/ \\__,_|\\___|
+        |___/
+`
+//... Workaround for Geany bug: `
+	) + ' '.repeat(37 - server_name.length) + server_name,
+
 	DEV_SERVER  : DEV_SERVER,
 	INSTALL_GEH : true,   // Global error and unhandled rejection handler
 

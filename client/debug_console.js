@@ -13,7 +13,7 @@ import { SETTINGS, PRESETS, DEBUG } from './config.js';
 import { History                  } from './history.js';
 
 
-const CEP_VERSION = 'v0.2.1α';
+let CEP_VERSION = 'v0.2.2α';   // Keyboard shortcuts will be appended in  self.init()
 
 const EXTRA_LINES = 0;
 const MIN_LINES = 0;
@@ -24,18 +24,21 @@ const BANG_REQUEST = '';//'>';//... Now multline == JSON request
 const BANG_CEP     = '.';
 
 const BUTTON_SCRIPTS = {
+	'login'      : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n\tstatus',
+	'as root'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:root\n\t\tpassword: 12345\n\tstatus',
+	'as user'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:user\n\t\tpassword: pass2\n\tstatus',
+	'logout'     : BANG_REQUEST + 'session\n\tlogout',
+	'status'     : BANG_REQUEST + 'session\n\tstatus',
+	'who'        : BANG_REQUEST + 'session\n\twho',
+	'kroot'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: root',
+	'kuser'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: user',
+	'MCP'        : BANG_REQUEST + 'mcp\n\tstatus',
+	'reset'      : BANG_REQUEST + 'mcp\n\trestart\n\t\ttoken: ',
+	'token'      : BANG_REQUEST + 'mcp\n\ttoken',
+	'clear'      : BANG_CEP + 'clear',
+	'help'       : BANG_CEP + 'help',
 	'connect'    : BANG_CEP + 'connect: ' + SETTINGS.WS_URL,
 	'disconnect' : BANG_CEP + 'disconnect',
-	'stat'    : BANG_REQUEST + 'session\n\tstatus',
-	'root'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:root\n\t\tpassword: 12345',
-	'user'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:user\n\t\tpassword: pass2',
-	'out'     : BANG_REQUEST + 'session\n\tlogout',
-	'who'     : BANG_REQUEST + 'session\n\twho',
-	'kroot'   : BANG_REQUEST + 'session\n\tkick\n\t\tusername: root',
-	'kuser'   : BANG_REQUEST + 'session\n\tkick\n\t\tusername: user',
-	'MCP'     : BANG_REQUEST + 'mcp\n\tstatus',
-	'rst'     : BANG_REQUEST + 'mcp\n\trestart\n\t\ttoken: ',
-	'token'   : BANG_REQUEST + 'mcp\n\ttoken',
 };
 
 const TUTORIAL_SCRIPT = [
@@ -314,9 +317,21 @@ export const DebugConsole = function (callback) {
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	function parse_button_script (script) {
+		const second_factor = self.elements.secondFactor.value || 'null';
+		return (
+			script
+			.replaceAll( '%u', self.elements.username.value )
+			.replaceAll( '%p', self.elements.password.value )
+			.replaceAll( '%t', second_factor )
+			.split('\n').filter( line => line.indexOf('secondFactor:null') < 0 ).join('\n')
+		);
+
+	} // parse_button_script
+
 	function on_script_button_click (event) {
 		event.preventDefault();
-		self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
+		self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
 
 		adjust_textarea();
 		scroll_down();
@@ -352,7 +367,7 @@ export const DebugConsole = function (callback) {
 			// MACROS
 			event.preventDefault();
 			const previous_value = self.elements.input.value;
-			self.elements.input.value = BUTTON_SCRIPTS[event.target.className];
+			self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
 			self.elements.send.click();
 
 		} else if (connected && (!shift && !ctrl && !alt)) {
@@ -434,10 +449,10 @@ export const DebugConsole = function (callback) {
 				cursorEnd  : modifiers.indexOf( 'cursorEnd'  ) >= 0,
 			};
 
-			const ignore_pos1end = true/*
+			const ignore_pos1end
 			=  !requires.cursorPos1 && !requires.cursorEnd
-			|| input.value.length == 0
-			;*/
+			|| (input.value.length == 0)
+			;
 
 			const key_matches
 			=  (event.shiftKey == requires.shift)
@@ -526,44 +541,50 @@ export const DebugConsole = function (callback) {
 
 			self.print( command, 'request' );
 
+			function show_file (file_name) {
+				fetch( file_name ).then( (response)=>{
+					if (! response.ok) {
+						throw new Error( 'HTTP error, status = ' + response.status );
+					}
+					return response.text();   // returns a Promise
+
+				}).then( (new_text)=>{
+					self.print(
+						'CEP-' + CEP_VERSION + '\n'
+						+ new_text.split( '//EOF' )[0].trim()
+						,
+						'cep',
+					);
+				});
+			}
+
 			const token     = command.split(':')[0].slice(1);
 			const parameter = command.slice( token.length + 1 );
 
 			switch (token) {
 			case 'connect':
-				self.elements.connection.classList = 'connection_status success';
-				self.elements.connection.innerText = 'Connected';
-				self.elements.title = SETTINGS.WS_URL;
-				callback.connect( SETTINGS.WS_URL );
+				callback.connect( parameter.slice(2) || SETTINGS.WS_URL );
 				break;
-
-			case 'disconnect' :
+			case 'disconnect':
 				self.elements.connection.classList = 'connection_status warning';
-				self.elements.connection.innerText = 'Offline';
+				self.elements.connection.innerText = 'Offline';//... Needs callback
 				self.elements.title = '';
 				callback.disconnect();
 				break;
-
-			default: {
+			case 'clear'  :  self.elements.output.innerHTML = '';  break;
+			case 'help'   :  show_file( 'help.txt' );              break;
+			case 'readme' :  show_file( 'README'   );              break;
+			default:
 				self.elements.connection.classList = 'connection_status error';
 				self.elements.connection.innerText = 'Error';
 				self.elements.title = 'Unknown command in perform_local()';
 				self.print( 'Unrecognized command', 'cep' );
 				throw new Error( 'DebugConsole-on_send_click-perform_local: Unrecognized command' );
-			break; }
 			}
 
 			return true;
 		}
-/*
 
-			const ws = callback.getWebSocketClient().websocket;
-			ws.addEventListener( 'open'   , ()=>update_status_ui('connection_status success') );
-			ws.addEventListener( 'close'  , ()=>update_status_ui('connection_status warning') );
-			ws.addEventListener( 'error'  , ()=>update_status_ui('connection_status error'  ) );
-			//ws.addEventListener( 'message', ()=>update_status_ui('connection_status message') );
-
-*/
 // JSON REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function send_json (text) {
 			// Multiline command: JSON request
@@ -591,7 +612,8 @@ export const DebugConsole = function (callback) {
 			if (connected) {
 				send_json( text );
 			} else {
-				self.print( 'NOT CONNECTED.' );
+				self.print( text, 'request' );
+				self.print( 'Not connected', 'error' );
 			}
 		}
 
@@ -659,6 +681,37 @@ export const DebugConsole = function (callback) {
 	} // on_clock_interval
 
 
+	this.onSocketOpen = function () {
+		self.elements.connection.classList = 'connection_status success';
+		self.elements.connection.innerText = 'Connected';
+		self.elements.title = SETTINGS.WS_URL;
+
+		self.elements.terminal.classList.add( 'connected' );
+
+	}; // onSocketConnect
+
+
+	this.onSocketClose = function () {
+		self.elements.connection.classList = 'connection_status warning';
+		self.elements.connection.innerText = 'Offline';
+		self.elements.title = '';
+
+		self.elements.terminal.classList.remove( 'connected' );
+
+	}; // onSocketClose
+
+
+	this.onSocketError = function () {
+		self.onSocketClose();
+		self.elements.connection.classList = 'connection_status error';
+		self.elements.connection.innerText = 'Error';
+		self.elements.title = '';
+
+		self.elements.terminal.classList.remove( 'connected' );
+
+	}; // onSocketError
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -699,6 +752,7 @@ export const DebugConsole = function (callback) {
 				self.elements.sam.classList.toggle( 'enabled', self.toggles.sam );
 				break;
 			}
+			case 'close': // fall through
 			case 'terminal': {
 				const is_enabled
 				= (new_state !== null)
@@ -718,7 +772,8 @@ export const DebugConsole = function (callback) {
 	}; // toggle
 
 
-	this.print = function (message, class_name) {
+	this.print = function (message, class_name = null) {
+		// Sanitize and colorize
 		let t = -1;
 		const class_names = [
 			'slash', 'period', 'colon', 'semi','curlyO',
@@ -736,6 +791,9 @@ export const DebugConsole = function (callback) {
 			? message
 			: request_to_text( message )
 		)
+		.replaceAll( '&lt;', '###lt###' )
+		.replaceAll( '&gt;', '###gt###' )
+		.replaceAll( '&amp;', '###amp###' )
 		.replace( /&/g, '&amp;' )
 		.replace( /</g, '&lt;'  )
 		;
@@ -746,19 +804,25 @@ export const DebugConsole = function (callback) {
 		});
 
 		message_html = message_html
+		.replaceAll( '###amp###', '&amp;' )
+		.replaceAll( '###gt###', '&gt;' )
+		.replaceAll( '###lt###', '&lt;' )
 		.split('\n')
-		.map( line => '<div>' + line + '</div>' )
+		.map( line => '<div>' + line.replaceAll('\\n', '\n') + '</div>' )   // '\\n' for .readme
 		.join('')
 		;
 
+		// Create DOM element
 		const new_element = document.createElement( 'pre' );
-		new_element.className = class_name;
+		if (class_name) new_element.className = class_name;
 		new_element.innerHTML = message_html;
 
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
-		const allowed = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
+		// Speech synthesizer
+		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
+		const allowed = char => chars.indexOf(char.toLowerCase()) >= 0;
 		sam_speak(
 			JSON.stringify( message, null, '\t' )
 			.trim()
@@ -772,7 +836,7 @@ export const DebugConsole = function (callback) {
 			.replace( /\./g , ' dot '       )
 			.replace( /:/g  , ' colon '     )
 			.split('')
-			.map( char => (allowed.indexOf(char.toLowerCase()) >= 0) ? char : ' ' )
+			.filter( allowed )
 			.join('')
 		);
 
@@ -794,22 +858,27 @@ export const DebugConsole = function (callback) {
 
 		document.body.innerHTML = (`
 <form class="active terminal">
-	<nav class="menu">
-		<section class="commands">
-		</section>
+	<nav class="controls">
 		<section class="toggles">
-			<button class="animations" title="Animations [Alt]+[A]">Anim</button>
-			<button class="fancy"      title="Fancy styling [Alt]+[F]">Fancy</button>
-			<button class="key_beep"   title="Keyboard beep [Alt]+[K]">Kbd</button>
+			<button class="animations" title="Animations [Alt]+[A]">A</button>
+			<button class="fancy"      title="Fancy styling [Alt]+[F]">F</button>
+			<button class="key_beep"   title="Keyboard beep [Alt]+[K]">K</button>
 			<button class="sam"        title="Software Automatic Mouth [Alt]+[M]">SAM</button>
-			<button class="close"      title="Minimize terminal [Alt]+[D]"> x </button>
+		</section>
+		<section>
+			<button class="close"      title="Minimize terminal [Alt]+[D]">Exit</button>
 		</section>
 	</nav>
 	<output></output>
 	<textarea></textarea>
 	<nav class="status">
-		<section>
-			<button class="submit" title="Shortcut: [Enter]">Enter</button>
+		<section class="main_menu">
+			<section class="commands">
+				<input type="text" placeholder="username">
+				<input type="password" placeholder="password">
+				<input type="password" placeholder="TFA">
+			</section>
+			<button class="submit" title="Shortcut: [Return]. [Shift]+[Return] inserts a newline">Enter</button>
 		</section>
 		<section>
 			<span class="time">12:23:02.2</span>
@@ -821,21 +890,23 @@ export const DebugConsole = function (callback) {
 
 		const container = document.querySelector( '.terminal' );
 		self.elements = {
-			html     : document.querySelector( 'html' ),
-			terminal : container,
-
-			animations : container.querySelector( '.animations' ),
-			close      : container.querySelector( '.close'      ),
-			commands   : container.querySelector( '.commands'   ),
-			connection : container.querySelector( '.connection' ),
-			fancy      : container.querySelector( '.fancy'      ),
-			input      : container.querySelector( 'textarea'    ),
-			keyBeep    : container.querySelector( '.key_beep'   ),
-			menu       : container.querySelector( '.menu'       ),
-			output     : container.querySelector( 'output'      ),
-			sam        : container.querySelector( '.sam'        ),
-			send       : container.querySelector( '.submit'     ),
-			status     : container.querySelector( '.status'     ),
+			html         : document.querySelector( 'html' ),
+			terminal     : container,
+			controls     : container.querySelector( '.controls'   ),
+			commands     : container.querySelector( '.commands'   ),
+			output       : container.querySelector( 'output'      ),
+			input        : container.querySelector( 'textarea'    ),
+			username     : container.querySelector( '[placeholder=username]' ),
+			password     : container.querySelector( '[placeholder=password]' ),
+			secondFactor : container.querySelector( '[placeholder=TFA]'      ),
+			close        : container.querySelector( '.close'      ),
+			send         : container.querySelector( '.submit'     ),
+			animations   : container.querySelector( '.animations' ),
+			connection   : container.querySelector( '.connection' ),
+			fancy        : container.querySelector( '.fancy'      ),
+			keyBeep      : container.querySelector( '.key_beep'   ),
+			sam          : container.querySelector( '.sam'        ),
+			status       : container.querySelector( '.status'     ),
 		};
 
 		self.history = new History( self.elements.input, {
@@ -861,16 +932,19 @@ export const DebugConsole = function (callback) {
 		addEventListener( 'mouseup', activate_audio );
 
 
-		// Create macro buttons
-		Object.keys( BUTTON_SCRIPTS ).forEach( (key)=>{
+		// MAIN MENU Create macro buttons
+		Object.keys( BUTTON_SCRIPTS ).forEach( (key, index)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
 
-			new_button.className = key;
-			new_button.innerText = name;
-			new_button.title     = 'Double click to execute immediately';
-			new_button.addEventListener( 'click', on_script_button_click );
+			const hue = Math.floor(360 / Object.keys(BUTTON_SCRIPTS).length * index);
+			const css = 'hue-rotate(' + hue + 'deg)';
 
+			new_button.className    = key;
+			new_button.innerText    = name;
+			new_button.title        = 'Double click to execute immediately';
+			//...new_button.style.filter = css;
+			new_button.addEventListener( 'click', on_script_button_click );
 			self.elements.commands.appendChild( new_button );
 		});
 
@@ -888,6 +962,7 @@ export const DebugConsole = function (callback) {
 			keyBeep    : PRESETS.KEYBOARD_BEEP,
 			separators : PRESETS.SEPARATORS,
 			sam        : PRESETS.SAM,
+			close      : PRESETS.TERMINAL,
 		};
 		Object.keys( self.toggles ).forEach( (key)=>{
 			if (self.elements[key]) {
@@ -904,36 +979,50 @@ export const DebugConsole = function (callback) {
 		*/
 
 
-		// Re-focus prompt
-		self.elements.input   .addEventListener( 'keyup'     , adjust_textarea );
-		self.elements.input   .addEventListener( 'input'     , on_input_change );
-		self.elements.input   .addEventListener( 'change'    , on_input_change );
-
-		self.elements.terminal.addEventListener( 'click', (event)=>{
-			if (event.target === self.elements.terminal) focus_prompt();
-		});
-
-		// Click
-		addEventListener( 'mouseup', (event)=>{
-			if ((event.button === 0) && (window.getSelection().type == 'Caret')) focus_prompt();
-		});
-
-		// Double click
-		addEventListener( 'dblclick', on_dblclick );
-
-
 		// Keyboard
 		addEventListener('keydown', on_keydown_beep );
+		addEventListener('keydown', (event)=>{//...? Where is chat/json? unify
+			const enabled = (self.elements.input.value.charAt(0) == '.');
+			self.elements.input.classList.toggle('local', enabled )
+		});
 		['keydown', 'keypress', 'keyup' ].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
 		);
         	self.elements.input.addEventListener( 'keydown', on_keydown );
 
 
+		// Re-focus prompt
+		self.elements.input.addEventListener( 'keyup'     , adjust_textarea );
+		self.elements.input.addEventListener( 'input'     , on_input_change );
+		self.elements.input.addEventListener( 'change'    , on_input_change );
+
+		self.elements.terminal.addEventListener( 'click', (event)=>{
+			if( (event.target === self.elements.terminal)
+			||  (event.target === self.elements.output)
+			||  (event.target === self.elements.input)
+			){
+				focus_prompt();
+			}
+		});
+
+
+		// Double click
+		addEventListener( 'dblclick', on_dblclick );
+
+
 		// Clock
 		start_clock();
 
-		self.print( 'CEP-' + CEP_VERSION + '^acdos\nREADY.\n', 'cep' );
+
+		// Prompt
+		const toggles    = shortcut => (shortcut.modifiers.length == 1) && (shortcut.modifiers[0] == 'alt');
+		const characters = toggle => toggle.key
+		const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
+
+		CEP_VERSION += '^' + shortcuts;   // For .help
+		self.print( 'CEP-' + CEP_VERSION + ' ready.\n', 'cep' );
+
+		if (self.elements.terminal.classList.contains( 'active' )) setTimeout( focus_prompt, 100 );
 
 		return Promise.resolve();
 

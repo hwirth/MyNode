@@ -23,7 +23,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 	this.request = {};
 
-	th is.request.nick = function (client, request_id, parameters) {
+	this.request.nick = function (client, request_id, parameters) {
 		color_log(
 			COLORS.PROTOCOL,
 			'<chat.nick>',
@@ -48,9 +48,11 @@ module.exports = function ChatServer (persistent_data, callback) {
 			;
 
 			client.broadcast({
-				time   : t0,
-				sender : client.login.nickName,
-				chat   : message,
+				type    : 'nickChange',
+				time    : t0,
+				chat    : message,
+				oldNick : nick_before || null,
+				newNick : client.login.nickName,
 			});
 
 		/*

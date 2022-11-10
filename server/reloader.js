@@ -21,11 +21,11 @@ const EMPTY = {};//...
 module.exports = function AppReloader (callback) {
 	const self = this;
 
-	this.isAppReloader
-
 	this.fileTimes;
 	this.router;
 	this.persistent;
+
+	this.alwaysReload;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -104,7 +104,6 @@ module.exports = function AppReloader (callback) {
 				self.fileTimes.previous[file_name] = self.fileTimes.current[file_name];
 
 				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
-
 				if (file_has_changed) {
 					const index = file_name.replace( '../', '' );
 					file_name_report[index] = {};   // Empty: Nicer formatting in DebugConsole
@@ -115,7 +114,6 @@ module.exports = function AppReloader (callback) {
 					'AppReloader-re_require_modules:',
 					file_name,
 				);
-
 			});
 
 			invalidate_require_cache();
@@ -150,28 +148,33 @@ module.exports = function AppReloader (callback) {
 	async function reload_modules (socket) {
 		if (DEBUG.RELOADER_TIMES) console.time( '| (re)load time' );
 
-		self.fileTimes.current = await get_file_times();
+		if (self.alwaysReload) {
+			invalidate_require_cache();
 
-		if (DEBUG.RELOADER_TIMES) color_log(
-			COLORS.RELOADER,
-			'AppReloader-reload_modules:',
-			self.fileTimes.current,
-		);
+		} else {
+			self.fileTimes.current = await get_file_times();
+
+			if (DEBUG.RELOADER_TIMES) color_log(
+				COLORS.RELOADER,
+				'AppReloader-reload_modules:',
+				self.fileTimes.current,
+			);
 
 
-		// Re-require modules
-		const reload_required = some_modules_updated( socket );
+			// Re-require modules
+			const reload_required = some_modules_updated( socket );
 
-		if (DEBUG.RELOADER_TIMES) color_log(
-			COLORS.RELOADER,
-			'AppReloader-reload_modules:',
-			'reload_required:',
-			reload_required,
-		);
+			if (DEBUG.RELOADER_TIMES) color_log(
+				COLORS.RELOADER,
+				'AppReloader-reload_modules:',
+				'reload_required:',
+				reload_required,
+			);
 
-		if (!reload_required) {
-			if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
-			return;
+			if (!reload_required) {
+				if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
+				return;
+			}
 		}
 
 		// Re-instantiate  Router
@@ -314,6 +317,8 @@ module.exports = function AppReloader (callback) {
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
+
+		self.alwaysReload = false;
 
 		return new Promise( async (done)=>{
 			await self.reset();

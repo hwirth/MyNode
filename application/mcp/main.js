@@ -34,7 +34,7 @@ module.exports = function MasterControl (persistent, callback) {
 			console.log( COLORS.DEFAULT );
 		});
 
-		DEBUG.MCPTOKEN =//...
+		if (SETTINGS.DEV_SERVER) DEBUG.MCPTOKEN = new_token;
 		current_access_token = new_token;
 
 		return new_token;
@@ -42,13 +42,16 @@ module.exports = function MasterControl (persistent, callback) {
 	} // create_new_access_token
 
 
-	function verify_token (provided_token, client) {
+	function verify_token (provided_token, client, login_request = false) {
 		return (
-			client.inGroup( 'admin', 'dev' )
+			(login_request || client.inGroup( 'admin', 'dev' ))
 			&& (provided_token == current_access_token)
 		);
 
 	} // verify_token
+
+
+	this.verifyToken = verify_token;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

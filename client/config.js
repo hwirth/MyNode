@@ -17,7 +17,7 @@ export const SETTINGS = {
 
 export const PRESETS = {
 	ANIMATIONS    : !true,
-	COMPRESSED    : true,
+	COMPRESSED    : !true,
 	FANCY         : !true,
 	KEYBOARD_BEEP : !true,
 	SEPARATORS    : false,

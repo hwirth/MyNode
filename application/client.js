@@ -44,7 +44,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 			clearTimeout( timeouts[ name ] );
 			delete timeouts[name];
 
-			if (name == 'login') {
+			if (self.maxIdleTime && (name == 'login')) {
 				set_timeout( 'idle' , on_idle_timeout , self.maxIdleTime );
 			}
 		}
@@ -55,7 +55,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	function on_login_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
 		//...? self.respond( STATUS.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
-		self.send({ 'LOGIN TIMED OUT': {} });
+		self.send({ 'LOGIN TIME OUT\nEND OF LINE.': {} });
 		self.closeSocket();
 
 	} // on_login_timeout
@@ -63,8 +63,8 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 	function on_idle_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_idle_timeout:', client_address );
-		self.respond( STATUS.NONE, ID_SERVER, REASONS.IDLE_TIMEOUT );
-		self.send({ 'IDLE TIMEOUT': {} });
+		//...? self.respond( STATUS.NONE, ID_SERVER, REASONS.IDLE_TIMEOUT );
+		self.send({ 'IDLE TIMEOUT\nEND OF LINE.': {} });
 		self.closeSocket();
 
 	} // on_idle_timeout
@@ -167,6 +167,8 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketClient.exit' );
+
 		Object.keys( timeouts ).forEach( (name)=>{
 			clear_timeout( name );
 		});
@@ -177,6 +179,8 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.init = function () {
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketClient.init' );
+
 		self.address     = client_address;
 		self.idleSince   = Date.now();
 		self.maxIdleTime = SETTINGS.TIMEOUT.IDLE;
