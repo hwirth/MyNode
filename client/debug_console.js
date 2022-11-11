@@ -502,13 +502,13 @@ export const DebugConsole = function (callback) {
 	let nr_active_sounds = 0;
 
 	function on_keydown_beep (event) {
-		if (!SETTINGS.KEYBOARD_BEEP) return;
-		if (!self.audioContext) return;
-		if (!self.toggles.keyBeep) return;
-
-		// Chromium crashes after I type fast for a few seconds
-		// Limiting number of sounds does not help:
-		if (nr_active_sounds > 5) return;
+		if( !SETTINGS.KEYBOARD_BEEP
+		||  !self.audioContext
+		||  !self.toggles.keyBeep
+		||  (nr_active_sounds > 5)
+		) {
+			return;
+		}
 
 		const context = self.audioContext;
 
