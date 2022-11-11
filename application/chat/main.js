@@ -86,10 +86,10 @@ module.exports = function ChatServer (persistent_data, callback) {
 				});
 			});
 
-			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.SUCCESS, request_id, REASONS.INSUFFICIENT_PERMS );
 
 		} else {
-			client.respond( STATUS.FAILURE, request_id, STATUS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
 	}; // request.say

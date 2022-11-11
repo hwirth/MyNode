@@ -332,21 +332,22 @@ X.terminal button.connect    { background:#888; }
 X.terminal button.disconnect { background:#888; }
 
 .terminal.fancy output::before {
+	--b:0.85;
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
-	filter:hue-rotate(180deg);
-	transition:filter 0.05s linear;
+	filter:hue-rotate(180deg) brightness(var(--b));
+	Xtransition:filter 0.05s linear;
 }
 .terminal.fancy.connected output::before {
-	filter:hue-rotate(0deg);
+	filter:hue-rotate(0deg) brightness(var(--b));
 }
-.terminal.yes output::before {
-	filter:hue-rotate(-90deg) contrast(2);
+.terminal.fancy.yes output::before {
+	filter:hue-rotate(-90deg) contrast(2) brightness(1);
 }
-.terminal.no output::before {
-	filter:hue-rotate(120deg) contrast(2);
+.terminal.fancy.no output::before {
+	filter:hue-rotate(140deg) contrast(3) brightness(1);
 }
 .terminal output {
 	margin-top:1em;

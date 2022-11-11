@@ -531,7 +531,7 @@ export const DebugConsole = function (callback) {
 
 		// Envelope
 		const t0 = context.currentTime;
-		const v = 0.2;
+		const v = 0.1;
 		var t1;
 		envelope.gain.setValueAtTime         ( 0.0, t1 = t0 );
 		envelope.gain.linearRampToValueAtTime( 1.0, t1 = t0 + v * 0.01 );
@@ -904,16 +904,19 @@ export const DebugConsole = function (callback) {
 		if (message.response && (typeof message.response.success != 'undefined')) {
 			const success = message.response.success ? 'yes' : 'no';
 
-			if (!self.elements.terminal.classList.contains('no') || (success == 'yes')) {
-				self.elements.terminal.classList.add( success );
-			}
+			//...if (!self.elements.terminal.classList.contains('no') || (success == 'yes')) {
+			//...	self.elements.terminal.classList.add( success );
+			//...}
+
 			setTimeout( ()=>{
 				self.elements.terminal.classList.remove( 'yes' );
 				self.elements.terminal.classList.remove( 'no' );
-			}, SETTINGS.TIMEOUT.BIT_ANSWER_COLOR);
-
-			setTimeout( ()=>{
+				self.elements.terminal.classList.add( success );
 				sam_speak( success );
+				setTimeout( ()=>{
+					self.elements.terminal.classList.remove( 'yes' );
+					self.elements.terminal.classList.remove( 'no' );
+				}, SETTINGS.TIMEOUT.BIT_ANSWER_COLOR);
 			}, SETTINGS.TIMEOUT.BIT_ANSWER_SOUND * (message.response.request-1) );
 		}
 
