@@ -336,8 +336,11 @@ X.terminal button.disconnect { background:#888; }
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
-	filter:hue-rotate(0deg);
+	filter:hue-rotate(180deg);
 	transition:filter 0.05s linear;
+}
+.terminal.fancy.connected output::before {
+	filter:hue-rotate(0deg);
 }
 .terminal.yes output::before {
 	filter:hue-rotate(-90deg) contrast(2);
