@@ -210,7 +210,7 @@ export const DebugConsole = function (callback) {
 				speed    : 72,       //72
 				mouth    : 128,      //128
 				throat   : 128,      //128
-				volume   : 0.1,      //1 I added a volume option to sam.js, but it's not all to pretty
+				volume   : 0.1,      //1 I added a volume option to sam.js, but it's not all too pretty
 			});
 		}
 
@@ -227,8 +227,10 @@ export const DebugConsole = function (callback) {
 					done();
 				}
 			});
+
 		}, Promise.resolve());
-	}
+
+	} // sam_speak
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -239,14 +241,10 @@ export const DebugConsole = function (callback) {
 		let text = '';
 
 		Object.keys( request ).forEach( (key)=>{
-			if( (typeof request[key] == 'object')
-			&&  (request[key] !== null)
-			) {
+			if ((typeof request[key] == 'object') && (request[key] !== null)) {
 				text
-				+= indentation
-				+  key
-				+  '\n'
-				+ request_to_text( request[key], indentation + '\t' )
+				+= indentation +  key + '\n'
+				+  request_to_text( request[key], indentation + '\t' )
 				;
 			} else {
 				if (typeof request[key] == 'undefined') {
