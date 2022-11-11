@@ -243,7 +243,7 @@ export const DebugConsole = function (callback) {
 		Object.keys( request ).forEach( (key)=>{
 			if ((typeof request[key] == 'object') && (request[key] !== null)) {
 				text
-				+= indentation +  key + '\n'
+				+= indentation + key + '\n'
 				+  request_to_text( request[key], indentation + '\t' )
 				;
 			} else {
@@ -268,16 +268,9 @@ export const DebugConsole = function (callback) {
 		const lines = text.split( '\n' );
 
 		function find_indentation (text) {
-			let indentation = 0;
-			for (
-				let i = 0
-				; (i < text.length) && (text.charAt(i) == '\t')
-				; ++i
-			) {
-				++indentation;
-			}
-
-			return indentation;
+			let i = 0;
+			for ( i = 0 ; (i < text.length) && (text.charAt(i) == '\t') ; ++i );
+			return i;
 		}
 
 		const result = {};
@@ -290,7 +283,6 @@ export const DebugConsole = function (callback) {
 			const new_request = { tag: id };
 			Object.keys( request ).forEach( key => new_request[key] = request[key] );
 			return new_request;
-
 		} else {
 			return request;
 		}
