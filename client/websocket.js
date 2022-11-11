@@ -52,7 +52,13 @@ export const WebSocketClient = function (parameters = {}) {
 		// Create socket and connect
 		//...document.cookie = 'username=' + parameters.username + '; path=/';
 		//...document.cookie = 'password=' + parameters.password + '; path=/';
-		const ws = new WebSocket( parameters.url );
+
+		let ws = null;
+		try {
+			ws = new WebSocket( parameters.url );
+		} catch (error) {
+			console.log( 'Connection failed', error.message );
+		}
 
 		function log (caption, data) {
 			if (!DEBUG.WEBSOCKET) return;
@@ -85,13 +91,21 @@ export const WebSocketClient = function (parameters = {}) {
 		});
 		ws.addEventListener( 'message', (event)=>{
 			log( 'WebSocketClient.onMessage', event );
-			const message = JSON.parse( event.data );
 
+			const message = event.data;
+		/*
+			let message = event.data;
+			try {
+				message = JSON.parse( event.data );
+			} catch {
+				message = '>' + message;
+			}
+		*/
 			console.log(
 				'%c🡇 WebSocketClient received%c:',
 				'color:#48f',
 				'color:unset',
-				JSON.stringify( message, null, '   ' ),
+				message,//...JSON.stringify( message, null, '   ' ),
 			);
 
 			if (callbacks.onMessage) callbacks.onMessage( event, self, message );
@@ -135,10 +149,19 @@ export const WebSocketClient = function (parameters = {}) {
 			'%c🡅 WebSocketClient sending%c:',
 			'color:#480',
 			'color:unset',
-			JSON.stringify( request, null, '   ' ),
+			request, //...JSON.stringify( request, null, '   ' ),
 		);
 
-		parameters.debugConsole.print( request, 'request' );
+		// See app-on_websocket_message
+		const hide_message
+		=  (DEBUG.HIDE_MESSAGES.PING && request.session && request.session.pong)
+		|| (DEBUG.HIDE_MESSAGES.CHAT && request.chat && request.chat.say)
+		;
+
+		if (!hide_message) {
+			parameters.terminal.print( request, 'request' );
+		}
+
 		self.websocket.send( JSON.stringify(request, null, '\t') );
 
 	} // send

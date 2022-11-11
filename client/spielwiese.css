@@ -50,16 +50,20 @@
 	--button-enabled-color : #fff;
 	--button-enabled-bg    : #280;
 
-	--terminal-text-color     : #ffe;
-	--terminal-request-color  : #ca0;
-	--terminal-response-color : #78f;
-	--terminal-notice-color   : #48f;
-	--terminal-warning-color  : #fc0;
-	--terminal-error-color    : #e20;
-	--terminal-success-color  : #0f0;
-	--terminal-cep-color      : #cc0;
-	--terminal-mcp-color      : var(--terminal-response-color);
-	--terminal-chat-color     : #fff;
+	--terminal-ping-color      : #8fa;
+	--terminal-broadcast-color : #86f;
+	--terminal-advisory-color  : #090;
+	--terminal-debug-color     : #aaa;
+	--terminal-notice-color    : #acf;
+	--terminal-text-color      : #ffe;
+	--terminal-request-color   : #ca0;
+	--terminal-response-color  : #78f;
+	--terminal-warning-color   : #fc0;
+	--terminal-error-color     : #e20;
+	--terminal-success-color   : #0f0;
+	--terminal-cep-color       : #cc0;
+	--terminal-mcp-color       : var(--terminal-response-color);
+	--terminal-chat-color      : #fff;
 
 	--terminal-input-color      : var(--terminal-request-color);
 	--terminal-separator-color  : #a60;
@@ -234,7 +238,7 @@ footer { display:none; }
 	background:#06c;
 }
 
-.terminal :is(input, button, span, code, ::before, ::after, textarea, output pre) {
+.terminal :is(h2, input, button, span, code, ::before, ::after, textarea, output pre) {
 	font-family:monospace,monospace; font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
 	font-family:terminal;
@@ -262,9 +266,9 @@ footer { display:none; }
 }
 
 .terminal nav section { font-size:0; }
-.terminal nav section > * { font-size:1rem; }
+.terminal nav section > * { font-size:1rem; color:#fff; }
 .terminal nav > :first-child { flex-grow:1; text-align:left; }
-.terminal nav > :last-child  { flex-grow:1; text-align:right; color:#fff; }
+.terminal nav > :last-child  { flex-grow:1; text-align:right; }
 
 X.terminal nav:hover .main_menu,
 X.terminal nav:focus-within .main_menu { border-radius:0 5px 5px 5px; }
@@ -277,12 +281,14 @@ X.terminal nav:focus-within .main_menu { border-radius:0 5px 5px 5px; }
 .terminal nav .main_menu:hover .commands,
 .terminal nav .main_menu:focus-within .commands {
 	display:flex;
-	flex-wrap:wrap;
-	position:absolute; bottom:100%; left:0; z-index:999; width:17em;
+	flex-wrap:wrap; justify-content:center; align-items:center;
+	position:absolute; bottom:100%; right:0; z-index:999; width:17em;
 	border-radius:5px;
 	padding:0 1px;
 }
 .terminal .connection_status { font-weight:bold; }
+X.terminal nav .cep { color:var(--terminal-text-color); align-self:center; text-align:center; width:100%; font-weight:normal; }
+
 
 .terminal :is(span, button) { margin:2px 1px; padding:0.1em 0.5em; border:none; vertical-align:middle; }
 .terminal button:focus,
@@ -296,13 +302,37 @@ X.terminal nav:focus-within .main_menu { border-radius:0 5px 5px 5px; }
 	;
 	color:var(--button-enabled-color);
 }
+.terminal button.login,
+.terminal button.logout,
+.terminal button.who,
+.terminal button.token,
+.terminal button.clear,
+.terminal button.help,
+.terminal button.connect,
+.terminal button.disconnect { background:#676; }
 
+X.terminal button.login      { background:#4a3; }
+X.terminal button.logout     { background:#a33; }
+X.terminal button.who        { background:#888; }
+X.terminal button.token      { background:#44c; }
+X.terminal button.clear      { background:#c84; }
+X.terminal button.help       { background:#286; }
+X.terminal button.connect    { background:#888; }
+X.terminal button.disconnect { background:#888; }
 
 .terminal.fancy output::before {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
+	filter:hue-rotate(0deg);
+	transition:filter 0.5s linear;
+}
+.terminal.yes output::before {
+	filter:hue-rotate(-90deg);
+}
+.terminal.no output::before {
+	filter:hue-rotate(120deg);
 }
 .terminal output {
 	margin-top:1em;
@@ -328,8 +358,12 @@ X.terminal .separators pre {
 }
 .terminal .separators pre:nth-child(2n) { background:#fff1; }
 
-.terminal pre.request  { color:var(--terminal-request-color)  ; white-space:pre-wrap; }
-.terminal pre.response { color:var(--terminal-response-color) ; white-space:pre-wrap; }
+.terminal pre.debug     > * { color:var(--terminal-debug-color)     ; white-space:pre-wrap; }
+.terminal pre.broadcast > * { color:var(--terminal-broadcast-color) ; white-space:pre-wrap; }
+.terminal pre.advisory  > * { color:var(--terminal-advisory-color)  ; white-space:pre-wrap; }
+.terminal pre.notice    > * { color:var(--terminal-notice-color)    ; white-space:pre-wrap; }
+.terminal pre.request       { color:var(--terminal-request-color)   ; white-space:pre-wrap; }
+.terminal pre.response      { color:var(--terminal-response-color)  ; white-space:pre-wrap; }
 .terminal pre.success  { color:var(--terminal-success-color)  ; }
 .terminal pre.failure  { color:var(--terminal-error-color)    ; }
 .terminal pre.cep      { color:var(--terminal-cep-color)      ; }
@@ -355,6 +389,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.local { color:var(--terminal-request-color); }
 .terminal textarea.local ::first-letter { color:#fff; }
 
+.terminal .connection_status.ping { color:var(--terminal-ping-color); }
 .terminal .time {
 	Xfont-variant-numeric: normal;
 	Xfont-variant-numeric: ordinal;

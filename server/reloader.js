@@ -82,7 +82,7 @@ module.exports = function AppReloader (callback) {
 	} // invalidate_require_cache
 
 
-	function some_modules_updated (socket) {
+	function some_modules_updated (socket, client_address) {
 		const file_name_report = {};   // Response telling user which files were updated
 
 		const changed_files = Object.keys( self.fileTimes.current ).filter( (file_name)=>{
@@ -128,7 +128,11 @@ module.exports = function AppReloader (callback) {
 		}
 
 		if (socket && Object.keys( file_name_report ).length) {
-			socket.send( JSON.stringify( {'MODULE RELOAD': file_name_report}, null, '\t' ) );
+			self.router.protocols.session.broadcast({
+				type    : 'reload',
+				address : client_address,
+				modules : file_name_report,
+			});
 		}
 
 		const nr_reloaded_files = Object.keys( file_name_report ).length;
@@ -145,7 +149,7 @@ module.exports = function AppReloader (callback) {
 	} // some_modules_updated
 
 
-	async function reload_modules (socket) {
+	async function reload_modules (socket, client_address) {
 		if (DEBUG.RELOADER_TIMES) console.time( '| (re)load time' );
 
 		if (self.alwaysReload) {
@@ -162,7 +166,7 @@ module.exports = function AppReloader (callback) {
 
 
 			// Re-require modules
-			const reload_required = some_modules_updated( socket );
+			const reload_required = some_modules_updated( socket, client_address );
 
 			if (DEBUG.RELOADER_TIMES) color_log(
 				COLORS.RELOADER,
@@ -274,7 +278,7 @@ module.exports = function AppReloader (callback) {
 
 		if (message) {
 			try {
-				await reload_modules( socket );
+				await reload_modules( socket, client_address );
 				await self.router.onMessage( socket, client_address, message );
 
 			} catch (error) {

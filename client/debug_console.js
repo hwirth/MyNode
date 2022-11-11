@@ -24,9 +24,29 @@ const BANG_REQUEST = '';//'>';//... Now multline == JSON request
 const BANG_CEP     = '.';
 
 const BUTTON_SCRIPTS = {
-	'login'      : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n\tstatus',
-	'as root'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:root\n\t\tpassword: 12345\n\tstatus',
-	'as user'    : BANG_REQUEST + 'session\n\tlogin\n\t\tusername:user\n\t\tpassword: pass2\n\tstatus',
+	'login'      : BANG_REQUEST //+ 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n\tstatus',
+		+ (`
+session
+	login
+		username: %u
+		password: %p
+		secondFactor: %t
+%N
+		`).trim(),
+	'as root'    : BANG_REQUEST //...+ 'session\n\tlogin\n\t\tusername:root\n\t\tpassword: 12345\n\tstatus',
+		+ (`
+session
+	login
+		username: root
+		password: 12345
+	status
+		`).trim(),
+	'as guest'    : BANG_REQUEST //...+ 'session\n\tlogin\n\t\tusername:user\n\t\tpassword: pass2\n\tstatus',
+		+ (`
+session
+	login
+		username: guest
+		`).trim(),
 	'logout'     : BANG_REQUEST + 'session\n\tlogout',
 	'status'     : BANG_REQUEST + 'session\n\tstatus',
 	'who'        : BANG_REQUEST + 'session\n\twho',
@@ -40,6 +60,8 @@ const BUTTON_SCRIPTS = {
 	'connect'    : BANG_CEP + 'connect: ' + SETTINGS.WS_URL,
 	'disconnect' : BANG_CEP + 'disconnect',
 };
+
+const BUTTON_DECORATE_CLASSNAME = ['login', 'logout', 'who', 'token', 'clear', 'help', 'connect', 'disconnect'];
 
 const TUTORIAL_SCRIPT = [
 	BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345',
@@ -148,6 +170,25 @@ export const DebugConsole = function (callback) {
 		self.elements.output.scrollBy(0, 99999);
 
 	} // scroll_down
+
+
+	function show_file (file_name) {
+		fetch( file_name ).then( (response)=>{
+			if (! response.ok) {
+				throw new Error( 'HTTP error, status = ' + response.status );
+			}
+			return response.text();   // returns a Promise
+
+		}).then( (new_text)=>{
+			self.print(
+				'CEP-' + CEP_VERSION + '\n'
+				+ new_text.split( '//EOF' )[0].trim()
+				,
+				'cep',
+			);
+		});
+
+	} // show_file
 
 
 	function next_script_entry (shift = true) {
@@ -313,21 +354,30 @@ export const DebugConsole = function (callback) {
 	} // text_to_request
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENTS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
 	function parse_button_script (script) {
+		const username = self.elements.userName.value;
+		const nickname = self.elements.nickName.value;
+		if (nickname && !username) self.elements.userName.value = 'guest';
 		const second_factor = self.elements.secondFactor.value || 'null';
+		script = script.replaceAll( '\n%N', (self.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
 		return (
 			script
-			.replaceAll( '%u', self.elements.username.value )
-			.replaceAll( '%p', self.elements.password.value )
+			.replaceAll( '%u', username )
+			.replaceAll( '%n', nickname )
+			.replaceAll( '%p', self.elements.passWord.value || 'null' )
 			.replaceAll( '%t', second_factor )
-			.split('\n').filter( line => line.indexOf('secondFactor:null') < 0 ).join('\n')
+			.split('\n')
+			.filter( line => line.indexOf('password: null') < 0 )
+			.filter( line => line.indexOf('secondFactor: null') < 0 )
+			.join('\n')
 		);
 
 	} // parse_button_script
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_script_button_click (event) {
 		event.preventDefault();
@@ -385,16 +435,12 @@ export const DebugConsole = function (callback) {
 
 
 	function on_keydown (event) {//... Move to  on_keyboard_event
-		if (['Shift', 'Ctrl', 'Alt'].indexOf(event.key) == 0) {
-			adjust_textarea();
-		}
-
-		if (event.keyCode == 13 && (!event.shiftKey && !event.ctrlKey && !event.altKey)) {
+		if ((event.keyCode == 13) && (!event.shiftKey && !event.ctrlKey && !event.altKey)) {
+			//  Enter newline
+		} else if ((event.keyCode == 13) && (event.shiftKey || event.ctrlKey || event.altKey)) {
 			// Execute command with any modifyer+Return
 			event.preventDefault();
 			self.elements.send.click();
-		} else if (event.keyCode == 13 && (event.shiftKey || event.ctrlKey || event.altKey)) {
-			//  Enter newline
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
 			event.preventDefault();
@@ -533,30 +579,13 @@ export const DebugConsole = function (callback) {
 	} // on_keydown_beep
 
 
-	function on_send_click (event) {
+	async function on_send_click (event) {
 
 // LOCAL COMMAND /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function perform_local (command) {
 			if (command.charAt(0) != BANG_CEP) return false;
 
 			self.print( command, 'request' );
-
-			function show_file (file_name) {
-				fetch( file_name ).then( (response)=>{
-					if (! response.ok) {
-						throw new Error( 'HTTP error, status = ' + response.status );
-					}
-					return response.text();   // returns a Promise
-
-				}).then( (new_text)=>{
-					self.print(
-						'CEP-' + CEP_VERSION + '\n'
-						+ new_text.split( '//EOF' )[0].trim()
-						,
-						'cep',
-					);
-				});
-			}
 
 			const token     = command.split(':')[0].slice(1);
 			const parameter = command.slice( token.length + 1 );
@@ -573,7 +602,26 @@ export const DebugConsole = function (callback) {
 				break;
 			case 'clear'  :  self.elements.output.innerHTML = '';  break;
 			case 'help'   :  show_file( 'help.txt' );              break;
+			case 'issue'  :  show_file( 'issue.txt' );             break;
 			case 'readme' :  show_file( 'README'   );              break;
+			case 'music':
+				document.body.innerHTML += (`
+<footer class="main_menu">
+	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+</footer>
+<iframe
+	style="position:absolute; top:0; left:0; z-index:1000; width:100px; height:70px; overflow:hidden;"
+	width="560" height="315"
+	src="https://www.youtube.com/embed/gXBuEcue9tE"
+	title="YouTube video player"
+	frameborder="0"
+	allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+	allowfullscreen
+	autoplay="true"
+></iframe>
+		`);
+				break;
 			default:
 				self.elements.connection.classList = 'connection_status error';
 				self.elements.connection.innerText = 'Error';
@@ -598,7 +646,7 @@ export const DebugConsole = function (callback) {
 				},
 			};
 
-			request.tag = ++self.requestId;
+			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
 			callback.send( request );
 
 		}
@@ -606,14 +654,60 @@ export const DebugConsole = function (callback) {
 
 		const text = self.elements.input.value.trim();
 		const is_local  = perform_local( text );
-		const connected = callback.isConnected();
 
 		if (!is_local) {
-			if (connected) {
+			const max_attempts = 10;
+			let nr_attempts = 0;
+
+			async function connection_established (Xnr_attempts = 0) {
+				if (callback.isConnected()) {
+					return Promise.resolve();
+				} else if (nr_attempts > max_attempts) {
+					return Promise.reject();
+				} else {
+					self.print( 'Attempt nr. ' + (nr_attempts++) )
+
+					return new Promise( (done)=>{
+						setTimeout( async ()=>{
+							if (callback.isConnected()) return done();
+							await connection_established().catch( (error)=>{
+								return connection_established();
+							});
+							done();
+						}, SETTINGS.TIMEOUT.RECONNECT*10 );
+					});
+				}
+			}
+
+			if (!callback.isConnected()) {
+				self.print( 'Connecting to ' + SETTINGS.WS_URL, 'cep' );
+
+				await callback.connect();  //...! Doesn't wait for onConnect
+				while ((nr_attempts++ < max_attempts) && !callback.isConnected()) {
+					await new Promise( (done)=>{
+						setTimeout( done, SETTINGS.TIMEOUT.RECONNECT );
+					});
+				}
+			}
+
+			if (nr_attempts == max_attempts) {
+				self.print( 'Aborting auto-connect', 'cep' );
+			}
+
+			if (callback.isConnected()) {
 				send_json( text );
 			} else {
-				self.print( text, 'request' );
-				self.print( 'Not connected', 'error' );
+				await new Promise( (done)=>{
+					setTimeout( ()=>{
+						if (callback.isConnected()) {
+							send_json( text );
+						} else {
+							//...self.print( text, 'request' );
+							self.print( 'Not connected', 'error' );
+						}
+						done();
+					}, SETTINGS.TIMEOUT.RECONNECT);
+				});
 			}
 		}
 
@@ -796,6 +890,7 @@ export const DebugConsole = function (callback) {
 		.replaceAll( '&amp;', '###amp###' )
 		.replace( /&/g, '&amp;' )
 		.replace( /</g, '&lt;'  )
+		//... .replaceAll( ': ', ':\t' )
 		;
 
 		tokens.forEach( (token, index)=>{
@@ -820,7 +915,21 @@ export const DebugConsole = function (callback) {
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
-		// Speech synthesizer
+		// Visualize/sonifiy success
+		if (message.response && (typeof message.response.success != 'undefined')) {
+			const success = message.response.success ? 'yes' : 'no';
+
+			if (!self.elements.terminal.classList.contains('no') || (success == 'yes')) {
+				self.elements.terminal.classList.add( success );
+			}
+			setTimeout( ()=>{
+				self.elements.terminal.classList.remove( 'yes' );
+				self.elements.terminal.classList.remove( 'no' );
+			}, 1000);
+
+			sam_speak( success );
+		}
+	/*
 		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
 		const allowed = char => chars.indexOf(char.toLowerCase()) >= 0;
 		sam_speak(
@@ -839,6 +948,7 @@ export const DebugConsole = function (callback) {
 			.filter( allowed )
 			.join('')
 		);
+	*/
 
 	}; // print
 
@@ -856,8 +966,8 @@ export const DebugConsole = function (callback) {
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
 
-		document.body.innerHTML = (`
-<form class="active terminal">
+		document.body.innerHTML += (`
+<form class="Xactive terminal">
 	<nav class="controls">
 		<section class="toggles">
 			<button class="animations" title="Animations [Alt]+[A]">A</button>
@@ -872,17 +982,19 @@ export const DebugConsole = function (callback) {
 	<output></output>
 	<textarea></textarea>
 	<nav class="status">
+		<section>
+			<span class="connection warning">OFFLINE</span>
+			<span class="time">12:23:02.2</span>
+		</section>
 		<section class="main_menu">
 			<section class="commands">
-				<input type="text" placeholder="username">
-				<input type="password" placeholder="password">
-				<input type="password" placeholder="TFA">
+				<!-- h2 class="cep">CEP</h2 -->
+				<input type="text" placeholder="Username">
+				<input type="text" placeholder="Nickname">
+				<input type="password" placeholder="Password">
+				<input type="password" placeholder="Factor 2">
 			</section>
 			<button class="submit" title="Shortcut: [Return]. [Shift]+[Return] inserts a newline">Enter</button>
-		</section>
-		<section>
-			<span class="time">12:23:02.2</span>
-			<span class="connection warning">OFFLINE</span>
 		</section>
 	</nav>
 </form>
@@ -892,13 +1004,15 @@ export const DebugConsole = function (callback) {
 		self.elements = {
 			html         : document.querySelector( 'html' ),
 			terminal     : container,
+			connection   : container.querySelector( '.connection' ),
 			controls     : container.querySelector( '.controls'   ),
 			commands     : container.querySelector( '.commands'   ),
 			output       : container.querySelector( 'output'      ),
 			input        : container.querySelector( 'textarea'    ),
-			username     : container.querySelector( '[placeholder=username]' ),
-			password     : container.querySelector( '[placeholder=password]' ),
-			secondFactor : container.querySelector( '[placeholder=TFA]'      ),
+			userName     : container.querySelector( '[placeholder=Username]'   ),
+			nickName     : container.querySelector( '[placeholder=Nickname]'   ),
+			passWord     : container.querySelector( '[placeholder=Password]'   ),
+			secondFactor : container.querySelector( '[placeholder="Factor 2"]' ),
 			close        : container.querySelector( '.close'      ),
 			send         : container.querySelector( '.submit'     ),
 			animations   : container.querySelector( '.animations' ),
@@ -937,10 +1051,13 @@ export const DebugConsole = function (callback) {
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
 
+			//...if (BUTTON_DECORATE_CLASSNAME.indexOf(key) >= 0)
+			new_button.className = key;
+
 			const hue = Math.floor(360 / Object.keys(BUTTON_SCRIPTS).length * index);
 			const css = 'hue-rotate(' + hue + 'deg)';
 
-			new_button.className    = key;
+			//new_button.className    = key;
 			new_button.innerText    = name;
 			new_button.title        = 'Double click to execute immediately';
 			//...new_button.style.filter = css;
@@ -970,25 +1087,29 @@ export const DebugConsole = function (callback) {
 			}
 			self.toggle( key, self.toggles[key] );
 		});
-		/*
-		self.elements.close     .addEventListener( 'click', ()=>self.toggle('terminal')   );
-		self.elements.animations.addEventListener( 'click', ()=>self.toggle('animations') );
-		self.elements.fancy     .addEventListener( 'click', ()=>self.toggle('fancy')      );
-		self.elements.keyBeep   .addEventListener( 'click', ()=>self.toggle('keyBeep')    );
-		self.elements.sam       .addEventListener( 'click', ()=>self.toggle('sam')        );
-		*/
 
 
 		// Keyboard
 		addEventListener('keydown', on_keydown_beep );
 		addEventListener('keydown', (event)=>{//...? Where is chat/json? unify
 			const enabled = (self.elements.input.value.charAt(0) == '.');
-			self.elements.input.classList.toggle('local', enabled )
+			self.elements.input.classList.toggle( 'local', enabled )
 		});
+        	self.elements.input.addEventListener( 'keydown', on_keydown );
 		['keydown', 'keypress', 'keyup' ].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
 		);
-        	self.elements.input.addEventListener( 'keydown', on_keydown );
+
+
+		// Login form
+		self.elements.login = self.elements.terminal.querySelector( '.login' );
+		self.elements.terminal.querySelectorAll( '.commands input' ).forEach( (input)=>{
+			input.addEventListener( 'input'  , ()=>self.elements.login.click() );
+			input.addEventListener( 'change' , ()=>self.elements.login.click() );
+		});
+		self.elements.commands.addEventListener( 'keydown', (event)=>{
+			if (event.keyCode == 13) self.elements.send.click();
+		});
 
 
 		// Re-focus prompt
@@ -998,9 +1119,20 @@ export const DebugConsole = function (callback) {
 
 		self.elements.terminal.addEventListener( 'click', (event)=>{
 			if( (event.target === self.elements.terminal)
-			||  (event.target === self.elements.output)
+			//...? no effect:   ||  (event.target === self.elements.output)
 			||  (event.target === self.elements.input)
 			){
+				focus_prompt();
+			}
+		});
+
+		let mouse_moved = true;
+		self.elements.output.addEventListener( 'mousedown', ()=>mouse_moved = false );
+		self.elements.output.addEventListener( 'mousemove', ()=>mouse_moved = true );
+		self.elements.output.addEventListener( 'blur',      ()=>mouse_moved = false );
+		self.elements.output.addEventListener( 'mouseup', (event)=>{
+			if (event.button != 0) return;
+			if (!mouse_moved) {
 				focus_prompt();
 			}
 		});
@@ -1020,7 +1152,9 @@ export const DebugConsole = function (callback) {
 		const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
 		CEP_VERSION += '^' + shortcuts;   // For .help
-		self.print( 'CEP-' + CEP_VERSION + ' ready.\n', 'cep' );
+		//...self.print( 'CEP-' + CEP_VERSION + ' ready.\n', 'cep' );
+		show_file( 'issue.txt' );
+		//...self.elements.terminal.querySelector( 'h2.cep' ).innerText = 'CEP-' + CEP_VERSION;
 
 		if (self.elements.terminal.classList.contains( 'active' )) setTimeout( focus_prompt, 100 );
 

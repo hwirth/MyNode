@@ -80,10 +80,11 @@ const SETTINGS = {
 	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789_[]()@-/äöüß',   // Chat name white list
 
 	TIMEOUT: {
-		SOCKET_CLOSE : 100,
-		PING         : 2000,   //... ws has this?
-		LOGIN        : 5*1000,
-		IDLE         : 5*1000,
+		SOCKET_CLOSE  : 300,
+		LOGIN         : 5*1000,
+		IDLE          : 5*1000,
+		PING_INTERVAL : 3*1000,
+		PING          : 2000,   //... ws has this?
 	},
 
 }; // SETTINGS

@@ -31,43 +31,26 @@ module.exports = function ChatServer (persistent_data, callback) {
 		);
 
 		if (client.login) {
+			//... Check nick validity/availability
+			if (!parameters) {
+				client.respond( STATUS.FAILURE, request_id, STATUS.INVALID_NICKNAME );
+				return;
+			}
+
 			const new_nick      = parameters;
+			const old_nick      = client.login.nickName;
 			const t0            = Date.now();
 			const all_clients   = callback.getAllClients();
 			const authenticated = client_address => all_clients[client_address].login;
 
-			//... Check nick validity/availability
-
-			const nick_before = client.login.nickName;
 			client.login.nickName = new_nick;
 
-			const message
-			= (nick_before)
-			? nick_before +' is now known as ' + new_nick
-			: client.login.userName + ' chose the nick name ' + new_nick
-			;
-
 			client.broadcast({
-				type    : 'nickChange',
-				time    : t0,
-				chat    : message,
-				oldNick : nick_before || null,
-				newNick : client.login.nickName,
+				type     : 'nickName',
+				userName : client.login.userName,
+				nickName : new_nick,
+				oldNick  : old_nick,
 			});
-
-		/*
-			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
-				all_clients[recipient].respond(
-					STATUS.NONE,
-					request_id,
-					{
-						time   : t0,
-						sender : client.login.nickName,
-						chat   : message,
-					},
-				)
-			);
-		*/
 
 			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
 
@@ -91,17 +74,17 @@ module.exports = function ChatServer (persistent_data, callback) {
 			const all_clients   = callback.getAllClients();
 			const authenticated = client_address => all_clients[client_address].login;
 
-			Object.keys( all_clients ).filter( authenticated ).forEach( recipient =>
-				all_clients[recipient].respond(
-					STATUS.NONE,
-					request_id,
-					{
-						time   : t0,
-						sender : client.login.nickName || client.login.userName,
-						chat   : message,
+			Object.keys( all_clients ).filter( authenticated ).forEach( (recipient)=>{
+				all_clients[recipient].send({
+					advisory: {
+						type     : 'chat',
+						time     : t0,
+						userName : client.login.userName,
+						nickName : client.login.nickName,
+						message  : message,
 					},
-				)
-			);
+				});
+			});
 
 			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
 

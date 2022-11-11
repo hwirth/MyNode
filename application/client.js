@@ -9,7 +9,7 @@ const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 
-const { REASONS, STATUS, ID_SERVER } = require( './constants.js' );
+const { REASONS, STATUS, STRINGS, ID_SERVER } = require( './constants.js' );
 
 
 module.exports = function WebSocketClient (socket, client_address, callback) {
@@ -19,6 +19,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	this.idleSince;
 	this.maxIdleTime;
 	this.login;
+	this.pingNr;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -43,10 +44,11 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		if (timeouts[name]) {
 			clearTimeout( timeouts[ name ] );
 			delete timeouts[name];
-
+/*//...
 			if (self.maxIdleTime && (name == 'login')) {
 				set_timeout( 'idle' , on_idle_timeout , self.maxIdleTime );
 			}
+*/
 		}
 
 	} // clear_timeout
@@ -54,8 +56,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 	function on_login_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
-		//...? self.respond( STATUS.NONE, ID_SERVER, REASONS.LOGIN_TIMED_OUT );
-		self.send({ 'LOGIN TIME OUT\nEND OF LINE.': {} });
+		self.send({ notice: STRINGS.LOGIN_TIMEOUT });
 		self.closeSocket();
 
 	} // on_login_timeout
@@ -63,8 +64,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 	function on_idle_timeout () {
 		color_log( COLORS.WARNING, 'WebSocketClient-on_idle_timeout:', client_address );
-		//...? self.respond( STATUS.NONE, ID_SERVER, REASONS.IDLE_TIMEOUT );
-		self.send({ 'IDLE TIMEOUT\nEND OF LINE.': {} });
+		self.send({ notice: STRINGS.IDLE_TIMEOUT });
 		self.closeSocket();
 
 	} // on_idle_timeout
@@ -77,30 +77,55 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 // CONNECTION AND MESSAGES ///////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.send = function (message) {
-		const stringified_json = JSON.stringify( message, null, '\t' );
+	this.send = function (message, request_id) {
+		if (request_id && (typeof message != 'string')) message.request = request_id.request;
+
+		if (request_id) message.command = request_id.command;
 
 		if (DEBUG.MESSAGE_OUT) color_log(
 			COLORS.SESSION,
 			'WebSocketClient-send:',
-			JSON.parse( stringified_json ),   // Re-parsing turns it into a single line
+			message,
 		);
 
-		if (socket.send) socket.send( stringified_json );
+		if (typeof message != 'string') {
+			message = JSON.stringify( message, null, '\t' );
+		}
+
+		if (socket.send) socket.send( message );
 
 	}; // send
 
 
-	this.broadcast = function (message) {
+	this.respond = function (status, request_id, result) {
+		self.send({
+			response: {
+				type     : request_id.command,
+				time     : Date.now(),
+				tag      : request_id.tag || null,
+				request  : request_id.request,
+				success  : status,
+				message  : result,
+			},
+		});
+
+	}; // respond
+
+
+	this.broadcast = function (message, request_id = {}) {
+		if (request_id && (typeof message != 'string')) message.request = request_id.request;
+
 		if (!self.login) {
 			self.respond( STATUS.FAILURE, null, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
 
-		callback.broadcast({
-			sender  : self.login.userName,
-			message : message,
-		});
+		message.tag      = request_id.tag,
+		message.request  = request_id.request,
+		message.command  = request_id.command,
+		message.userName = (self.login) ? self.login.userName : null;
+		message.nickName = (self.login) ? self.login.nickName : null;
+		callback.broadcast( message );
 
 	}; // broadcast
 
@@ -117,20 +142,9 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	}; // closeSocket
 
 
-	this.respond = function (status, request_id, result) {
-		self.send({
-			tag      : request_id.tag,
-			success  : status,
-			response : result,
-			MCP      : request_id.MCP,
-		});
-
-	}; // respond
-
-
 // OTHER METHODS /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.setIdleTime = function (new_idle_time) {
+	this.setIdleTime = function (new_idle_time = SETTINGS.TIMEOUT.LOGIN) {
 		self.maxIdleTime = new_idle_time;
 		set_timeout( 'idle', on_idle_timeout, self.maxIdleTime );
 
@@ -162,6 +176,23 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	}; // inGroup
 
 
+	this.sendPing = function () {
+		self.send({
+			advisory: {
+				type: 'ping',
+				pong: ++self.pingNr,
+			}
+		});
+
+	}; // sendPing
+
+
+	this.receivePong = function () {
+		set_timeout( 'ping', self.sendPing, SETTINGS.TIMEOUT.PING_INTERVAL );
+
+	}; // receivePong
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -187,6 +218,9 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		self.login       = false;
 
 		set_timeout( 'login', on_login_timeout, SETTINGS.TIMEOUT.LOGIN );
+
+		self.pingNr = 0;
+		self.receivePong();
 
 		return Promise.resolve();
 

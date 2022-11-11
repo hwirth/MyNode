@@ -76,7 +76,10 @@ module.exports.Router = function (persistent, callback) {
 		// Main level keys designate target protocol, second level a command
 		// Since keys in objects must be unique, each command can only be used once
 
-		const request_id = message;   //...? Usually .tag is used, but not always
+		const request_id = {
+			tag: message.tag,
+			request: null,
+		}
 
 		const client = self.protocols.session.getClientByAddress( client_address );
 		if (!client) {
@@ -87,22 +90,21 @@ module.exports.Router = function (persistent, callback) {
 
 
 		function send_error (error, catch_mode = '') {
-			const new_message = {
-				tag      : request_id.tag,
-				success  : false,
-				reason   : REASONS.INTERNAL_ERROR,
-			};
+			color_log( COLORS.ERROR, 'ERROR Router.onMessage-send_error:', error );
 
-			const show_full_report = client.login && client.inGroup( 'admin', 'dev' );
+			Object.keys( persistent.session.clients ).forEach( (address)=>{
+				const client = persistent.session.clients[address];
+				const new_message = {
+					tag      : request_id.tag,
+					request  : request_id.request || null,
+					success  : false,
+					reason   : REASONS.INTERNAL_ERROR,
+				};
 
-			if (show_full_report) {
-				color_log( COLORS.ERROR, 'ERROR Router.onMessage:1' );
-				new_message.response = format_error( error );
-			} else {
-				color_log( COLORS.ERROR, 'ERROR Router.onMessage-send_error:', error );
-			}
+				if (client.inGroup('admin', 'dev')) new_message.error = format_error( error );
 
-			callback.broadcast({ ['ROUTER ERROR ' + catch_mode + ':']: new_message });
+				client.send({ broadcast: new_message });
+			});
 		}
 
 
@@ -112,6 +114,9 @@ module.exports.Router = function (persistent, callback) {
 		async function call_request_handler (protocol_name, command_name) {
 			const combined_name = protocol_name + '.' + command_name;
 			const request_handler = self.protocols[protocol_name].request[command_name];
+
+			++request_id.request;
+			request_id.command = combined_name;
 
 			if (!request_handler) {
 				rejected_commands.push( combined_name );
@@ -181,6 +186,7 @@ module.exports.Router = function (persistent, callback) {
 
 		// For each protocol addressed (top level key),  call_request_handler(...);
 
+		let handler_count = 0;
 		const handler_calls = async ([protocol_name, protocol_command_names]) => {
 			const protocol = self.protocols[protocol_name];
 
@@ -211,6 +217,7 @@ module.exports.Router = function (persistent, callback) {
 					// Enforce execution order on second level (commands)
 					await prev;
 					return call_request_handler(protocol_name, command_name);
+
 				}, Promise.resolve());
 			}
 
@@ -295,6 +302,7 @@ module.exports.Router = function (persistent, callback) {
 		const registered_protocols = {
 			session : { template: SessionHandler,
 				callbacks: [
+					'broadcast',
 					'verifyToken',
 					'getAllClients',
 				],

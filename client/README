@@ -132,7 +132,7 @@ When sub-objects need to call methods of other objects which also need to call m
 just pass the all methods as callbacks when instantiating the first object, because the next one does not exist yet.
 Therefore, "relay" functions in the main object are used for instantiation, because we are allowed to code calls for
 things that don't yet exist, when the funcion is declared.
-
+//EOF
 
 4. Configuration
 ================
@@ -166,6 +166,13 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] broadcast, advisory, notice, debug protocols
+[?] Don't client.send/broadcast, return results to router
+[ ] Get rid of line-divs and rules  output pre > *
+[ ] self.debugConsole.print( message, 'response' ); --> ( 'response', message )
+[ ] Connection throttling:
+ADVISORY
+TRY AGAIN IN 5207 MILLISECONDS WITH TAG D822AE3A74
 [ ] as [ before | (username,password) [do <command>| continue] ]
 [ ] "MCP asleep"
 [ ] Keyboard toggles --> buttons
@@ -200,6 +207,8 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 6.1 Git
 -------
 --paginate
+git commit --amend
+
 (04:31:00 AM) EdFletcher: hmw[at]: along the same lines, take a look at interactive rebase. it's a very powerful tool
 for reworking commits which encourages you to make many small commits (as you can always rework them later). so in your
 case you could make frequent commits that only touch one or a few files, then arrange them contextually into related
@@ -233,7 +242,6 @@ callbacks.sendToClient( client.address, data ); - Have session.js "publish" its 
 
 7. Code Parking Space (Ignore)
 ==============================
-//EOF
 	as
 		username: <name>
 		do

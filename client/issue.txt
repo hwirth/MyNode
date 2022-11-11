@@ -1,0 +1,6 @@
+MyNode Enlightenment CMS - JSON Debugger and Chat
+-------------------------------------------------
+1. Log in as "guest" in the "Enter" menu
+2. You can choose a nick name, if you like.
+3. [Shift]+[Return]: Send text or requests
+-------------------------------------------------

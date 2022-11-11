@@ -113,7 +113,7 @@ const Main = function () {
 			EXTRA_HEADER_DASHES,
 		);
 
-		if (DEBUG.MESSAGE_IN) color_log( COLORS.MESSAGE_IN, '', JSON.parse(String( json_string )) );
+		if (DEBUG.MESSAGE_IN) color_log( COLORS.RECEIVED, 'Received:', JSON.parse(String( json_string )) );
 
 		await self.reloader.onMessage( socket, client_address, json_string );
 
@@ -218,9 +218,10 @@ const Main = function () {
 
 			self.wsServer.handleUpgrade( request, socket, head, (socket)=>{
 				self.wsServer.emit( 'connection', socket, request );
-				socket.send( JSON.stringify({
-					['Welcome on ' + SETTINGS.SERVER_NAME + '.']: {},
-				}) );
+				socket.send( //JSON.stringify({ [
+					'Welcome on ' + SETTINGS.SERVER_NAME + '.'
+				//: {},] })
+				);
 			});
 
 

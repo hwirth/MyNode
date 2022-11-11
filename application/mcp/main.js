@@ -34,7 +34,6 @@ module.exports = function MasterControl (persistent, callback) {
 			console.log( COLORS.DEFAULT );
 		});
 
-		if (SETTINGS.DEV_SERVER) DEBUG.MCPTOKEN = new_token;
 		current_access_token = new_token;
 
 		return new_token;
@@ -118,8 +117,8 @@ module.exports = function MasterControl (persistent, callback) {
 								.split( '\n' )
 							),
 						},
-						//...debug: DEBUG,
 						settings: SETTINGS,
+						debug: DEBUG,
 					},
 				);
 
@@ -165,7 +164,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 		const provided_token = String( parameters.token || null );
 
-		if (!verify_token( provided_token, client )) {
+		if (false&&!verify_token( provided_token, client )) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
