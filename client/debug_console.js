@@ -426,7 +426,7 @@ export const DebugConsole = function (callback) {
 
 	function on_keydown (event) {//... Move to  on_keyboard_event
 		if ((event.keyCode == 13) && (!event.shiftKey && !event.ctrlKey && !event.altKey)) {
-			//  Enter newline
+			//... Do nothing, let user enter newline
 
 		} else if ((event.keyCode == 13) && (event.shiftKey || event.ctrlKey || event.altKey)) {
 			// Execute command with any modifyer+Return
@@ -437,26 +437,19 @@ export const DebugConsole = function (callback) {
 			// Insert TAB character instead of leaving the textarea
 			event.preventDefault();
 
-			const input = self.elements.input;
-			let selection_start = input.selectionStart;
+			const input           = self.elements.input;
+			const selection_start = input.selectionStart;
+			const before          = input.value.substring( 0, input.selectionStart );
+			const after           = input.value.substring( input.selectionEnd )
 
-			input.value
-			= input.value.substring( 0, input.selectionStart )
-			+ '\t'
-			+ input.value.substring( input.selectionEnd )
-			;
-
-			input.selectionEnd = selection_start + EXTRA_LINES + 1;
+			input.value           = before + '\t' + after;
+			input.selectionEnd    = selection_start + EXTRA_LINES + 1;
 		}
 
 	} // on_keydown
 
 
 	function on_keyboard_event (event) {
-		const shift = event.shiftKey;
-		const ctrl = event.ctrlKey;
-		const alt = event.altKey;
-
 		if ((event.type == 'keydown') && DEBUG.KEYBOARD_EVENTS) {
 			console.log( 'KEYDOWN:', 'key:', event.key, 'code:', event.code );
 		}
@@ -467,9 +460,9 @@ export const DebugConsole = function (callback) {
 
 		KEYBOARD_SHORTCUTS.forEach( (shortcut)=>{
 			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
-			const is_event = (shortcut.event.split(',')).indexOf( event.type ) >= 0;
+			const is_event = (shortcut.event.split( ',' )).indexOf( event.type ) >= 0;
 
-			if (is_event && is_key && modifiers(shortcut)) {
+			if (is_event && is_key && modifiers( shortcut )) {
 				event.stopPropagation();
 				event.preventDefault();
 
