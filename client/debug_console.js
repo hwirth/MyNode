@@ -277,7 +277,7 @@ export const DebugConsole = function (callback) {
 		const stack = [result];
 		let current_indentation = 0;
 
-		const request = parse_line( 0 )
+		const request = parse_line( 0 );
 
 		if (id) {
 			const new_request = { tag: id };
@@ -399,7 +399,7 @@ export const DebugConsole = function (callback) {
 		const ctrl = event.ctrlKey;
 		const alt = event.altKey;
 
-		const connected = callback.isConnected();
+		const connected        = callback.isConnected();
 		const commands_clicked = event.target.closest('.terminal .commands');
 		const button_clicked   = event.target.tagName == 'BUTTON';
 
@@ -427,10 +427,12 @@ export const DebugConsole = function (callback) {
 	function on_keydown (event) {//... Move to  on_keyboard_event
 		if ((event.keyCode == 13) && (!event.shiftKey && !event.ctrlKey && !event.altKey)) {
 			//  Enter newline
+
 		} else if ((event.keyCode == 13) && (event.shiftKey || event.ctrlKey || event.altKey)) {
 			// Execute command with any modifyer+Return
 			event.preventDefault();
 			self.elements.send.click();
+
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
 			event.preventDefault();
