@@ -21,7 +21,9 @@ export const SETTINGS = {
 	AUTO_APPEND_TAGS : true,
 
 	TIMEOUT: {
-		RECONNECT : 200,   //1000 ms
+		RECONNECT        : 200,   //1000 ms
+		BIT_ANSWER_COLOR : 200,
+		BIT_ANSWER_SOUND : 250,
 	},
 
 	KEYBOARD_BEEP : true,

@@ -126,6 +126,7 @@ body.dark_mode {
 	font-display: swap;
 }
 
+
 /* PAGE LAYOUT */
 
 * { margin:0; padding:0; box-sizing:border-box; font-size:1rem; }
@@ -265,10 +266,20 @@ footer { display:none; }
 	padding:0 1px;
 }
 
-.terminal nav section { font-size:0; }
+.terminal nav > section {
+	Xdisplay:flex;
+	Xalign-items:center;
+	Xjustify-content:center;
+	Xfont-size:0;
+}
 .terminal nav section > * { font-size:1rem; color:#fff; }
-.terminal nav > :first-child { flex-grow:1; text-align:left; }
-.terminal nav > :last-child  { flex-grow:1; text-align:right; }
+.terminal nav section > * {
+	Xdisplay:flex;
+	Xalign-items:center;
+	Xjustify-content:center;
+}
+.terminal nav > :first-child { flex-grow:1; text-align:left; Xalign-items:start; }
+.terminal nav > :last-child  { flex-grow:1; text-align:right; Xalign-items:end; }
 
 X.terminal nav:hover .main_menu,
 X.terminal nav:focus-within .main_menu { border-radius:0 5px 5px 5px; }
@@ -290,7 +301,7 @@ X.terminal nav:focus-within .main_menu { border-radius:0 5px 5px 5px; }
 X.terminal nav .cep { color:var(--terminal-text-color); align-self:center; text-align:center; width:100%; font-weight:normal; }
 
 
-.terminal :is(span, button) { margin:2px 1px; padding:0.1em 0.5em; border:none; vertical-align:middle; }
+.terminal :is(span, button) { margin:2px 1px; padding:2px 7px 1px 8px; border:none; vertical-align:middle; }
 .terminal button:focus,
 .terminal button:hover   { filter:brightness(1.5); }
 .terminal button.submit  { background:var(--button-submit-bg); color:var(--button-submit-color); }
@@ -326,13 +337,13 @@ X.terminal button.disconnect { background:#888; }
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
 	filter:hue-rotate(0deg);
-	transition:filter 0.5s linear;
+	transition:filter 0.05s linear;
 }
 .terminal.yes output::before {
-	filter:hue-rotate(-90deg);
+	filter:hue-rotate(-90deg) contrast(2);
 }
 .terminal.no output::before {
-	filter:hue-rotate(120deg);
+	filter:hue-rotate(120deg) contrast(2);
 }
 .terminal output {
 	margin-top:1em;

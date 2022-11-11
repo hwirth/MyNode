@@ -925,9 +925,15 @@ export const DebugConsole = function (callback) {
 			setTimeout( ()=>{
 				self.elements.terminal.classList.remove( 'yes' );
 				self.elements.terminal.classList.remove( 'no' );
-			}, 1000);
+			}, SETTINGS.TIMEOUT.BIT_ANSWER_COLOR);
 
-			sam_speak( success );
+			setTimeout( ()=>{
+				sam_speak( success );
+			}, SETTINGS.TIMEOUT.BIT_ANSWER_SOUND * (message.response.request-1) );
+		}
+
+		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
+			sam_speak( message.broadcast.success ? 'yes' : 'no' );
 		}
 	/*
 		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
