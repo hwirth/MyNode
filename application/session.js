@@ -81,12 +81,13 @@ module.exports = function SessionHandler (persistent, callback) {
 			//...new Date().toUTCString();
 		}
 
-		//if (typeof message != 'string') message = JSON.stringify( message, null, '\t' );
+		//...if (typeof message != 'string') message = JSON.stringify( message, null, '\t' );
 
+		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
 		const bulletin = {
 			broadcast: {
+				time : time,
 				type : message.type,
-				time : Date.now(),
 				...message,
 			}
 		};
@@ -115,7 +116,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		}
 
 		self.broadcast({
-			type    : 'connected',
+			type    : 'connect',
 			address : client_address,
 		});
 
@@ -145,14 +146,14 @@ module.exports = function SessionHandler (persistent, callback) {
 
 		if (client.login) {
 			self.broadcast({
-				type     : 'disconnected',
+				type     : 'disconnect',
 				address  : client_address,
 				userName : client.login.userName,
 				nickName : client.login.nickName,
 			});
 		} else {
 			self.broadcast({
-				type    : 'disconnected',
+				type    : 'disconnect',
 				address : client_address,
 			});
 		}
@@ -217,11 +218,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		const user_record = persistent.accounts[parameters.username];
 		if (!user_record) {
 			log_warning( 'login', REASONS.INVALID_USERNAME, dump(client) );
-			client.respond(
-				STATUS.FAILURE,
-				request_id,
-				REASONS.USERNAME_UNKNOWN.replace('NAME', parameters.username)
-			);
+			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			return;
 
 		}
@@ -244,6 +241,12 @@ module.exports = function SessionHandler (persistent, callback) {
 			const new_subscriptions = ['broadcast'];
 			if (user_record.subscriptions) subs.push( ...user_record.subscriptions );
 
+			client.login = {
+				userName      : parameters.username,
+				groups        : new_groups,
+				subscriptions : new_subscriptions,
+			};
+
 			client.secondFactor
 			=  (typeof parameters.secondFactor == 'undefined')
 			|| (typeof parameters.secondFactor == 'null')
@@ -254,29 +257,24 @@ module.exports = function SessionHandler (persistent, callback) {
 				/*login_request*/true,
 			);
 
-			//...delete client.login;   // Ensure last entry
-			client.login = {
-				userName      : parameters.username,
-				groups        : new_groups,
-				subscriptions : new_subscriptions,
-			};
-
-			client.setIdleTime( user_record.maxIdleTime );
-
 			if (client.login.userName == 'guest') {
 				client.login.userName += ++self.guestNr;
 			}
 
-// /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+			client.setIdleTime( user_record.maxIdleTime );
+
 			callback.broadcast({
-				type     : 'attached',
+				type     : 'login',
 				address  : client.address,
 				userName : client.login.userName,
 			});
 
 			color_log( COLORS.COMMAND, '<session.login>', 'client:', dump(client) );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
+;
+			client.send({ notice: user_record.banner || STRINGS.LOGIN_BANNER });
 
+// /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		} else {
 			log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
 			client.respond( STATUS.FAILURE, request_id, REASONS.BAD_PASSWORD );
@@ -309,7 +307,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 
 			callback.broadcast({
-				type     : 'detached',
+				type     : 'logout',
 				address  : client.address,
 				userName : client.login.userName,
 				nickName : client.login.nickName,
@@ -383,7 +381,8 @@ module.exports = function SessionHandler (persistent, callback) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
-
+if (!client.login) throw new Error( 'NO CLIENT' );
+		//... cant kick multiple
 		let target_client = null;
 		if (parameters.address) {
 			target_client = persistent.clients[parameters.address];
@@ -467,11 +466,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.exit' );
 
-		callback.broadcast({
-			sender  : 'SessionHandler',
-			type    : 'serverRestart',
-			text    : STRINGS.RESTARTING_SERVER,
-		});
+		callback.broadcast({ type: 'restart' });
 
 		return new Promise( done => setTimeout(done, SETTINGS.TIMEOUT.SOCKET_CLOSE) );
 

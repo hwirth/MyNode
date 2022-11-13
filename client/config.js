@@ -5,28 +5,38 @@
 
 "use strict";
 
+function get (search) {
+	return search.split(' ').reduce( (prev, term)=>{
+		return prev || (location.href.indexOf( term ) >= 0);
+	}, false);
+
+} // get
+
 export const DEBUG = {
 	WEBSOCKET       : !false,
 	KEYBOARD_EVENTS : false,
 
 	HIDE_MESSAGES: {
 		PING : true,
-		CHAT : true,
+		CHAT : false,
 	},
 };
 
 export const SETTINGS = {
-	WS_URL           : 'wss://spielwiese.central-dogma.at:1337',
 	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS : true,
+	KEYBOARD_BEEP    : true,   // Turn off entirely, see PRESETS
+	HIDE_PINGPONG    : true,   // Don't log ping/pong messages to the dev console
+
+	WEBSOCKET: {
+		URL : 'wss://spielwiese.central-dogma.at:1337',
+	},
 
 	TIMEOUT: {
 		RECONNECT        : 200,   //1000 ms
 		BIT_ANSWER_COLOR : 200,
-		BIT_ANSWER_SOUND : 250,
+		BIT_ANSWER_SOUND : 270,
 	},
-
-	KEYBOARD_BEEP : true,
 
 	YOUTUBE: {
 		VOLUME    : 3,
@@ -43,13 +53,28 @@ export const SETTINGS = {
 };
 
 export const PRESETS = {
-	ANIMATIONS    : !true,
-	COMPRESSED    : true,
-	FANCY         : true,
-	KEYBOARD_BEEP : true,
-	SEPARATORS    : false,
-	SAM           : true,
-	TERMINAL      : location.href.indexOf('terminal') >= 0,
+	FILTER: {
+		DEBUG     : true,   //... -> ALL, Currently: when false, only chat visible
+		CEP       : true,
+		STRING    : true,
+		NOTICE    : true,
+		BROADCAST : true,
+		UPDATE    : true,
+		REQUEST   : true,
+		RESPONSE  : true,
+	},
+
+	TOGGLE: {
+		TERMINAL      : get( 'terminal' ),
+		COMPRESSED    : !true,
+		SEPARATORS    : false,
+		OVERFLOW      : !true,
+		ANIMATIONS    : !true,
+		FANCY         : !false,
+		KEYBOARD_BEEP : !false,
+		SAM           : !false,
+	},
 };
+
 
 //EOF

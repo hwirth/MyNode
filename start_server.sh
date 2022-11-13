@@ -30,7 +30,11 @@ while [ 1 ] ; do
 		;;
 	-1|255)
 		# Requested restart
-		echo -e "\n$0: Restart requested\n"
+		echo
+		echo -e "\e[1;32m#####################"
+		echo -e "#\e[1;37m RESTART REQUESTED\e[1;32m #"
+		echo -e "#####################\e[0;37m"
+		echo
 		nr_crashes=0
 		sleep 1
 

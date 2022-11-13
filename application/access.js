@@ -6,53 +6,31 @@
 "use strict";
 
 const { SETTINGS        } = require( '../server/config.js' );
-const { STRINGS         } = require( '../server/constants.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS         } = require( './constants.js' );
 
-const debug = false;
-DEBUG.PARSE = {
-	SHOW_HEADER  : debug && !false,
-	LINES        : debug && !false,
-	SEPARATED    : debug && !false,
-	TOKENS       : debug && !false,
-	SOURCE       : debug && !false,
-	RULES        : debug && !false,
-};
 
 const PROTOCOL_DESCRIPTION = (`
-	#connecting,guest,user,mod,admin,dev: session.status
-	#connecting: session.login.username=string,password=string
-	#guest,user,mod,admin,dev: session.logout
-	#guest,user,mod,admin,dev: session.who
-	#guest,user,mod,admin,dev: session.who.username=string
-	#user,mod,admin,dev: server.status
-	#mod,admin,dev: session.who.address=address+port
-	#mod,admin,dev: session.kick.address=address+port
-	#mod,admin,dev: session.kick.username=string
-	#admin,dev: server.status.persistent
-	#admin,dev: server.restart
-	#dev: server.log.*
-	#dev: test.*
-	#some,groups: some.(complex.arg1,arg2=string),(more=string,(deeper.nested))
-	#	{
-	#		some: {
-	#			complex: {
-	#				arg1: empty,
-	#				arg2: string,
-	#			},
-	#			more: string,
-	#			deeper: {
-	#				nested: empty,
-	#			}
-	#		}
-	#	}
-	admin,dev:     server.restart
-	mod,admin,dev: session.who
-	admin,dev:     session.who.username=string
-	dev:           session.who.address=string
-	dev:           some.(complex.arg1,arg2=string),(more=string,(deeper.nested))
+	connecting: {session:{login:{username:literal=guest}}}
+	connecting: {session:{login:{username:literal=guest,nickname:string}}}
+	connecting: {session:{login:{username:string,password:string}}}
+	connecting: {session:{login:{username:string,password:string,secondFactor:string}}}
+	connecting: {session:{login:{username:string,nickname:string,password:string}}}
+	connecting: {session:{login:{username:string,nickname:string,password:string,secondFactor:string}}}
+	connecting,guest,user,mod,admin,dev,owner: {help:*}
+	connecting,guest,user,mod,admin,dev,owner: {session:{status:empty}}
+	guest,user,mod,admin,dev,owner: {session:{who:empty}}
+	guest,user,mod,admin,dev,owner: {session:{who:{username:string}}}
+	guest,user,mod,admin,dev,owner: {chat:{say:string}}
+	guest,user,mod,admin,dev,owner: {chat:{nick:string}}
+	mod,admin,dev,owner: {session:{who:{address:address}}}
+	mod,admin,dev,owner: {session:{kick:{username:string}}}
+	mod,admin,dev,owner: {session:{who:{address:address}}}
+	admin,dev,owner: {mcp:{token:empty}}
+	admin,dev,owner: {server:{reset:empty}}
+	admin,dev,owner: {server:{reboot:empty}}
+	dev,owner: {mcp:{status:empty}}
 
 `); // PROTOCOL_DESCRIPTION
 
@@ -91,221 +69,63 @@ module.exports = function AccessControl (persistent, callback) {
 	function parse_configuration (configuration) {
 		const groups = ['connecting', 'guest', 'user', 'mod', 'admin', 'dev', 'owner'];
 
-		const tokens = (()=>{
-			const without_comments = line => line.split('#', 1)[0].trim();
-			const to_objects       = (line, index) => { return {source: index, text: line}; };
-			const empty_lines      = lineMeta => (lineMeta.text.trim() != '');
+		const without_comments = line => line.split('#', 1)[0].trim();
+		const to_objects       = (line, index) => { return {source: index, text: line}; };
+		const empty_lines      = lineMeta => (lineMeta.text.trim() != '');
 
-			const groups_and_rule  = line => {
-				const parts = line.text.split( ':' );
-				if (parts.length != 2) throw new Error(
-					'More than one ":" in ' + line.source + '\n' + line.text + '\n'
-				);
+		return (
+			configuration
+			.trim().split( '\n' )
+			.map( without_comments )
+			.map( to_objects )
+			.filter( empty_lines )
+			.map( (line)=>{
+				const groups = line.text.split( ':', 1 )[0];
+				const rule = line.text.slice( groups.length + 1 ).trim();
 				return {
-					source : line.source,
-					groups : parts[0].trim().split( ',' ),
-					rule   : parse_rule( line.source, parts[1].trim() ),
-				}
-			};
+					groups : groups.trim().split( ',' ),
+					rule   : parse_rule( line.source, rule ),
+				};
+			})
+		);
 
-			return (
-				configuration
-				.trim().split( '\n' )
-				.map( without_comments )
-				.map( to_objects )
-				.filter( empty_lines )
-				.map( groups_and_rule )
+		function parse_rule (source, rule) {
+			const json = (
+				rule
+				.replace( /\{/g  , '{"'  )  // Regex chars: . \ + * ? [ ^ ] $ ( ) { } = ! < > | : -
+				.replace( /\}/g  , '"}'  )
+				.replace( /\:/g  , '":"' )
+				.replace( /,/g   , '","' )
+				.replace( /"\{/g , '{'   )
+				.replace( /\}"/g , '}'   )
 			);
 
-		})(); // tokens
+			const types = ['empty', '*', 'address', 'string', 'number', 'boolean', 'literal=guest'];
+			function check_rules (obj) {
+				Object.keys( obj ).forEach( (property)=>{
+					if (typeof obj[property] == 'object') {
+						check_rules( obj[property] );
+					} else {
+						if (types.indexOf( obj[property] ) < 0) {
+							throw new Error( 'Unknown type "' + obj[property] + '"' );
+						}
+					}
+				});
 
-
-		function parse_rule (line_source, text) {
-			const nr_parens_open  = text.split( '(' ).length - 1;
-			const nr_parens_close = text.split( ')' ).length - 1;
-
-			if (nr_parens_open != nr_parens_close) {
-				throw new Error( 'Parens mismatch in ' + line_source + ': ' + text );
+				return obj;
 			}
 
-			function next_parens (text) {
-				const pos_open  = text.indexOf( '(' );
-				const pos_close = text.indexOf( ')' );
+			try {
+				return check_rules( JSON.parse( json ) );
+
+			} catch (error) {
+				color_log( COLORS.ERROR, 'parse_rule:', source, rule );
+				throw new Error( error.message + ' in rule ' + source );
+				return null;
 			}
 
-			return text.trim();
 		} // parse_rule
 
-
-		if (DEBUG.PARSE.TOKENS) {
-			console.log( '*'.repeat(79) );
-			console.log( 'tokens:', tokens );
-			console.log( '*'.repeat(79) );
-		}
-
-		const new_rules = {};
-		return new_rules;
-
-/*
-		// PARSER ENTRY POINT
-
-		const rule_logs = [];
-		const new_rules = {};
-
-
-		const lines     = line_objects( configuration );
-		if (DEBUG.PARSE.LINES) {
-			console.log( 'lines:', lines );
-			console.log( '*'.repeat(79) );
-		}
-		function line_objects (configuration) {
-			const without_comments = line => line.split('#', 1)[0].trim();
-			const to_objects       = (line, index) => { return {source: index, text: line}; };
-			const empty_lines      = line => (line.text.trim() != '');
-			return (
-				configuration
-				.trim().split( '\n' )
-				.map( without_comments )
-				.map( to_objects )
-				.filter( empty_lines )
-			);
-
-		} // get_line_objects
-
-
-		const separated = lines.map( groups_and_rules );
-		if (DEBUG.PARSE.SEPARATED) {
-			console.log( 'separated:', separated );
-			console.log( '*'.repeat(79) );
-		}
-		function groups_and_rules (line) {
-			const pos_colon  = line.text.indexOf( ':' );
-			const pos_equals = line.text.indexOf( '=' );
-
-			const has_colon  = (pos_colon  >= 0);
-			const has_equals = (pos_equals >= 0);
-
-			if (!has_colon) {
-				throw new Error(
-					'No group in line '
-					+ line.source
-					+ ': '
-					+ line.text
-				);
-			}
-
-			const parts = line.text.split( ':', 2 );
-			return {
-				source : line.source,                    // 3.
-				groups : parts[0].trim().split( ',' ),   // Comma
-				rule   : parts[1].trim().split( '.' ),   // Period
-			};
-
-		} // get_groups_and_rules
-
-
-		const rules     = separated.map( get_rules );
-		if (DEBUG.PARSE.TOKENS) {
-			console.log( 'add_rule callbacks:' );
-			rule_logs.forEach( callback => callback() );
-			console.log( '*'.repeat(79) );
-		}
-		function get_rules (line) {
-			const separators = [
-				{ char: '=', name: 'equals'       },
-				{ char: ',', name: 'comma'        },
-				{ char: '|', name: 'pipe'         },
-				{ char: '(', name: 'parensOpen'   },
-				{ char: ')', name: 'parensClose'  },
-				{ char: '[', name: 'bracketOpen'  },
-				{ char: ']', name: 'bracketClose' },
-				{ char: '{', name: 'curlyOpen'    },
-				{ char: '}', name: 'curlyClose'   },
-			];
-
-			return {
-				source : line.source,
-				groups : line.groups,
-				tokens : line.rule.map( rule => parse(rule) ),
-			};
-
-			function parse (rule) {
-				const pos = {};  separators.forEach( (glyph)=>{
-					pos[glyph.name] = rule.indexOf( glyph.char );
-				});
-				const has = {};  Object.keys( pos ).forEach( (key)=>{
-					has[key] = (pos[key] >= 0);
-				});
-
-
-				if (has.curlyOpen || has.curlyClose || has.bracketOpen || has.bracketClose) {
-					throw new Error(
-						'Not implemented yet: "'
-						+ rule
-						+ '" in line '
-						+ line.source
-						+ ': '
-						+ line.text
-					);
-				}
-
-				if (has.comma) {
-					return (
-						rule
-						.split( ',' )
-						.map( sub_rule => parse(sub_rule) )
-					);
-				}
-
-				if (has.equals) {
-					const parts = rule.split( '=' );
-
-					if (parts.length != 2) throw new Error(
-						'Too many equal signs: "'
-						+ rule
-						+ '" in line '
-						+ line.source
-						+ ': '
-						+ line.text
-					);
-
-					return {
-						token : parts[0],
-						type  : parts[1],
-					};
-				}
-
-				return {
-					token: rule,
-				}
-			}
-
-		} // get_rules
-
-
-		rules.forEach( (rule)=>{
-			rule.groups.forEach( (group)=>{
-				if (!new_rules[group]) new_rules[group] = [];
-				new_rules[group].push( rule.tokens );
-			});
-		});
-		if (DEBUG.PARSE.RULES) {
-			console.log( 'new_rules:' );
-			console.log( new_rules );
-			console.log( '*'.repeat(79) );
-		}
-		function add_rule (group, rule) {
-			rule_logs.push( ()=>console.log( 'ADD RULE:', group, ':', rule.tokens ) );
-		}
-
-
-		if (DEBUG.PARSE.SOURCE) {
-			console.log( 'formatted_source:', '\n' + format_source(configuration) );
-			console.log( '*'.repeat(79) );
-		}
-
-		return new_rules;
-*/
 	} // parse_configuration
 
 
@@ -324,14 +144,7 @@ module.exports = function AccessControl (persistent, callback) {
 
 	this.loadConfiguration = function (new_configuration) {
 		persistent.configuration = new_configuration.trim();
-
-		try {
-			self.rules = parse_configuration( new_configuration );
-
-		} catch (error) {
-			color_log( COLORS.ERROR, 'PARSER:', error.message );
-			console.log( error );
-		}
+		self.rules = parse_configuration( new_configuration );
 
 	}; // loadConfiguration
 

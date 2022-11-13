@@ -31,6 +31,7 @@ module.exports.REASONS = {
 	SUCCESSFULLY_AUTHENTICATED  : 'Authenticated',
 	AUTHENTICATION_FAILED       : 'Invalid second factor',
 	KICKED_USER                 : 'Kicked user NAME, address: ADDRESS',
+	NICKNAME_CHANGED            : 'Changed nickname',
 	KICKED_BY                   : 'Kicked by',
 	USERNAME_UNKNOWN            : 'User NAME unknown',
 	MALFORMED_REQUEST           : 'Malformed request',
@@ -42,19 +43,16 @@ const STRINGS = {
 	GLOBAL_ERROR_HANDLER : 'GLOBAL ERROR HANDLER:',
 	SYSTEM_ERROR         : 'SYSTEM FAILURE:',
 	RESTARTING_SERVER    : 'THE SYSTEM IS GOING DOWN FOR A RESTART',
-	YOU_SHOULDNT_HAVE    : "YOU SHOULDN'T HAVE COME BACK, FLYNN",
+	YOU_SHOULDNT_HAVE    : 'YOU SHOULDN\'T HAVE COME BACK, FLYNN',
 	LOGIN_TIMEOUT        : 'Login timeout',
 	IDLE_TIMEOUT         : 'Idle timeout',
 	END_OF_LINE          : 'END OF LINE.',
+	LOGIN_BANNER         : 'Banner message not set'
 
 }; // STRINGS
 
 
-const ID_SERVER = 'END_OF_LINE';
-
-
 module.exports.STATUS    = STATUS;
 module.exports.STRINGS   = STRINGS;
-module.exports.ID_SERVER = ID_SERVER;
 
 //EOF

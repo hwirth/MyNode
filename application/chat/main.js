@@ -52,10 +52,10 @@ module.exports = function ChatServer (persistent_data, callback) {
 				oldNick  : old_nick,
 			});
 
-			client.respond( STATUS.SUCCESS, request_id, STATUS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.SUCCESS, request_id, REASONS.NICKNAME_CHANGED );
 
 		} else {
-			client.respond( STATUS.FAILURE, request_id, STATUS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
 	}; // request.nick
@@ -76,7 +76,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 			Object.keys( all_clients ).filter( authenticated ).forEach( (recipient)=>{
 				all_clients[recipient].send({
-					advisory: {
+					update: {
 						type     : 'chat',
 						time     : t0,
 						userName : client.login.userName,
@@ -86,7 +86,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 				});
 			});
 
-			client.respond( STATUS.SUCCESS, request_id, REASONS.INSUFFICIENT_PERMS );
+			client.respond( STATUS.SUCCESS, request_id );
 
 		} else {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );

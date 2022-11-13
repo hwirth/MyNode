@@ -34,7 +34,7 @@ const Application = function () {
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	async function connect_to_websocket (ws_url = SETTINGS.WS_URL) {
+	async function connect_to_websocket (ws_url = SETTINGS.WEBSOCKET.URL) {
 		if (self.webSocketClient) {
 			await disconnect_from_websocket( self.webSocketClient );
 		}
@@ -103,7 +103,7 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_websocket_open (event, socket)  {
-		self.terminal.print( 'Connected to ' + SETTINGS.WS_URL, 'cep' );
+		self.terminal.print( 'Connected to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
 		self.terminal.onSocketOpen();
 
 		if (boot_sequence) boot_sequence.forEach( (request)=>{
@@ -121,46 +121,40 @@ const Application = function () {
 
 
 	function on_websocket_message (event, socket, message) {
-		// Handle response
-
-		try {
-			message = JSON.parse( event.data );
-		} catch {
-			// Assume string
-		}
+		try   { message = JSON.parse( event.data ); }
+		catch { /* Assume string */ }
 
 		// See  WebSocketClient.send()
-		if (message.advisory) {
-			switch (message.advisory.type) {
-			case 'ping':
-				self.terminal.elements.connection.classList.add( 'ping' );
-				//...self.terminal.elements.connection.innerText = 'Ping ' + message.advisory.pong;
+		if (message.update) {
+			switch (message.update.type) {
+				case 'ping': {
+					self.terminal.elements.connection.classList.add( 'ping' );
+					socket.send( { session: { pong: message.update.pong }} );
+					setTimeout( ()=>{
+						self.terminal.elements.connection.classList.remove( 'ping' );
+					}, 100);
 
-				setTimeout( ()=>{
-					socket.send( { session: { pong: message.advisory.pong }} );
-					self.terminal.elements.connection.classList.remove( 'ping' );
-				}, 100);
-				if (DEBUG.HIDE_MESSAGES.PING) return;
-				break;
+					if (DEBUG.HIDE_MESSAGES.PING) return; else break;
+				}
+				case 'chat': {
+					const sender = message.update.nickName || message.update.userName;
+					setTimeout( ()=>{
+						self.terminal.print( {[sender]: message.update.message}, 'chat' );
+					});
 
-			case 'chat':
-				const sender = message.advisory.nickName || message.advisory.userName;
-				setTimeout( ()=>{
-					self.terminal.print( {[sender]: message.advisory.message}, 'chat' );
-				});
-				if (DEBUG.HIDE_MESSAGES.CHAT) return;
-				break;
-
-			default:
-				self.terminal.print( 'Unknown advisory', 'error' );
+					if (DEBUG.HIDE_MESSAGES.CHAT) return; else break;
+				}
+				default: {
+					self.terminal.print( 'Unknown update', 'error' );
+				}
 			}
 		}
 
 		let class_name = 'response';
-		if (typeof message == 'string') class_name = 'debug';
-		if (message.broadcast) class_name = 'broadcast';
-		if (message.advisory ) class_name = 'advisory';
-		if (message.notice   ) class_name = 'notice';
+		if (typeof message == 'string')              class_name = 'string';
+		if (typeof message.notice    != 'undefined') class_name = 'notice';
+		if (typeof message.broadcast != 'undefined') class_name = 'broadcast';
+		if (typeof message.update    != 'undefined') class_name = 'update';
 
 		self.terminal.print( message, class_name );
 
@@ -197,11 +191,11 @@ const Application = function () {
 
 		self.youTubePlayer = null;
 
-		document.body.innerHTML = (`
-<footer class="main_menu">
+		document.body.innerHTML += (`
+<header class="meta">
 	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
 	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-</footer>
+</header>
 		`);
 
 		self.webSocketClient = null;

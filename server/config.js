@@ -61,6 +61,8 @@ const SETTINGS = {
 	APP_PATH    : '../application/',
 	MAIN_MODULE : '../application/router.js',
 
+	MESSAGE_TIMESTAMPS : true,   // Send time with each JSON reply
+
 	LOG: {
 		FILE_NAME     : config_file.LOG_FILE_NAME,                // File name for log output
 		TO_CONSOLE    : (config_file.LOG_TO_CONSOLE == 'true'),   // Whether color_log() outputs to STDOUT
@@ -74,6 +76,9 @@ const SETTINGS = {
 		RUN_AS_GROUP  : config_file.RUN_AS_GROUP,
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
 	},
+
+	LOG_PINGPONG : false,
+	KICK_NO_PONG : true,
 
 	// Upper case chars are also accepted
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.?&%=-+/:[]',   // http server white list

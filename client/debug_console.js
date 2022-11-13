@@ -13,6 +13,10 @@ import { SETTINGS, PRESETS, DEBUG } from './config.js';
 import { History                  } from './history.js';
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// CONFIGURATION
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
 let CEP_VERSION = 'v0.2.2α';   // Keyboard shortcuts will be appended in  self.init()
 
 const EXTRA_LINES = 0;
@@ -33,20 +37,9 @@ session
 		secondFactor: %t
 %N
 		`).trim(),
-	'as root'    : BANG_REQUEST //...+ 'session\n\tlogin\n\t\tusername:root\n\t\tpassword: 12345\n\tstatus',
-		+ (`
-session
-	login
-		username: root
-		password: 12345
-	status
-		`).trim(),
-	'as guest'    : BANG_REQUEST //...+ 'session\n\tlogin\n\t\tusername:user\n\t\tpassword: pass2\n\tstatus',
-		+ (`
-session
-	login
-		username: guest
-		`).trim(),
+	'root'       : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
+	'user'       : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
+	'guest'      : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
 	'logout'     : BANG_REQUEST + 'session\n\tlogout',
 	'status'     : BANG_REQUEST + 'session\n\tstatus',
 	'who'        : BANG_REQUEST + 'session\n\twho',
@@ -57,20 +50,89 @@ session
 	'token'      : BANG_REQUEST + 'mcp\n\ttoken',
 	'clear'      : BANG_CEP + 'clear',
 	'help'       : BANG_CEP + 'help',
-	'connect'    : BANG_CEP + 'connect: ' + SETTINGS.WS_URL,
+	'connect'    : BANG_CEP + 'connect ' + SETTINGS.WEBSOCKET.URL,
 	'disconnect' : BANG_CEP + 'disconnect',
 };
 
 const BUTTON_DECORATE_CLASSNAME = ['login', 'logout', 'who', 'token', 'clear', 'help', 'connect', 'disconnect'];
 
 const TUTORIAL_SCRIPT = [
-	BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345',
-	BANG_REQUEST + 'session\n\tstatus',
-	BANG_REQUEST + 'mcp\n\tinspect',
-	BANG_REQUEST + 'mcp\n\tinspect: reloader.persistentData',
-	BANG_REQUEST + 'mcp\n\tstatus',
+	BANG_CEP     + 'connect ' + SETTINGS.WEBSOCKET.URL,
+	BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
+	//...BANG_REQUEST + 'session\n\twho\nmcp\n\tstatus',
 ];
 
+const HTML_TERMINAL = (`
+<form class="chat terminal">
+	<header class="toolbar">
+		<section>
+			<button class="animations" title="Toggle animations [Alt]+[A]">Animate</button>
+			<button class="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
+			<button class="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
+			<button class="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
+		</section>
+	</header>
+	<main class="shell last">
+		<output></output>
+		<textarea></textarea>
+	</main>
+	<footer class="toolbar">
+		<section>
+			<div class="connection warning">OFFLINE</div>
+		</section>
+		<section>
+			<div class="time"></div>
+		</section>
+		<section class="menu commands">
+			<button class="submit" title="Execute command/send chat text">Enter</button>
+			<div class="items">
+				<input type="text" placeholder="Username" autocomplete="username">
+				<input type="text" placeholder="Nickname" autocomplete="nickname">
+				<input type="password" placeholder="Password" autocomplete="password">
+				<input type="password" placeholder="Factor 2" autocomplete="one-time-code">
+			</div>
+		</section>
+		<section>
+			<button class="close" title="Minimize terminal">Exit</button>
+		</section>
+		<section class="menu toggles">
+			<button class="debug"      title="Toggle debug mode">Debug</button>
+			<div class="items">
+				<button class="cep"        title="Display local replies">CEP</button>
+				<button class="string"     title="Display raw strings">String</button>
+				<button class="notice"     title="Display notices">Notice</button>
+				<button class="broadcast"  title="Display broadcasts">Broadcast</button>
+				<button class="update"     title="Display updates">Update</button>
+				<button class="request"    title="Display requests">Request</button>
+				<button class="response"   title="Display responses">Response</button>
+			</div>
+		</section>
+	</footer>
+</form>
+`).split('\n').map( line => line.trim() ).join(''); // HTML_TERMINAL
+
+
+const HTML_YOUTUBE = (`
+<footer class="main_menu">
+	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+</footer>
+<iframe
+	style="position:absolute; top:0; left:0; z-index:1000; width:100px; height:70px; overflow:hidden;"
+	width="560" height="315"
+	src="https://www.youtube.com/embed/gXBuEcue9tE"
+	title="YouTube video player"
+	frameborder="0"
+	allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+	allowfullscreen
+	autoplay="true"
+></iframe>
+`); // HTML_YOUTUBE
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// IMPLEMENTATION
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 export const DebugConsole = function (callback) {
 	const self = this;
@@ -88,47 +150,47 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'a',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggle( 'animations' ); },
+		action    : ()=>{ self.toggles.animations.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'c',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.output.classList.toggle('compressed'); scroll_down(); },
+		action    : ()=>{ self.toggles.compressed.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'd',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggle( 'terminal' ); },
+		action    : ()=>{ self.toggles.debug.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'f',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggle( 'fancy' ); },
+		action    : ()=>{ self.toggles.fancy.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'k',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggle( 'keyBeep' ); },
+		action    : ()=>{ self.toggles.keyBeep.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'm',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggle( 'sam' ); },
+		action    : ()=>{ self.toggles.sam.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'o',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.terminal.classList.toggle( 'overflow' ); }
+		action    : ()=>{ self.toggles.overflow.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 's',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.output.classList.toggle('separators'); scroll_down(); },
+		action    : ()=>{ self.toggles.separators.toggle(); },
 	},{
 		event     : 'keydown',
-		key       : '#',
-		modifiers : ['ctrl'],
-		action    : ()=>{ self.toggle( 'terminal' ); },
+		key       : 't',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggles.terminal.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'ArrowUp',
@@ -146,9 +208,16 @@ export const DebugConsole = function (callback) {
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function focus_prompt (clear_accept = true) {
+	function focus_prompt (position = 0) {
+		const pos1  = -1;
+		const end   = +1;
+		const input = self.elements.input;
+
 		adjust_textarea();
-		self.elements.input.focus();
+		input.focus();
+
+		if (position == pos1) input.selectionEnd = input.selectionStart = 0;
+		if (position == end ) input.selectionEnd = input.selectionStart = input.value.length;
 
 	} // focus_prompt
 
@@ -172,7 +241,7 @@ export const DebugConsole = function (callback) {
 	} // scroll_down
 
 
-	function show_file (file_name) {
+	function show_file (file_name, show_cep_version = false) {
 		fetch( file_name ).then( (response)=>{
 			if (! response.ok) {
 				throw new Error( 'HTTP error, status = ' + response.status );
@@ -181,7 +250,7 @@ export const DebugConsole = function (callback) {
 
 		}).then( (new_text)=>{
 			self.print(
-				'CEP-' + CEP_VERSION + '\n'
+				((show_cep_version) ? 'CEP-' + CEP_VERSION + '\n' : '')
 				+ new_text.split( '//EOF' )[0].trim()
 				,
 				'cep',
@@ -191,17 +260,9 @@ export const DebugConsole = function (callback) {
 	} // show_file
 
 
-	function next_script_entry (shift = true) {
-		if (!callback.isConnected()) return 'connect: ' + SETTINGS.WS_URL;
-		const script = (shift) ? TUTORIAL_SCRIPT.shift() : TUTORIAL_SCRIPT[0] ;
-		return (TUTORIAL_SCRIPT.length > 0) ? script : 'END OF LINE.' ;
-
-	} // next_script_entry
-
-
 	function sam_speak (text) {
 		if (!self.audioContext) return;
-		if (!self.toggles.sam) return;
+		if (!self.toggles.sam.enabled) return;
 
 		if (!self.sam) {
 			self.sam = new SamJs({
@@ -220,7 +281,7 @@ export const DebugConsole = function (callback) {
 			await prev;
 			const part = parts[index].trim();
 			return new Promise( async (done)=>{
-				if (self.toggles.sam) {
+				if (self.toggles.sam.enabled) {
 					if (part != '') await self.sam.speak( parts[index] );
 					setTimeout( done, 150 );
 				} else {
@@ -231,6 +292,30 @@ export const DebugConsole = function (callback) {
 		}, Promise.resolve());
 
 	} // sam_speak
+
+
+	function sam_read (message) {
+		const text = (typeof message == 'string') ? message : JSON.stringify( message, null, ' ' );
+		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
+		const allowed = char => chars.indexOf(char.toLowerCase()) >= 0;
+		sam_speak(
+			text
+			.trim()
+			.replace( /: /g , ' '           )
+			.replace( /,/g  , ' '           )
+			.replace( /\t/g , ' '           )
+			.replace( /\n/g , 'PAUSE PAUSE' )
+			.replace( /=/g  , ' equals '    )
+			.replace( /\//g , ' slash '     )
+			.replace( /\\/g , ' backslash ' )
+			.replace( /\./g , ' dot '       )
+			.replace( /:/g  , ' colon '     )
+			.split('')
+			.filter( allowed )
+			.join('')
+		);
+
+	} // sam_read
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -344,40 +429,102 @@ export const DebugConsole = function (callback) {
 	} // text_to_request
 
 
-	function parse_button_script (script) {
-		const username = self.elements.userName.value;
-		const nickname = self.elements.nickName.value;
-		if (nickname && !username) self.elements.userName.value = 'guest';
-		const second_factor = self.elements.secondFactor.value || 'null';
-		script = script.replaceAll( '\n%N', (self.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
-		return (
-			script
-			.replaceAll( '%u', username )
-			.replaceAll( '%n', nickname )
-			.replaceAll( '%p', self.elements.passWord.value || 'null' )
-			.replaceAll( '%t', second_factor )
-			.split('\n')
-			.filter( line => line.indexOf('password: null') < 0 )
-			.filter( line => line.indexOf('secondFactor: null') < 0 )
-			.join('\n')
-		);
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// CLOCK
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	} // parse_button_script
+	const start_time = new Date();
+
+	function start_clock () {
+
+		function get_formatted_time () {
+			return Intl.DateTimeFormat( navigator.language, {
+				weekday : 'short',
+				year    : 'numeric',
+				month   : 'short',
+				day     : 'numeric',
+				hour    : '2-digit',
+				minute  : '2-digit',
+				second  : '2-digit',
+				//fractionalSecondDigits: '3',
+				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
+				hour12  : false,
+
+			}).format(new Date());
+			//...new Date().toUTCString();
+		}
+
+		function current_second () {
+			return Math.floor( Date.now() / 1000 );
+		}
+
+		function update_clock () {
+			if (!true) {
+				const elapsed = new Date() - start_time;
+				const s180 = Math.floor(elapsed / 1000) % 180;
+				const percent = Math.floor(s180 / 1.8)
+				document.querySelector( '.time').innerText = percent;
+			} else {
+				document.querySelector( '.time').innerText = get_formatted_time();
+				return current_second();
+			}
+		}
+
+		let recent_second = 0;
+		function narrow_wait () {
+			if (current_second() != recent_second) {
+				recent_second = update_clock();
+				long_wait();
+			} else {
+				setTimeout( narrow_wait );
+			}
+		}
+
+		function long_wait () {
+			const remaining_ms = 1000 - Date.now() % 1000;
+			setTimeout( narrow_wait, remaining_ms - 50 );
+		}
+
+		update_clock();
+		long_wait();
+
+	} // start_clock
+
+
+	this.onSocketOpen = function () {
+		self.elements.connection.classList = 'connection success';
+		self.elements.connection.innerText = 'Connected';
+		self.elements.title = SETTINGS.WEBSOCKET.URL;
+
+		self.elements.terminal.classList.add( 'connected' );
+
+	}; // onSocketConnect
+
+
+	this.onSocketClose = function () {
+		self.elements.connection.classList = 'connection warning';
+		self.elements.connection.innerText = 'Offline';
+		self.elements.title = '';
+
+		self.elements.terminal.classList.remove( 'connected' );
+
+	}; // onSocketClose
+
+
+	this.onSocketError = function () {
+		self.onSocketClose();
+		self.elements.connection.classList = 'connection error';
+		self.elements.connection.innerText = 'Error';
+		self.elements.title = '';
+
+		self.elements.terminal.classList.remove( 'connected' );
+
+	}; // onSocketError
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENTS
+// KEYBOARD EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function on_script_button_click (event) {
-		event.preventDefault();
-		self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
-
-		adjust_textarea();
-		scroll_down();
-
-	} // on_script_button_click
-
 
 	function on_input_change () {
 		adjust_textarea();
@@ -386,52 +533,14 @@ export const DebugConsole = function (callback) {
 	} // on_input_change
 
 
-	function on_click (event) {
-		//...if (event.target === self.elements.terminal) focus_prompt();
-
-	} // on_dblclick
-
-
-	function on_dblclick (event) {
-		if (event.target.tagName == 'BODY') return self.toggle( 'terminal' );
-
-		const shift = event.shiftKey;
-		const ctrl = event.ctrlKey;
-		const alt = event.altKey;
-
-		const connected        = callback.isConnected();
-		const commands_clicked = event.target.closest('.terminal .commands');
-		const button_clicked   = event.target.tagName == 'BUTTON';
-
-		if (commands_clicked && button_clicked) {
-			// MACROS
-			event.preventDefault();
-			const previous_value = self.elements.input.value;
-			self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
-			self.elements.send.click();
-
-		} else if (connected && (!shift && !ctrl && !alt)) {
-			// TUTORIAL SCRIPT
-			self.elements.input.value = next_script_entry();
-			self.elements.send.click();
-			self.elements.input.value = next_script_entry( false );
-			focus_prompt();
-
-		} else {
-			focus_prompt();
-		}
-
-	} // on_dblclick
-
-
 	function on_keydown (event) {//... Move to  on_keyboard_event
-		if ((event.keyCode == 13) && (!event.shiftKey && !event.ctrlKey && !event.altKey)) {
-			//... Do nothing, let user enter newline
-
-		} else if ((event.keyCode == 13) && (event.shiftKey || event.ctrlKey || event.altKey)) {
-			// Execute command with any modifyer+Return
-			event.preventDefault();
-			self.elements.send.click();
+		if ((event.keyCode == 13) && (!event.ctrlKey && !event.altKey)) {
+			const chat_mode    = !self.toggles.debug.enabled;
+			if (chat_mode ^ event.shiftKey) {   // xor
+				// Execute command with any modifyer+Return
+				event.preventDefault();
+				self.elements.send.click();
+			}
 
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
@@ -504,7 +613,7 @@ export const DebugConsole = function (callback) {
 	function on_keydown_beep (event) {
 		if( !SETTINGS.KEYBOARD_BEEP
 		||  !self.audioContext
-		||  !self.toggles.keyBeep
+		||  !self.toggles.keyBeep.enabled
 		||  (nr_active_sounds > 5)
 		) {
 			return;
@@ -549,20 +658,16 @@ export const DebugConsole = function (callback) {
 			square_wave.disconnect( envelope );
 			envelope.disconnect( volume );
 			volume.disconnect( context.destination );
-		/*
-			context
-			= square_wave
-			= envelope
-			= volume
-			= destination
-			= null
-			;
-		*/
+
 			--nr_active_sounds
 		}
 
 	} // on_keydown_beep
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// MOUSE EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	async function on_send_click (event) {
 
@@ -572,43 +677,28 @@ export const DebugConsole = function (callback) {
 
 			self.print( command, 'request' );
 
-			const token     = command.split(':')[0].slice(1);
+			const token     = command.split(' ')[0].slice(1);
 			const parameter = command.slice( token.length + 1 );
 
 			switch (token) {
 			case 'connect':
-				callback.connect( parameter.slice(2) || SETTINGS.WS_URL );
+				callback.connect( parameter || SETTINGS.WEBSOCKET.URL );
 				break;
 			case 'disconnect':
-				self.elements.connection.classList = 'connection_status warning';
+				self.elements.connection.classList = 'connection warning';
 				self.elements.connection.innerText = 'Offline';//... Needs callback
 				self.elements.title = '';
 				callback.disconnect();
 				break;
-			case 'clear'  :  self.elements.output.innerHTML = '';  break;
-			case 'help'   :  show_file( 'help.txt' );              break;
-			case 'issue'  :  show_file( 'issue.txt' );             break;
-			case 'readme' :  show_file( 'README'   );              break;
+			case 'clear'  :  self.elements.output.innerHTML = '';                break;
+			case 'help'   :  show_file( 'help.txt', /*show_cep_version*/true );  break;
+			case 'issue'  :  show_file( 'issue.txt' );                           break;
+			case 'readme' :  show_file( 'README'   );                            break;
 			case 'music':
-				document.body.innerHTML += (`
-<footer class="main_menu">
-	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-</footer>
-<iframe
-	style="position:absolute; top:0; left:0; z-index:1000; width:100px; height:70px; overflow:hidden;"
-	width="560" height="315"
-	src="https://www.youtube.com/embed/gXBuEcue9tE"
-	title="YouTube video player"
-	frameborder="0"
-	allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-	allowfullscreen
-	autoplay="true"
-></iframe>
-		`);
+				document.body.innerHTML += HTML_YOUTUBE;
 				break;
 			default:
-				self.elements.connection.classList = 'connection_status error';
+				self.elements.connection.classList = 'connection error';
 				self.elements.connection.innerText = 'Error';
 				self.elements.title = 'Unknown command in perform_local()';
 				self.print( 'Unrecognized command', 'cep' );
@@ -620,54 +710,22 @@ export const DebugConsole = function (callback) {
 
 // JSON REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function send_json (text) {
-			// Multiline command: JSON request
-
-			const request
-			= (text.indexOf('\n') >= 0)
-			? text_to_request( text )
-			: {
-				chat: {
-					say: text,
-				},
-			};
-
+			const request = (text.indexOf('\n') >= 0) ? text_to_request(text) : {chat: { say: text }};
 			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
 			callback.send( request );
-
 		}
 
-
 		const text = self.elements.input.value.trim();
-		const is_local  = perform_local( text );
+		const is_json = !perform_local( text );
 
-		if (!is_local) {
+		if (is_json) {
 			const max_attempts = 10;
 			let nr_attempts = 0;
 
-			async function connection_established (Xnr_attempts = 0) {
-				if (callback.isConnected()) {
-					return Promise.resolve();
-				} else if (nr_attempts > max_attempts) {
-					return Promise.reject();
-				} else {
-					self.print( 'Attempt nr. ' + (nr_attempts++) )
-
-					return new Promise( (done)=>{
-						setTimeout( async ()=>{
-							if (callback.isConnected()) return done();
-							await connection_established().catch( (error)=>{
-								return connection_established();
-							});
-							done();
-						}, SETTINGS.TIMEOUT.RECONNECT*10 );
-					});
-				}
-			}
-
 			if (!callback.isConnected()) {
-				self.print( 'Connecting to ' + SETTINGS.WS_URL, 'cep' );
+				self.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
 
-				await callback.connect();  //...! Doesn't wait for onConnect
+				await callback.connect();  //...! Doesn't wait for onConnect yet
 				while ((nr_attempts++ < max_attempts) && !callback.isConnected()) {
 					await new Promise( (done)=>{
 						setTimeout( done, SETTINGS.TIMEOUT.RECONNECT );
@@ -704,160 +762,112 @@ export const DebugConsole = function (callback) {
 	} // on_send_click
 
 
-	const start_time = new Date();
-	function start_clock () {
+	function parse_button_script (script) {
+		const username = self.elements.userName.value;
+		const nickname = self.elements.nickName.value;
+		if (nickname && !username) self.elements.userName.value = 'guest';
+		const second_factor = self.elements.secondFactor.value || 'null';
+		script = script.replaceAll( '\n%N', (self.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
+		return (
+			script
+			.replaceAll( '%u', username )
+			.replaceAll( '%n', nickname )
+			.replaceAll( '%p', self.elements.passWord.value || 'null' )
+			.replaceAll( '%t', second_factor )
+			.split('\n')
+			.filter( line => line.indexOf('password: null') < 0 )
+			.filter( line => line.indexOf('secondFactor: null') < 0 )
+			.join('\n')
+		);
 
-		function get_formatted_time () {
-			return Intl.DateTimeFormat( navigator.language, {
-				weekday : 'short',
-				year    : 'numeric',
-				month   : 'short',
-				day     : 'numeric',
-				hour    : '2-digit',
-				minute  : '2-digit',
-				second  : '2-digit',
-				//fractionalSecondDigits: '3',
-				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
-				hour12  : false,
+	} // parse_button_script
 
-			}).format(new Date());
-			//...new Date().toUTCString();
+
+	function on_script_button_click (event) {
+		event.preventDefault();
+		self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
+
+		adjust_textarea();
+		scroll_down();
+
+	} // on_script_button_click
+
+
+	function on_click (event) {
+		//...if (event.target === self.elements.terminal) focus_prompt();
+
+		if (event.target.parentNode === self.elements.output) {
+			event.target.classList.toggle( 'expand' );
+
+		}
+		else if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
+		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
+		else if (event.target === self.elements.asGuest) fill( 'guest' , '' )
+		;
+
+		function fill (username, password) {
+			self.elements.userName.value = username;
+			self.elements.passWord.value = password;
+			self.elements.nickName.focus();
 		}
 
-		function current_second () {
-			return Math.floor( Date.now() / 1000 );
-		}
+	} // on_dblclick
 
-		function update_clock () {
-			if (!true) {
-				const elapsed = new Date() - start_time;
-				const s180 = Math.floor(elapsed / 1000) % 180;
-				const percent = Math.floor(s180 / 1.8)
-				document.querySelector( '.time').innerText = percent;
+
+	function on_dblclick (event) {
+		if (event.target.tagName == 'BODY') return self.toggles.terminal.toggle();
+
+		const shift = event.shiftKey;
+		const ctrl = event.ctrlKey;
+		const alt = event.altKey;
+
+		const connected        = true;//...callback.isConnected();
+		const commands_clicked = event.target.closest('.terminal .commands');
+		const button_clicked   = event.target.tagName == 'BUTTON';
+
+		if (commands_clicked && button_clicked) {
+			// Command menu button was clicked
+			event.preventDefault();
+			const previous_value = self.elements.input.value;
+			self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
+			self.elements.send.click();
+
+		} else if (connected && (!shift && !ctrl && !alt)) {
+			// Output area was clicked
+			if (TUTORIAL_SCRIPT.length == 0) {
+				self.elements.input.value = '.help';
+				self.elements.send.click();
 			} else {
-				document.querySelector( '.time').innerText = get_formatted_time();
-				return current_second();
-			}
-		}
-
-		let recent_second = 0;
-		function narrow_wait () {
-			if (current_second() != recent_second) {
-				recent_second = update_clock();
-				long_wait();
-			} else {
-				setTimeout( narrow_wait );
-			}
-		}
-
-		function long_wait () {
-			const remaining_ms = 1000 - Date.now() % 1000;
-			setTimeout( narrow_wait, remaining_ms - 50 );
-		}
-
-		long_wait();
-
-	} // on_clock_interval
-
-
-	this.onSocketOpen = function () {
-		self.elements.connection.classList = 'connection_status success';
-		self.elements.connection.innerText = 'Connected';
-		self.elements.title = SETTINGS.WS_URL;
-
-		self.elements.terminal.classList.add( 'connected' );
-
-	}; // onSocketConnect
-
-
-	this.onSocketClose = function () {
-		self.elements.connection.classList = 'connection_status warning';
-		self.elements.connection.innerText = 'Offline';
-		self.elements.title = '';
-
-		self.elements.terminal.classList.remove( 'connected' );
-
-	}; // onSocketClose
-
-
-	this.onSocketError = function () {
-		self.onSocketClose();
-		self.elements.connection.classList = 'connection_status error';
-		self.elements.connection.innerText = 'Error';
-		self.elements.title = '';
-
-		self.elements.terminal.classList.remove( 'connected' );
-
-	}; // onSocketError
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// INTERFACE
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.toggle = function (item, new_state = null) {
-		switch (item) {
-			case 'animations': {
-				self.toggles.animations = (new_state !== null) ? new_state : !self.toggles.animations;
-				self.elements.animations.classList.toggle( 'enabled', self.toggles.animations );
-				self.elements.html.classList.toggle( 'animate', self.toggles.animations );
-				break;
-			}
-			case 'compressed': {
-				self.toggles.compressed = (new_state !== null) ? new_state : !self.toggles.compressed;
-				//...self.elements.compressed.classList.toggle( 'enabled', self.toggles.compressed );
-				self.elements.output.classList.toggle( 'compressed', self.toggles.compressed );
-				break;
-			}
-			case 'fancy': {
-				self.toggles.fancy = (new_state !== null) ? new_state : !self.toggles.fancy;
-				self.elements.fancy.classList.toggle( 'enabled', self.toggles.fancy );
-				self.elements.terminal.classList.toggle( 'fancy', self.toggles.fancy );
-				break;
-			}
-			case 'keyBeep': {
-				self.toggles.keyBeep = (new_state !== null) ? new_state : !self.toggles.keyBeep;
-				self.elements.keyBeep.classList.toggle( 'enabled', self.toggles.keyBeep );
-				break;
-			}
-			case 'separators': {
-				self.toggles.separators = (new_state !== null) ? new_state : !self.toggles.separators;
-				//...self.elements.separators.classList.toggle( 'enabled', self.toggles.separators );
-				self.elements.output.classList.toggle( 'separators', self.toggles.separators );
-				break;
-			}
-			case 'sam': {
-				self.toggles.sam = (new_state !== null) ? new_state : !self.toggles.sam;
-				self.elements.sam.classList.toggle( 'enabled', self.toggles.sam );
-				break;
-			}
-			case 'close': // fall through
-			case 'terminal': {
-				const is_enabled
-				= (new_state !== null)
-				? new_state
-				: self.elements.terminal.classList.toggle( 'active' )
+				const current_value = self.elements.input.value;
+				const next_script = TUTORIAL_SCRIPT[0];
+				const user_edited
+				=  (current_value.length != next_script.length)
+				&& (current_value.slice(0, next_script.length) == next_script)
 				;
-				self.elements.terminal.classList.toggle( 'active', is_enabled );
-				if (is_enabled) focus_prompt();
-				break;
+				const new_value = TUTORIAL_SCRIPT.shift();
+				if (!user_edited) self.elements.input.value = new_value;
+				self.elements.send.click();
+				self.elements.input.value = TUTORIAL_SCRIPT[0] || '.help';
 			}
-			default: {
-				console.log( 'DebugConsole.toggle: Unknown item:', item );
-				throw new Error( 'DebugConsole.toggle: Unknown item' );
-			}
+			focus_prompt();
+		} else {
+			focus_prompt();
 		}
 
-	}; // toggle
+	} // on_dblclick
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// PRINT
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.print = function (message, class_name = null) {
-		// Sanitize and colorize
-		let t = -1;
+
+		// Decorate tokens with HTML
 		const class_names = [
-			'slash', 'period', 'colon', 'semi','curlyO',
-			'bracketO', 'parensO', 'parensC', 'bracketC','curlyC',
-			'true', 'false', 'null'
+			'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
+			'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
+			'true'     , 'false'   , 'null'
 		];
 		const tokens = [
 			'/', '.', ':', ';', '{',
@@ -870,12 +880,11 @@ export const DebugConsole = function (callback) {
 			? message
 			: request_to_text( message )
 		)
+		.replace( /&/g, '&amp;' )
+		.replace( /</g, '&lt;'  )
 		.replaceAll( '&lt;', '###lt###' )
 		.replaceAll( '&gt;', '###gt###' )
 		.replaceAll( '&amp;', '###amp###' )
-		.replace( /&/g, '&amp;' )
-		.replace( /</g, '&lt;'  )
-		//... .replaceAll( ': ', ':\t' )
 		;
 
 		tokens.forEach( (token, index)=>{
@@ -887,9 +896,7 @@ export const DebugConsole = function (callback) {
 		.replaceAll( '###amp###', '&amp;' )
 		.replaceAll( '###gt###', '&gt;' )
 		.replaceAll( '###lt###', '&lt;' )
-		.split('\n')
-		.map( line => '<div>' + line.replaceAll('\\n', '\n') + '</div>' )   // '\\n' for .readme
-		.join('')
+		.replaceAll('\\n', '\n')   // '\\n' for .readme
 		;
 
 		// Create DOM element
@@ -923,28 +930,79 @@ export const DebugConsole = function (callback) {
 		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
 			sam_speak( message.broadcast.success ? 'yes' : 'no' );
 		}
-	/*
-		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
-		const allowed = char => chars.indexOf(char.toLowerCase()) >= 0;
-		sam_speak(
-			JSON.stringify( message, null, '\t' )
-			.trim()
-			.replace( /: /g , ' '           )
-			.replace( /,/g  , ' '           )
-			.replace( /\t/g , ' '           )
-			.replace( /\n/g , 'PAUSE PAUSE' )
-			.replace( /=/g  , ' equals '    )
-			.replace( /\//g , ' slash '     )
-			.replace( /\\/g , ' backslash ' )
-			.replace( /\./g , ' dot '       )
-			.replace( /:/g  , ' colon '     )
-			.split('')
-			.filter( allowed )
-			.join('')
-		);
-	*/
 
 	}; // print
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// TOGGLES
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function create_toggles() {
+		const terminal = self.elements.terminal;
+		const output   = self.elements.output;
+
+		return [
+			{ name: 'terminal'   , preset: PRESETS.TOGGLE.TERMINAL      , target: terminal },
+			{ name: 'debug'      , preset: PRESETS.FILTER.DEBUG         , target: output   },
+			{ name: 'cep'        , preset: PRESETS.FILTER.CEP           , target: output   },
+			{ name: 'string'     , preset: PRESETS.FILTER.STRING        , target: output   },
+			{ name: 'notice'     , preset: PRESETS.FILTER.NOTICE        , target: output   },
+			{ name: 'broadcast'  , preset: PRESETS.FILTER.BROADCAST     , target: output   },
+			{ name: 'update'     , preset: PRESETS.FILTER.UPDATE        , target: output   },
+			{ name: 'request'    , preset: PRESETS.FILTER.REQUEST       , target: output   },
+			{ name: 'response'   , preset: PRESETS.FILTER.RESPONSE      , target: output   },
+			{ name: 'compressed' , preset: PRESETS.TOGGLE.COMPRESSED    , target: output   },
+			{ name: 'separators' , preset: PRESETS.TOGGLE.SEPARATORS    , target: output   },
+			{ name: 'overflow'   , preset: PRESETS.TOGGLE.OVERFLOW      , target: output   },
+			{ name: 'keyBeep'    , preset: PRESETS.TOGGLE.KEYBOARD_BEEP , target: terminal },
+			{ name: 'animations' , preset: PRESETS.TOGGLE.ANIMATIONS    , target: terminal },
+			{ name: 'fancy'      , preset: PRESETS.TOGGLE.FANCY         , target: terminal },
+			{ name: 'sam'        , preset: PRESETS.TOGGLE.SAM           , target: terminal },
+
+		].map( (toggle)=>{
+			const element = self.elements[toggle.name];
+			const target  = toggle.target;
+
+			toggle = {
+				enabled : toggle.preset,
+				...toggle,
+				enable  : ()     =>{ flip( true  ); },
+				disable : ()     =>{ flip( false ); },
+				toggle  : (state)=>{ flip( state ); },
+			};
+
+			function update_dom () {
+				const is_terminal = (toggle.name == 'terminal');
+				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
+				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
+				scroll_down();
+			}
+
+			function flip (new_state = null) {
+				console.log( 'flip:', toggle, typeof new_state );
+				const just_toggle = (new_state === null) || (typeof new_state == 'event');
+				toggle.enabled = just_toggle ? !toggle.enabled : new_state;
+				update_dom();
+			}
+
+			if (element && element.tagName == 'BUTTON') {
+				element.addEventListener( 'click', ()=>{
+					flip();
+					focus_prompt();
+				});
+			}
+
+			update_dom();
+
+			return toggle;
+
+		}).reduce( (prev, next)=>{
+			return {...prev, [next.name]: next};
+
+		}, /*initialValue*/{} );
+
+	} // create_toggles
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -960,62 +1018,46 @@ export const DebugConsole = function (callback) {
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
 
-		document.body.innerHTML += (`
-<form class="Xactive terminal">
-	<nav class="controls">
-		<section class="toggles">
-			<button class="animations" title="Animations [Alt]+[A]">A</button>
-			<button class="fancy"      title="Fancy styling [Alt]+[F]">F</button>
-			<button class="key_beep"   title="Keyboard beep [Alt]+[K]">K</button>
-			<button class="sam"        title="Software Automatic Mouth [Alt]+[M]">SAM</button>
-		</section>
-		<section>
-			<button class="close"      title="Minimize terminal [Alt]+[D]">Exit</button>
-		</section>
-	</nav>
-	<output></output>
-	<textarea></textarea>
-	<nav class="status">
-		<section>
-			<span class="connection warning">OFFLINE</span>
-			<span class="time">12:23:02.2</span>
-		</section>
-		<section class="main_menu">
-			<section class="commands">
-				<!-- h2 class="cep">CEP</h2 -->
-				<input type="text" placeholder="Username">
-				<input type="text" placeholder="Nickname">
-				<input type="password" placeholder="Password">
-				<input type="password" placeholder="Factor 2">
-			</section>
-			<button class="submit" title="Shortcut: [Return]. [Shift]+[Return] inserts a newline">Enter</button>
-		</section>
-	</nav>
-</form>
-		`).trim();
+		document.body.innerHTML += HTML_TERMINAL.trim();
 
 		const container = document.querySelector( '.terminal' );
 		self.elements = {
 			html         : document.querySelector( 'html' ),
 			terminal     : container,
-			connection   : container.querySelector( '.connection' ),
-			controls     : container.querySelector( '.controls'   ),
-			commands     : container.querySelector( '.commands'   ),
-			output       : container.querySelector( 'output'      ),
-			input        : container.querySelector( 'textarea'    ),
+			shell        : container.querySelector( '.shell'            ),
+			connection   : container.querySelector( '.connection'       ),
+			controls     : container.querySelector( '.controls'         ),
+			commands     : container.querySelector( '.commands .items'  ),
+			output       : container.querySelector( 'output'            ),
+			input        : container.querySelector( 'textarea'          ),
+			// Login form
 			userName     : container.querySelector( '[placeholder=Username]'   ),
 			nickName     : container.querySelector( '[placeholder=Nickname]'   ),
 			passWord     : container.querySelector( '[placeholder=Password]'   ),
 			secondFactor : container.querySelector( '[placeholder="Factor 2"]' ),
-			close        : container.querySelector( '.close'      ),
-			send         : container.querySelector( '.submit'     ),
-			animations   : container.querySelector( '.animations' ),
-			connection   : container.querySelector( '.connection' ),
-			fancy        : container.querySelector( '.fancy'      ),
-			keyBeep      : container.querySelector( '.key_beep'   ),
-			sam          : container.querySelector( '.sam'        ),
-			status       : container.querySelector( '.status'     ),
+			// Additional menu buttons are addeded to .elements later under "Login form"
+			close        : container.querySelector( '.close'            ),
+			send         : container.querySelector( '.submit'           ),
+			status       : container.querySelector( '.status'           ),
+			// Filter
+			debug        : container.querySelector( 'button.debug'      ),
+			string       : container.querySelector( 'button.string'     ),
+			cep          : container.querySelector( 'button.cep'        ),
+			notice       : container.querySelector( 'button.notice'     ),
+			update       : container.querySelector( 'button.update'     ),
+			broadcast    : container.querySelector( 'button.broadcast'  ),
+			request      : container.querySelector( 'button.request'    ),
+			response     : container.querySelector( 'button.response'   ),
+			// Modes
+			animations   : container.querySelector( 'button.animations' ),
+			fancy        : container.querySelector( 'button.fancy'      ),
+			keyBeep      : container.querySelector( 'button.key_beep'   ),
+			sam          : container.querySelector( 'button.sam'        ),
 		};
+
+console.groupCollapsed( 'DebugConsole.elements{}' );
+console.dir( self.elements );
+console.groupEnd();
 
 		self.history = new History( self.elements.input, {
 			onInputChanged: ()=>{
@@ -1023,6 +1065,13 @@ export const DebugConsole = function (callback) {
 				scroll_down();
 			},
 		});
+window.toggles =
+		// Toggles
+		self.toggles = create_toggles();
+
+console.groupCollapsed( 'DebugConsole.toggles{}' );
+console.dir( self.toggles );
+console.groupEnd();
 
 
 		// Disable <form> submission
@@ -1060,27 +1109,13 @@ export const DebugConsole = function (callback) {
 		});
 
 
-		// Button: Send
+		// Button: "Enter"
 		self.requestId = 0;
 		self.elements.send.addEventListener( 'click', on_send_click );
 
 
-		// Buttons: Toggles
-		self.toggles = {
-			animations : PRESETS.ANIMATIONS,
-			compressed : PRESETS.COMPRESSED,
-			fancy      : PRESETS.FANCY,
-			keyBeep    : PRESETS.KEYBOARD_BEEP,
-			separators : PRESETS.SEPARATORS,
-			sam        : PRESETS.SAM,
-			close      : PRESETS.TERMINAL,
-		};
-		Object.keys( self.toggles ).forEach( (key)=>{
-			if (self.elements[key]) {
-				self.elements[key].addEventListener( 'click', ()=>self.toggle( key ) );
-			}
-			self.toggle( key, self.toggles[key] );
-		});
+		// Button: "Exit"
+		self.elements.close.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
 
 
 		// Keyboard
@@ -1096,7 +1131,11 @@ export const DebugConsole = function (callback) {
 
 
 		// Login form
-		self.elements.login = self.elements.terminal.querySelector( '.login' );
+		self.elements.login   = container.querySelector( 'button.login' );
+		self.elements.asRoot  = container.querySelector( 'button.root'  );
+		self.elements.asUser  = container.querySelector( 'button.user'  );
+		self.elements.asGuest = container.querySelector( 'button.guest' );
+
 		self.elements.terminal.querySelectorAll( '.commands input' ).forEach( (input)=>{
 			input.addEventListener( 'input'  , ()=>self.elements.login.click() );
 			input.addEventListener( 'change' , ()=>self.elements.login.click() );
@@ -1112,12 +1151,9 @@ export const DebugConsole = function (callback) {
 		self.elements.input.addEventListener( 'change'    , on_input_change );
 
 		self.elements.terminal.addEventListener( 'click', (event)=>{
-			if( (event.target === self.elements.terminal)
-			//...? no effect:   ||  (event.target === self.elements.output)
-			||  (event.target === self.elements.input)
-			){
-				focus_prompt();
-			}
+			if      (event.target === self.elements.output  ) focus_prompt( -1 );//... Expand eats this
+			else if (event.target === self.elements.input   ) focus_prompt(  0 );
+			else if (event.target === self.elements.terminal) focus_prompt( +1 );
 		});
 
 		let mouse_moved = true;
@@ -1132,8 +1168,9 @@ export const DebugConsole = function (callback) {
 		});
 
 
-		// Double click
-		addEventListener( 'dblclick', on_dblclick );
+		// CLICK and DOUBLE CLICK
+		addEventListener( 'click'    , on_click    );
+		addEventListener( 'dblclick' , on_dblclick );
 
 
 		// Clock
@@ -1146,11 +1183,16 @@ export const DebugConsole = function (callback) {
 		const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
 		CEP_VERSION += '^' + shortcuts;   // For .help
-		//...self.print( 'CEP-' + CEP_VERSION + ' ready.\n', 'cep' );
 		show_file( 'issue.txt' );
-		//...self.elements.terminal.querySelector( 'h2.cep' ).innerText = 'CEP-' + CEP_VERSION;
 
-		if (self.elements.terminal.classList.contains( 'active' )) setTimeout( focus_prompt, 100 );
+		if (self.elements.terminal.classList.contains( 'enabled' )) setTimeout( focus_prompt, 100 );
+
+		function get (search) {
+			return search.split(' ').reduce( (prev, term)=>{
+				return prev || (location.href.indexOf( term ) >= 0);
+			}, false);
+		}
+
 
 		return Promise.resolve();
 

@@ -1,6 +1,2 @@
-MyNode Enlightened CMS - JSON Debugger and Chat
-------------------------------------------------
-1. Choose a Nickname in the "Enter" menu
-2. Double click "login"
-3. Press [Shift]+[Return] to send text/requests
-------------------------------------------------
+MyNode Chat Console:
+Type  .help  and press Shift+Return

@@ -101,7 +101,11 @@ const Main = function () {
 	this.onMessage = async function (socket, client_address, json_string) {
 		const request_nr = ++message_id;
 
-		log_header(
+		const message = JSON.parse(String( json_string )); //...? Why String
+		const is_pingpong = message.session && message.session.pong;
+		const do_log = (!is_pingpong || (is_pingpong && SETTINGS.LOG_PINGPONG));
+
+		if (do_log) log_header(
 			COLORS.TRAFFIC,
 			'MESSAGE '
 			+ request_nr
@@ -113,11 +117,17 @@ const Main = function () {
 			EXTRA_HEADER_DASHES,
 		);
 
-		if (DEBUG.MESSAGE_IN) color_log( COLORS.RECEIVED, 'Received:', JSON.parse(String( json_string )) );
+		if (DEBUG.MESSAGE_IN && do_log) color_log( COLORS.RECEIVED, 'Received:', message );
 
 		await self.reloader.onMessage( socket, client_address, json_string );
 
-		if (DEBUG.MESSAGE) end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr ); else console.log();
+		if (do_log) {
+			if (DEBUG.MESSAGE) {
+				end_header( COLORS.TRAFFIC, 'MESSAGE ' + request_nr );
+			} else {
+				console.log();
+			}
+		}
 
 	}; // onMessage
 
@@ -387,7 +397,9 @@ const Main = function () {
 		) {
 			try {
 				self.reloader.router.protocols.session.broadcast({
-					'FATAL SYSTEM FAILURE': format_error( error ),
+					type    : 'global error',
+					message : error.message,
+					error   : format_error( error ),
 				});
 
 			} catch (error) {

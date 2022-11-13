@@ -212,7 +212,11 @@ module.exports = function AppReloader (callback) {
 			invalidate_require_cache();
 
 			if (socket) {
-				const message = { 'RELOAD ERROR': format_error(error) };
+				const message = {
+					type    : 'reload error',
+					message : error.message,
+					error   : format_error( error ),
+				};
 
 				try {
 					self.router.protocols.session.broadcast( message );

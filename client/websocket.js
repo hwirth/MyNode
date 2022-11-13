@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { DEBUG } from './config.js';
+import { SETTINGS, DEBUG } from './config.js';
 
 const CONNECTION_TIMEOUT_MS = 5000;
 
@@ -60,7 +60,7 @@ export const WebSocketClient = function (parameters = {}) {
 			console.log( 'Connection failed', error.message );
 		}
 
-		function log (caption, data) {
+		function log_event (caption, data) {
 			if (!DEBUG.WEBSOCKET) return;
 
 			console.groupCollapsed( caption );
@@ -69,7 +69,7 @@ export const WebSocketClient = function (parameters = {}) {
 		}
 
 		ws.addEventListener( 'open', (event)=>{
-			log( 'WebSocketClient.onOpen', event );
+			log_event( 'WebSocketClient.onOpen', event );
 			stop_timeout_loop();
 
 			if (callbacks.onOpen) callbacks.onOpen( event, self );
@@ -77,36 +77,45 @@ export const WebSocketClient = function (parameters = {}) {
 			callback_connection_established();
 		});
 		ws.addEventListener( 'close', (event)=>{
-			log( 'WebSocketClient.onClose', event );
+			log_event( 'WebSocketClient.onClose', event );
 			stop_timeout_loop();
 
 			if (callbacks.onClose) callbacks.onClose( event, self );
 		});
 		ws.addEventListener( 'error', (event)=>{
-			log( 'WebSocketClient.onError', event );
+			log_event( 'WebSocketClient.onError', event );
 			console.log( 'ws: Error:', event );
 			stop_timeout_loop();
 
 			if (callbacks.onError) callbacks.onError( event, self );
 		});
 		ws.addEventListener( 'message', (event)=>{
-			log( 'WebSocketClient.onMessage', event );
-
-			const message = event.data;
-		/*
 			let message = event.data;
-			try {
-				message = JSON.parse( event.data );
-			} catch {
-				message = '>' + message;
+
+			if (typeof message == 'string') {
+				try {
+					message = JSON.parse( message );
+				} catch {
+					// Assume string
+				}
 			}
-		*/
-			console.log(
-				'%c🡇 WebSocketClient received%c:',
-				'color:#48f',
-				'color:unset',
-				message,//...JSON.stringify( message, null, '   ' ),
-			);
+
+			// Hide ping/pong log messages
+			const is_pingpong    = message.update && message.update.pong;
+			const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
+			if (do_log) {
+				console.groupCollapsed(
+					'%c🡇 WebSocketClient received%c:',
+					'color:#48f', 'color:unset',
+					JSON.stringify( message )
+					.replaceAll( '"', '' )
+					.replaceAll( '{', '' )
+					.replaceAll( '}', '' )
+					.slice(0, 90),
+				);
+				console.log( message );
+				console.groupEnd();
+			}
 
 			if (callbacks.onMessage) callbacks.onMessage( event, self, message );
 		});
@@ -145,12 +154,22 @@ export const WebSocketClient = function (parameters = {}) {
 
 
 	this.send = function (request) {
-		console.log(
-			'%c🡅 WebSocketClient sending%c:',
-			'color:#480',
-			'color:unset',
-			request, //...JSON.stringify( request, null, '   ' ),
-		);
+		// Hide ping/pong log messages
+		const is_pingpong = request.session && request.session.pong;
+		const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
+		if (do_log) {
+			console.groupCollapsed(
+				'%c🡅 WebSocketClient sending%c:',
+				'color:#480', 'color:unset',
+				JSON.stringify( request )
+				.replaceAll( '"', '' )
+				.replaceAll( '{', '' )
+				.replaceAll( '}', '' )
+				.slice(0, 90),
+			);
+			console.log( request );
+			console.groupEnd();
+		}
 
 		// See app-on_websocket_message
 		const hide_message

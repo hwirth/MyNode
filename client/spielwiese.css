@@ -1,13 +1,12 @@
 /*** spielwiese.css ***/
 
 :root {
+	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
+
 	color-scheme:light dark; /* both supported */
 
 	--font-family          : terminal;
 	--terminal-font-family : var(--font-family);
-	--NOBRACKETS_terminal-font-family : mode7;
-	--DISABLED_terminal-font-family : seti;
-	--DISABLED_terminal-font-family : crt;
 
 	--page-width   : 64rem;
 	--body-padding : max(1.5rem, calc((100vw - var(--page-width)) / 2));
@@ -51,10 +50,11 @@
 	--button-enabled-bg    : #280;
 
 	--terminal-ping-color      : #8fa;
-	--terminal-broadcast-color : #86f;
-	--terminal-advisory-color  : #090;
-	--terminal-debug-color     : #aaa;
+	--terminal-debug-color     : #acf;
+	--terminal-string-color    : #5c6;
 	--terminal-notice-color    : #acf;
+	--terminal-update-color  : #090;
+	--terminal-broadcast-color : #86f;
 	--terminal-text-color      : #ffe;
 	--terminal-request-color   : #ca0;
 	--terminal-response-color  : #78f;
@@ -123,13 +123,13 @@ body.dark_mode {
 	src: url('/fonts/WhiteRabbit.woff2') format('woff2');
 	font-weight: normal;
 	font-style: normal;
-	font-display: swap;
+	Xfont-display: swap;
 }
 
 
 /* PAGE LAYOUT */
 
-* { margin:0; padding:0; box-sizing:border-box; font-size:1rem; }
+* { margin:0; padding:0; box-sizing:border-box; font-size:15px; }
 
 html, body { width:100%; height:100%; }
 :not(.init) body {
@@ -167,59 +167,32 @@ a:focus  { color:var(--a-focus); }
 h1 { font-size:1.35em; }
 h2 { font-size:1.1em; }
 
-input {
-	border:var(--input-border);
-	border-radius:var(--input-radius);
-	background:var(--input-bg); color:var(--input-color);
-	padding:0.25em 0.35em;
-}
-input:focus {
-	outline:none;
-	border-width:1px;
-}
-
-button {
-	border:var(--input-border);
-	border-radius:0.25em;
-	background: var(--button-bg); color:var(--button-color);
-	padding:0.25em 0.0025em;
-	white-space:nowrap;
-}
-
-input {
-	border:var(--input-border);
-	border-radius:0.25em;
-	Xbackground: var(--button-bg); color:var(--button-color);
-	padding:2px 5px;
-	color:#fff;
-	background:#000;
-	display:inline-block;
-	vertical-align:middle;
-}
-
 footer { display:none; }
 
 
 /* DEBUG CONSOLE */
 
+.terminal.enabled { display:grid; }
 .terminal {
 	position:absolute; bottom:0; left:0; z-index:999;
-	display:grid; grid-template-rows:min-content auto 1fr min-content;
-	grid-template-areas:"r0" "r1" "r2" "r3";
-	width:100%; height:0%;
+	display:none; grid-template-rows:min-content auto min-content;
+	grid-template-areas:"r0" "r1" "r2";
+	width:100%; height:100%;
 	padding:0;
 	overflow:hidden;
 	background:#210;
-	transition:all 0.1s ease-in-out;
 }
-.terminal > nav.controls { grid-area:r0; }
-.terminal > nav.status   { grid-area:r3; }
-.terminal > textarea     { grid-area:r2; }
-.terminal > output       { grid-area:r1; }
+.terminal header { grid-area:r0; }
+.terminal main   { grid-area:r1; position:relative; width:100%; max-height:100%; overflow:hidden; }
+.terminal footer { grid-area:r2; }
+.terminal .shell { display:grid; grid-template-areas:"m0" "m1"; grid-template-rows:auto 1fr; }
+.terminal .shell output   { grid-area:m0; }
+.terminal .shell textarea { grid-area:m1; }
+
+
 
 .terminal.connected { background:#120; }
-.terminal.active { height:100%; padding:var(--terminal-padding); }
-.terminal.active :is(header, footer) { display:none; }
+.terminal.enabled   { height:100%; padding:var(--terminal-padding); }
 .terminal.fancy::after {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background: #000 url(/images/bg_grid3.jpg);
@@ -229,7 +202,7 @@ footer { display:none; }
 }
 /*@media (min-width: 640px) {*/
 @media (min-aspect-ratio: 4/3) {
-    .terminal::after {
+    .terminal.fancy::after {
         background-size: 100% 100%;
     }
 }
@@ -239,12 +212,12 @@ footer { display:none; }
 	background:#06c;
 }
 
-.terminal :is(h2, input, button, span, code, ::before, ::after, textarea, output pre) {
+.terminal :is(h2, input, button, span, code, ::before, ::after, .toolbar, textarea, pre) {
 	font-family:monospace,monospace; font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
 	font-family:terminal;
 }
-.terminal nav *,
+.terminal .toolbar *,
 .terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre) {
 	text-shadow:
 		 1px  0px #0008,
@@ -254,54 +227,56 @@ footer { display:none; }
 	;
 }
 
-.terminal nav {
+
+.terminal input {
+	border:var(--input-border);
+	border-radius:var(--input-radius);
+	background:var(--input-bg); color:var(--input-color);
+	border:var(--input-border);
+	border-radius:0.25em;
+	color:#fff;
+	background:#000;
+	Xdisplay:inline-block;
+	Xvertical-align:middle;
+}
+.terminal input:focus {
+	outline:none;
+	border-width:1px;
+}
+.terminal button {
+	border:var(--input-border);
+	border-radius:5px;
+	background: var(--button-bg); color:var(--button-color);
+	white-space:nowrap;
+}
+
+
+.terminal .toolbar {
 	position:relative;
-	display:inline-flex;
-	flex-grow:1;
-	flex-wrap:wrap;
-	align-items:center; justify-content:center;
+	display:inline-flex; flex-wrap:wrap; align-items:center; justify-content:center;
 	width:100%;
-	background:#fff2;
 	border-radius:5px;
-	padding:0 1px;
+	background:#fff2; color:#fff;
+	box-shadow:inset 0 0 0 1px #fff4;
 }
 
-.terminal nav > section {
-	Xdisplay:flex;
-	Xalign-items:center;
-	Xjustify-content:center;
-	Xfont-size:0;
-}
-.terminal nav section > * { font-size:1rem; color:#fff; }
-.terminal nav section > * {
-	Xdisplay:flex;
-	Xalign-items:center;
-	Xjustify-content:center;
-}
-.terminal nav > :first-child { flex-grow:1; text-align:left; Xalign-items:start; }
-.terminal nav > :last-child  { flex-grow:1; text-align:right; Xalign-items:end; }
+.terminal .toolbar section { position:relative; display:flex; }
+.terminal .toolbar > :first-child { text-align:left; }
+.terminal .toolbar > :last-child  { text-align:right; }
 
-X.terminal nav:hover .main_menu,
-X.terminal nav:focus-within .main_menu { border-radius:0 5px 5px 5px; }
+.terminal footer > :nth-child(1) { flex-grow:1; }
+.terminal footer > :nth-child(2) { flex-grow:0; }
+.terminal footer > :nth-child(3) { flex-grow:1; justify-content:end; text-align:right; }
+.terminal footer > :nth-child(4) { flex-grow:0; justify-content:end; }
 
-.terminal nav .main_menu .commands { display:none; background:#fff2; }
-.terminal nav .main_menu .commands > * {
-	flex-grow:1;/* //...? Browser complains "not a flex item", but makes buttons stretch anyways */
-	Xbackground:#f00;
-}
-.terminal nav .main_menu:hover .commands,
-.terminal nav .main_menu:focus-within .commands {
-	display:flex;
-	flex-wrap:wrap; justify-content:center; align-items:center;
-	position:absolute; bottom:100%; right:0; z-index:999; width:17em;
-	border-radius:5px;
-	padding:0 1px;
-}
-.terminal .connection_status { font-weight:bold; }
-X.terminal nav .cep { color:var(--terminal-text-color); align-self:center; text-align:center; width:100%; font-weight:normal; }
+.terminal .toolbar section > :is(div, span) { padding:1px 5px; vertical-align:middle; }
+
+.terminal .toolbar,
+.terminal .toolbar section { height:calc(1.2rem + 2px); line-height:calc(1.2rem + 2px); }
+.terminal button,
+.terminal input { height:calc(1.2rem + 2px); padding:2.5px 5px 1.5px; }
 
 
-.terminal :is(span, button) { margin:2px 1px; padding:2px 7px 1px 8px; border:none; vertical-align:middle; }
 .terminal button:focus,
 .terminal button:hover   { filter:brightness(1.5); }
 .terminal button.submit  { background:var(--button-submit-bg); color:var(--button-submit-color); }
@@ -322,16 +297,40 @@ X.terminal nav .cep { color:var(--terminal-text-color); align-self:center; text-
 .terminal button.connect,
 .terminal button.disconnect { background:#676; }
 
-X.terminal button.login      { background:#4a3; }
-X.terminal button.logout     { background:#a33; }
-X.terminal button.who        { background:#888; }
-X.terminal button.token      { background:#44c; }
-X.terminal button.clear      { background:#c84; }
-X.terminal button.help       { background:#286; }
-X.terminal button.connect    { background:#888; }
-X.terminal button.disconnect { background:#888; }
 
-.terminal.fancy output::before {
+.terminal .toolbar > section .menu { display:flex; align-items:center; justify-content:center; padding:0; }
+
+.terminal .toolbar > .menu .items { display:none; background:#fff2; }
+.terminal .toolbar > .menu:hover .items,
+.terminal .toolbar > .menu:focus .items,
+.terminal .toolbar > .menu:focus-within .items {
+	display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
+	position:absolute; bottom:100%; right:0; z-index:999;
+	width:17em;
+	padding:0;
+	border-radius:5px;
+}
+.terminal .toolbar > .menu .items > * { flex-grow:1; }
+
+
+.terminal .connection { font-weight:bold; transition:color 0.1s linear; }
+.terminal .connection.ping { color:var(--terminal-ping-color); }
+.terminal .time {
+	flex-grow:1;
+	Xfont-variant-numeric: normal;
+	Xfont-variant-numeric: ordinal;
+	font-variant-numeric: slashed-zero;
+	Xfont-variant-numeric: lining-nums; /* <numeric-figure-values> */
+	font-variant-numeric: oldstyle-nums; /* <numeric-figure-values> */
+	Xfont-variant-numeric: proportional-nums; /* <numeric-spacing-values> */
+	Xfont-variant-numeric: tabular-nums; /* <numeric-spacing-values> */
+	Xfont-variant-numeric: diagonal-fractions; /* <numeric-fraction-values> */
+	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
+	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
+}
+
+
+.terminal.fancy .shell::before {
 	--b:0.85;
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
@@ -340,54 +339,68 @@ X.terminal button.disconnect { background:#888; }
 	filter:hue-rotate(180deg) brightness(var(--b));
 	Xtransition:filter 0.05s linear;
 }
-.terminal.fancy.connected output::before {
-	filter:hue-rotate(0deg) brightness(var(--b));
+.terminal.fancy.connected output::before { filter:hue-rotate(  0deg) brightness(var(--b)); }
+.terminal.fancy.yes       output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
+.terminal.fancy.no        output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
+.terminal.fancy.yes output::after,
+.terminal.fancy.no  output::after {
+	content:'';
+	position:absolute; top:50%; left:50%; transform:translate(-50%,-53%); z-index:-1;
+	width:200%; height:200%;
+	border-radius:100%;
+	background:#0000;
 }
-.terminal.fancy.yes output::before {
-	filter:hue-rotate(-90deg) contrast(2) brightness(1);
-}
-.terminal.fancy.no output::before {
-	filter:hue-rotate(140deg) contrast(3) brightness(1);
-}
+.terminal.fancy.yes output::after { background:radial-gradient(#0f04, #0000); }
+.terminal.fancy.no  output::after { background:radial-gradient(#f004, #0000); }
+
 .terminal output {
 	margin-top:1em;
-	padding-bottom:0.1em;
 	color:var(--terminal-text-color);
 	overflow-y:hidden;
 	white-space:pre-wrap;
 	overflow-x:hidden;
 	overflow-y:scroll;
-	scroll-behavior: smooth;
+	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 }
-.terminal.overflow output { overflow-y:hidden; }
+.terminal pre { padding-bottom:1em; white-space:pre-wrap; }
+.terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; padding-top:2px; padding-bottom:2px; }
+.terminal .separators pre:nth-child(2n+1) { Xbackground:#fff4; }
+.terminal .compressed pre:hover { background:#fff4; cursor:pointer; }
+.terminal .compressed pre.expand:hover { background:unset; cursor:pointer; }
+.terminal .compressed.overflow pre { white-space:nowrap; }
+.terminal .compressed.separators pre:hover { border-width:1px 0; margin-top:-1px; }
+.terminal .compressed pre { white-space:normal; overflow:hidden; padding-top:0; padding-bottom:0; }
+.terminal .compressed.last pre:last-child,
+X.terminal .compressed pre.string,
+X.terminal .compressed pre.cep,
+.terminal .compressed pre.expand { white-space:pre-wrap; }
 
-X.terminal output pre.compressed,
-.terminal output.compressed pre { padding-top:0; padding-bottom:0; }
-.terminal output.compressed pre.response { white-space:pre-wrap; }
-.terminal output.compressed pre.request { white-space:normal; }
-.terminal output.compressed pre.request div { display:inline-block; margin-right:0.45em; }
+.terminal pre { display:none; }
+.terminal .debug.cep       pre.cep,
+.terminal .debug.string    pre.string,
+.terminal .debug.notice    pre.notice,
+.terminal .debug.broadcast pre.broadcast,
+.terminal .debug.update    pre.update,
+.terminal .debug.request   pre.request,
+.terminal .debug.response  pre.response,
+.terminal.chat pre.chat { display:block; }
 
-.terminal output pre { padding-bottom:1em; white-space:pre-wrap; }
-X.terminal .separators pre {
-	border-bottom:var(--terminal-separator-border);
-}
-.terminal .separators pre:nth-child(2n) { background:#fff1; }
 
-.terminal pre.debug     > * { color:var(--terminal-debug-color)     ; white-space:pre-wrap; }
-.terminal pre.broadcast > * { color:var(--terminal-broadcast-color) ; white-space:pre-wrap; }
-.terminal pre.advisory  > * { color:var(--terminal-advisory-color)  ; white-space:pre-wrap; }
-.terminal pre.notice    > * { color:var(--terminal-notice-color)    ; white-space:pre-wrap; }
-.terminal pre.request       { color:var(--terminal-request-color)   ; white-space:pre-wrap; }
-.terminal pre.response      { color:var(--terminal-response-color)  ; white-space:pre-wrap; }
-.terminal pre.success  { color:var(--terminal-success-color)  ; }
-.terminal pre.failure  { color:var(--terminal-error-color)    ; }
-.terminal pre.cep      { color:var(--terminal-cep-color)      ; }
-.terminal pre.mcp      { color:var(--terminal-mcp-color)      ; }
-.terminal pre.chat     { color:var(--terminal-chat-color)     ; padding-left:1.75em; position:relative; }
+.terminal pre.cep       { color:var(--terminal-cep-color)       }
+.terminal pre.debug     { color:var(--terminal-debug-color)     }
+.terminal pre.string    { color:var(--terminal-string-color)    }
+.terminal pre.notice    { color:var(--terminal-notice-color)    }
+.terminal pre.broadcast { color:var(--terminal-broadcast-color) }
+.terminal pre.update    { color:var(--terminal-update-color)    }
+.terminal pre.request   { color:var(--terminal-request-color)   }
+.terminal pre.response  { color:var(--terminal-response-color)  }
+
+.terminal pre.chat          { color:var(--terminal-chat-color)      ; padding-left:1em; position:relative; }
 .terminal pre.chat::before {
 	content:'';
-	position:absolute; left:0;
-	width:1em; height:1em; background:#fff;
+	position:absolute; left:6px; top:0.5em; transform:translate(-50%,-50%);
+	width:10px; height:10px;
+	background:#fff2; outline:solid 1px #fff8; border-radius:100%;
 }
 
 .terminal textarea {
@@ -403,20 +416,6 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.request { color:var(--terminal-input-color); }
 .terminal textarea.local { color:var(--terminal-request-color); }
 .terminal textarea.local ::first-letter { color:#fff; }
-
-.terminal .connection_status.ping { color:var(--terminal-ping-color); }
-.terminal .time {
-	Xfont-variant-numeric: normal;
-	Xfont-variant-numeric: ordinal;
-	font-variant-numeric: slashed-zero;
-	Xfont-variant-numeric: lining-nums; /* <numeric-figure-values> */
-	font-variant-numeric: oldstyle-nums; /* <numeric-figure-values> */
-	Xfont-variant-numeric: proportional-nums; /* <numeric-spacing-values> */
-	Xfont-variant-numeric: tabular-nums; /* <numeric-spacing-values> */
-	Xfont-variant-numeric: diagonal-fractions; /* <numeric-fraction-values> */
-	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
-	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
-}
 
 
 .terminal code      { color:#fcb; }
@@ -454,7 +453,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* MCP */
-:not(.init).animate .active.terminal::before {
+:not(.init) .animate.enabled.terminal::before {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background-image: url(/images/mcp.jpg);
 	background-size: cover;
@@ -477,7 +476,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* Background */
-:not(.init).animate .terminal::after {
+:not(.init) .animate.enabled.terminal::after {
 	animation: MCP_GLOW 360s linear infinite; /*grid3*/
 }
 @keyframes MCP_GLOW {
@@ -497,7 +496,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* Bit */
-:not(.init).animate .terminal output::before {
+:not(.init) .animate.enabled.terminal output::before {
 	animation: BIT_GLOW 360s linear infinite; /*bit.gif*/
 }
 @keyframes BIT_GLOW {

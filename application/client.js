@@ -9,16 +9,17 @@ const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 const { color_log, dump } = require( '../server/debug.js' );
 
-const { REASONS, STATUS, STRINGS, ID_SERVER } = require( './constants.js' );
+const { REASONS, STATUS, STRINGS } = require( './constants.js' );
 
 
 module.exports = function WebSocketClient (socket, client_address, callback) {
 	const self = this;
 
 	this.address;
-	this.idleSince;
 	this.maxIdleTime;
+	this.idleSince;
 	this.login;
+	this.secondFactor;
 	this.pingNr;
 
 
@@ -82,7 +83,9 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 		if (request_id) message.command = request_id.command;
 
-		if (DEBUG.MESSAGE_OUT) color_log(
+		const is_pingpong = message.update && (message.update.type =='ping')
+		const do_log = DEBUG.MESSAGE_OUT && (!is_pingpong || (is_pingpong && SETTINGS.LOG_PINGPONG));
+		if (do_log) color_log(
 			COLORS.SESSION,
 			'WebSocketClient-send:',
 			message,
@@ -98,14 +101,16 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.respond = function (status, request_id, result) {
+		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
 		self.send({
 			response: {
-				type     : request_id.command,
-				time     : Date.now(),
-				tag      : request_id.tag || null,
-				request  : request_id.request,
-				success  : status,
-				message  : result,
+				time    : time,
+				type    : 'result',
+				tag     : request_id.tag || null,
+				request : request_id.request,
+				success : status,
+				command : request_id.command,
+				result  : result,
 			},
 		});
 
@@ -177,8 +182,10 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.sendPing = function () {
+		if (!SETTINGS.KICK_NO_PONG) return;
+
 		self.send({
-			advisory: {
+			update: {
 				type: 'ping',
 				pong: ++self.pingNr,
 			}
@@ -188,6 +195,8 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.receivePong = function () {
+		if (!SETTINGS.KICK_NO_PONG) return;
+
 		set_timeout( 'ping', self.sendPing, SETTINGS.TIMEOUT.PING_INTERVAL );
 
 	}; // receivePong
@@ -212,14 +221,15 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketClient.init' );
 
-		self.address     = client_address;
-		self.idleSince   = Date.now();
-		self.maxIdleTime = SETTINGS.TIMEOUT.IDLE;
-		self.login       = false;
+		self.address      = client_address;
+		self.idleSince    = Date.now();
+		self.maxIdleTime  = SETTINGS.TIMEOUT.IDLE;
+		self.login        = false;
+		self.secondFactor = null;
+		self.pingNr       = null;
 
 		set_timeout( 'login', on_login_timeout, SETTINGS.TIMEOUT.LOGIN );
 
-		self.pingNr = 0;
 		self.receivePong();
 
 		return Promise.resolve();

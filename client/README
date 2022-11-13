@@ -166,13 +166,14 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
-[ ] broadcast, advisory, notice, debug protocols
+[ ] First toggle fails
+[ ] self.router.protocols.session.broadcast( message );  -- flag/object describing who gets full error
+[ ] <header><main><footer> - put output/input into main
+[ ] WANT TO PLAY A GAME?
+[ ] broadcast, update, notice, debug protocols
 [?] Don't client.send/broadcast, return results to router
-[ ] Get rid of line-divs and rules  output pre > *
 [ ] self.debugConsole.print( message, 'response' ); --> ( 'response', message )
-[ ] Connection throttling:
-ADVISORY
-TRY AGAIN IN 5207 MILLISECONDS WITH TAG D822AE3A74
+[ ] Connection throttling: ADVICE: TRY AGAIN IN 5207 MILLISECONDS WITH TAG D822AE3A74
 [ ] as [ before | (username,password) [do <command>| continue] ]
 [ ] "MCP asleep"
 [ ] Keyboard toggles --> buttons

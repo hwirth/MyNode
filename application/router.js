@@ -290,6 +290,7 @@ module.exports.Router = function (persistent, callback) {
 			reset                  : callback.reset,
 			triggerExit            : callback.triggerExit,
 			verifyToken            : (...params)=>{ return self.protocols.mcp.verifyToken(...params); },
+			getRules               : ()=>{ return self.protocols.access.rules; },
 			getProtocols           : ()=>self.protocols,
 			getAllClients          : ()=>{ return persistent.session.clients; },
 			getAllPersistentData   : ()=>{ return persistent; },
@@ -314,6 +315,7 @@ module.exports.Router = function (persistent, callback) {
 				callbacks : [
 					'broadcast',
 					'reset',
+					'getRules',
 					'getUpTime',
 					'getProtocols',
 					'getAllPersistentData',

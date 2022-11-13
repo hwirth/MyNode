@@ -110,15 +110,16 @@ module.exports = function MasterControl (persistent, callback) {
 					{
 						upTime   : get_uptime( /*formatted*/true ),
 						memory   : memory_info,
+						settings: SETTINGS,
+						debug: DEBUG,
 						access   : {
+							//...rules : callback.getRules(),
 							rules: (
 								callback
 								.getProtocolDescription( /*show_line_numbers*/false )
 								.split( '\n' )
 							),
 						},
-						settings: SETTINGS,
-						debug: DEBUG,
 					},
 				);
 
