@@ -76,6 +76,8 @@ module.exports.Router = function (persistent, callback) {
 		// Main level keys designate target protocol, second level a command
 		// Since keys in objects must be unique, each command can only be used once
 
+		const handled_commands  = [];
+		const rejected_commands = [];
 		const request_id = {
 			tag: message.tag,
 			request: null,
@@ -107,9 +109,6 @@ module.exports.Router = function (persistent, callback) {
 			});
 		}
 
-
-		const handled_commands = [];
-		const rejected_commands = [];
 
 		async function call_request_handler (protocol_name, command_name) {
 			const combined_name = protocol_name + '.' + command_name;
@@ -246,9 +245,13 @@ module.exports.Router = function (persistent, callback) {
 			, rejected_commands.length
 		);
 
+		const rejected_commands2 = rejected_commands.reduce( (prev, next)=>{
+			return {...prev, [rejected_commands]: false};
+		}, {});
+
 		const debug_message = { protocols: {} };
 		if (handled_commands .length) debug_message.protocols.handled  = handled_commands;
-		if (rejected_commands.length) debug_message.protocols.rejected = rejected_commands;
+		if (rejected_commands.length) debug_message.protocols.rejected = rejected_commands2;
 		if (rejected_commands.length) send_as_json( socket, debug_message );
 
 	}; // onMessage

@@ -44,10 +44,10 @@ session
 	'who'        : BANG_REQUEST + 'session\n\twho',
 	'status'     : BANG_REQUEST + 'session\n\tstatus',
 	'MCP'        : BANG_REQUEST + 'mcp\n\tstatus',
+	'token'      : BANG_REQUEST + 'mcp\n\ttoken',
 	'kroot'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: root',
 	'kuser'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: user',
 	'reset'      : BANG_REQUEST + 'mcp\n\trestart\n\t\ttoken: ',
-	'token'      : BANG_REQUEST + 'mcp\n\ttoken',
 	'clear'      : BANG_CEP + 'clear',
 	'help'       : BANG_CEP + 'help',
 	'connect'    : BANG_CEP + 'connect ' + SETTINGS.WEBSOCKET.URL,
@@ -66,8 +66,7 @@ const HTML_TERMINAL = (`
 <form class="terminal">
 	<header class="toolbar">
 		<nav class="path">
-			<span title="MyNode Client Endpoint">CEP</span>
-			<span title="Chat/JSON Debugger">Local</span>
+			<span title="MyNode Client Endpoint">CEP</span><span title="Chat/JSON Debugger">Local</span>
 		</nav>
 		<nav class="toggles">
 			<button class="debug" title="Toggle debug mode">Debug</button>
@@ -208,6 +207,11 @@ export const DebugConsole = function (callback) {
 		key       : 'ArrowDown',
 		modifiers : ['cursorEnd'],
 		action    : ()=>{ self.history.forward(); },
+	},{
+		event     : 'keydown',
+		key       : 'Home',
+		modifiers : ['shift'],
+		action    : ()=>{ self.clearScreen(); },
 	}];
 
 
@@ -323,6 +327,63 @@ export const DebugConsole = function (callback) {
 		);
 
 	} // sam_read
+
+
+	let nr_active_sounds = 0;
+
+	function beep () {
+		if( !SETTINGS.KEYBOARD_BEEP
+		||  !self.audioContext
+		||  !self.toggles.keyBeep.enabled
+		||  (nr_active_sounds > 5)
+		) {
+			return;
+		}
+
+		const context = self.audioContext;
+
+		let square_wave = context.createOscillator();
+		let envelope = context.createGain();
+		let volume = context.createGain();
+		let destination = context.destination;
+
+		square_wave.type = "square";
+		square_wave.frequency.value = 440 * 4;
+		square_wave.detune.value = 0;
+		envelope.gain.value = 0.0;
+		volume.gain.value = 0.05;
+
+		square_wave
+		.connect(envelope)
+		.connect(volume)
+		.connect(destination)
+		;
+
+		// Envelope
+		const t0 = context.currentTime;
+		const v = 0.1;
+		var t1;
+		envelope.gain.setValueAtTime         ( 0.0, t1 = t0 );
+		envelope.gain.linearRampToValueAtTime( 1.0, t1 = t0 + v * 0.01 );
+		envelope.gain.linearRampToValueAtTime( 0.1, t1 = t0 + v * 0.10 );
+		envelope.gain.linearRampToValueAtTime( 0.0, t1 = t0 + v * 1.00 );
+
+		//square_wave.addEventListener('ended', on_ended);
+		square_wave.onended = on_ended;
+		square_wave.start();
+		square_wave.stop(t1);
+
+		++nr_active_sounds;
+
+		function on_ended (event) {
+			square_wave.disconnect( envelope );
+			envelope.disconnect( volume );
+			volume.disconnect( context.destination );
+
+			--nr_active_sounds
+		}
+
+	} // beep
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -615,63 +676,6 @@ export const DebugConsole = function (callback) {
 	} // on_keyboard_event
 
 
-	let nr_active_sounds = 0;
-
-	function on_keydown_beep (event) {
-		if( !SETTINGS.KEYBOARD_BEEP
-		||  !self.audioContext
-		||  !self.toggles.keyBeep.enabled
-		||  (nr_active_sounds > 5)
-		) {
-			return;
-		}
-
-		const context = self.audioContext;
-
-		let square_wave = context.createOscillator();
-		let envelope = context.createGain();
-		let volume = context.createGain();
-		let destination = context.destination;
-
-		square_wave.type = "square";
-		square_wave.frequency.value = 440 * 4;
-		square_wave.detune.value = 0;
-		envelope.gain.value = 0.0;
-		volume.gain.value = 0.05;
-
-		square_wave
-		.connect(envelope)
-		.connect(volume)
-		.connect(destination)
-		;
-
-		// Envelope
-		const t0 = context.currentTime;
-		const v = 0.1;
-		var t1;
-		envelope.gain.setValueAtTime         ( 0.0, t1 = t0 );
-		envelope.gain.linearRampToValueAtTime( 1.0, t1 = t0 + v * 0.01 );
-		envelope.gain.linearRampToValueAtTime( 0.1, t1 = t0 + v * 0.10 );
-		envelope.gain.linearRampToValueAtTime( 0.0, t1 = t0 + v * 1.00 );
-
-		//square_wave.addEventListener('ended', on_ended);
-		square_wave.onended = on_ended;
-		square_wave.start();
-		square_wave.stop(t1);
-
-		++nr_active_sounds;
-
-		function on_ended (event) {
-			square_wave.disconnect( envelope );
-			envelope.disconnect( volume );
-			volume.disconnect( context.destination );
-
-			--nr_active_sounds
-		}
-
-	} // on_keydown_beep
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // MOUSE EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -708,11 +712,16 @@ export const DebugConsole = function (callback) {
 
 
 	function on_click (event) {
-		//...if (event.target === self.elements.terminal) focus_prompt();
+console.log( event.target );
+		if (event.target.tagName == 'BUTTON') beep();
+
+		if      (event.target === self.elements.output) focus_prompt( -1 )//... Expand eats this
+		else if (event.target === self.elements.input ) focus_prompt(  0 )
+		else if (event.target === self.elements.shell ) focus_prompt( +1 )
+		;
 
 		if (event.target.parentNode === self.elements.output) {
 			event.target.classList.toggle( 'expand' );
-
 		}
 		else if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
 		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
@@ -795,7 +804,7 @@ export const DebugConsole = function (callback) {
 				self.elements.title = '';
 				callback.disconnect();
 				break;
-			case 'clear'  :  self.elements.output.innerHTML = '';                break;
+			case 'clear'  :  self.clearScreen();                                 break;
 			case 'help'   :  show_file( 'help.txt', /*show_cep_version*/true );  break;
 			case 'issue'  :  show_file( 'issue.txt' );                           break;
 			case 'readme' :  show_file( 'README'   );                            break;
@@ -870,6 +879,12 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // PRINT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.clearScreen = function () {
+		self.elements.output.innerHTML = '';
+
+	} // clearScreen
+
 
 	this.print = function (message, class_name = null) {
 
@@ -1036,8 +1051,8 @@ export const DebugConsole = function (callback) {
 			terminal     : container,
 			shell        : container.querySelector( '.shell'            ),
 			connection   : container.querySelector( '.connection'       ),
-			controls     : container.querySelector( '.controls'         ),
 			commands     : container.querySelector( '.commands .items'  ),
+			toggles      : container.querySelector( '.commands .items'  ),
 			output       : container.querySelector( 'output'            ),
 			input        : container.querySelector( 'textarea'          ),
 			// Login form
@@ -1048,7 +1063,6 @@ export const DebugConsole = function (callback) {
 			// Additional menu buttons are addeded to .elements later under "Login form"
 			close        : container.querySelector( '.close'            ),
 			send         : container.querySelector( '.submit'           ),
-			status       : container.querySelector( '.status'           ),
 			// Filter
 			debug        : container.querySelector( 'button.debug'      ),
 			string       : container.querySelector( 'button.string'     ),
@@ -1075,7 +1089,7 @@ console.groupEnd();
 				scroll_down();
 			},
 		});
-window.toggles =
+
 		// Toggles
 		self.toggles = create_toggles();
 
@@ -1129,7 +1143,7 @@ console.groupEnd();
 
 
 		// Keyboard
-		addEventListener('keydown', on_keydown_beep );
+		addEventListener('keydown', beep );
 		addEventListener('keydown', (event)=>{//...? Where is chat/json? unify
 			const enabled = (self.elements.input.value.charAt(0) == '.');
 			self.elements.input.classList.toggle( 'local', enabled )
@@ -1159,12 +1173,6 @@ console.groupEnd();
 		self.elements.input.addEventListener( 'keyup'     , adjust_textarea );
 		self.elements.input.addEventListener( 'input'     , on_input_change );
 		self.elements.input.addEventListener( 'change'    , on_input_change );
-
-		self.elements.terminal.addEventListener( 'click', (event)=>{
-			if      (event.target === self.elements.output  ) focus_prompt( -1 );//... Expand eats this
-			else if (event.target === self.elements.input   ) focus_prompt(  0 );
-			else if (event.target === self.elements.terminal) focus_prompt( +1 );
-		});
 
 		let mouse_moved = true;
 		self.elements.output.addEventListener( 'mousedown', ()=>mouse_moved = false );

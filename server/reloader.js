@@ -287,7 +287,11 @@ module.exports = function AppReloader (callback) {
 
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
-				socket.send( JSON.stringify({ 'RELOADER ERROR 2': format_error(error) }) );
+				self.router.protocols.session.broadcast({
+					type    : 'router error 2',
+					message : error.message,
+					error   : format_error( error ),
+				});
 			}
 		}
 
