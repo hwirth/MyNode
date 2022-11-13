@@ -62,30 +62,13 @@ const TUTORIAL_SCRIPT = [
 
 const HTML_TERMINAL = (`
 <form class="terminal">
-	<header class="toolbar">
-		<nav class="path">
-			<span title="MyNode Client Endpoint">CEP</span><span title="Chat/JSON Debugger">Local</span>
-		</nav>
-		<nav>
-			<button class="toggles" title="Toggles">Test</button>
-			<div class="items">
-				<button Xclass="animations" title="Toggle animations [Alt]+[A]">Animate</button>
-				<button Xclass="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
-				<button Xclass="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
-				<button Xclass="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
-			</div>
-		</nav>
-	</header>
 	<main class="chat shell last">
 		<output></output>
 		<textarea autocomplete="off"></textarea>
 	</main>
-	<footer class="toolbar">
-		<nav>
-			<span class="connection warning">OFFLINE</span>
-		</nav>
-		<nav>
-			<span class="time"></span>
+	<header class="toolbar">
+		<nav class="path">
+			<span title="MyNode Client Endpoint">CEP</span><span title="Chat/JSON Debugger">Local</span>
 		</nav>
 		<nav>
 			<button class="toggles" title="Toggles">Toggles</button>
@@ -107,6 +90,14 @@ const HTML_TERMINAL = (`
 				<button class="request"   title="Display requests">Request</button>
 				<button class="response"  title="Display responses">Response</button>
 			</div>
+		</nav>
+	</header>
+	<footer class="toolbar">
+		<nav>
+			<span class="connection warning">OFFLINE</span>
+		</nav>
+		<nav>
+			<span class="time"></span>
 		</nav>
 		<nav class="commands">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
@@ -1021,6 +1012,7 @@ export const DebugConsole = function (callback) {
 				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
 				scroll_down();
 				if (is_terminal && toggle.enabled) focus_prompt();
+				if (is_terminal) self.elements.html.classList.remove( 'animate' );//...
 			}
 
 			function flip (new_state = null) {

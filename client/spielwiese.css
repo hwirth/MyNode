@@ -87,11 +87,13 @@ html, body { width:100%; height:100%; }
 	background-size:100% 100%;
 }
 html:not(.init)::after {
-	content:'Node ready'; white-space:pre; color:#fc0;
-	transform:translate(0,-50%);
-	position:absolute; top:50%; left:100px;
-	font-family:var(--font-family);
-	text-transform:uppercase;
+	content:'NODE\AREADY'; white-space:pre;
+	position:absolute; bottom:20px; left:30px; transform:translate(-50%,-50%);
+	outline:solid 1px #fff6;
+	border-radius:3px;
+	padding:2px 5px;
+	font-family:var(--font-family); font-size:0.7em; line-height:1.1em; text-align:center;
+	background:#0007; color:#fc0;
 }
 :not(.init) body::after {
 	content:'';
@@ -99,11 +101,10 @@ html:not(.init)::after {
 	height:100%; width:100%;
 	background-color:#2220;
 	background-image:url(/images/beam.png);   /*********************************************************** BEAM **/
-	background-position:25px center;
+	background-position:6px center;
 	background-repeat:no-repeat;
 	background-size:calc(96px / 2) 100%;
 	filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
-	animation: BEAM 0.2s ease-in-out infinite;
 }
 
 :focus { outline:none; }
@@ -285,7 +286,9 @@ X.terminal button.token,
 	background-size:cover;
 	background-size:auto 100%;
 	background-position:center;
+	transition:background-image 0.5s ease-in-out;
 }
+.terminal.fancy.connected { opacity:1; }
 /*@media (min-width: 640px) {*/
 @media (min-aspect-ratio: 4/3) {
     .terminal.fancy {
@@ -294,20 +297,19 @@ X.terminal button.token,
 }
 /* BEAM */
 .terminal.fancy::after {
-	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:1;
+	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; Xz-index:1;
 	background-color:#2220;
 	background-image:url(/images/beam.png);   /*********************************************************** BEAM **/
-	background-position:24px center;
+	background-position:6px center;
 	background-repeat:no-repeat;
 	background-size:calc(96px / 2) calc(100% - 3.6rem);
 	filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
-	animation: BEAM 0.2s ease-in-out infinite;
 }
 .terminal.fancy.connected::after { filter:hue-rotate(0deg); }
 .terminal.fancy output::before {
 	--b:0.85;
 	content:'';
-	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:2;
+	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);   /************************************************* BIT **/
 	filter:hue-rotate(180deg) brightness(var(--b));
@@ -350,20 +352,6 @@ X.terminal .compressed pre.string,
 X.terminal .compressed pre.cep,
 .terminal .compressed pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
-.terminal.fancy :is(textarea, pre) { padding-left:85px; }
-.terminal.fancy pre::before {
-	content:'';
-	position:absolute; left:25px; top:2px;
-	width:21px; height:12px;
-	outline:solid 1px #fff2; border-radius:100%;
-	background:radial-gradient(ellipse at center, #fffc, #fff8 1px, #fff1 5px, #fff0 6px);
-	animation: BEAM 0.2s ease-in-out infinite;
-}
-.terminal.fancy pre.expand::before {
-	outline:solid 1px #fff6; border-radius:100%;
-	background:radial-gradient(ellipse at center, #ffff, #fffa 3px, #fff1 10px, #fff0 20px);
-}
-
 .terminal pre { display:none; }
 .terminal .debug.cep       pre.cep,
 .terminal .debug.string    pre.string,
@@ -382,14 +370,26 @@ X.terminal .compressed pre.cep,
 .terminal pre.update    { color:var(--terminal-update-color)    }
 .terminal pre.request   { color:var(--terminal-request-color)   }
 .terminal pre.response  { color:var(--terminal-response-color)  }
+.terminal pre.chat      { color:var(--terminal-chat-color)      }
 
-.terminal pre.chat          { color:var(--terminal-chat-color)      ; padding-left:1em; position:relative; }
-.terminal pre.chat::before {
+.terminal.fancy :is(textarea, pre) { padding-left:50px; }
+.terminal.fancy pre::before {
 	content:'';
-	position:absolute; left:6px; top:0.5em; transform:translate(-50%,-50%);
-	width:10px; height:10px;
-	background:#fff2; outline:solid 1px #fff8; border-radius:100%;
+	position:absolute; left:7px; top:2px;
+	width:21px; height:12px;
+	outline:solid 1px #fff2; border-radius:100%;
+	background:radial-gradient(ellipse at center, #fffc, #fff8 1px, #fff1 5px, #fff0 6px);
 }
+.terminal.fancy pre.expand::before {
+	outline-color:#fff6; border-radius:100%;
+	background:radial-gradient(ellipse at center, #ffff, #fffa 3px, #fff1 10px, #fff0 20px);
+}
+
+.terminal .debug pre.chat::before {
+	content:'Msg'; line-height:12px; font-size:0.7em; text-align:center;
+	outline:none; border-radius:3px; background:#0003;
+}
+.terminal .debug pre.chat.expand::before { background:#fff6; }
 
 .terminal code      { color:#fcb; }
 .terminal .success  { color:#080; }
@@ -432,6 +432,9 @@ X.terminal textarea:focus { caret-color:#f0f; }
 :not(.init).animate body::after {
 	animation: BEAM 0.2s ease-in-out infinite;
 }
+.terminal.fancy.animations::after {
+	animation: BEAM 0.2s ease-in-out infinite;
+}
 @keyframes BEAM {
 	   0% { opacity:1.0; }
 	  42% { opacity:0.98; }
@@ -441,7 +444,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* MCP */
-:not(.init) .animate.enabled.terminal::before {
+X:not(.init) .animate.enabled.terminal::before {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; z-index:-2;
 	background-image: url(/images/mcp.jpg);
 	background-size: cover;
@@ -464,7 +467,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* Background */
-:not(.init) .animate.enabled.terminal::after {
+X:not(.init) .animate.enabled.terminal::after {
 	animation: MCP_GLOW 360s linear infinite; /*grid3*/
 }
 @keyframes MCP_GLOW {
@@ -484,7 +487,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* Bit */
-:not(.init) .animate.enabled.terminal output::before {
+X:not(.init) .animate.enabled.terminal output::before {
 	animation: BIT_GLOW 360s linear infinite; /*bit.gif*/
 }
 @keyframes BIT_GLOW {
