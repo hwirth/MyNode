@@ -14,7 +14,7 @@ const STATUS = {
 
 module.exports.REASONS = {
 	UNKNOWN_COMMAND             : 'Unknown command',
-	INTERNAL_ERROR              : 'Internal error',
+	APPLICATION_ERROR           : 'Application error',
 	TOKEN_ISSUED                : 'A new token has been issued',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
 	PERSISTENCE_RESET           : 'Persistent data have been reloaded',

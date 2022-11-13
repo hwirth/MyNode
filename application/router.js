@@ -98,14 +98,15 @@ module.exports.Router = function (persistent, callback) {
 				const client = persistent.session.clients[address];
 				const new_message = {
 					tag      : request_id.tag,
+					type     : 'error',
 					request  : request_id.request || null,
 					success  : false,
-					reason   : REASONS.INTERNAL_ERROR,
+					reason   : REASONS.APPLICATION_ERROR,
 				};
 
 				if (client.inGroup('admin', 'dev')) new_message.error = format_error( error );
 
-				client.send({ broadcast: new_message });
+				callback.broadcast({ broadcast: new_message });
 			});
 		}
 

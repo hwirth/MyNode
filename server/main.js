@@ -397,7 +397,7 @@ const Main = function () {
 		) {
 			try {
 				self.reloader.router.protocols.session.broadcast({
-					type    : 'global error',
+					type    : 'fatal',
 					message : error.message,
 					error   : format_error( error ),
 				});

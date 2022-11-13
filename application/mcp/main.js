@@ -113,12 +113,7 @@ module.exports = function MasterControl (persistent, callback) {
 						settings: SETTINGS,
 						debug: DEBUG,
 						access   : {
-							//...rules : callback.getRules(),
-							rules: (
-								callback
-								.getProtocolDescription( /*show_line_numbers*/false )
-								.split( '\n' )
-							),
+							rules: callback.getProtocolDescription().split('\n'),
 						},
 					},
 				);

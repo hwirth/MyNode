@@ -213,7 +213,7 @@ module.exports = function AppReloader (callback) {
 
 			if (socket) {
 				const message = {
-					type    : 'reload error',
+					type    : 'error',
 					message : error.message,
 					error   : format_error( error ),
 				};
@@ -288,7 +288,7 @@ module.exports = function AppReloader (callback) {
 			} catch (error) {
 				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
 				self.router.protocols.session.broadcast({
-					type    : 'router error 2',
+					type    : 'error',
 					message : error.message,
 					error   : format_error( error ),
 				});

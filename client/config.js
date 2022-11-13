@@ -74,6 +74,10 @@ export const PRESETS = {
 		KEYBOARD_BEEP : !false,
 		SAM           : !false,
 	},
+
+	VOLUME: {
+		SAM: 0.01,
+	},
 };
 
 

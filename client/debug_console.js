@@ -17,7 +17,7 @@ import { History                  } from './history.js';
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-let CEP_VERSION = 'v0.2.2α';   // Keyboard shortcuts will be appended in  self.init()
+let CEP_VERSION = 'v0.3.0β';   // Keyboard shortcuts will be appended in  self.init()
 
 const EXTRA_LINES = 0;
 const MIN_LINES = 0;
@@ -54,8 +54,6 @@ session
 	'disconnect' : BANG_CEP + 'disconnect',
 };
 
-const BUTTON_DECORATE_CLASSNAME = ['login', 'logout', 'who', 'token', 'clear', 'help', 'connect', 'disconnect'];
-
 const TUTORIAL_SCRIPT = [
 	BANG_CEP     + 'connect ' + SETTINGS.WEBSOCKET.URL,
 	BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
@@ -68,25 +66,13 @@ const HTML_TERMINAL = (`
 		<nav class="path">
 			<span title="MyNode Client Endpoint">CEP</span><span title="Chat/JSON Debugger">Local</span>
 		</nav>
-		<nav class="toggles">
-			<button class="debug" title="Toggle debug mode">Debug</button>
-			<div class="items">
-				<button class="cep"       title="Display local replies">CEP</button>
-				<button class="string"    title="Display raw strings">String</button>
-				<button class="notice"    title="Display notices">Notice</button>
-				<button class="broadcast" title="Display broadcasts">Broadcast</button>
-				<button class="update"    title="Display updates">Update</button>
-				<button class="request"   title="Display requests">Request</button>
-				<button class="response"  title="Display responses">Response</button>
-			</div>
-		</nav>
 		<nav>
-			<button class="toggles" title="Toggles">Toggles</button>
+			<button class="toggles" title="Toggles">Test</button>
 			<div class="items">
-				<button class="animations" title="Toggle animations [Alt]+[A]">Animate</button>
-				<button class="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
-				<button class="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
-				<button class="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
+				<button Xclass="animations" title="Toggle animations [Alt]+[A]">Animate</button>
+				<button Xclass="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
+				<button Xclass="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
+				<button Xclass="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
 			</div>
 		</nav>
 	</header>
@@ -100,6 +86,27 @@ const HTML_TERMINAL = (`
 		</nav>
 		<nav>
 			<span class="time"></span>
+		</nav>
+		<nav>
+			<button class="toggles" title="Toggles">Toggles</button>
+			<div class="items">
+				<button class="animations" title="Toggle animations [Alt]+[A]">Animate</button>
+				<button class="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
+				<button class="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
+				<button class="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
+			</div>
+		</nav>
+		<nav class="toggles">
+			<button class="debug" title="Toggle debug mode">Debug</button>
+			<div class="items">
+				<button class="cep"       title="Display local replies">CEP</button>
+				<button class="string"    title="Display raw strings">String</button>
+				<button class="notice"    title="Display notices">Notice</button>
+				<button class="broadcast" title="Display broadcasts">Broadcast</button>
+				<button class="update"    title="Display updates">Update</button>
+				<button class="request"   title="Display requests">Request</button>
+				<button class="response"  title="Display responses">Response</button>
+			</div>
 		</nav>
 		<nav class="commands">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
@@ -211,6 +218,11 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'Home',
 		modifiers : ['shift'],
+		action    : ()=>{ self.clearInput(); },
+	},{
+		event     : 'keydown',
+		key       : 'Home',
+		modifiers : ['ctrl'],
 		action    : ()=>{ self.clearScreen(); },
 	}];
 
@@ -282,7 +294,7 @@ export const DebugConsole = function (callback) {
 				speed    : 72,       //72
 				mouth    : 128,      //128
 				throat   : 128,      //128
-				volume   : 0.1,      //1 I added a volume option to sam.js, but it's not all too pretty
+				volume   : PRESETS.VOLUME.SAM,  //1 I added volume to sam.js, but it's not too pretty
 			});
 		}
 
@@ -712,7 +724,6 @@ export const DebugConsole = function (callback) {
 
 
 	function on_click (event) {
-console.log( event.target );
 		if (event.target.tagName == 'BUTTON') beep();
 
 		if      (event.target === self.elements.output) focus_prompt( -1 )//... Expand eats this
@@ -886,6 +897,13 @@ console.log( event.target );
 	} // clearScreen
 
 
+	this.clearInput = function () {
+		self.elements.input.value = '';
+		scroll_down();
+
+	} // clearScreen
+
+
 	this.print = function (message, class_name = null) {
 
 		// Decorate tokens with HTML
@@ -1002,10 +1020,11 @@ console.log( event.target );
 				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
 				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
 				scroll_down();
+				if (is_terminal && toggle.enabled) focus_prompt();
 			}
 
 			function flip (new_state = null) {
-				console.log( 'flip:', toggle, typeof new_state );
+				//...console.log( 'flip:', toggle, typeof new_state );
 				const just_toggle = (new_state === null) || (typeof new_state == 'event');
 				toggle.enabled = just_toggle ? !toggle.enabled : new_state;
 				update_dom();
@@ -1118,7 +1137,6 @@ console.groupEnd();
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
 			const new_button = document.createElement( 'button' );
 
-			//...if (BUTTON_DECORATE_CLASSNAME.indexOf(key) >= 0)
 			new_button.className = key;
 
 			const hue = Math.floor(360 / Object.keys(BUTTON_SCRIPTS).length * index);
