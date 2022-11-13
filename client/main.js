@@ -121,28 +121,30 @@ const Application = function () {
 
 
 	function on_websocket_message (event, socket, message) {
+		// See  WebSocketClient.send()
 		try   { message = JSON.parse( event.data ); }
 		catch { /* Assume string */ }
 
-		// See  WebSocketClient.send()
-		if (message.update) {
+		if (!message.update) {
+			print_message();
+
+		} else {
 			switch (message.update.type) {
 				case 'ping': {
-					self.terminal.elements.connection.classList.add( 'ping' );
+					if (!DEBUG.HIDE_MESSAGES.PING) print_message();
 					socket.send( { session: { pong: message.update.pong }} );
+
+					self.terminal.elements.connection.classList.add( 'ping' );
 					setTimeout( ()=>{
 						self.terminal.elements.connection.classList.remove( 'ping' );
 					}, 100);
-
-					if (DEBUG.HIDE_MESSAGES.PING) return; else break;
+					break;
 				}
 				case 'chat': {
+					if (!DEBUG.HIDE_MESSAGES.CHAT) print_message();
 					const sender = message.update.nickName || message.update.userName;
-					setTimeout( ()=>{
-						self.terminal.print( {[sender]: message.update.message}, 'chat' );
-					});
-
-					if (DEBUG.HIDE_MESSAGES.CHAT) return; else break;
+					self.terminal.print( {[sender]: message.update.message}, 'chat' );
+					break;
 				}
 				default: {
 					self.terminal.print( 'Unknown update', 'error' );
@@ -150,13 +152,17 @@ const Application = function () {
 			}
 		}
 
-		let class_name = 'response';
-		if (typeof message == 'string')              class_name = 'string';
-		if (typeof message.notice    != 'undefined') class_name = 'notice';
-		if (typeof message.broadcast != 'undefined') class_name = 'broadcast';
-		if (typeof message.update    != 'undefined') class_name = 'update';
 
-		self.terminal.print( message, class_name );
+		function print_message () {
+			let class_name = 'response';
+			if      (typeof message == 'string')              class_name = 'string expand'
+			else if (typeof message.notice    != 'undefined') class_name = 'notice expand'
+			else if (typeof message.broadcast != 'undefined') class_name = 'broadcast'
+			else if (typeof message.update    != 'undefined') class_name = 'update'
+			;
+
+			self.terminal.print( message, class_name );
+		}
 
 	} // on_websocket_message
 

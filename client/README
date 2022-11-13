@@ -166,6 +166,7 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] .mark
 [ ] First toggle fails
 [ ] self.router.protocols.session.broadcast( message );  -- flag/object describing who gets full error
 [ ] <header><main><footer> - put output/input into main
