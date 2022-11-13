@@ -41,11 +41,11 @@ session
 	'user'       : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
 	'guest'      : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
 	'logout'     : BANG_REQUEST + 'session\n\tlogout',
-	'status'     : BANG_REQUEST + 'session\n\tstatus',
 	'who'        : BANG_REQUEST + 'session\n\twho',
+	'status'     : BANG_REQUEST + 'session\n\tstatus',
+	'MCP'        : BANG_REQUEST + 'mcp\n\tstatus',
 	'kroot'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: root',
 	'kuser'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: user',
-	'MCP'        : BANG_REQUEST + 'mcp\n\tstatus',
 	'reset'      : BANG_REQUEST + 'mcp\n\trestart\n\t\ttoken: ',
 	'token'      : BANG_REQUEST + 'mcp\n\ttoken',
 	'clear'      : BANG_CEP + 'clear',
@@ -63,50 +63,57 @@ const TUTORIAL_SCRIPT = [
 ];
 
 const HTML_TERMINAL = (`
-<form class="chat terminal">
+<form class="terminal">
 	<header class="toolbar">
-		<section>
-			<button class="animations" title="Toggle animations [Alt]+[A]">Animate</button>
-			<button class="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
-			<button class="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
-			<button class="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
-		</section>
+		<nav class="path">
+			<span title="MyNode Client Endpoint">CEP</span>
+			<span title="Chat/JSON Debugger">Local</span>
+		</nav>
+		<nav class="toggles">
+			<button class="debug" title="Toggle debug mode">Debug</button>
+			<div class="items">
+				<button class="cep"       title="Display local replies">CEP</button>
+				<button class="string"    title="Display raw strings">String</button>
+				<button class="notice"    title="Display notices">Notice</button>
+				<button class="broadcast" title="Display broadcasts">Broadcast</button>
+				<button class="update"    title="Display updates">Update</button>
+				<button class="request"   title="Display requests">Request</button>
+				<button class="response"  title="Display responses">Response</button>
+			</div>
+		</nav>
+		<nav>
+			<button class="toggles" title="Toggles">Toggles</button>
+			<div class="items">
+				<button class="animations" title="Toggle animations [Alt]+[A]">Animate</button>
+				<button class="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
+				<button class="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
+				<button class="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
+			</div>
+		</nav>
 	</header>
-	<main class="shell last">
+	<main class="chat shell last">
 		<output></output>
-		<textarea></textarea>
+		<textarea autocomplete="off"></textarea>
 	</main>
 	<footer class="toolbar">
-		<section>
-			<div class="connection warning">OFFLINE</div>
-		</section>
-		<section>
-			<div class="time"></div>
-		</section>
-		<section class="menu commands">
+		<nav>
+			<span class="connection warning">OFFLINE</span>
+		</nav>
+		<nav>
+			<span class="time"></span>
+		</nav>
+		<nav class="commands">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
 			<div class="items">
-				<input type="text" placeholder="Username" autocomplete="username">
-				<input type="text" placeholder="Nickname" autocomplete="nickname">
-				<input type="password" placeholder="Password" autocomplete="password">
-				<input type="password" placeholder="Factor 2" autocomplete="one-time-code">
+				<input type="text"     name="username" placeholder="Username" autocomplete="username">
+				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname">
+				<input type="password" name="password" placeholder="Password" autocomplete="password">
+				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
 			</div>
-		</section>
-		<section>
+		</nav>
+		<nav>
 			<button class="close" title="Minimize terminal">Exit</button>
-		</section>
-		<section class="menu toggles">
-			<button class="debug"      title="Toggle debug mode">Debug</button>
-			<div class="items">
-				<button class="cep"        title="Display local replies">CEP</button>
-				<button class="string"     title="Display raw strings">String</button>
-				<button class="notice"     title="Display notices">Notice</button>
-				<button class="broadcast"  title="Display broadcasts">Broadcast</button>
-				<button class="update"     title="Display updates">Update</button>
-				<button class="request"    title="Display requests">Request</button>
-				<button class="response"   title="Display responses">Response</button>
-			</div>
-		</section>
+		</nav>
 	</footer>
 </form>
 `).split('\n').map( line => line.trim() ).join(''); // HTML_TERMINAL
@@ -669,99 +676,6 @@ export const DebugConsole = function (callback) {
 // MOUSE EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	async function on_send_click (event) {
-
-// LOCAL COMMAND /////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		function perform_local (command) {
-			if (command.charAt(0) != BANG_CEP) return false;
-
-			self.print( command, 'request' );
-
-			const token     = command.split(' ')[0].slice(1);
-			const parameter = command.slice( token.length + 1 );
-
-			switch (token) {
-			case 'connect':
-				callback.connect( parameter || SETTINGS.WEBSOCKET.URL );
-				break;
-			case 'disconnect':
-				self.elements.connection.classList = 'connection warning';
-				self.elements.connection.innerText = 'Offline';//... Needs callback
-				self.elements.title = '';
-				callback.disconnect();
-				break;
-			case 'clear'  :  self.elements.output.innerHTML = '';                break;
-			case 'help'   :  show_file( 'help.txt', /*show_cep_version*/true );  break;
-			case 'issue'  :  show_file( 'issue.txt' );                           break;
-			case 'readme' :  show_file( 'README'   );                            break;
-			case 'music':
-				document.body.innerHTML += HTML_YOUTUBE;
-				break;
-			default:
-				self.elements.connection.classList = 'connection error';
-				self.elements.connection.innerText = 'Error';
-				self.elements.title = 'Unknown command in perform_local()';
-				self.print( 'Unrecognized command', 'cep' );
-				throw new Error( 'DebugConsole-on_send_click-perform_local: Unrecognized command' );
-			}
-
-			return true;
-		}
-
-// JSON REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		function send_json (text) {
-			const request = (text.indexOf('\n') >= 0) ? text_to_request(text) : {chat: { say: text }};
-			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
-			callback.send( request );
-		}
-
-		const text = self.elements.input.value.trim();
-		const is_json = !perform_local( text );
-
-		if (is_json) {
-			const max_attempts = 10;
-			let nr_attempts = 0;
-
-			if (!callback.isConnected()) {
-				self.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
-
-				await callback.connect();  //...! Doesn't wait for onConnect yet
-				while ((nr_attempts++ < max_attempts) && !callback.isConnected()) {
-					await new Promise( (done)=>{
-						setTimeout( done, SETTINGS.TIMEOUT.RECONNECT );
-					});
-				}
-			}
-
-			if (nr_attempts == max_attempts) {
-				self.print( 'Aborting auto-connect', 'cep' );
-			}
-
-			if (callback.isConnected()) {
-				send_json( text );
-			} else {
-				await new Promise( (done)=>{
-					setTimeout( ()=>{
-						if (callback.isConnected()) {
-							send_json( text );
-						} else {
-							//...self.print( text, 'request' );
-							self.print( 'Not connected', 'error' );
-						}
-						done();
-					}, SETTINGS.TIMEOUT.RECONNECT);
-				});
-			}
-		}
-
-		self.history.add( text );
-		self.elements.input.value = '';
-
-		focus_prompt();
-
-	} // on_send_click
-
-
 	function parse_button_script (script) {
 		const username = self.elements.userName.value;
 		const nickname = self.elements.nickName.value;
@@ -855,6 +769,102 @@ export const DebugConsole = function (callback) {
 		}
 
 	} // on_dblclick
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// SEND BUTTON
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	async function on_send_click (event) {
+
+		function perform_local (command) {
+			if (command.charAt(0) != BANG_CEP) return false;
+
+			self.print( command, 'request' );
+
+			const token     = command.split(' ')[0].slice(1);
+			const parameter = command.slice( token.length + 1 );
+
+			switch (token) {
+			case 'connect':
+				callback.connect( parameter || SETTINGS.WEBSOCKET.URL );
+				break;
+			case 'disconnect':
+				self.elements.connection.classList = 'connection warning';
+				self.elements.connection.innerText = 'Offline';//... Needs callback
+				self.elements.title = '';
+				callback.disconnect();
+				break;
+			case 'clear'  :  self.elements.output.innerHTML = '';                break;
+			case 'help'   :  show_file( 'help.txt', /*show_cep_version*/true );  break;
+			case 'issue'  :  show_file( 'issue.txt' );                           break;
+			case 'readme' :  show_file( 'README'   );                            break;
+			case 'music':
+				document.body.innerHTML += HTML_YOUTUBE;
+				break;
+			default:
+				self.elements.connection.classList = 'connection error';
+				self.elements.connection.innerText = 'Error';
+				self.elements.title = 'Unknown command in perform_local()';
+				self.print( 'Unrecognized command', 'cep' );
+				throw new Error( 'DebugConsole-on_send_click-perform_local: Unrecognized command' );
+			}
+
+			return true;
+		}
+
+		function send_json (text) {
+			const request = (text.indexOf('\n') >= 0) ? text_to_request(text) : {chat: { say: text }};
+			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
+			callback.send( request );
+		}
+
+		async function remote_command () {
+			const max_attempts = 10;
+			let nr_attempts = 0;
+
+
+			if (!callback.isConnected()) {
+				self.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
+
+				await callback.connect();  //...! Doesn't wait for onConnect yet
+				while ((nr_attempts++ < max_attempts) && !callback.isConnected()) {
+					await new Promise( (done)=>{
+						setTimeout( done, SETTINGS.TIMEOUT.RECONNECT );
+					});
+				}
+			}
+
+			if (nr_attempts == max_attempts) {
+				self.print( 'Aborting auto-connect', 'cep' );
+			}
+
+			if (callback.isConnected()) {
+				send_json( text );
+			} else {
+				await new Promise( (done)=>{
+					setTimeout( ()=>{
+						if (callback.isConnected()) {
+							send_json( text );
+						} else {
+							//...self.print( text, 'request' );
+							self.print( 'Not connected', 'error' );
+						}
+						done();
+					}, SETTINGS.TIMEOUT.RECONNECT);
+				});
+			}
+		}
+
+		const text = self.elements.input.value.trim();
+		if (!perform_local( text )) await remote_command();
+
+		self.history.add( text );
+		self.elements.input.value = '';
+
+		focus_prompt();
+
+	} // on_send_click
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
