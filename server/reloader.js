@@ -206,7 +206,12 @@ module.exports = function AppReloader (callback) {
 			self.router = await new require( router.url ).Router(
 				router.persistent,
 				router.callbacks,
-			);
+
+			).catch( (error)=>{
+				console.log( '#######################################################################' );
+				console.log( '#### self.router = await new require( router.url ).Router().catch() ###' );
+				console.log( '#######################################################################' );
+			});
 
 		} catch (error) {
 			invalidate_require_cache();

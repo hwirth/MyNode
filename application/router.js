@@ -149,19 +149,24 @@ module.exports.Router = function (persistent, callback) {
 				//... How do I catch, when I accidentially
 				//... forgot to await something in there?
 				if (request_handler.constructor.name === 'AsyncFunction') {
-					if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
+					if (DEBUG.ROUTER) ;color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
 
-					await request_handler(
-						client,
-						request_id,
-						request_arguments
+					try {
+						await request_handler(
+							client,
+							request_id,
+							request_arguments
 
-					).catch( (error)=>{
-						send_error( error, 3 );
-					});
+						).catch( (error)=>{
+							send_error( error, 3 );
+						});
+
+					} catch (error) {
+						send_error( error, 4 );
+					}
 
 				} else {
-					if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'SYNC', combined_name );
+					if (DEBUG.ROUTER) ;color_log( COLORS.ROUTER, 'SYNC', combined_name );
 
 					try {
 						request_handler(
@@ -171,7 +176,7 @@ module.exports.Router = function (persistent, callback) {
 						);
 
 					} catch (error) {
-						send_error( error, 4 );
+						send_error( error, 5 );
 					}
 				}
 

@@ -230,6 +230,37 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 	}; // inspect
 
 
+// CRASH TEST ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	//...? How to automatically recover from application errors like this:
+
+	const TEST_URL = 'https://rss.orf.at/news.xml';
+
+	// Mistake in application code: Uses a Promise, doesn't catch
+	this.request.crashSync = function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<mcp.crashSync>', 'client:', dump(client) );
+
+		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
+
+	} // crashSync
+
+	// Mistake in application code: Uses a Promise, doesn't await
+	this.request.crashAsync = async function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<mcp.crashAsync>', 'client:', dump(client) );
+
+		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
+
+	} // crashAsync
+
+	// This will get caught properly:
+	this.request.crashSafe = async function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<mcp.crashSafe>', 'client:', dump(client) );
+
+		await fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
+
+	} // crashAsync
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -256,13 +287,13 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 			}
 
 			return (
-					  (years   ? years      + 'y' : '')
-					+ (weeks   ? weeks      + 'w' : '')
-					+ (days    ? days       + 'd:' : '')
-					+ leading( hours  , 2 ) + 'h'
-					+ leading( minutes, 2 ) + 'm'
-					+ leading( seconds, 2 ) + '.'
-					+ leading( millis , 3 ) + 's'
+				  (years   ? years      + 'y' : '')
+				+ (weeks   ? weeks      + 'w' : '')
+				+ (days    ? days       + 'd:' : '')
+				+ leading( hours  , 2 ) + 'h'
+				+ leading( minutes, 2 ) + 'm'
+				+ leading( seconds, 2 ) + '.'
+				+ leading( millis , 3 ) + 's'
 			);
 
 		} else {

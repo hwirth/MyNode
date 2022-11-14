@@ -1,2 +1,2 @@
-MyNode Chat Console:
+MyNode Chat Console
 Type  .help  and press Shift+Return

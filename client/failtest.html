@@ -1,0 +1,33 @@
+<script>
+// Mistake in application code: Uses a Promise, doesn't catch nor await
+const test_functions = {
+	test_sync: ()=>console.log('test_sync ran'),
+	test_async: async()=>console.log('test_async ran'),
+	normal_error: ()=>{ throw new Error('TEST ERROR') },
+	promise_sync: ()=>{ new Promise().then((res,rej) => UNDEFINED_FUNCTION) },
+	promise_async: async()=>{ new Promise().then((res,rej) => UNDEFINED_FUNCTION) },
+	promise_await: async()=>{ await new Promise().then((res,rej) => UNDEFINED_FUNCTION) },
+	test: ()=>{ new Promise( ()=>{ 'STRING HAS NO FILTER'.filter(all=>true) })},
+}
+
+for( name in test_functions ) test( test_functions[name] )
+
+async function test (test_function) {
+	if (test_function.constructor.name === 'AsyncFunction') {
+		try { await test_function().catch(e=>report(error,1)) }
+		catch (error) { report(error,2) }
+	}
+	else {
+		try { test_function().catch(error=>report(error,3)) }
+		catch (error) { report(error,4) }
+	}
+
+	function report (error, nr) {
+		console.group('GOOD:', nr, name, 'caught', error.message )
+		console.log( test_function.toString() )
+		console.log( error )
+		console.trace()
+		console.groupEnd()
+	}
+}
+</script>

@@ -98,6 +98,38 @@ const Application = function () {
 	}; // toggleYouTubePause
 
 
+	function orf_rss (url = 'https://rss.orf.at/news.xml') {
+		fetch(url)
+		.then(response => response.text())
+		.then(str => new window.DOMParser().parseFromString( str, 'text/xml' ))
+		.then(data => {
+			console.log(data);
+			const items = data.querySelectorAll( 'item' );
+			let html = ``;
+			items.forEach( (element)=>{
+				const parts = ['title', 'date', 'link'].map( (tag_name)=>{
+					return element.querySelector( tag_name );
+				});
+				console.log( parts );
+				/*
+				const html = (`
+<article>
+	<h2>
+		<a href="${parts.link}" target="_blank" rel="noopener">
+			${parts.title}
+		</a>
+	</h2>
+	<p>${parts.date}</p>
+</article>
+				`).split('\n').map( line => line.trim() ).join('').trim();
+				self.terminal.print( html );
+				*/
+			});
+		});
+
+	} // orf_rss
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -154,14 +186,7 @@ const Application = function () {
 
 
 		function print_message () {
-			let class_name = 'response';
-			if      (typeof message == 'string')              class_name = 'string expand'
-			else if (typeof message.notice    != 'undefined') class_name = 'notice expand'
-			else if (typeof message.broadcast != 'undefined') class_name = 'broadcast'
-			else if (typeof message.update    != 'undefined') class_name = 'update'
-			;
-
-			self.terminal.print( message, class_name );
+			self.terminal.onReceive( message );
 		}
 
 	} // on_websocket_message

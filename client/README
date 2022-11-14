@@ -157,6 +157,13 @@ WS_PORT               1337
 ===============
 $ npm install ws follow-redirects re-require-module
 
+Upgrade node:
+sudo npm cache clean -f
+sudo npm install -g n
+sudo npm install -g n
+sudo n stable
+
+
 
 6. Debugging
 ============
@@ -166,6 +173,10 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] Double key beep in login: send.click() <-- buttons beep too
+[ ] Max. scrollback
+[ ] Click error notification, search results, etc. --> scroll.
+[ ] Errors in bottom left: Hover, see notifications
 [ ] .mark
 [ ] First toggle fails
 [ ] self.router.protocols.session.broadcast( message );  -- flag/object describing who gets full error

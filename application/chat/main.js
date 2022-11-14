@@ -95,6 +95,63 @@ module.exports = function ChatServer (persistent_data, callback) {
 	}; // request.say
 
 
+	this.request.news = async function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<chat.news>', 'client:', dump(client) );
+
+		//throw new Error( 'TEST ERROR' );
+
+		const url = 'https://rss.orf.at/news.xml';
+
+		let response_html = '';
+
+		await fetch( url )
+		.then( response => response.text() )
+		//.then( str => new DOMParser().parseFromString( str, 'text/xml' ) )
+		.then( data => {
+			console.log(
+				data
+				.split( '<item' )
+				.map( (entries)=>{
+					return (
+						entries
+						//.split( '\n' )
+						.filter( (line)=>{
+							return (
+								   (line.indexOf('<title>') >= 0)
+								|| (line.indexOf('<link>' ) >= 0)
+							);
+						})
+					);
+				}),
+			);
+	/*
+			const items = data.querySelectorAll( 'item' );
+			let html = ``;
+			items.forEach( (element)=>{
+				const parts = ['title', 'date', 'link'].map( (tag_name)=>{
+					return element.querySelector( tag_name );
+				});
+				console.log( parts );
+				/*
+				response_html += (`
+<article>
+	<h2>
+		<a href="${parts.link}" target="_blank" rel="noopener">
+			${parts.title}
+		</a>
+	</h2>
+	<p>${parts.date}</p>
+</article>
+				`).split('\n').map( line => line.trim() ).join('').trim();
+				self.terminal.print( html );
+				* /
+			});
+	*/
+		});
+
+	}; // news
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

@@ -343,13 +343,10 @@ X.terminal button.token,
 .terminal .separators pre:nth-child(2n+1) { Xbackground:#fff4; }
 .terminal .compressed pre:hover { background:#fff4; cursor:pointer; }
 .terminal .compressed pre.expand:hover { background:unset; cursor:pointer; }
-X.terminal .compressed.overflow pre { white-space:nowrap; }
 .terminal .compressed.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
 .terminal .compressed.separators pre:hover { border-width:1px 0; margin-top:-1px; }
 .terminal .compressed pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
-.terminal .compressed.last pre:last-child,
-X.terminal .compressed pre.string,
-X.terminal .compressed pre.cep,
+.terminal .compressed.last pre:last-child,/*//...*/
 .terminal .compressed pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
 .terminal pre { display:none; }
@@ -385,11 +382,13 @@ X.terminal .compressed pre.cep,
 	background:radial-gradient(ellipse at center, #ffff, #fffa 3px, #fff1 10px, #fff0 20px);
 }
 
-.terminal .debug pre.chat::before {
+.terminal.fancy .debug pre.chat::before {
 	content:'Msg'; line-height:12px; font-size:0.7em; text-align:center;
 	outline:none; border-radius:3px; background:#0003;
 }
-.terminal .debug pre.chat.expand::before { background:#fff6; }
+.terminal.fancy .debug pre.chat.expand::before { background:#fff6; }
+
+.terminal iframe { position:relative; width:calc(100% - 70px); margin-left:50px; }
 
 .terminal code      { color:#fcb; }
 .terminal .success  { color:#080; }

@@ -99,7 +99,7 @@ const HTML_TERMINAL = (`
 		<nav>
 			<span class="time"></span>
 		</nav>
-		<nav class="commands">
+		<nav class="commands"><!-- <menu><li>//... -->
 			<button class="submit" title="Execute command/send chat text">Enter</button>
 			<div class="items">
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
@@ -208,12 +208,12 @@ export const DebugConsole = function (callback) {
 	},{
 		event     : 'keydown',
 		key       : 'Home',
-		modifiers : ['shift'],
+		modifiers : ['ctrl'],
 		action    : ()=>{ self.clearInput(); },
 	},{
 		event     : 'keydown',
 		key       : 'Home',
-		modifiers : ['ctrl'],
+		modifiers : ['shift', 'ctrl'],
 		action    : ()=>{ self.clearScreen(); },
 	}];
 
@@ -255,21 +255,45 @@ export const DebugConsole = function (callback) {
 	} // scroll_down
 
 
-	function show_file (file_name, show_cep_version = false) {
-		fetch( file_name ).then( (response)=>{
-			if (! response.ok) {
-				throw new Error( 'HTTP error, status = ' + response.status );
-			}
+	async function show_file (file_name, extract_body = false) {
+		const file_contents = await fetch( file_name ).then( (response)=>{
+			if (! response.ok) throw new Error( 'HTTP error, status = ' + response.status );
 			return response.text();   // returns a Promise
-
-		}).then( (new_text)=>{
-			self.print(
-				((show_cep_version) ? 'CEP-' + CEP_VERSION + '\n' : '')
-				+ new_text.split( '//EOF' )[0].trim()
-				,
-				'cep',
-			);
 		});
+
+		const file_extension = file_name.split('.').pop();
+
+		if (file_extension != file_name) {
+			switch (file_extension) {
+				case 'html': {
+					const iframe = document.createElement( 'iframe' );
+					iframe.className = 'cep htmlfile expand';
+					iframe.src = file_name;
+					iframe.setAttribute( 'frameborder', '0' );
+					iframe.setAttribute( 'scrolling', 'no' );
+					iframe.addEventListener( 'load', ()=>{
+						iframe.style.height = (
+							iframe
+							.contentWindow
+							.document
+							.documentElement
+							.scrollHeight
+							+ 'px'
+						);
+						//scroll_down();
+					});
+					self.elements.output.appendChild( iframe );
+					break;
+				}
+				case 'txt': // fall through
+				default: {
+					self.print(
+						file_contents.split( '//EOF' )[0].trim(),
+						'cep textfile expand',
+					);
+				}
+			}
+		}
 
 	} // show_file
 
@@ -788,8 +812,11 @@ export const DebugConsole = function (callback) {
 
 	async function on_send_click (event) {
 
+// LOCAL COMMANDS ////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function perform_local (command) {
 			if (command.charAt(0) != BANG_CEP) return false;
+
+			function show_version() { self.print( 'CEP-' + CEP_VERSION, 'cep' ); }
 
 			self.print( command, 'request' );
 
@@ -806,10 +833,12 @@ export const DebugConsole = function (callback) {
 				self.elements.title = '';
 				callback.disconnect();
 				break;
-			case 'clear'  :  self.clearScreen();                                 break;
-			case 'help'   :  show_file( 'help.txt', /*show_cep_version*/true );  break;
-			case 'issue'  :  show_file( 'issue.txt' );                           break;
-			case 'readme' :  show_file( 'README'   );                            break;
+			case 'version' :  show_version();                 break;
+			case 'clear'   :  self.clearScreen();             break;
+			case 'help'    :  show_file( 'help.txt' );        break;
+			case 'issue'   :  show_file( 'issue.txt' );       break;
+			case 'readme ' :  show_file( 'README'   );        break;
+			case 'diary'   :  show_file( 'dev_diary.html' );  break;
 			case 'music':
 				document.body.innerHTML += HTML_YOUTUBE;
 				break;
@@ -824,6 +853,7 @@ export const DebugConsole = function (callback) {
 			return true;
 		}
 
+// REMOTE COMMANDS ///////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function send_json (text) {
 			const request = (text.indexOf('\n') >= 0) ? text_to_request(text) : {chat: { say: text }};
 			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
@@ -862,6 +892,7 @@ export const DebugConsole = function (callback) {
 							self.print( 'Not connected', 'error' );
 						}
 						done();
+
 					}, SETTINGS.TIMEOUT.RECONNECT);
 				});
 			}
@@ -876,6 +907,24 @@ export const DebugConsole = function (callback) {
 		focus_prompt();
 
 	} // on_send_click
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// RECEIVE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.onReceive = function (message) {
+		let class_name = 'response';
+		if      (typeof message == 'string')              class_name = 'string expand'
+		else if (typeof message.cep       != 'undefined') class_name = 'cep expand'
+		else if (typeof message.notice    != 'undefined') class_name = 'notice expand'
+		else if (typeof message.broadcast != 'undefined') class_name = 'broadcast'
+		else if (typeof message.update    != 'undefined') class_name = 'update'
+		;
+
+		self.print( message, class_name );
+
+	}; // onReceive
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -897,46 +946,54 @@ export const DebugConsole = function (callback) {
 
 	this.print = function (message, class_name = null) {
 
-		// Decorate tokens with HTML
-		const class_names = [
-			'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
-			'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
-			'true'     , 'false'   , 'null'
-		];
-		const tokens = [
-			'/', '.', ':', ';', '{',
-			'[', '(', ')', ']', '}',
-			'true', 'false', 'null',
-		];
+		function highlight () {
+			// Decorate tokens with HTML
+			const class_names = [
+				'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
+				'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
+				'true'     , 'false'   , 'null'
+			];
+			const tokens = [
+				'/', '.', ':', ';', '{',
+				'[', '(', ')', ']', '}',
+				'true', 'false', 'null',
+			];
 
-		let message_html = (
-			(typeof message == 'string')
-			? message
-			: request_to_text( message )
-		)
-		.replace( /&/g, '&amp;' )
-		.replace( /</g, '&lt;'  )
-		.replaceAll( '&lt;', '###lt###' )
-		.replaceAll( '&gt;', '###gt###' )
-		.replaceAll( '&amp;', '###amp###' )
-		;
+			let message_html = (
+				(typeof message == 'string')
+				? message
+				: request_to_text( message )
+			)
+			.replace( /&/g, '&amp;' )
+			.replace( /</g, '&lt;'  )
+			.replaceAll( '&lt;', '###lt###' )
+			.replaceAll( '&gt;', '###gt###' )
+			.replaceAll( '&amp;', '###amp###' )
+			;
 
-		tokens.forEach( (token, index)=>{
-			const html = '<code class="' + class_names[index] + '">' + token + '</code>';
-			message_html = message_html.replaceAll( token, html );
-		});
+			tokens.forEach( (token, index)=>{
+				const html = '<code class="' + class_names[index] + '">' + token + '</code>';
+				message_html = message_html.replaceAll( token, html );
+			});
 
-		message_html = message_html
-		.replaceAll( '###amp###', '&amp;' )
-		.replaceAll( '###gt###', '&gt;' )
-		.replaceAll( '###lt###', '&lt;' )
-		.replaceAll('\\n', '\n')   // '\\n' for .readme
-		;
+			message_html = message_html
+			.replaceAll( '###amp###', '&amp;' )
+			.replaceAll( '###gt###', '&gt;' )
+			.replaceAll( '###lt###', '&lt;' )
+			.replaceAll('\\n', '\n')   // '\\n' for .readme
+			;
+
+			return message_html;
+		}
+
+		const print_message = highlight( 
+			(typeof message == 'string') ? message : JSON.stringify(message, null, '\t')
+		);
 
 		// Create DOM element
 		const new_element = document.createElement( 'pre' );
 		if (class_name) new_element.className = class_name;
-		new_element.innerHTML = message_html;
+		new_element.innerHTML = print_message;
 
 		self.elements.output.appendChild( new_element );
 		scroll_down();
