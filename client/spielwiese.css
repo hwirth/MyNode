@@ -153,7 +153,7 @@ footer { display:none; }
 .terminal :is(h2, input, button, span, code, ::before, ::after, .toolbar, textarea, pre) {
 	font-family:terminal; font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
-	
+
 }
 .terminal .toolbar *,
 .terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre) {
@@ -347,7 +347,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 }
 
-.terminal pre { position:relative; padding-bottom:1em; white-space:pre-wrap; }
+.terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
 .terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; padding-top:2px; padding-bottom:2px; }
 .terminal .separators pre:nth-child(2n+1) { Xbackground:#fff4; }
 .terminal .compress pre:hover { background:#fff4; cursor:pointer; }
@@ -359,7 +359,6 @@ X.terminal nav.tasks button.active { background-color:#570; }
 .terminal .compress pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
 .terminal pre { display:block; }
-.terminal .chat .cep       pre.cep,
 .terminal .chat .string    pre.string,
 .terminal .chat .notice    pre.notice,
 .terminal .chat .broadcast pre.broadcast,
@@ -390,10 +389,11 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	background:radial-gradient(ellipse at center, #ffff, #fffa 3px, #fff1 10px, #fff0 20px);
 }
 
-.terminal.fancy .chat pre.chat::before {
+.terminal.fancy pre.chat::before {
 	content:'Msg'; line-height:12px; font-size:0.7em; text-align:center;
 	outline:none; border-radius:3px; background:#0003;
 }
+.terminal.fancy .chat pre.chat::before { color:#0af; }
 .terminal.fancy .chat pre.chat.expand::before { background:#fff6; }
 
 .terminal iframe { position:relative; width:calc(100% - 70px); margin-left:50px; }
@@ -429,6 +429,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 }
 X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.request { color:var(--terminal-request-color); }
+.terminal textarea.cep     { color:var(--terminal-request-color); }
 .terminal textarea.local { color:var(--terminal-request-color); }
 .terminal textarea.local ::first-letter { color:#fff; }
 

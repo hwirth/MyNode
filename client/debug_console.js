@@ -6,7 +6,7 @@
 "use strict";
 
 // This is a node module or something. It installs itself under window.SamJs and cannot be imported normally
-// I think a bundler would change that, but this is from the /dist folder!? I also added a volume option
+// I think a bundler would change that, but this is from the /dist folder!? I also added a volume option to it.
 import * as DUMMY_SamJs from './samjs.js';
 
 import { SETTINGS, PRESETS, DEBUG } from './config.js';
@@ -29,8 +29,8 @@ export const DebugConsole = function (callback) {
 
 	let CEP_VERSION = 'v0.3.1α';   // Keyboard shortcuts will be appended in  self.init()
 
-	const EXTRA_LINES = 0;
-	const MIN_LINES = 0;
+	const EXTRA_LINES = 0;   // When adjusting textarea size (rows), make it bigger
+	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
 
 	const BUTTON_SCRIPTS = {
 		'login'      : 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n%N',
@@ -347,7 +347,11 @@ export const DebugConsole = function (callback) {
 		const nr_lines = (lines.length > 0) ? lines.length : 1;
 		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
 
-		self.elements.input.style.height = (self.elements.input.rows + 1) + 'em';
+		const scale = parseFloat(
+			getComputedStyle( document.documentElement )
+			.getPropertyValue( '--terminal-line-height' )
+		);
+		self.elements.input.style.height = scale * (self.elements.input.rows + 1) + 'em';
 
 	} // adjust_textarea
 
@@ -501,7 +505,6 @@ if (!self.audioContext) await new Promise( (done)=>setTimeout(done) );   //...?
 //...? Timeout makes sure, WebAudio does not glitch on the very first beep
 //...? The envelope seems not to work as intended, context still "waking up"??
 //...? Setting v < 0.2 makes the first sound played "louder" even with the timeout
-
 const delay = (last_beep_time == 0) ? 100 : 0;
 setTimeout( ()=>{
 		// Envelope
@@ -520,7 +523,6 @@ setTimeout( ()=>{
 
 		++nr_active_sounds;
 }, delay);
-
 		function on_ended (event) {
 			square_wave.disconnect( envelope );
 			envelope.disconnect( volume );
@@ -567,7 +569,7 @@ setTimeout( ()=>{
 		const lines = text.split( '\n' );
 
 		function find_indentation (text) {
-			let i = 0;
+			var i;
 			for ( i = 0 ; (i < text.length) && (text.charAt(i) == '\t') ; ++i );
 			return i;
 		}
@@ -592,7 +594,6 @@ setTimeout( ()=>{
 			if (typeof lines[index] == 'undefined') return result;
 
 			const line_indentation = find_indentation( lines[index] );
-
 			if (line_indentation < current_indentation) {
 				const difference = current_indentation - line_indentation;
 				for (let i = 0; i < difference; ++i) {
@@ -650,48 +651,13 @@ setTimeout( ()=>{
 	const start_time = new Date();
 
 	function start_clock () {
-
-		function get_formatted_time () {
-			return Intl.DateTimeFormat( navigator.language, {
-				weekday : 'short',
-				year    : 'numeric',
-				month   : 'short',
-				day     : 'numeric',
-				hour    : '2-digit',
-				minute  : '2-digit',
-				second  : '2-digit',
-				//fractionalSecondDigits: '3',
-				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
-				hour12  : false,
-
-			}).format(new Date());
-			//...new Date().toUTCString();
-		}
+		let recent_second = 0;
+		update_clock();
+		long_wait();
+		return;
 
 		function current_second () {
 			return Math.floor( Date.now() / 1000 );
-		}
-
-		function update_clock () {
-			if (!true) {
-				const elapsed = new Date() - start_time;
-				const s180 = Math.floor(elapsed / 1000) % 180;
-				const percent = Math.floor(s180 / 1.8)
-				document.querySelector( '.time').innerText = percent;
-			} else {
-				document.querySelector( '.time').innerText = get_formatted_time();
-				return current_second();
-			}
-		}
-
-		let recent_second = 0;
-		function narrow_wait () {
-			if (current_second() != recent_second) {
-				recent_second = update_clock();
-				long_wait();
-			} else {
-				setTimeout( narrow_wait );
-			}
 		}
 
 		function long_wait () {
@@ -699,8 +665,32 @@ setTimeout( ()=>{
 			setTimeout( narrow_wait, remaining_ms - 50 );
 		}
 
-		update_clock();
-		long_wait();
+		function narrow_wait () {
+			if (current_second() != recent_second) {
+				recent_second = current_second();
+				update_clock();
+				long_wait();
+			} else {
+				setTimeout( narrow_wait );
+			}
+		}
+
+		function update_clock () {
+			document.querySelector( '.time' ).innerText = Intl.DateTimeFormat(
+				navigator.language, {
+					weekday : 'short',
+					year    : 'numeric',
+					month   : 'short',
+					day     : 'numeric',
+					hour    : '2-digit',
+					minute  : '2-digit',
+					second  : '2-digit',
+					//fractionalSecondDigits: '3',
+					timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
+					hour12  : false,
+				},
+			).format(new Date());
+		}
 
 	} // start_clock
 
@@ -722,9 +712,6 @@ setTimeout( ()=>{
 		const alt = event.altKey;
 		const key = event.key;
 
-		const is_local_command = (self.elements.input.value.charAt(0) == '.');
-		self.elements.input.classList.toggle( 'local', is_local_command );
-
 		if ((key != 'Shift') && (key != 'Control') && (key != 'Alt') && (key != 'Meta')) beep();
 
 	 	if ((event.keyCode == 13) && !event.shiftKey && !event.ctrlKey && !event.altKey) {
@@ -745,6 +732,15 @@ setTimeout( ()=>{
 		}
 
 	} // on_keydown
+
+
+	function on_keyup () {
+		const bang = self.elements.input.value.charAt(0);
+		const is_local_command = (self.elements.input.value.charAt(0) == '.');
+		self.elements.input.classList.toggle( 'local', (bang == '.') );
+		self.elements.input.classList.toggle( 'cep', (bang == '/') );
+
+	} // on_keyup
 
 
 	function on_keyboard_event (event) {
@@ -1284,7 +1280,8 @@ console.groupEnd();
 
 
 		// Keyboard
-        	self.elements.input.addEventListener( 'keydown', on_keydown );
+        	self.elements.input.addEventListener( 'keydown' , on_keydown );
+        	self.elements.input.addEventListener( 'keyup'   , on_keyup   );
 		['keydown', 'keypress', 'keyup' ].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
 		);

@@ -1,15 +1,50 @@
-MyNode Chat and Debug Console
-A fancy websocket JSON-message debugger
+MyNode CHAT and DEBUG CONSOLE
 
 Sends single lines as  chat.say  requests, otherwise
 turns TAB formatted multiline text into JSON objects.
 
-Guest Login
-      1. Choose a *NICK*name in the "Enter" menu
-      2. Double click "Login" (auto-connects)
+Chat and Debug Mode
+-------------------
+While in chat mode, all non-chat messages are hidden.
+Click the "Chat" button or press Alt+D to switch the mode.
+While in debug mode, the toggles in the Chat menu let you
+select, which types of messages to show.
 
-Keyboard shortcuts
-      Enter              Sends text/request
-      Shift+Enter        Inserts line break (multiline request)
-      Ctrl+Home          Clears input
-      Ctrl+Shift+Home    Clears screen
+Sending JSON Messages
+---------------------
+You can enter tab-indented pseudo-JSON, in order to send
+arbitrary requests to the server. In essence, you type a
+JSON object without the curly braces and quotation marks.
+
+You type:                 Resulting JSON:
+
+session                   {
+    login                     "session":{
+      username: Mr. Me            "login":{
+      password: secRet                "username":"Mr. Me",
+chat                                  "password":"secRet"
+    nick: me                      }
+                              },
+                              "chat":{
+                                  "nick":"me"
+                              }
+                          }
+
+You MUST USE the TAB KEY for indenting.
+
+Keyboard
+--------
+Enter            Sends text/request
+Shift+Enter      Inserts line break (pseudo-JSON)
+Ctrl+Home        Clears input
+Ctrl+Shift+Home  Clears screen
+
+Toggles:
+Alt+A            CSS Animations (Experimental)
+Alt+C            Compressed output
+Alt+D            Chat/debug mode
+Alt+F            Fancy styling
+Alt+K            Keyboard and button beeps
+Alt+M            SAM TTS (Bit saying yes or now)
+Alt+O            Overflow
+Alt+S            Separators

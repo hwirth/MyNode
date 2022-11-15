@@ -5,13 +5,6 @@
 
 "use strict";
 
-function get (search) {
-	return search.split(' ').reduce( (prev, term)=>{
-		return prev || (location.href.indexOf( term ) >= 0);
-	}, false);
-
-} // get
-
 export const DEBUG = {
 	WEBSOCKET       : !false,
 	KEYBOARD_EVENTS : false,
@@ -57,9 +50,16 @@ export const SETTINGS = {
 	},
 };
 
+function get (search) {
+	if (location.href.indexOf( 'all' ) >= 0) return (search != 'debug');
+	return search.split(' ').reduce( (prev, term)=>{
+		return prev || (location.href.indexOf( term ) >= 0);
+	}, false);
+
+}
 export const PRESETS = {
 	FILTER: {
-		CHAT      : false,   //... -> ALL, Currently: when true, only chat visible
+		CHAT      : !get( 'debug' ),   //... -> ALL, Currently: when true, only chat visible
 		CEP       : true,
 		STRING    : true,
 		NOTICE    : true,
@@ -71,13 +71,13 @@ export const PRESETS = {
 
 	TOGGLE: {
 		TERMINAL   : get( 'terminal' ),
-		COMPRESS   : true,
-		SEPARATORS : false,
-		OVERFLOW   : true,
-		ANIMATE    : !true,
-		FANCY      : !false,
-		KEY_BEEP   : !false,
-		TTS        : !false,
+		COMPRESS   : !get( 'compress' ),
+		SEPARATORS : false,//...get( 'separators' ),
+		OVERFLOW   : get( 'overflow' ),
+		ANIMATE    : get( 'animate' ),
+		FANCY      : get( 'fancy' ),
+		KEY_BEEP   : get( 'keybeep' ),
+		TTS        : get( 'tts' ),
 	},
 
 	VOLUME: {

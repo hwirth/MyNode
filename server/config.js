@@ -81,7 +81,7 @@ const SETTINGS = {
 	KICK_NO_PONG : true,
 
 	// Upper case chars are also accepted
-	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.?&%=-+/:[]',   // http server white list
+	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.,?&%=-+/:[]',   // http server white list
 	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789_[]()@-/äöüß',   // Chat name white list
 
 	TIMEOUT: {

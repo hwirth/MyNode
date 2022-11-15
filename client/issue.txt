@@ -1,2 +1,8 @@
 MyNode Chat and Debug Console
-Type /help and press Return
+A fancy websocket JSON-message debugger
+
+Guest Login
+1. Choose a *NICK*name in the "Enter" menu
+2. Double click "Login"
+
+Enter /help for more information.

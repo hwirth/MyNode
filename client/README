@@ -173,6 +173,8 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] Remote control for effects like the Bit saying yes or now a given amount of times,
+    /helpMCP "inspecting" a users's screen, etc.
 [ ] Double key beep in login: send.click() <-- buttons beep too
 [ ] Max. scrollback
 [ ] Click error notification, search results, etc. --> scroll.
