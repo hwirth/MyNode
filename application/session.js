@@ -248,12 +248,12 @@ module.exports = function SessionHandler (persistent, callback) {
 				subscriptions : new_subscriptions,
 			};
 
-			client.secondFactor
-			=  (typeof parameters.secondFactor == 'undefined')
-			|| (typeof parameters.secondFactor == 'null')
+			client.factor2
+			=  (typeof parameters.factor2 == 'undefined')
+			|| (typeof parameters.factor2 == 'null')
 			? null
 			: callback.verifyToken(
-				parameters.secondFactor,
+				parameters.factor2,
 				client,
 				/*login_request*/true,
 			);
@@ -285,13 +285,13 @@ module.exports = function SessionHandler (persistent, callback) {
 
 
 	this.request.authenticate = function (client, request_id, parameters) {
-		const token = parameters.secondFactor || parameters.token;
-		client.secondFactor = callback.verifyToken(
+		const token = parameters.factor2 || parameters.token;
+		client.factor2 = callback.verifyToken(
 			token,
 			client,
 			/*login_request*/true,
 		);
-		if (client.secondFactor) {
+		if (client.factor2) {
 			color_log( COLORS.COMMAND, '<session.authenticate>', 'client:', dump(client) );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_AUTHENTICATED );
 		} else {

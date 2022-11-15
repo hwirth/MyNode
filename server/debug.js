@@ -33,7 +33,7 @@ const DEBUG = {                                                // What to log
 	MESSAGE                   : DEBUG_ENABLED && !false,   // Trace onMessage
 
 	MESSAGE_IN                : DEBUG_ENABLED && !false,   // Show received, onMessage
-	MESSAGE_OUT               : DEBUG_ENABLED && !false,   // Show sent, socket.send()
+	MESSAGE_OUT               : DEBUG_ENABLED && false,   // Show sent, socket.send()
 
 	HTTP_UPGRADE              : DEBUG_ENABLED && false,
 	HTTP_GET_ALL              : DEBUG_ENABLED && !false,   // Log all GET requests
@@ -137,6 +137,7 @@ function format_error (error) {
  */
 function color_log (colors = '', heading = '', ...text) {
 	if (colors == '\n') return console.log();
+	if (heading.charAt(0) == '<') heading = '\n' + heading;
 
 try {
 	heading = String( heading );

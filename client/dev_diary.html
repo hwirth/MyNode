@@ -34,6 +34,25 @@
 <header><h1>myNode Developer's Diary</h1></header>
 
 <article>
+	<h2>Line Height Woes<time>Tue, 16<sup>h</sup>30<br>Nov 15, 2022</time></h2>
+	<p>
+		I am fighting vertical text alignment. Again. Still again. Something changed with Firefox close to
+		a year ago and I can't figure out what was changed. Firefox insists of adding a pixel to line height,
+		or does some other thing with font rendering with a similar effect.
+	</p>
+	<p>
+		So far, I get best results in all browsers with tricks like <code>padding:1.5px horiz 2.5px</code>.
+	</p>
+	<p>
+		I kept asking around since many of my layouts "broke" that day, and the really odd part about it is,
+		that nobody has even noticed. Either they all no longer test with all major browsers, or they have
+		some normalizers, that have found a solution. Perhaps I should try a normalizer and see, if they
+		prevent the problem from happening. That way I would find the trick and also what was changed in
+		Firefox.
+	</p>
+</article>
+
+<article>
 	<h2>Error Handling<time>Mon, 12<sup>h</sup>20<br>Nov 14, 2022</time></h2>
 	<p>
 		Error handling with Javascript is quite unreliable, when you got random code that might contain any kind

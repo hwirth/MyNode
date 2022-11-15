@@ -295,7 +295,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 				+ leading( seconds, 2 ) + '.'
 				+ leading( millis , 3 ) + 's'
 			);
-			
+
 		} else {
 			return milliseconds;
 		}

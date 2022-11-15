@@ -149,7 +149,7 @@ module.exports.Router = function (persistent, callback) {
 				//... How do I catch, when I accidentially
 				//... forgot to await something in there?
 				if (request_handler.constructor.name === 'AsyncFunction') {
-					if (DEBUG.ROUTER) ;color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
+					if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'AWAIT:', combined_name );
 
 					try {
 						await request_handler(
@@ -166,7 +166,7 @@ module.exports.Router = function (persistent, callback) {
 					}
 
 				} else {
-					if (DEBUG.ROUTER) ;color_log( COLORS.ROUTER, 'SYNC', combined_name );
+					if (DEBUG.ROUTER) color_log( COLORS.ROUTER, 'SYNC', combined_name );
 
 					try {
 						request_handler(
@@ -251,14 +251,25 @@ module.exports.Router = function (persistent, callback) {
 			, rejected_commands.length
 		);
 
-		const rejected_commands2 = rejected_commands.reduce( (prev, next)=>{
-			return {...prev, [rejected_commands]: false};
-		}, {});
+		const debug_message = {
+			response: {
+				time      : Date.now(),
+				type      : 'reject',
+				tag       : request_id.tag,
+				request   : request_id.request,
+			},
+		};
+		if (handled_commands .length) debug_message.response.handled = handled_commands;
+		if (true || rejected_commands.length) {
+			debug_message.response.rejected = rejected_commands;/*.reduce( (prev, next)=>{
+				return {...prev, [rejected_commands]: false};
+			}, {})*/;
+		}
 
-		const debug_message = { protocols: {} };
-		if (handled_commands .length) debug_message.protocols.handled  = handled_commands;
-		if (rejected_commands.length) debug_message.protocols.rejected = rejected_commands2;
-		if (rejected_commands.length) send_as_json( socket, debug_message );
+		if (SETTINGS.REPORT_HANDLED || rejected_commands.length) {
+			debug_message.response.success = (rejected_commands.length === 0);
+			send_as_json( socket, debug_message );
+		}
 
 	}; // onMessage
 

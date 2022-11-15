@@ -15,9 +15,9 @@ const PROTOCOL_DESCRIPTION = (`
 	connecting: {session:{login:{username:literal=guest}}}
 	connecting: {session:{login:{username:literal=guest,nickname:string}}}
 	connecting: {session:{login:{username:string,password:string}}}
-	connecting: {session:{login:{username:string,password:string,secondFactor:string}}}
+	connecting: {session:{login:{username:string,password:string,factor2:string}}}
 	connecting: {session:{login:{username:string,nickname:string,password:string}}}
-	connecting: {session:{login:{username:string,nickname:string,password:string,secondFactor:string}}}
+	connecting: {session:{login:{username:string,nickname:string,password:string,factor2:string}}}
 	connecting,guest,user,mod,admin,dev,owner: {help:*}
 	connecting,guest,user,mod,admin,dev,owner: {session:{status:empty}}
 	guest,user,mod,admin,dev,owner: {session:{who:empty}}

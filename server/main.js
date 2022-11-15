@@ -359,12 +359,16 @@ const Main = function () {
 				client_address = client_address.slice( 7 );
 			}
 
-			socket.on( 'close', ()=>{
-				callbacks.onDisconnect( socket, client_address );
-			});
-
 			socket.on( 'message', (message_data)=>{
 				callbacks.onMessage( socket, client_address, message_data );
+			});
+
+			socket.on( 'pong', (...params)=>{
+				console.log( 'pong:', ...params );
+			});
+
+			socket.on( 'close', ()=>{
+				callbacks.onDisconnect( socket, client_address );
 			});
 
 			socket.onerror = function (error) {

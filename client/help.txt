@@ -1,5 +1,5 @@
 MyNode CHAT and DEBUG CONSOLE
-
+=============================
 Sends single lines as  chat.say  requests, otherwise
 turns TAB formatted multiline text into JSON objects.
 
@@ -39,12 +39,5 @@ Shift+Enter      Inserts line break (pseudo-JSON)
 Ctrl+Home        Clears input
 Ctrl+Shift+Home  Clears screen
 
-Toggles:
-Alt+A            CSS Animations (Experimental)
-Alt+C            Compressed output
-Alt+D            Chat/debug mode
-Alt+F            Fancy styling
-Alt+K            Keyboard and button beeps
-Alt+M            SAM TTS (Bit saying yes or now)
-Alt+O            Overflow
-Alt+S            Separators
+Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
+>README</a> for even more details.

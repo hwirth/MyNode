@@ -51,7 +51,7 @@ export const SETTINGS = {
 };
 
 function get (search) {
-	if (location.href.indexOf( 'all' ) >= 0) return (search != 'debug');
+	if ((location.href.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
 	return search.split(' ').reduce( (prev, term)=>{
 		return prev || (location.href.indexOf( term ) >= 0);
 	}, false);
@@ -60,9 +60,9 @@ function get (search) {
 export const PRESETS = {
 	FILTER: {
 		CHAT      : !get( 'debug' ),   //... -> ALL, Currently: when true, only chat visible
-		CEP       : true,
-		STRING    : true,
-		NOTICE    : true,
+		CEP       : false,
+		STRING    : false,
+		NOTICE    : false,
 		BROADCAST : true,
 		UPDATE    : true,
 		REQUEST   : true,
@@ -71,13 +71,13 @@ export const PRESETS = {
 
 	TOGGLE: {
 		TERMINAL   : get( 'terminal' ),
-		COMPRESS   : !get( 'compress' ),
-		SEPARATORS : false,//...get( 'separators' ),
+		COMPACT    : get( 'compact' ),
+		SEPARATORS : get( 'separators' ),
 		OVERFLOW   : get( 'overflow' ),
-		ANIMATE    : get( 'animate' ),
-		FANCY      : get( 'fancy' ),
+		ANIMATE    : !get( 'animate' ),
+		FANCY      : !get( 'fancy' ),
 		KEY_BEEP   : get( 'keybeep' ),
-		TTS        : get( 'tts' ),
+		TTS        : !get( 'tts' ),
 	},
 
 	VOLUME: {

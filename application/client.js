@@ -19,7 +19,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	this.maxIdleTime;
 	this.idleSince;
 	this.login;
-	this.secondFactor;
+	this.factor2;
 	this.pingNr;
 
 
@@ -190,7 +190,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 				pong: ++self.pingNr,
 			}
 		});
-
+socket.ping();
 	}; // sendPing
 
 
@@ -225,7 +225,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		self.idleSince    = Date.now();
 		self.maxIdleTime  = SETTINGS.TIMEOUT.IDLE;
 		self.login        = false;
-		self.secondFactor = null;
+		self.factor2      = null;
 		self.pingNr       = null;
 
 		set_timeout( 'login', on_login_timeout, SETTINGS.TIMEOUT.LOGIN );

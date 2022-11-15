@@ -130,7 +130,7 @@ module.exports = function AppReloader (callback) {
 		if (socket && Object.keys( file_name_report ).length) {
 			self.router.protocols.session.broadcast({
 				type    : 'reload',
-				address : client_address,
+				//...address : client_address,
 				modules : file_name_report,
 			});
 		}

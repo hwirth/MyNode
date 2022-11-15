@@ -173,6 +173,13 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] Remote control for DEBUG, SETTINGS, etc.
+[ ] Filter ping instead of secretly hiding
+[ ] ERROR: Router.onMessage:0: Unknown client: ...  after reset, while others connected
+[ ] Ping/pong animation: (green?) light dot travelling up, then down the beam
+[ ] Messages in/out: dot moving down or up
+[ ] Time --> header, filter+toggle --> enter/exit menu
+[ ] --terminal-mcp-color  --  mcp.say=..., other speech synth, control over MCP animation (opacity level, speed, ...)
 [ ] Remote control for effects like the Bit saying yes or now a given amount of times,
     /helpMCP "inspecting" a users's screen, etc.
 [ ] Double key beep in login: send.click() <-- buttons beep too

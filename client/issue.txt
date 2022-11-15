@@ -1,8 +1,9 @@
 MyNode Chat and Debug Console
 A fancy websocket JSON-message debugger
 
-Guest Login
+Guest Login:
 1. Choose a *NICK*name in the "Enter" menu
 2. Double click "Login"
+3. Click "Chat" to hide the debug messages
 
 Enter /help for more information.

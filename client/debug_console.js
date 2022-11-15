@@ -32,24 +32,24 @@ export const DebugConsole = function (callback) {
 	const EXTRA_LINES = 0;   // When adjusting textarea size (rows), make it bigger
 	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
 
-	const BUTTON_SCRIPTS = {
-		'login'      : 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n%N',
-		'root'       : 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
-		'user'       : 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
-		'guest'      : 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
-		'logout'     : 'session\n\tlogout',
-		'who'        : 'session\n\twho',
-		'status'     : 'session\n\tstatus',
-		'MCP'        : 'mcp\n\tstatus',
-		'token'      : 'mcp\n\ttoken',
-		'kroot'      : 'session\n\tkick\n\t\tusername: root',
-		'kuser'      : 'session\n\tkick\n\t\tusername: user',
-		'reset'      : 'mcp\n\trestart\n\t\ttoken: ',
-		'clear'      : '/clear',
-		'help'       : '/help',
-		'connect'    : '/connect ' + SETTINGS.WEBSOCKET.URL,
-		'disconnect' : '/disconnect',
-	};
+	const BUTTON_SCRIPTS = [
+{ menu:'send' , name:'login'  , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N' },
+{ menu:'send' , name:'root'   , script: 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ' },
+{ menu:'send' , name:'user'   , script: 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ' },
+{ menu:'send' , name:'guest'  , script: 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ' },
+{ menu:'send' , name:'logout' , script: 'session\n\tlogout' },
+{ menu:'send' , name:'connect'    , script: '/connect ' + SETTINGS.WEBSOCKET.URL },
+{ menu:'send' , name:'disconnect' , script: '/disconnect' },
+{ menu:'chat' , name:'who'    , script: 'session\n\twho' },
+{ menu:'chat' , name:'status' , script: 'session\n\tstatus' },
+{ menu:'chat' , name:'MCP'    , script: 'mcp\n\tstatus' },
+{ menu:'chat' , name:'token'  , script: 'mcp\n\ttoken' },
+{ menu:'chat' , name:'kroot'  , script: 'session\n\tkick\n\t\tusername: root' },
+{ menu:'chat' , name:'kuser'  , script: 'session\n\tkick\n\t\tusername: user' },
+{ menu:'chat' , name:'reset'  , script: 'mcp\n\trestart\n\t\ttoken: ' },
+{ menu:'chat' , name:'clear'  , script: '/clear' },
+{ menu:'chat' , name:'help'   , script: '/help' },
+	];
 
 	const SHORTHAND_COMMANDS = {
 		'nick'  : 'chat\n\tnick:*',
@@ -64,18 +64,14 @@ export const DebugConsole = function (callback) {
 	</main>
 	<header class="toolbar">
 		<nav class="tasks">
-			<button class="enabled" title="Client End Point">CEP</button>
+			<button class="cep enabled" title="Client End Point">CEP</button>
 		</nav>
-		<nav class="Xfilters">
+		<nav class="filter">
 			<button>Filter</button>
 			<div class="items"></div>
 		</nav>
 		<nav class="toggles">
-			<button>Toggles</button>
-			<div class="items"></div>
-		</nav>
-		<nav class="debug">
-			<button class="chat" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat</button>
+			<button>Toggle</button>
 			<div class="items"></div>
 		</nav>
 	</header>
@@ -86,14 +82,18 @@ export const DebugConsole = function (callback) {
 		<nav>
 			<span class="time"></span>
 		</nav>
-		<nav class="commands"><!-- <menu><li>//... -->
+		<nav class="send">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
 			<div class="items">
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
-				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname">
+				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" autofocus>
 				<input type="password" name="password" placeholder="Password" autocomplete="password">
 				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
 			</div>
+		</nav>
+		<nav class="chat">
+			<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat</button>
+			<div class="items"></div>
 		</nav>
 		<nav>
 			<button class="close" title="Minimize terminal">Exit</button>
@@ -128,12 +128,12 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'c',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.compress.toggle(); },
+		action    : ()=>{ self.toggles.compact.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'd',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.chat.toggle(); },
+		action    : ()=>{ self.toggles.debug.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'f',
@@ -193,9 +193,11 @@ export const DebugConsole = function (callback) {
 			terminal     : container,
 			shell        : container.querySelector( '.shell'           ),
 			connection   : container.querySelector( '.connection'      ),
-			commands     : container.querySelector( '.commands .items' ),
+			time         : container.querySelector( '.time'            ),
+			send         : container.querySelector( '.send .items'     ),
+			chat         : container.querySelector( '.chat .items'     ),
 			toggles      : container.querySelector( '.toggles .items'  ),
-			filters      : container.querySelector( '.filters .items'  ),
+			filter       : container.querySelector( '.filter .items'   ),
 			debug        : container.querySelector( '.debug .items'    ),
 			output       : container.querySelector( 'output'           ),
 			input        : container.querySelector( 'textarea'         ),
@@ -203,19 +205,19 @@ export const DebugConsole = function (callback) {
 			userName     : container.querySelector( '[name=username]' ),
 			nickName     : container.querySelector( '[name=nickname]' ),
 			passWord     : container.querySelector( '[name=password]' ),
-			secondFactor : container.querySelector( '[name=factor2]'  ),
+			factor2      : container.querySelector( '[name=factor2]'  ),
 			// Additional menu buttons are addeded to .elements later under "Login form"
-			close        : container.querySelector( '.close'  ),
-			send         : container.querySelector( '.submit' ),
+			enter        : container.querySelector( '.submit' ),
+			close        : container.querySelector( '.close'  ),//...! => exit
 			// Filter
-			chat         : container.querySelector( 'button.chat'      ),
+			debug        : container.querySelector( 'button.debug'     ),/*
 			string       : container.querySelector( 'button.string'    ),
 			cep          : container.querySelector( 'button.cep'       ),
 			notice       : container.querySelector( 'button.notice'    ),
 			update       : container.querySelector( 'button.update'    ),
 			broadcast    : container.querySelector( 'button.broadcast' ),
 			request      : container.querySelector( 'button.request'   ),
-			response     : container.querySelector( 'button.response'  ),
+			response     : container.querySelector( 'button.response'  ),*/
 			// Toggles
 			animate      : container.querySelector( 'button.animate'  ),
 			fancy        : container.querySelector( 'button.fancy'    ),
@@ -240,21 +242,21 @@ export const DebugConsole = function (callback) {
 
 		return [
 { name:'terminal'   , preset:T.TERMINAL   , target:terminal , menu:null      , shortcut:'T',  caption:null         },
-{ name:'chat'       , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:null         },
-{ name:'cep'        , preset:F.CEP        , target:output   , menu:'debug'   , shortcut:null, caption:'CEP'        },
-{ name:'string'     , preset:F.STRING     , target:output   , menu:'debug'   , shortcut:null, caption:'String'     },
-{ name:'notice'     , preset:F.NOTICE     , target:output   , menu:'debug'   , shortcut:null, caption:'Notice'     },
-{ name:'broadcast'  , preset:F.BROADCAST  , target:output   , menu:'debug'   , shortcut:null, caption:'Broadcast'  },
-{ name:'update'     , preset:F.UPDATE     , target:output   , menu:'debug'   , shortcut:null, caption:'Update'     },
-{ name:'request'    , preset:F.REQUEST    , target:output   , menu:'debug'   , shortcut:null, caption:'Request'    },
-{ name:'response'   , preset:F.RESPONSE   , target:output   , menu:'debug'   , shortcut:null, caption:'Response'   },
-{ name:'compress'   , preset:T.COMPRESS   , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compress'   },
+{ name:'debug'      , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:'Chat'       },
+{ name:'cep'        , preset:F.CEP        , target:output   , menu:'filter'  , shortcut:null, caption:'CEP'        },
+{ name:'string'     , preset:F.STRING     , target:output   , menu:'filter'  , shortcut:null, caption:'String'     },
+{ name:'notice'     , preset:F.NOTICE     , target:output   , menu:'filter'  , shortcut:null, caption:'Notice'     },
+{ name:'broadcast'  , preset:F.BROADCAST  , target:output   , menu:'filter'  , shortcut:null, caption:'Broadcast'  },
+{ name:'update'     , preset:F.UPDATE     , target:output   , menu:'filter'  , shortcut:null, caption:'Update'     },
+{ name:'request'    , preset:F.REQUEST    , target:output   , menu:'filter'  , shortcut:null, caption:'Request'    },
+{ name:'response'   , preset:F.RESPONSE   , target:output   , menu:'filter'  , shortcut:null, caption:'Response'   },
+{ name:'compact'    , preset:T.COMPACT    , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compact'    },
 { name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'O',  caption:'Overflow'   },
 { name:'separators' , preset:T.SEPARATORS , target:output   , menu:'toggles' , shortcut:'S',  caption:'Separators' },
 { name:'keyBeep'    , preset:T.KEY_BEEP   , target:terminal , menu:'toggles' , shortcut:'K',  caption:'Key Beep'   },
 { name:'animate'    , preset:T.ANIMATE    , target:terminal , menu:'toggles' , shortcut:'A',  caption:'Animations' },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'      },
-{ name:'tts'        , preset:T.TTS        , target:terminal , menu:'toggles' , shortcut:'M',  caption:'TTS'        },
+{ name:'tts'        , preset:T.TTS        , target:terminal , menu:'toggles' , shortcut:'M',  caption:'Speech'     },
 
 		].map( (toggle)=>{
 			const target = toggle.target;
@@ -292,7 +294,6 @@ export const DebugConsole = function (callback) {
 				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
 				scroll_down();
 				if (is_terminal && toggle.enabled) focus_prompt();
-				if (is_terminal) self.elements.html.classList.remove( 'animate' );//...
 			}
 
 			function flip (new_state = null) {
@@ -300,6 +301,12 @@ export const DebugConsole = function (callback) {
 				const just_toggle = (new_state === null) || (typeof new_state == 'event');
 				toggle.enabled = just_toggle ? !toggle.enabled : new_state;
 				update_dom();
+				 if (toggle.name == 'terminal') {
+					self.elements.html.classList.toggle( 'animate', !toggle.enabled );
+				}
+console.log( 'toggle.name', toggle.name );
+console.trace();
+				self.bit.say( toggle.enabled );//..., /*delay*/0, (toggle.name == 'tts') );
 			}
 
 			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
@@ -347,10 +354,12 @@ export const DebugConsole = function (callback) {
 		const nr_lines = (lines.length > 0) ? lines.length : 1;
 		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
 
-		const scale = parseFloat(
-			getComputedStyle( document.documentElement )
-			.getPropertyValue( '--terminal-line-height' )
-		);
+		const cssvar_height
+		= getComputedStyle( document.documentElement )
+		.getPropertyValue( '--terminal-line-height' )
+		;
+
+		const scale = parseFloat( cssvar_height || 1 );
 		self.elements.input.style.height = scale * (self.elements.input.rows + 1) + 'em';
 
 	} // adjust_textarea
@@ -370,99 +379,40 @@ export const DebugConsole = function (callback) {
 
 		const file_extension = file_name.split('.').pop();
 
-		if (file_extension != file_name) {
-			switch (file_extension) {
-				case 'html': {
-					const iframe = document.createElement( 'iframe' );
-					iframe.className = 'cep htmlfile expand';
-					iframe.src = file_name;
-					iframe.setAttribute( 'frameborder', '0' );
-					iframe.setAttribute( 'scrolling', 'no' );
-					iframe.addEventListener( 'load', ()=>{
-						iframe.style.height = (
-							iframe
-							.contentWindow
-							.document
-							.documentElement
-							.scrollHeight
-							+ 'px'
-						);
-						//scroll_down();
-					});
-					self.elements.output.appendChild( iframe );
-					break;
-				}
-				case 'txt': // fall through
-				default: {
-					self.print(
-						file_contents.split( '//EOF' )[0].trim(),
-						'cep textfile expand',
+		switch (file_extension) {
+			case 'html': {
+				const iframe = document.createElement( 'iframe' );
+				iframe.className = 'cep htmlfile expand';
+				iframe.src = file_name;
+				iframe.setAttribute( 'frameborder', '0' );
+				iframe.setAttribute( 'scrolling', 'no' );
+				iframe.addEventListener( 'load', ()=>{
+					iframe.style.height = (
+						iframe
+						.contentWindow
+						.document
+						.documentElement
+						.scrollHeight
+						+ 'px'
 					);
-				}
+					//scroll_down();
+				});
+				self.elements.output.appendChild( iframe );
+				break;
+			}
+			case 'txt': // fall through
+			default: {
+				self.print(
+					file_contents.split( '//EOF' )[0].trim(),
+					'cep textfile expand',
+				);
 			}
 		}
 
 	} // show_file
 
 
-	function sam_speak (text) {
-		if (!self.audioContext) return;
-		if (!self.toggles.tts.enabled) return;
-
-		if (!self.sam || SETTINGS.SAM_ALWAYS_NEW) {
-			self.sam = new SamJs({
-				singmode : !false,   //false
-				pitch    : 50,       //64
-				speed    : 72,       //72
-				mouth    : 128,      //128
-				throat   : 128,      //128
-				volume   : PRESETS.VOLUME.SAM * SETTINGS.MAIN_VOLUME,
-				//1 I added volume to sam.js, but it's not too pretty
-			});
-		}
-
-		text
-		.split( 'PAUSE' )
-		.reduce( async (prev, next, index, parts)=>{
-			await prev;
-			const part = parts[index].trim();
-			return new Promise( async (done)=>{
-				if (self.toggles.tts.enabled) {
-					if (part != '') await self.sam.speak( parts[index] );
-					setTimeout( done, 150 );
-				} else {
-					done();
-				}
-			});
-
-		}, Promise.resolve());
-
-	} // sam_speak
-
-
-	function sam_read (message) {
-		const text = (typeof message == 'string') ? message : JSON.stringify( message, null, ' ' );
-		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
-		const allowed = char => chars.indexOf(char.toLowerCase()) >= 0;
-		sam_speak(
-			text
-			.trim()
-			.replace( /: /g , ' '           )
-			.replace( /,/g  , ' '           )
-			.replace( /\t/g , ' '           )
-			.replace( /\n/g , 'PAUSE PAUSE' )
-			.replace( /=/g  , ' equals '    )
-			.replace( /\//g , ' slash '     )
-			.replace( /\\/g , ' backslash ' )
-			.replace( /\./g , ' dot '       )
-			.replace( /:/g  , ' colon '     )
-			.split('')
-			.filter( allowed )
-			.join('')
-		);
-
-	} // sam_read
-
+// BEEP //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	let nr_active_sounds = 0;
 	let last_beep_time = 0;
@@ -532,6 +482,91 @@ setTimeout( ()=>{
 		}
 
 	} // beep
+
+
+// BIT ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function sam_read (message) {
+		const text = (typeof message == 'string') ? message : JSON.stringify( message, null, ' ' );
+		const chars = 'abcdefghijklmnopqrstuvwxyz0123456789 ';
+		const allowed = char => chars.indexOf(char.toLowerCase()) >= 0;
+		sam_speak(
+			text
+			.trim()
+			.replace( /: /g , ' '           )
+			.replace( /,/g  , ' '           )
+			.replace( /\t/g , ' '           )
+			.replace( /\n/g , 'PAUSE PAUSE' )
+			.replace( /=/g  , ' equals '    )
+			.replace( /\//g , ' slash '     )
+			.replace( /\\/g , ' backslash ' )
+			.replace( /\./g , ' dot '       )
+			.replace( /:/g  , ' colon '     )
+			.split('')
+			.filter( allowed )
+			.join('')
+		);
+
+	} // sam_read
+
+
+	function sam_speak (text, ignore_toggle) {
+		if (!self.audioContext) return;
+
+		if (!self.toggles.tts.enabled && !ignore_toggle) return;
+
+		if (!self.sam || SETTINGS.SAM_ALWAYS_NEW) {
+			self.sam = new SamJs({
+				singmode : !false,   //false
+				pitch    : 50,       //64
+				speed    : 72,       //72
+				mouth    : 128,      //128
+				throat   : 128,      //128
+				volume   : PRESETS.VOLUME.SAM * SETTINGS.MAIN_VOLUME,
+				//1 I added volume to sam.js, but it's not too pretty
+			});
+		}
+
+		text
+		.split( 'PAUSE' )
+		.reduce( async (prev, next, index, parts)=>{
+			await prev;
+			const part = parts[index].trim();
+			return new Promise( async (done)=>{
+				if (self.toggles.tts.enabled || ignore_toggle) {
+					if (part != '') await self.sam.speak( parts[index] );
+					setTimeout( done, 150 );
+				} else {
+					done();
+				}
+			});
+
+		}, Promise.resolve());
+
+	} // sam_speak
+
+
+	this.bit = {
+		say: function ( state, delay = 0, ignore_toggle = false ) {
+			const success = state ? 'yes' : 'no';
+
+			// We might receive several responses, when we sent several requersts, so we...
+			setTimeout( ()=>{
+				self.elements.terminal.classList.remove( 'yes' );
+				self.elements.terminal.classList.remove( 'no' );
+				self.elements.terminal.classList.add( success );
+
+				sam_speak( success, ignore_toggle );
+
+				setTimeout( ()=>{
+					self.elements.terminal.classList.remove( success );
+				}, SETTINGS.TIMEOUT.BIT_ANSWER_COLOR);
+
+			// .. delay TTS accordingly:
+			}, SETTINGS.TIMEOUT.BIT_ANSWER_SOUND * delay);
+		}
+
+	}; // bit
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -651,7 +686,7 @@ setTimeout( ()=>{
 	const start_time = new Date();
 
 	function start_clock () {
-		let recent_second = 0;
+		let recent_second = current_second();
 		update_clock();
 		long_wait();
 		return;
@@ -666,17 +701,18 @@ setTimeout( ()=>{
 		}
 
 		function narrow_wait () {
-			if (current_second() != recent_second) {
-				recent_second = current_second();
-				update_clock();
-				long_wait();
-			} else {
+			if (current_second() == recent_second) {
 				setTimeout( narrow_wait );
+			} else {
+				update_clock();
+				//...recent_second = current_second();
+				//...long_wait();
+				setInterval( update_clock, 1000 );
 			}
 		}
 
 		function update_clock () {
-			document.querySelector( '.time' ).innerText = Intl.DateTimeFormat(
+			self.elements.time.innerText = Intl.DateTimeFormat(
 				navigator.language, {
 					weekday : 'short',
 					year    : 'numeric',
@@ -716,7 +752,7 @@ setTimeout( ()=>{
 
 	 	if ((event.keyCode == 13) && !event.shiftKey && !event.ctrlKey && !event.altKey) {
 			event.preventDefault();
-			self.elements.send.click();
+			self.elements.enter.click();
 
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
@@ -797,11 +833,12 @@ setTimeout( ()=>{
 // MOUSE EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function parse_button_script (script) {
+	function parse_button_script (script_name) {
+		let script   = BUTTON_SCRIPTS.find( script => script.name == script_name ).script;
 		const username = self.elements.userName.value;
 		const nickname = self.elements.nickName.value;
 		if (nickname && !username) self.elements.userName.value = 'guest';
-		const second_factor = self.elements.secondFactor.value || 'null';
+		const second_factor = self.elements.factor2.value || 'null';
 		script = script.replaceAll( '\n%N', (self.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
 		return (
 			script
@@ -811,7 +848,7 @@ setTimeout( ()=>{
 			.replaceAll( '%t', second_factor )
 			.split('\n')
 			.filter( line => line.indexOf('password: null') < 0 )
-			.filter( line => line.indexOf('secondFactor: null') < 0 )
+			.filter( line => line.indexOf('factor2: null') < 0 )
 			.join('\n')
 		);
 
@@ -820,7 +857,7 @@ setTimeout( ()=>{
 
 	function on_script_button_click (event) {
 		event.preventDefault();
-		self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
+		self.elements.input.value = parse_button_script( event.target.className );
 
 		adjust_textarea();
 		scroll_down();
@@ -861,15 +898,17 @@ setTimeout( ()=>{
 		const alt = event.altKey;
 
 		const connected        = true;//...callback.isConnected();
-		const commands_clicked = event.target.closest('.terminal .commands');
+		const commands_clicked = event.target.closest('.terminal .send' )
+			|| event.target.closest( '.terminal .chat');
 		const button_clicked   = event.target.tagName == 'BUTTON';
 
 		if (commands_clicked && button_clicked) {
 			// Command menu button was clicked
 			event.preventDefault();
 			const previous_value = self.elements.input.value;
-			self.elements.input.value = parse_button_script( BUTTON_SCRIPTS[event.target.className] );
-			self.elements.send.click();
+console.log( event.target );
+			self.elements.input.value = parse_button_script( event.target.className );
+			self.elements.enter.click();
 
 		} else {
 			focus_prompt();
@@ -882,7 +921,7 @@ setTimeout( ()=>{
 // SEND BUTTON
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	async function on_send_click (event) {
+	async function on_enter_click (event) {
 
 // LOCAL COMMANDS ////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function perform_local (command) {
@@ -909,7 +948,7 @@ setTimeout( ()=>{
 			case 'clear'   :  self.clearScreen();             break;
 			case 'help'    :  show_file( 'help.txt'       );  break;
 			case 'issue'   :  show_file( 'issue.txt'      );  break;
-			case 'readme ' :  show_file( 'README'         );  break;
+			case 'readme'  :  show_file( 'README'         );  break;
 			case 'diary'   :  show_file( 'dev_diary.html' );  break;
 			case 'music':
 				document.body.innerHTML += HTML_YOUTUBE;
@@ -919,7 +958,7 @@ setTimeout( ()=>{
 				self.elements.connection.innerText = 'Error';
 				self.elements.title = 'Unknown command in perform_local()';
 				self.print( 'Unrecognized command', 'cep' );
-				throw new Error( 'DebugConsole-on_send_click-perform_local: Unrecognized command' );
+				throw new Error( 'DebugConsole-on_enter_click-perform_local: Unrecognized command' );
 			}
 
 			return true;
@@ -1042,7 +1081,7 @@ setTimeout( ()=>{
 
 		focus_prompt();
 
-	} // on_send_click
+	} // on_enter_click
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1114,7 +1153,6 @@ setTimeout( ()=>{
 			}
 		}
 
-
 		function print_message () {
 			let class_name = 'response';
 			if      (typeof message == 'string')              class_name = 'string expand'
@@ -1133,19 +1171,6 @@ setTimeout( ()=>{
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // PRINT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.clearScreen = function () {
-		self.elements.output.innerHTML = '';
-
-	} // clearScreen
-
-
-	this.clearInput = function () {
-		self.elements.input.value = '';
-		scroll_down();
-
-	} // clearScreen
-
 
 	this.print = function (message, class_name = null) {
 
@@ -1190,42 +1215,57 @@ setTimeout( ()=>{
 		}
 
 
-		const print_message = highlight(
-			(typeof message == 'string') ? message : JSON.stringify(message, null, '\t')
-		);
+		// Let user scroll up   //... Make optional
+		const o = self.elements.output;
+		const do_scroll = (o.scrollHeight - o.scrollTop == o.clientHeight);
+
+		const print_message
+		= (typeof message == 'string')
+		? message
+		: highlight( JSON.stringify(message, null, '\t') )
+		;
 
 		// Create DOM element
 		const new_element = document.createElement( 'pre' );
 		if (class_name) new_element.className = class_name;
 		new_element.innerHTML = print_message;
 		self.elements.output.appendChild( new_element );
-		scroll_down();
 
-		if (message.type) new_element.dataset.type = message.type;
+		if (!false || do_scroll) scroll_down();
+
+		['response', 'broadcast'].forEach( (category)=>{
+			if (message[category] && message[category].type) {
+				new_element.dataset.type = message[category].type;
+			}
+		});
 
 		// Visualize/sonifiy success/failure
 		if (message.response && (typeof message.response.success != 'undefined')) {
 			const success = message.response.success ? 'yes' : 'no';
 
-			// We might receive several responses, when we sent several requersts, so we...
-			setTimeout( ()=>{
-				self.elements.terminal.classList.remove( 'yes' );
-				self.elements.terminal.classList.remove( 'no' );
-				self.elements.terminal.classList.add( success );
-				sam_speak( success );
-				setTimeout( ()=>{
-					self.elements.terminal.classList.remove( success );
-				}, SETTINGS.TIMEOUT.BIT_ANSWER_COLOR);
-
-			// .. delay TTS accordingly:
-			}, SETTINGS.TIMEOUT.BIT_ANSWER_SOUND * (message.response.request-1) );
+			// We might receive several responses, when we sent several requersts,
+			// so we tell the bit to stack its answers:
+			self.bit.say( message.response.success, message.response.request - 1 );
 		}
 
 		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
-			sam_speak( message.broadcast.success ? 'yes' : 'no' );
+			self.bit.say( message.broadcast.success ? 'yes' : 'no' );
 		}
 
 	}; // print
+
+
+	this.clearScreen = function () {
+		self.elements.output.innerHTML = '';
+
+	} // clearScreen
+
+
+	this.clearInput = function () {
+		self.elements.input.value = '';
+		scroll_down();
+
+	} // clearScreen
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1282,58 +1322,72 @@ console.groupEnd();
 		// Keyboard
         	self.elements.input.addEventListener( 'keydown' , on_keydown );
         	self.elements.input.addEventListener( 'keyup'   , on_keyup   );
-		['keydown', 'keypress', 'keyup' ].forEach(
+		['keydown', 'keypress', 'keyup'].forEach(
 			event => addEventListener( event, on_keyboard_event, {passive: false} )
 		);
 
 
 		// MAIN MENU Create macro buttons
-		Object.keys( BUTTON_SCRIPTS ).forEach( (key, index)=>{
-			const name = key.charAt(0).toUpperCase() + key.slice(1);
+		BUTTON_SCRIPTS.forEach( (script)=>{
 			const new_button = document.createElement( 'button' );
-
-			new_button.className = key;
-
-			const hue = Math.floor(360 / Object.keys(BUTTON_SCRIPTS).length * index);
-			const css = 'hue-rotate(' + hue + 'deg)';
-
-			//new_button.className    = key;
-			new_button.innerText    = name;
-			new_button.title        = 'Double click to execute immediately';
-			//...new_button.style.filter = css;
+			new_button.className = script.name;
+			new_button.innerText = script.name.charAt(0).toUpperCase() + script.name.slice(1);
+			new_button.title     = 'Double click to execute immediately';
 			new_button.addEventListener( 'click', on_script_button_click );
-			self.elements.commands.appendChild( new_button );
+
+			self.elements[script.menu].appendChild( new_button );
 		});
 
 
-		// Button: "Enter"
+		// CLICK and DOUBLE CLICK
+		function set_html_animate () {
+			self.elements.html.classList.remove( 'animate' );
+			self.elements.terminal.removeEventListener( 'click', set_html_animate );
+		}
+		self.elements.terminal.addEventListener( 'click'    , set_html_animate );
+		self.elements.terminal.addEventListener( 'click'    , on_click    );
+		self.elements.terminal.addEventListener( 'dblclick' , on_dblclick );
+
+		// Open terminal from main screen
+		addEventListener( 'dblclick', (event)=>{
+			if (!event.target.closest( '.terminal' )) {
+				self.toggles.terminal.toggle();
+			}
+		});
+
+
+		// BUTTON: "Enter"
 		self.requestId = 0;
-		self.elements.send.addEventListener( 'click', on_send_click );
+		self.elements.enter.addEventListener( 'click', on_enter_click );
 
 
-		// Button: "Exit"
+		// BUTTON: "Exit"
 		self.elements.close.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
 
 
-		// Login form
+		// LOGIN FORM
 		self.elements.login   = container.querySelector( 'button.login' );
 		self.elements.asRoot  = container.querySelector( 'button.root'  );
 		self.elements.asUser  = container.querySelector( 'button.user'  );
 		self.elements.asGuest = container.querySelector( 'button.guest' );
 
-		self.elements.terminal.querySelectorAll( '.commands input' ).forEach( (input)=>{
+		self.elements.terminal.querySelectorAll( '.send input' ).forEach( (input)=>{
 			input.addEventListener( 'input'  , ()=>self.elements.login.click() );
 			input.addEventListener( 'change' , ()=>self.elements.login.click() );
 		});
-		self.elements.commands.addEventListener( 'keydown', (event)=>{
-			if (event.keyCode == 13) self.elements.send.click();
+		self.elements.send.addEventListener( 'keydown', (event)=>{
+			if (event.keyCode == 13) self.elements.enter.click();
 		});
 
 
-		// Re-focus prompt
-		self.elements.input.addEventListener( 'keyup'     , adjust_textarea );
-		self.elements.input.addEventListener( 'input'     , on_input_change );
-		self.elements.input.addEventListener( 'change'    , on_input_change );
+		// CLOCK
+		start_clock();
+
+
+		// PROMPT
+		self.elements.input.addEventListener( 'keyup'  , adjust_textarea );
+		self.elements.input.addEventListener( 'input'  , on_input_change );
+		self.elements.input.addEventListener( 'change' , on_input_change );
 
 		let mouse_moved = true;
 		self.elements.output.addEventListener( 'mousedown', ()=>mouse_moved = false );
@@ -1346,34 +1400,24 @@ console.groupEnd();
 			}
 		});
 
+		function init_prompt () {
+			// Find shortcuts and add list of keys to CEP_VERSION
+			const toggles    = sc => (sc.modifiers.length == 1) && (sc.modifiers[0] == 'alt');
+			const characters = toggle => toggle.key
+			const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
-		// CLICK and DOUBLE CLICK
-		self.elements.terminal.addEventListener( 'click'    , on_click    );
-		self.elements.terminal.addEventListener( 'dblclick' , on_dblclick );
+			CEP_VERSION += '^' + shortcuts;   // For .help
+			show_file( 'issue.txt' );
 
-		addEventListener( 'dblclick', self.toggles.terminal.toggle );
-
-
-		// Clock
-		start_clock();
-
-
-		// Prompt
-		const toggles    = shortcut => (shortcut.modifiers.length == 1) && (shortcut.modifiers[0] == 'alt');
-		const characters = toggle => toggle.key
-		const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
-
-		CEP_VERSION += '^' + shortcuts;   // For .help
-		show_file( 'issue.txt' );
-
-		if (self.elements.terminal.classList.contains( 'enabled' )) setTimeout( focus_prompt, 100 );
-
-		function get (search) {
-			return search.split(' ').reduce( (prev, term)=>{
-				return prev || (location.href.indexOf( term ) >= 0);
-			}, false);
+			if (self.elements.terminal.classList.contains( 'enabled' )) setTimeout( focus_prompt, 100 );
 		}
 
+		init_prompt();
+
+		if (!true) setTimeout( ()=>{   //...
+			self.elements.nickName.focus();
+			console.log( 'login' );
+		}, 200 );
 
 		return Promise.resolve();
 

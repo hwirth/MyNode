@@ -61,7 +61,10 @@ const SETTINGS = {
 	APP_PATH    : '../application/',
 	MAIN_MODULE : '../application/router.js',
 
-	MESSAGE_TIMESTAMPS : true,   // Send time with each JSON reply
+	MESSAGE_TIMESTAMPS : true,    // Send time with each JSON reply
+	REPORT_HANDLED     : true,    // Always send response handled/rejected
+	LOG_PINGPONG       : false,   // true: Might flood your log output
+	KICK_NO_PONG       : true,    // False: Allow clients to ignore ping updates
 
 	LOG: {
 		FILE_NAME     : config_file.LOG_FILE_NAME,                // File name for log output
@@ -76,9 +79,6 @@ const SETTINGS = {
 		RUN_AS_GROUP  : config_file.RUN_AS_GROUP,
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
 	},
-
-	LOG_PINGPONG : false,
-	KICK_NO_PONG : true,
 
 	// Upper case chars are also accepted
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.,?&%=-+/:[]',   // http server white list

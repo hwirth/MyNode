@@ -24,8 +24,22 @@
 	--button-enabled-bg     : #676;
 	--button-enabled-border : unset;
 
+	--tab-size       : 4;
+	--input-tab-size : 8; X:var(--tab-size);
+
+	--terminal-font-size   : 1rem;X:17px;
+	--terminal-line-height : 1rem;
+	--terminal-padding     : 10px;
+
 	--terminal-connected-color : #0a0;
 	--terminal-ping-color      : #0f0;
+	--terminal-chat-color      : #fff;
+	--terminal-cep-color       : #cc0;
+	--terminal-mcp-color       : #f00;
+
+	--terminal-warning-color   : #fc0;
+	--terminal-error-color     : #e20;
+	--terminal-success-color   : #0f0;
 
 	--terminal-debug-color     : #acf;
 	--terminal-string-color    : #5c6;
@@ -35,23 +49,11 @@
 	--terminal-text-color      : #ffe;
 	--terminal-request-color   : #ca0;
 	--terminal-response-color  : #78f;
-	--terminal-warning-color   : #fc0;
-	--terminal-error-color     : #e20;
-	--terminal-success-color   : #0f0;
-	--terminal-cep-color       : #cc0;
-	--terminal-mcp-color       : var(--terminal-response-color);
-	--terminal-chat-color      : #fff;
 
 	--terminal-input-color      : var(--terminal-request-color);
 	--terminal-input-bg         : #000;
 	--terminal-separator-color  : #a60;
 	--terminal-separator-border : dashed 1px var(--terminal-separator-color);
-
-	--terminal-line-height: 1rem;
-	--tab-size: 4;
-	--input-tab-size: 8; X:var(--tab-size);
-
-	--terminal-padding: 0.5em;
 }
 
 
@@ -133,7 +135,7 @@ footer { display:none; }
 	grid-template-areas:"r0" "r1" "r2";
 	width:100%; height:100%;
 	padding:var(--terminal-padding);
-	font-size:17px;
+	font-size:var(--terminal-font-size);
 	overflow:hidden;
 	background:#000;
 }
@@ -205,7 +207,11 @@ X.terminal button.token,
 	display:inline-flex; flex-wrap:wrap; Xalign-items:center; Xjustify-content:center;
 	border-radius:5px;
 	background:#fff3; color:#fff;
-	box-shadow:inset 0 0 0 1px #fff5;
+	Xbox-shadow:inset 0 0 0 1px #fff5;
+	box-shadow:
+		inset 0 0 0 1px #fff5,
+		inset 0 0 5px 0 #000
+	;
 	user-select:none; cursor:default;
 }
 .terminal .toolbar > * { Xposition:relative; display:flex; }
@@ -219,7 +225,7 @@ X.terminal button.token,
 .terminal footer > :nth-child(4) { flex-grow:0; justify-content:end; }
 
 .terminal button,
-.terminal input { height:calc(1.2rem + 2px); padding:2.5px 5px 1.5px; }
+.terminal input { height:calc(1.2rem + 2px); padding:2.5px 5px 1.5px 7px/*//...?*/; }
 .terminal .toolbar,
 .terminal .toolbar nav { height:calc(1.2rem + 2px); line-height:calc(1.2rem + 0px); }
 .terminal .toolbar nav > :is(div, span) { padding:3px 5px; vertical-align:middle; }
@@ -236,7 +242,10 @@ X.terminal button.token,
 .terminal .toolbar .path > :last-child::after { content:none; }
 
 /* MENUS */
-.terminal .toolbar > nav .items { display:none; background:#fff2; }
+.terminal .toolbar > nav .items,
+.terminal .toolbar > nav[class] .items { display:none; }
+X.terminal:not(.connected) .send .items,
+X.terminal:not(.connected) .chat .items,
 .terminal .toolbar > nav:hover .items,
 .terminal .toolbar > nav:focus .items,
 .terminal .toolbar > nav:focus-within .items {
@@ -244,10 +253,13 @@ X.terminal button.token,
 	position:absolute; top:100%; right:0; z-index:999;
 	box-sizing:content-box; border-radius:5px;
 	padding:0;
+	background:#fff2;
 }
-.terminal nav.toggles  .items { width:10em; }
-.terminal nav.debug    .items { width:12em; }
-.terminal nav.commands .items { width:17em; }
+.terminal nav.toggles .items { width:10em; }
+.terminal nav.filter  .items { width:10em; }
+.terminal nav.debug   .items { width:12em; }
+.terminal nav.send    .items { width:16.5em; }
+.terminal nav.chat    .items { width:10em; }
 
 .terminal .toolbar > nav .items > * { flex-grow:1; min-width:3em; }
 .terminal footer.toolbar > nav:hover .items,
@@ -258,6 +270,7 @@ X.terminal nav.tasks button { background-color:#460; }
 X.terminal nav.tasks button.active { background-color:#570; }
 
 /* Other UI */
+.terminal button.cep { background:#fff4; }
 .terminal .connection.success { font-weight:bold; color:#080; transition:color 0.2s linear; }
 .terminal .connection.ping { color:#0a0; }
 .terminal.animate .connection.ping {
@@ -265,14 +278,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	background-position:-100% 50%;
 	background-size:20px 20px;
 	background-repeat:no-repeat;
-	animation: PING 0.5s linear 1;
 }
-@keyframes PING {
-	  0% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
-	 50% { background-position: 100% 50%; Xcolor:#0a0; X:var(--terminal-ping-color   ); }
-	100% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
-}
-
 .terminal .time {
 	flex-grow:1;
 	Xfont-variant-numeric: normal;
@@ -288,8 +294,6 @@ X.terminal nav.tasks button.active { background-color:#570; }
 }
 
 
-
-/* SHELL */
 .terminal.fancy {
 	background:unset;
 	background-image:url(/images/bg_grid3.jpg);   /******************************************************* GRID **/
@@ -299,13 +303,11 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	transition:background-image 0.5s ease-in-out;
 }
 .terminal.fancy.connected { opacity:1; }
-/*@media (min-width: 640px) {*/
 @media (min-aspect-ratio: 4/3) {
     .terminal.fancy {
         background-size: 100% 100%;
     }
 }
-
 .terminal.fancy::after {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; Xz-index:1;
 	background-color:#2220;
@@ -316,7 +318,8 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
 }
 .terminal.fancy.connected::after { filter:hue-rotate(0deg); }
-.terminal.fancy output::before {
+
+.terminal.fancy.animate output::before {
 	--b:0.85;
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -325,19 +328,19 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	filter:hue-rotate(180deg) brightness(var(--b));
 }
 .terminal.fancy > * { z-index:3; }
-.terminal.fancy.connected output::before { filter:hue-rotate(  0deg) brightness(var(--b)); }
-.terminal.fancy.yes       output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
-.terminal.fancy.no        output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
-.terminal.fancy.yes output::after,
-.terminal.fancy.no  output::after {
+.terminal.fancy.connected   output::before { filter:hue-rotate(  0deg) brightness(var(--b)); }
+.terminal.fancy.animate.yes output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
+.terminal.fancy.animate.no  output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
+.terminal.fancy.animate.yes output::after,
+.terminal.fancy.animate.no  output::after {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:-1;
 	width:200%; height:200%;
 	border-radius:100%;
 	background:#0000;
 }
-.terminal.fancy.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 5%, #0000 10%); }
-.terminal.fancy.no  output::after { background:radial-gradient(circle at center, #f003, #8002 5%, #0000 10%); }
+.terminal.fancy.animate.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 7%, #0000 10%); }
+.terminal.fancy.animate.no  output::after { background:radial-gradient(circle at center, #f003, #8002 7%, #0000 10%); }
 
 .terminal output {
 	margin-top:1em;
@@ -350,21 +353,22 @@ X.terminal nav.tasks button.active { background-color:#570; }
 .terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
 .terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; padding-top:2px; padding-bottom:2px; }
 .terminal .separators pre:nth-child(2n+1) { Xbackground:#fff4; }
-.terminal .compress pre:hover { background:#fff4; cursor:pointer; }
-.terminal .compress pre.expand:hover { background:unset; cursor:pointer; }
-.terminal .compress.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
-.terminal .compress.separators pre:hover { border-width:1px 0; margin-top:-1px; }
-.terminal .compress pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
-.terminal output.compress.last pre:last-child,/*//...*/
-.terminal .compress pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
+.terminal .compact pre:hover { background:#fff4; cursor:pointer; }
+.terminal .compact pre.expand:hover { background:unset; cursor:pointer; }
+.terminal .compact.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
+.terminal .compact.separators pre:hover { border-width:1px 0; margin-top:-1px; }
+.terminal .compact pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
+.terminal output.compact.last pre:last-child,/*//...*/
+.terminal .compact pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
 .terminal pre { display:block; }
-.terminal .chat .string    pre.string,
-.terminal .chat .notice    pre.notice,
-.terminal .chat .broadcast pre.broadcast,
-.terminal .chat .update    pre.update,
-.terminal .chat .request   pre.request,
-.terminal .chat .response  pre.response { display:none; }
+.terminal .debug .cep       pre.cep,
+.terminal .debug .string    pre.string,
+.terminal .debug .notice    pre.notice,
+.terminal .debug .broadcast pre.broadcast,
+.terminal .debug .update    pre.update,
+.terminal .debug .request   pre.request,
+.terminal .debug .response  pre.response { display:none; }
 
 .terminal pre.cep       { color:var(--terminal-cep-color)       }
 .terminal pre.debug     { color:var(--terminal-debug-color)     }
@@ -379,7 +383,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 .terminal.fancy :is(textarea, pre) { padding-left:50px; }
 .terminal.fancy pre::before {
 	content:'';
-	position:absolute; left:7px; top:2px;
+	position:absolute; left:5px; top:2px;
 	width:21px; height:12px;
 	outline:solid 1px #fff2; border-radius:100%;
 	background:radial-gradient(ellipse at center, #fffc, #fff8 1px, #fff1 5px, #fff0 6px);
@@ -436,19 +440,16 @@ X.terminal textarea:focus { caret-color:#f0f; }
 
 /* ANIMATIONS */
 
-/* Beam */
-:not(.init).animate body::after {
-	animation: BEAM 0.2s ease-in-out infinite;
-}
+/* Beams */
+:not(.init).animate body::after,
 .terminal.fancy.animate::after {
 	animation: BEAM 0.1s ease-in-out infinite;
 }
 @keyframes BEAM {
 	  0% { opacity:1.0; }
-	 40% { opacity:1.0; }
-	 45% { opacity:0.9; }
-	 55% { opacity:0.9; }
-	 60% { opacity:1.0; }
+	 49% { opacity:1.0; }
+	 50% { opacity:0.9; }
+	 99% { opacity:0.9; }
 	100% { opacity:1.0; }
 	/*
 	   0% { opacity:1.0; }
@@ -458,6 +459,18 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	 100% { opacity:1.0; }
 	 */
 }
+
+/* Ping */
+X.terminal.animate .connection.ping {
+	animation: PING 0.5s linear 1;
+}
+@keyframes PING {
+	  0% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
+	 50% { background-position: 100% 50%; Xcolor:#0a0; X:var(--terminal-ping-color   ); }
+	100% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
+}
+
+
 
 /* MCP */
 X:not(.init) .animate.enabled.terminal::before {
