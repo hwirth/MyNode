@@ -25,16 +25,20 @@ export const DEBUG = {
 export const SETTINGS = {
 	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS : true,
-	KEYBOARD_BEEP    : true,   // Turn off entirely, see PRESETS
+	KEY_BEEP         : true,   // Turn off entirely, see PRESETS
 	HIDE_PINGPONG    : true,   // Don't log ping/pong messages to the dev console
+	MAIN_VOLUME      : 1.0,    //0..1
+	SAM_ALWAYS_NEW   : !true,   // Reinstantiate SAM on every call, enabling MAIN_VOLUME
 
 	WEBSOCKET: {
-		URL : 'wss://spielwiese.central-dogma.at:1337',
+		URL       : 'wss://spielwiese.central-dogma.at:1337',
+		LOG_SLICE : 60,
 	},
 
 	TIMEOUT: {
 		CONNECTION_PING  : 500,
 		RECONNECT        : 200,   //1000 ms
+		BEEP_IGNORE      : 100,
 		BIT_ANSWER_COLOR : 200,
 		BIT_ANSWER_SOUND : 270,
 	},
@@ -55,7 +59,7 @@ export const SETTINGS = {
 
 export const PRESETS = {
 	FILTER: {
-		DEBUG     : true,   //... -> ALL, Currently: when false, only chat visible
+		CHAT      : false,   //... -> ALL, Currently: when true, only chat visible
 		CEP       : true,
 		STRING    : true,
 		NOTICE    : true,
@@ -66,14 +70,14 @@ export const PRESETS = {
 	},
 
 	TOGGLE: {
-		TERMINAL      : get( 'terminal' ),
-		COMPRESS      : !true,
-		SEPARATORS    : false,
-		OVERFLOW      : !true,
-		ANIMATE       : !true,
-		FANCY         : !false,
-		KEYBOARD_BEEP : !false,
-		TTS           : !false,
+		TERMINAL   : get( 'terminal' ),
+		COMPRESS   : true,
+		SEPARATORS : false,
+		OVERFLOW   : true,
+		ANIMATE    : !true,
+		FANCY      : !false,
+		KEY_BEEP   : !false,
+		TTS        : !false,
 	},
 
 	VOLUME: {

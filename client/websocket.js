@@ -111,7 +111,7 @@ export const WebSocketClient = function (parameters = {}) {
 					.replaceAll( '"', '' )
 					.replaceAll( '{', '' )
 					.replaceAll( '}', '' )
-					.slice(0, 90),
+					.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
 				);
 				console.log( message );
 				console.groupEnd();
@@ -165,7 +165,7 @@ export const WebSocketClient = function (parameters = {}) {
 				.replaceAll( '"', '' )
 				.replaceAll( '{', '' )
 				.replaceAll( '}', '' )
-				.slice(0, 90),
+				.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
 			);
 			console.log( request );
 			console.groupEnd();

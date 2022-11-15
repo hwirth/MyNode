@@ -4,24 +4,19 @@ A fancy websocket JSON-message debugger
 Sends single lines as  chat.say  requests, otherwise
 turns TAB formatted multiline text into JSON objects.
 
-1) Guest Login
+Guest Login
       1. Choose a *NICK*name in the "Enter" menu
       2. Double click "Login" (auto-connects)
+      3. Click the "Chat" button to toggle chat/debug mode
 
-2) Click the "Debug" button to toggle chat/debug mode:
-
-2a) Debug Mode Chat and websocket traffic visible
-      Enter        Inserts line break
-      Shift+Enter  Sends text/request
-
-2b) Chat Mode - Only chat messages visible
+Chat Mode: Only chat messages visible
       Enter        Sends text/request
       Shift+Enter  Inserts line break
 
-3) Shortcuts
+Debug Mode: Chat and websocket traffic visible
+      Enter        Inserts line break
+      Shift+Enter  Sends text/request
+
+Shortcuts
       Ctrl+Home    Clears screen
       Shift+Home   Clears input
-      Alt+C        Compressed view
-      Alt+D        Toggle debug/chat mode
-      Alt+O        Line overflow
-      Alt+S        Separators

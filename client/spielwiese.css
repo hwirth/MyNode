@@ -79,7 +79,7 @@ body {
 	--a-focus   : #00f;
 }
 
-* { margin:0; padding:0; box-sizing:border-box; font-size:15px; }
+* { margin:0; padding:0; box-sizing:border-box; }
 
 html, body { width:100%; height:100%; }
 :not(.init) body {
@@ -95,7 +95,7 @@ html:not(.init)::after {
 	outline:solid 1px #fff6;
 	border-radius:3px;
 	padding:2px 5px;
-	font-family:var(--font-family); font-size:0.7em; line-height:1.1em; text-align:center;
+	font-family:terminal; font-size:0.7em; line-height:1.1em; text-align:center;
 	background:#0007; color:#fc0;
 }
 :not(.init) body::after {
@@ -133,14 +133,9 @@ footer { display:none; }
 	grid-template-areas:"r0" "r1" "r2";
 	width:100%; height:100%;
 	padding:var(--terminal-padding);
+	font-size:17px;
 	overflow:hidden;
-	Xbackground:#210;
-	Xbackground:#210a;
 	background:#000;
-}
-.terminal.connected {
-	Xbackground:#012;
-	Xbackground:#012a;
 }
 .terminal header { grid-area:r0; position:relative; }
 .terminal main   { grid-area:r1; position:relative; width:100%; max-height:100%; overflow:hidden; }
@@ -156,9 +151,9 @@ footer { display:none; }
 }
 
 .terminal :is(h2, input, button, span, code, ::before, ::after, .toolbar, textarea, pre) {
-	font-family:monospace,monospace; font-size:1rem; line-height:var(--terminal-line-height);
+	font-family:terminal; font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
-	font-family:terminal;
+	
 }
 .terminal .toolbar *,
 .terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre) {
@@ -175,7 +170,6 @@ footer { display:none; }
 	border:var(--input-border);
 	border-radius:var(--input-radius);
 	border:var(--input-border); border-radius:0.25em;
-	color:#fff;
 	background:var(--terminal-input-bg); color:var(--terminal-input-color);
 }
 .terminal input:focus {
@@ -191,16 +185,10 @@ footer { display:none; }
 }
 .terminal button:focus,
 .terminal button:hover   { filter:brightness(1.5); }
-.terminal button.submit  { background:var(--button-submit-bg); color:var(--button-submit-color); }
-.terminal button.close   { background:var(--button-close-bg); color:var(--button-close-color); }
-.terminal button.enabled {
-	Xbox-shadow:
-		inset 0 0 0 2px var(--button-enabled-bg)/*,
-		0 0 0 2px var(--button-enabled-bg)*/
-	;
-	background:var(--button-enabled-bg);
-	color:var(--button-enabled-color);
-}
+.terminal button.submit  { background:var(--button-submit-bg ); color:var(--button-submit-color ); }
+.terminal button.close   { background:var(--button-close-bg  ); color:var(--button-close-color  ); }
+.terminal button.enabled { background:var(--button-enabled-bg); color:var(--button-enabled-color); }
+
 .terminal button.login,
 .terminal button.logout,
 .terminal button.who,
@@ -222,8 +210,9 @@ X.terminal button.token,
 }
 .terminal .toolbar > * { Xposition:relative; display:flex; }
 .terminal header > :nth-child(1) { flex-grow:1; }
-.terminal header > :nth-child(2) { flex-grow:0; justify-content:end; text-align:right; }
+.terminal header > :nth-child(2) { flex-grow:0; justify-content:end; }
 .terminal header > :nth-child(3) { flex-grow:0; justify-content:end; }
+.terminal header > :nth-child(4) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(1) { flex-grow:0; }
 .terminal footer > :nth-child(2) { flex-grow:1; }
 .terminal footer > :nth-child(3) { flex-grow:0; justify-content:end; }
@@ -253,15 +242,20 @@ X.terminal button.token,
 .terminal .toolbar > nav:focus-within .items {
 	display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
 	position:absolute; top:100%; right:0; z-index:999;
-	width:17em; box-sizing:content-box;
-	Xborder:solid 1px #fffa; border-radius:5px;
-	Xpadding:15px;
-	padding:0px;
+	box-sizing:content-box; border-radius:5px;
+	padding:0;
 }
+.terminal nav.toggles  .items { width:10em; }
+.terminal nav.debug    .items { width:12em; }
+.terminal nav.commands .items { width:17em; }
+
 .terminal .toolbar > nav .items > * { flex-grow:1; min-width:3em; }
 .terminal footer.toolbar > nav:hover .items,
 .terminal footer.toolbar > nav:focus .items,
 .terminal footer.toolbar > nav:focus-within .items { bottom:100%; top:unset; }
+
+X.terminal nav.tasks button { background-color:#460; }
+X.terminal nav.tasks button.active { background-color:#570; }
 
 /* Other UI */
 .terminal .connection.success { font-weight:bold; color:#080; transition:color 0.2s linear; }
@@ -296,7 +290,6 @@ X.terminal button.token,
 
 
 /* SHELL */
-
 .terminal.fancy {
 	background:unset;
 	background-image:url(/images/bg_grid3.jpg);   /******************************************************* GRID **/
@@ -312,7 +305,7 @@ X.terminal button.token,
         background-size: 100% 100%;
     }
 }
-/* BEAM */
+
 .terminal.fancy::after {
 	content: ''; position:absolute; top:0; left:0; width:100%; height:100%; Xz-index:1;
 	background-color:#2220;
@@ -350,7 +343,6 @@ X.terminal button.token,
 	margin-top:1em;
 	color:var(--terminal-text-color);
 	white-space:pre-wrap;
-	Xoverflow-x:visible;
 	overflow-y:scroll;
 	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 }
@@ -366,15 +358,14 @@ X.terminal button.token,
 .terminal output.compress.last pre:last-child,/*//...*/
 .terminal .compress pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
-.terminal pre { display:none; }
-.terminal .debug.cep       pre.cep,
-.terminal .debug.string    pre.string,
-.terminal .debug.notice    pre.notice,
-.terminal .debug.broadcast pre.broadcast,
-.terminal .debug.update    pre.update,
-.terminal .debug.request   pre.request,
-.terminal .debug.response  pre.response,
-.terminal .chat pre.chat { display:block; }
+.terminal pre { display:block; }
+.terminal .chat .cep       pre.cep,
+.terminal .chat .string    pre.string,
+.terminal .chat .notice    pre.notice,
+.terminal .chat .broadcast pre.broadcast,
+.terminal .chat .update    pre.update,
+.terminal .chat .request   pre.request,
+.terminal .chat .response  pre.response { display:none; }
 
 .terminal pre.cep       { color:var(--terminal-cep-color)       }
 .terminal pre.debug     { color:var(--terminal-debug-color)     }
@@ -399,11 +390,11 @@ X.terminal button.token,
 	background:radial-gradient(ellipse at center, #ffff, #fffa 3px, #fff1 10px, #fff0 20px);
 }
 
-.terminal.fancy .debug pre.chat::before {
+.terminal.fancy .chat pre.chat::before {
 	content:'Msg'; line-height:12px; font-size:0.7em; text-align:center;
 	outline:none; border-radius:3px; background:#0003;
 }
-.terminal.fancy .debug pre.chat.expand::before { background:#fff6; }
+.terminal.fancy .chat pre.chat.expand::before { background:#fff6; }
 
 .terminal iframe { position:relative; width:calc(100% - 70px); margin-left:50px; }
 
@@ -449,14 +440,22 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	animation: BEAM 0.2s ease-in-out infinite;
 }
 .terminal.fancy.animate::after {
-	animation: BEAM 0.2s ease-in-out infinite;
+	animation: BEAM 0.1s ease-in-out infinite;
 }
 @keyframes BEAM {
+	  0% { opacity:1.0; }
+	 40% { opacity:1.0; }
+	 45% { opacity:0.9; }
+	 55% { opacity:0.9; }
+	 60% { opacity:1.0; }
+	100% { opacity:1.0; }
+	/*
 	   0% { opacity:1.0; }
 	  42% { opacity:0.98; }
 	  86% { opacity:1.0; }
 	  93% { opacity:0.9; }
 	 100% { opacity:1.0; }
+	 */
 }
 
 /* MCP */

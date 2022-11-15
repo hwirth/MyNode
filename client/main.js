@@ -166,10 +166,6 @@ const Application = function () {
 
 
 	function on_console_send (request) {
-		if (!(request.session && request.session.pong)) {
-			console.log( 'on_console_send(): request:', request );
-		}
-
 		self.webSocketClient.send( request );
 
 	} // on_console_send
