@@ -13,40 +13,56 @@ import { SETTINGS, PRESETS, DEBUG } from './config.js';
 import { History                  } from './history.js';
 
 
+export const DebugConsole = function (callback) {
+	const self = this;
+
+	this.history;
+	this.audioContext;
+	this.toggles;
+
+	this.requestToText = request_to_text;
+	this.textToRequest = text_to_request;
+
+	this.requestId;
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-let CEP_VERSION = 'v0.3.1α';   // Keyboard shortcuts will be appended in  self.init()
+	let CEP_VERSION = 'v0.3.1α';   // Keyboard shortcuts will be appended in  self.init()
 
-const EXTRA_LINES = 0;
-const MIN_LINES = 0;
+	const EXTRA_LINES = 0;
+	const MIN_LINES = 0;
 
-const BUTTON_SCRIPTS = {
-	'login'      : 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n%N',
-	'root'       : 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
-	'user'       : 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
-	'guest'      : 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
-	'logout'     : 'session\n\tlogout',
-	'who'        : 'session\n\twho',
-	'status'     : 'session\n\tstatus',
-	'MCP'        : 'mcp\n\tstatus',
-	'token'      : 'mcp\n\ttoken',
-	'kroot'      : 'session\n\tkick\n\t\tusername: root',
-	'kuser'      : 'session\n\tkick\n\t\tusername: user',
-	'reset'      : 'mcp\n\trestart\n\t\ttoken: ',
-	'clear'      : '/clear',
-	'help'       : '/help',
-	'connect'    : '/connect ' + SETTINGS.WEBSOCKET.URL,
-	'disconnect' : '/disconnect',
-};
 
-const SHORTHAND_COMMANDS = {
-	'nick'  : 'chat\n\tnick:*',
-	'who'   : 'session\n\twho',
-};
+	const BUTTON_SCRIPTS = {
+		'login'      : 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n%N',
+		'root'       : 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
+		'user'       : 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
+		'guest'      : 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
+		'logout'     : 'session\n\tlogout',
+		'who'        : 'session\n\twho',
+		'status'     : 'session\n\tstatus',
+		'MCP'        : 'mcp\n\tstatus',
+		'token'      : 'mcp\n\ttoken',
+		'kroot'      : 'session\n\tkick\n\t\tusername: root',
+		'kuser'      : 'session\n\tkick\n\t\tusername: user',
+		'reset'      : 'mcp\n\trestart\n\t\ttoken: ',
+		'clear'      : '/clear',
+		'help'       : '/help',
+		'connect'    : '/connect ' + SETTINGS.WEBSOCKET.URL,
+		'disconnect' : '/disconnect',
+	};
 
-const HTML_TERMINAL = (`
+
+	const SHORTHAND_COMMANDS = {
+		'nick'  : 'chat\n\tnick:*',
+		'who'   : 'session\n\twho',
+	};
+
+
+	const HTML_TERMINAL = (`
 <form class="terminal">
 	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
 		<output class="Xlast"></output>
@@ -90,9 +106,10 @@ const HTML_TERMINAL = (`
 		</nav>
 	</footer>
 </form>
-`); // HTML_TERMINAL
+	`); // HTML_TERMINAL
 
-const HTML_YOUTUBE = (`
+
+	const HTML_YOUTUBE = (`
 <footer class="main_menu">
 	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
 	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
@@ -107,29 +124,8 @@ const HTML_YOUTUBE = (`
 	allowfullscreen
 	autoplay="true"
 ></iframe>
-`); // HTML_YOUTUBE
+	`); // HTML_YOUTUBE
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// IMPLEMENTATION
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-export const DebugConsole = function (callback) {
-	const self = this;
-
-	this.history;
-	this.audioContext;
-	this.toggles;
-
-	this.requestToText = request_to_text;
-	this.textToRequest = text_to_request;
-
-	this.requestId;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// CONFIGURATION
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	const KEYBOARD_SHORTCUTS = [{
 		event     : 'keydown',
