@@ -269,7 +269,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	function get_uptime (formatted = false) {
 		const milliseconds = process.uptime() * 1000;
-		//const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
+		//...const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
 
 		if (formatted) {
 			let seconds = Math.floor( milliseconds / 1000 );
@@ -295,7 +295,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 				+ leading( seconds, 2 ) + '.'
 				+ leading( millis , 3 ) + 's'
 			);
-
+			
 		} else {
 			return milliseconds;
 		}

@@ -153,42 +153,8 @@ const Application = function () {
 
 
 	function on_websocket_message (event, socket, message) {
-		// See  WebSocketClient.send()
-		try   { message = JSON.parse( event.data ); }
-		catch { /* Assume string */ }
-
-		if (!message.update) {
-			print_message();
-
-		} else {
-			switch (message.update.type) {
-				case 'ping': {
-					if (!DEBUG.HIDE_MESSAGES.PING) print_message();
-					socket.send( { session: { pong: message.update.pong }} );
-
-					self.terminal.elements.connection.classList.add( 'ping' );
-					setTimeout( ()=>{
-						self.terminal.elements.connection.classList.remove( 'ping' );
-					}, 100);
-					break;
-				}
-				case 'chat': {
-					if (!DEBUG.HIDE_MESSAGES.CHAT) print_message();
-					const sender = message.update.nickName || message.update.userName;
-					self.terminal.print( {[sender]: message.update.message}, 'chat' );
-					break;
-				}
-				default: {
-					self.terminal.print( 'Unknown update', 'error' );
-				}
-			}
-		}
-
-
-		function print_message () {
-			self.terminal.onReceive( message );
-		}
-
+		self.terminal.onReceive( message );
+		
 	} // on_websocket_message
 
 
@@ -200,7 +166,9 @@ const Application = function () {
 
 
 	function on_console_send (request) {
-		console.log( 'on_console_send(): request:', request );
+		if (!(request.session && request.session.pong)) {
+			console.log( 'on_console_send(): request:', request );
+		}
 
 		self.webSocketClient.send( request );
 

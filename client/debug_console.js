@@ -22,74 +22,47 @@ let CEP_VERSION = 'v0.3.0β';   // Keyboard shortcuts will be appended in  self.
 const EXTRA_LINES = 0;
 const MIN_LINES = 0;
 
-const BANGS = ['>', ':', '!', '.', ';', '/'];
-
-const BANG_REQUEST = '';//'>';//... Now multline == JSON request
-const BANG_CEP     = '.';
-
 const BUTTON_SCRIPTS = {
-	'login'      : BANG_REQUEST //+ 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n\tstatus',
-		+ (`
-session
-	login
-		username: %u
-		password: %p
-		secondFactor: %t
-%N
-		`).trim(),
-	'root'       : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
-	'user'       : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
-	'guest'      : BANG_REQUEST + 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
-	'logout'     : BANG_REQUEST + 'session\n\tlogout',
-	'who'        : BANG_REQUEST + 'session\n\twho',
-	'status'     : BANG_REQUEST + 'session\n\tstatus',
-	'MCP'        : BANG_REQUEST + 'mcp\n\tstatus',
-	'token'      : BANG_REQUEST + 'mcp\n\ttoken',
-	'kroot'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: root',
-	'kuser'      : BANG_REQUEST + 'session\n\tkick\n\t\tusername: user',
-	'reset'      : BANG_REQUEST + 'mcp\n\trestart\n\t\ttoken: ',
-	'clear'      : BANG_CEP + 'clear',
-	'help'       : BANG_CEP + 'help',
-	'connect'    : BANG_CEP + 'connect ' + SETTINGS.WEBSOCKET.URL,
-	'disconnect' : BANG_CEP + 'disconnect',
+	'login'      : 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n%N',
+	'root'       : 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
+	'user'       : 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ',
+	'guest'      : 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ',
+	'logout'     : 'session\n\tlogout',
+	'who'        : 'session\n\twho',
+	'status'     : 'session\n\tstatus',
+	'MCP'        : 'mcp\n\tstatus',
+	'token'      : 'mcp\n\ttoken',
+	'kroot'      : 'session\n\tkick\n\t\tusername: root',
+	'kuser'      : 'session\n\tkick\n\t\tusername: user',
+	'reset'      : 'mcp\n\trestart\n\t\ttoken: ',
+	'clear'      : '.clear',
+	'help'       : '.help',
+	'connect'    : '.connect ' + SETTINGS.WEBSOCKET.URL,
+	'disconnect' : '.disconnect',
 };
 
 const TUTORIAL_SCRIPT = [
-	BANG_CEP     + 'connect ' + SETTINGS.WEBSOCKET.URL,
-	BANG_REQUEST + 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
-	//...BANG_REQUEST + 'session\n\twho\nmcp\n\tstatus',
+	'.connect ' + SETTINGS.WEBSOCKET.URL,
+	'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ',
 ];
 
 const HTML_TERMINAL = (`
 <form class="terminal">
-	<main class="chat shell last">
-		<output></output>
+	<main class="chat shell">
+		<output class="Xlast"></output>
 		<textarea autocomplete="off"></textarea>
 	</main>
 	<header class="toolbar">
 		<nav class="path">
 			<span title="MyNode Client Endpoint">CEP</span><span title="Chat/JSON Debugger">Local</span>
 		</nav>
-		<nav>
-			<button class="toggles" title="Toggles">Toggles</button>
-			<div class="items">
-				<button class="animations" title="Toggle animations [Alt]+[A]">Animate</button>
-				<button class="fancy"      title="Toggle fancy styling [Alt]+[F]">Fancy</button>
-				<button class="key_beep"   title="Toggle keyboard beep [Alt]+[K]">Beep</button>
-				<button class="sam"        title="Toggle Software Automatic Mouth [Alt]+[M]">TTS</button>
-			</div>
-		</nav>
 		<nav class="toggles">
+			<button>Toggles</button>
+			<div class="items"></div>
+		</nav>
+		<nav class="filters">
 			<button class="debug" title="Toggle debug mode">Debug</button>
-			<div class="items">
-				<button class="cep"       title="Display local replies">CEP</button>
-				<button class="string"    title="Display raw strings">String</button>
-				<button class="notice"    title="Display notices">Notice</button>
-				<button class="broadcast" title="Display broadcasts">Broadcast</button>
-				<button class="update"    title="Display updates">Update</button>
-				<button class="request"   title="Display requests">Request</button>
-				<button class="response"  title="Display responses">Response</button>
-			</div>
+			<div class="items"></div>
 		</nav>
 	</header>
 	<footer class="toolbar">
@@ -113,8 +86,7 @@ const HTML_TERMINAL = (`
 		</nav>
 	</footer>
 </form>
-`).split('\n').map( line => line.trim() ).join(''); // HTML_TERMINAL
-
+`); // HTML_TERMINAL
 
 const HTML_YOUTUBE = (`
 <footer class="main_menu">
@@ -154,12 +126,12 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'a',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.animations.toggle(); },
+		action    : ()=>{ self.toggles.animate.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'c',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.compressed.toggle(); },
+		action    : ()=>{ self.toggles.compress.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'd',
@@ -179,7 +151,7 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'm',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.sam.toggle(); },
+		action    : ()=>{ self.toggles.tts.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'o',
@@ -216,6 +188,90 @@ export const DebugConsole = function (callback) {
 		modifiers : ['shift', 'ctrl'],
 		action    : ()=>{ self.clearScreen(); },
 	}];
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// TOGGLES
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function create_toggles() {
+		const terminal = self.elements.terminal;
+		const output   = self.elements.output;
+
+		const T = PRESETS.TOGGLE;
+		const F = PRESETS.FILTER;
+
+		return [
+			{ name:'terminal'   , preset:T.TERMINAL      , target:terminal , menu:null },
+			{ name:'debug'      , preset:F.DEBUG         , target:output   , menu:'filters' },
+			{ name:'cep'        , preset:F.CEP           , target:output   , menu:'filters' },
+			{ name:'string'     , preset:F.STRING        , target:output   , menu:'filters' },
+			{ name:'notice'     , preset:F.NOTICE        , target:output   , menu:'filters' },
+			{ name:'broadcast'  , preset:F.BROADCAST     , target:output   , menu:'filters' },
+			{ name:'update'     , preset:F.UPDATE        , target:output   , menu:'filters' },
+			{ name:'request'    , preset:F.REQUEST       , target:output   , menu:'filters' },
+			{ name:'response'   , preset:F.RESPONSE      , target:output   , menu:'filters' },
+			{ name:'compress'   , preset:T.COMPRESS      , target:output   , menu:'toggles' },
+			{ name:'separators' , preset:T.SEPARATORS    , target:output   , menu:'toggles' },
+			{ name:'overflow'   , preset:T.OVERFLOW      , target:output   , menu:'toggles' },
+			{ name:'keyBeep'    , preset:T.KEYBOARD_BEEP , target:terminal , menu:'toggles' },
+			{ name:'animate'    , preset:T.ANIMATE       , target:terminal , menu:'toggles' },
+			{ name:'fancy'      , preset:T.FANCY         , target:terminal , menu:'toggles' },
+			{ name:'tts'        , preset:T.TTS           , target:terminal , menu:'toggles' },
+
+		].map( (toggle)=>{
+			const target = toggle.target;
+			const menu   = self.elements[toggle.menu];
+			let element  = self.elements[toggle.name];
+
+			if (!element) {
+				const button = document.createElement( 'button' );
+				button.innerText = toggle.caption || toggle.name;
+				if (menu) menu.appendChild( button );
+				element = button;
+			}
+
+			toggle = {
+				enabled : toggle.preset,
+				...toggle,
+				enable  : ()     =>{ flip( true  ); },
+				disable : ()     =>{ flip( false ); },
+				toggle  : (state)=>{ flip( state ); },
+			};
+
+			function update_dom () {
+				const is_terminal = (toggle.name == 'terminal');
+				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
+				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
+				scroll_down();
+				if (is_terminal && toggle.enabled) focus_prompt();
+				if (is_terminal) self.elements.html.classList.remove( 'animate' );//...
+			}
+
+			function flip (new_state = null) {
+				//...console.log( 'flip:', toggle, typeof new_state );
+				const just_toggle = (new_state === null) || (typeof new_state == 'event');
+				toggle.enabled = just_toggle ? !toggle.enabled : new_state;
+				update_dom();
+			}
+
+			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
+				element.addEventListener( 'click', ()=>{
+					flip();
+					focus_prompt();
+				});
+			}
+
+			update_dom();
+
+			return toggle;
+
+		}).reduce( (prev, next)=>{
+			return {...prev, [next.name]: next};
+
+		}, /*initialValue*/{} );
+
+	} // create_toggles
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -300,7 +356,7 @@ export const DebugConsole = function (callback) {
 
 	function sam_speak (text) {
 		if (!self.audioContext) return;
-		if (!self.toggles.sam.enabled) return;
+		if (!self.toggles.tts.enabled) return;
 
 		if (!self.sam) {
 			self.sam = new SamJs({
@@ -319,7 +375,7 @@ export const DebugConsole = function (callback) {
 			await prev;
 			const part = parts[index].trim();
 			return new Promise( async (done)=>{
-				if (self.toggles.sam.enabled) {
+				if (self.toggles.tts.enabled) {
 					if (part != '') await self.sam.speak( parts[index] );
 					setTimeout( done, 150 );
 				} else {
@@ -586,37 +642,6 @@ export const DebugConsole = function (callback) {
 	} // start_clock
 
 
-	this.onSocketOpen = function () {
-		self.elements.connection.classList = 'connection success';
-		self.elements.connection.innerText = 'Connected';
-		self.elements.title = SETTINGS.WEBSOCKET.URL;
-
-		self.elements.terminal.classList.add( 'connected' );
-
-	}; // onSocketConnect
-
-
-	this.onSocketClose = function () {
-		self.elements.connection.classList = 'connection warning';
-		self.elements.connection.innerText = 'Offline';
-		self.elements.title = '';
-
-		self.elements.terminal.classList.remove( 'connected' );
-
-	}; // onSocketClose
-
-
-	this.onSocketError = function () {
-		self.onSocketClose();
-		self.elements.connection.classList = 'connection error';
-		self.elements.connection.innerText = 'Error';
-		self.elements.title = '';
-
-		self.elements.terminal.classList.remove( 'connected' );
-
-	}; // onSocketError
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // KEYBOARD EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -814,7 +839,7 @@ export const DebugConsole = function (callback) {
 
 // LOCAL COMMANDS ////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function perform_local (command) {
-			if (command.charAt(0) != BANG_CEP) return false;
+			if (command.charAt(0) != '.') return false;
 
 			function show_version() { self.print( 'CEP-' + CEP_VERSION, 'cep' ); }
 
@@ -910,19 +935,86 @@ export const DebugConsole = function (callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// RECEIVE
+// WEBSOCKET
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.onReceive = function (message) {
-		let class_name = 'response';
-		if      (typeof message == 'string')              class_name = 'string expand'
-		else if (typeof message.cep       != 'undefined') class_name = 'cep expand'
-		else if (typeof message.notice    != 'undefined') class_name = 'notice expand'
-		else if (typeof message.broadcast != 'undefined') class_name = 'broadcast'
-		else if (typeof message.update    != 'undefined') class_name = 'update'
-		;
+	this.onSocketOpen = function () {
+		self.elements.connection.classList = 'connection success';
+		self.elements.connection.innerText = 'Connected';
+		self.elements.title = SETTINGS.WEBSOCKET.URL;
 
-		self.print( message, class_name );
+		self.elements.terminal.classList.add( 'connected' );
+
+	}; // onSocketConnect
+
+
+	this.onSocketClose = function () {
+		self.elements.connection.classList = 'connection warning';
+		self.elements.connection.innerText = 'Offline';
+		self.elements.title = '';
+
+		self.elements.terminal.classList.remove( 'connected' );
+
+	}; // onSocketClose
+
+
+	this.onSocketError = function () {
+		self.onSocketClose();
+		self.elements.connection.classList = 'connection error';
+		self.elements.connection.innerText = 'Error';
+		self.elements.title = '';
+
+		self.elements.terminal.classList.remove( 'connected' );
+
+	}; // onSocketError
+
+
+// RECEIVE ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.onReceive = function (message) {
+		// See  WebSocketClient.send()
+		try   { message = JSON.parse( event.data ); }
+		catch { /* Assume string */ }
+
+		if (!message.update) {
+			print_message();
+
+		} else {
+			switch (message.update.type) {
+				case 'ping': {
+					if (!DEBUG.HIDE_MESSAGES.PING) print_message();
+					callback.send( {session:{ pong: message.update.pong }} );
+
+					self.elements.connection.classList.add( 'ping' );
+					setTimeout( ()=>{
+						self.elements.connection.classList.remove( 'ping' );
+					}, SETTINGS.TIMEOUT.CONNECTION_PING);
+					break;
+				}
+				case 'chat': {
+					if (!DEBUG.HIDE_MESSAGES.CHAT) print_message();
+					const sender = message.update.nickName || message.update.userName;
+					self.print( {[sender]: message.update.message}, 'chat' );
+					break;
+				}
+				default: {
+					self.print( 'Unknown update', 'error' );
+				}
+			}
+		}
+
+
+		function print_message () {
+			let class_name = 'response';
+			if      (typeof message == 'string')              class_name = 'string expand'
+			else if (typeof message.cep       != 'undefined') class_name = 'cep expand'
+			else if (typeof message.notice    != 'undefined') class_name = 'notice expand'
+			else if (typeof message.broadcast != 'undefined') class_name = 'broadcast'
+			else if (typeof message.update    != 'undefined') class_name = 'update'
+			;
+
+			self.print( message, class_name );
+		}
 
 	}; // onReceive
 
@@ -994,27 +1086,24 @@ export const DebugConsole = function (callback) {
 		const new_element = document.createElement( 'pre' );
 		if (class_name) new_element.className = class_name;
 		new_element.innerHTML = print_message;
-
 		self.elements.output.appendChild( new_element );
 		scroll_down();
 
-		// Visualize/sonifiy success
+		// Visualize/sonifiy success/failure
 		if (message.response && (typeof message.response.success != 'undefined')) {
 			const success = message.response.success ? 'yes' : 'no';
-
-			//...if (!self.elements.terminal.classList.contains('no') || (success == 'yes')) {
-			//...	self.elements.terminal.classList.add( success );
-			//...}
-
+			
+			// We might receive several responses, when we sent several requersts, so we...
 			setTimeout( ()=>{
 				self.elements.terminal.classList.remove( 'yes' );
 				self.elements.terminal.classList.remove( 'no' );
 				self.elements.terminal.classList.add( success );
 				sam_speak( success );
 				setTimeout( ()=>{
-					self.elements.terminal.classList.remove( 'yes' );
-					self.elements.terminal.classList.remove( 'no' );
+					self.elements.terminal.classList.remove( success );
 				}, SETTINGS.TIMEOUT.BIT_ANSWER_COLOR);
+				
+			// .. delay TTS accordingly:
 			}, SETTINGS.TIMEOUT.BIT_ANSWER_SOUND * (message.response.request-1) );
 		}
 
@@ -1023,79 +1112,6 @@ export const DebugConsole = function (callback) {
 		}
 
 	}; // print
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// TOGGLES
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function create_toggles() {
-		const terminal = self.elements.terminal;
-		const output   = self.elements.output;
-
-		return [
-			{ name: 'terminal'   , preset: PRESETS.TOGGLE.TERMINAL      , target: terminal },
-			{ name: 'debug'      , preset: PRESETS.FILTER.DEBUG         , target: output   },
-			{ name: 'cep'        , preset: PRESETS.FILTER.CEP           , target: output   },
-			{ name: 'string'     , preset: PRESETS.FILTER.STRING        , target: output   },
-			{ name: 'notice'     , preset: PRESETS.FILTER.NOTICE        , target: output   },
-			{ name: 'broadcast'  , preset: PRESETS.FILTER.BROADCAST     , target: output   },
-			{ name: 'update'     , preset: PRESETS.FILTER.UPDATE        , target: output   },
-			{ name: 'request'    , preset: PRESETS.FILTER.REQUEST       , target: output   },
-			{ name: 'response'   , preset: PRESETS.FILTER.RESPONSE      , target: output   },
-			{ name: 'compressed' , preset: PRESETS.TOGGLE.COMPRESSED    , target: output   },
-			{ name: 'separators' , preset: PRESETS.TOGGLE.SEPARATORS    , target: output   },
-			{ name: 'overflow'   , preset: PRESETS.TOGGLE.OVERFLOW      , target: output   },
-			{ name: 'keyBeep'    , preset: PRESETS.TOGGLE.KEYBOARD_BEEP , target: terminal },
-			{ name: 'animations' , preset: PRESETS.TOGGLE.ANIMATIONS    , target: terminal },
-			{ name: 'fancy'      , preset: PRESETS.TOGGLE.FANCY         , target: terminal },
-			{ name: 'sam'        , preset: PRESETS.TOGGLE.SAM           , target: terminal },
-
-		].map( (toggle)=>{
-			const element = self.elements[toggle.name];
-			const target  = toggle.target;
-
-			toggle = {
-				enabled : toggle.preset,
-				...toggle,
-				enable  : ()     =>{ flip( true  ); },
-				disable : ()     =>{ flip( false ); },
-				toggle  : (state)=>{ flip( state ); },
-			};
-
-			function update_dom () {
-				const is_terminal = (toggle.name == 'terminal');
-				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
-				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
-				scroll_down();
-				if (is_terminal && toggle.enabled) focus_prompt();
-				if (is_terminal) self.elements.html.classList.remove( 'animate' );//...
-			}
-
-			function flip (new_state = null) {
-				//...console.log( 'flip:', toggle, typeof new_state );
-				const just_toggle = (new_state === null) || (typeof new_state == 'event');
-				toggle.enabled = just_toggle ? !toggle.enabled : new_state;
-				update_dom();
-			}
-
-			if (element && element.tagName == 'BUTTON') {
-				element.addEventListener( 'click', ()=>{
-					flip();
-					focus_prompt();
-				});
-			}
-
-			update_dom();
-
-			return toggle;
-
-		}).reduce( (prev, next)=>{
-			return {...prev, [next.name]: next};
-
-		}, /*initialValue*/{} );
-
-	} // create_toggles
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1117,34 +1133,35 @@ export const DebugConsole = function (callback) {
 		self.elements = {
 			html         : document.querySelector( 'html' ),
 			terminal     : container,
-			shell        : container.querySelector( '.shell'            ),
-			connection   : container.querySelector( '.connection'       ),
-			commands     : container.querySelector( '.commands .items'  ),
-			toggles      : container.querySelector( '.commands .items'  ),
-			output       : container.querySelector( 'output'            ),
-			input        : container.querySelector( 'textarea'          ),
+			shell        : container.querySelector( '.shell'           ),
+			connection   : container.querySelector( '.connection'      ),
+			commands     : container.querySelector( '.commands .items' ),
+			toggles      : container.querySelector( '.toggles .items'  ),
+			filters      : container.querySelector( '.filters .items'  ),
+			output       : container.querySelector( 'output'           ),
+			input        : container.querySelector( 'textarea'         ),
 			// Login form
 			userName     : container.querySelector( '[placeholder=Username]'   ),
 			nickName     : container.querySelector( '[placeholder=Nickname]'   ),
 			passWord     : container.querySelector( '[placeholder=Password]'   ),
 			secondFactor : container.querySelector( '[placeholder="Factor 2"]' ),
 			// Additional menu buttons are addeded to .elements later under "Login form"
-			close        : container.querySelector( '.close'            ),
-			send         : container.querySelector( '.submit'           ),
+			close        : container.querySelector( '.close'  ),
+			send         : container.querySelector( '.submit' ),
 			// Filter
-			debug        : container.querySelector( 'button.debug'      ),
-			string       : container.querySelector( 'button.string'     ),
-			cep          : container.querySelector( 'button.cep'        ),
-			notice       : container.querySelector( 'button.notice'     ),
-			update       : container.querySelector( 'button.update'     ),
-			broadcast    : container.querySelector( 'button.broadcast'  ),
-			request      : container.querySelector( 'button.request'    ),
-			response     : container.querySelector( 'button.response'   ),
+			debug        : container.querySelector( 'button.debug'     ),
+			string       : container.querySelector( 'button.string'    ),
+			cep          : container.querySelector( 'button.cep'       ),
+			notice       : container.querySelector( 'button.notice'    ),
+			update       : container.querySelector( 'button.update'    ),
+			broadcast    : container.querySelector( 'button.broadcast' ),
+			request      : container.querySelector( 'button.request'   ),
+			response     : container.querySelector( 'button.response'  ),
 			// Modes
-			animations   : container.querySelector( 'button.animations' ),
-			fancy        : container.querySelector( 'button.fancy'      ),
-			keyBeep      : container.querySelector( 'button.key_beep'   ),
-			sam          : container.querySelector( 'button.sam'        ),
+			animate      : container.querySelector( 'button.animate'  ),
+			fancy        : container.querySelector( 'button.fancy'    ),
+			keyBeep      : container.querySelector( 'button.key_beep' ),
+			tts          : container.querySelector( 'button.tts'      ),
 		};
 
 console.groupCollapsed( 'DebugConsole.elements{}' );
@@ -1164,7 +1181,6 @@ console.groupEnd();
 console.groupCollapsed( 'DebugConsole.toggles{}' );
 console.dir( self.toggles );
 console.groupEnd();
-
 
 		// Disable <form> submission
 		self.elements.terminal.addEventListener( 'submit', event => event.preventDefault() );

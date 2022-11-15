@@ -86,8 +86,9 @@ module.exports = function SessionHandler (persistent, callback) {
 		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
 		const bulletin = {
 			broadcast: {
-				time : time,
-				type : message.type,
+				time    : time,              // Add timestamp
+				address : message.address,   // Ensure order of entries
+				type    : message.type,      // Ensure order of entries
 				...message,
 			}
 		};

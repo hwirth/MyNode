@@ -33,6 +33,7 @@ export const SETTINGS = {
 	},
 
 	TIMEOUT: {
+		CONNECTION_PING  : 500,
 		RECONNECT        : 200,   //1000 ms
 		BIT_ANSWER_COLOR : 200,
 		BIT_ANSWER_SOUND : 270,
@@ -66,13 +67,13 @@ export const PRESETS = {
 
 	TOGGLE: {
 		TERMINAL      : get( 'terminal' ),
-		COMPRESSED    : !true,
+		COMPRESS      : !true,
 		SEPARATORS    : false,
 		OVERFLOW      : !true,
-		ANIMATIONS    : !true,
+		ANIMATE       : !true,
 		FANCY         : !false,
 		KEYBOARD_BEEP : !false,
-		SAM           : !false,
+		TTS           : !false,
 	},
 
 	VOLUME: {

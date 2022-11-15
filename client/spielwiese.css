@@ -2,9 +2,10 @@
 
 :root {
 	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
-
 	color-scheme:light dark; /* both supported */
+}
 
+.terminal {
 	--font-family          : terminal;
 
 	--input-color        : #000;
@@ -23,7 +24,9 @@
 	--button-enabled-bg     : #676;
 	--button-enabled-border : unset;
 
-	--terminal-ping-color      : #8fa;
+	--terminal-connected-color : #0a0;
+	--terminal-ping-color      : #0f0;
+
 	--terminal-debug-color     : #acf;
 	--terminal-string-color    : #5c6;
 	--terminal-notice-color    : #acf;
@@ -87,7 +90,7 @@ html, body { width:100%; height:100%; }
 	background-size:100% 100%;
 }
 html:not(.init)::after {
-	content:'NODE\AREADY'; white-space:pre;
+	content:'WHAT IS\AMY NODE'; white-space:pre;
 	position:absolute; bottom:20px; left:30px; transform:translate(-50%,-50%);
 	outline:solid 1px #fff6;
 	border-radius:3px;
@@ -229,7 +232,7 @@ X.terminal button.token,
 .terminal button,
 .terminal input { height:calc(1.2rem + 2px); padding:2.5px 5px 1.5px; }
 .terminal .toolbar,
-.terminal .toolbar nav { height:calc(1.2rem + 2px); line-height:calc(1.2rem + 2px); }
+.terminal .toolbar nav { height:calc(1.2rem + 2px); line-height:calc(1.2rem + 0px); }
 .terminal .toolbar nav > :is(div, span) { padding:3px 5px; vertical-align:middle; }
 
 /* PATH */
@@ -261,8 +264,21 @@ X.terminal button.token,
 .terminal footer.toolbar > nav:focus-within .items { bottom:100%; top:unset; }
 
 /* Other UI */
-.terminal .connection { font-weight:bold; transition:color 0.1s linear; }
-.terminal .connection.ping { color:var(--terminal-ping-color); }
+.terminal .connection.success { font-weight:bold; color:#080; transition:color 0.2s linear; }
+.terminal .connection.ping { color:#0a0; }
+.terminal.animate .connection.ping {
+	background:radial-gradient(circle, #0f0 0, #0f00 10px);
+	background-position:-100% 50%;
+	background-size:20px 20px;
+	background-repeat:no-repeat;
+	animation: PING 0.5s linear 1;
+}
+@keyframes PING {
+	  0% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
+	 50% { background-position: 100% 50%; Xcolor:#0a0; X:var(--terminal-ping-color   ); }
+	100% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
+}
+
 .terminal .time {
 	flex-grow:1;
 	Xfont-variant-numeric: normal;
@@ -276,6 +292,7 @@ X.terminal button.token,
 	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
 }
+
 
 
 /* SHELL */
@@ -341,13 +358,13 @@ X.terminal button.token,
 .terminal pre { position:relative; padding-bottom:1em; white-space:pre-wrap; }
 .terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; padding-top:2px; padding-bottom:2px; }
 .terminal .separators pre:nth-child(2n+1) { Xbackground:#fff4; }
-.terminal .compressed pre:hover { background:#fff4; cursor:pointer; }
-.terminal .compressed pre.expand:hover { background:unset; cursor:pointer; }
-.terminal .compressed.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
-.terminal .compressed.separators pre:hover { border-width:1px 0; margin-top:-1px; }
-.terminal .compressed pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
-.terminal .compressed.last pre:last-child,/*//...*/
-.terminal .compressed pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
+.terminal .compress pre:hover { background:#fff4; cursor:pointer; }
+.terminal .compress pre.expand:hover { background:unset; cursor:pointer; }
+.terminal .compress.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
+.terminal .compress.separators pre:hover { border-width:1px 0; margin-top:-1px; }
+.terminal .compress pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
+.terminal output.compress.last pre:last-child,/*//...*/
+.terminal .compress pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
 .terminal pre { display:none; }
 .terminal .debug.cep       pre.cep,
@@ -431,7 +448,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 :not(.init).animate body::after {
 	animation: BEAM 0.2s ease-in-out infinite;
 }
-.terminal.fancy.animations::after {
+.terminal.fancy.animate::after {
 	animation: BEAM 0.2s ease-in-out infinite;
 }
 @keyframes BEAM {
