@@ -20,9 +20,6 @@ export const DebugConsole = function (callback) {
 	this.audioContext;
 	this.toggles;
 
-	this.requestToText = request_to_text;
-	this.textToRequest = text_to_request;
-
 	this.requestId;
 
 
@@ -34,7 +31,6 @@ export const DebugConsole = function (callback) {
 
 	const EXTRA_LINES = 0;
 	const MIN_LINES = 0;
-
 
 	const BUTTON_SCRIPTS = {
 		'login'      : 'session\n\tlogin\n\t\tusername:%u\n\t\tpassword:%p\n\t\tsecondFactor:%t\n%N',
@@ -55,12 +51,10 @@ export const DebugConsole = function (callback) {
 		'disconnect' : '/disconnect',
 	};
 
-
 	const SHORTHAND_COMMANDS = {
 		'nick'  : 'chat\n\tnick:*',
 		'who'   : 'session\n\twho',
 	};
-
 
 	const HTML_TERMINAL = (`
 <form class="terminal">
@@ -108,7 +102,6 @@ export const DebugConsole = function (callback) {
 </form>
 	`); // HTML_TERMINAL
 
-
 	const HTML_YOUTUBE = (`
 <footer class="main_menu">
 	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
@@ -125,7 +118,6 @@ export const DebugConsole = function (callback) {
 	autoplay="true"
 ></iframe>
 	`); // HTML_YOUTUBE
-
 
 	const KEYBOARD_SHORTCUTS = [{
 		event     : 'keydown',
@@ -483,7 +475,7 @@ export const DebugConsole = function (callback) {
 			return;
 		}
 
-if (!self.audioContext) await new Promise( (done)=>setTimeout(done) );//...?
+if (!self.audioContext) await new Promise( (done)=>setTimeout(done) );   //...?
 
 		last_beep_time = Date.now();
 
@@ -544,14 +536,14 @@ setTimeout( ()=>{
 // CONVERT USER INPUT <--> JSON
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function request_to_text (request, indentation = '') {
+	this.requestToText = function (request, indentation = '') {
 		let text = '';
 
 		Object.keys( request ).forEach( (key)=>{
 			if ((typeof request[key] == 'object') && (request[key] !== null)) {
 				text
 				+= indentation + key + '\n'
-				+  request_to_text( request[key], indentation + '\t' )
+				+  self.requestToText( request[key], indentation + '\t' )
 				;
 			} else {
 				if (typeof request[key] == 'undefined') {
@@ -568,10 +560,10 @@ setTimeout( ()=>{
 
 		return text;
 
-	} // request_to_text
+	}; // requestToText
 
 
-	function text_to_request (text, id = null) {
+	this.textToRequest = function (text, id = null) {
 		const lines = text.split( '\n' );
 
 		function find_indentation (text) {
@@ -642,13 +634,13 @@ setTimeout( ()=>{
 				++current_indentation;
 
 			} else {
-				console.log( 'text_to_request: parts.length == 0' );
+				console.log( 'textToRequest: parts.length == 0' );
 			}
 
 			return parse_line( index + 1, current_indentation );
 		}
 
-	} // text_to_request
+	}; // textToRequest
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -724,19 +716,20 @@ setTimeout( ()=>{
 	} // on_input_change
 
 
-	function on_keydown (event) {//... Move to  on_keyboard_event
+	function on_keydown (event) {//... Move to  on_keyboard_event?
+		const shift = event.shiftKey;
+		const ctrl = event.ctrlKey;
+		const alt = event.altKey;
+		const key = event.key;
+
 		const is_local_command = (self.elements.input.value.charAt(0) == '.');
 		self.elements.input.classList.toggle( 'local', is_local_command );
 
-		beep();
+		if ((key != 'Shift') && (key != 'Control') && (key != 'Alt') && (key != 'Meta')) beep();
 
-		if ((event.keyCode == 13) && (!event.ctrlKey && !event.altKey)) {
-			const chat_mode = self.toggles.chat.enabled;
-			if (chat_mode ^ event.shiftKey) {   // xor
-				// Execute command with any modifyer+Return
-				event.preventDefault();
-				self.elements.send.click();
-			}
+	 	if ((event.keyCode == 13) && !event.shiftKey && !event.ctrlKey && !event.altKey) {
+			event.preventDefault();
+			self.elements.send.click();
 
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
@@ -938,7 +931,7 @@ setTimeout( ()=>{
 
 // REMOTE REQUEST ////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function send_json (text) {
-			const request = (text.indexOf('\n') >= 0) ? text_to_request(text) : {chat: { say: text }};
+			const request = (text.indexOf('\n') >= 0) ? self.textToRequest(text) : {chat: { say: text }};
 			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
 			callback.send( request );
 		}
@@ -1176,7 +1169,7 @@ setTimeout( ()=>{
 			let message_html = (
 				(typeof message == 'string')
 				? message
-				: request_to_text( message )
+				: self.requestToText( message )
 			)
 			.replace( /&/g, '&amp;' )
 			.replace( /</g, '&lt;'  )
@@ -1290,6 +1283,13 @@ console.groupEnd();
 		addEventListener( 'mouseup', activate_audio );
 
 
+		// Keyboard
+        	self.elements.input.addEventListener( 'keydown', on_keydown );
+		['keydown', 'keypress', 'keyup' ].forEach(
+			event => addEventListener( event, on_keyboard_event, {passive: false} )
+		);
+
+
 		// MAIN MENU Create macro buttons
 		Object.keys( BUTTON_SCRIPTS ).forEach( (key, index)=>{
 			const name = key.charAt(0).toUpperCase() + key.slice(1);
@@ -1316,13 +1316,6 @@ console.groupEnd();
 
 		// Button: "Exit"
 		self.elements.close.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
-
-
-		// Keyboard
-        	self.elements.input.addEventListener( 'keydown', on_keydown );
-		['keydown', 'keypress', 'keyup' ].forEach(
-			event => addEventListener( event, on_keyboard_event, {passive: false} )
-		);
 
 
 		// Login form

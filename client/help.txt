@@ -1,4 +1,4 @@
-MyNode Client End Point
+MyNode Chat and Debug Console
 A fancy websocket JSON-message debugger
 
 Sends single lines as  chat.say  requests, otherwise
@@ -7,16 +7,9 @@ turns TAB formatted multiline text into JSON objects.
 Guest Login
       1. Choose a *NICK*name in the "Enter" menu
       2. Double click "Login" (auto-connects)
-      3. Click the "Chat" button to toggle chat/debug mode
 
-Chat Mode: Only chat messages visible
-      Enter        Sends text/request
-      Shift+Enter  Inserts line break
-
-Debug Mode: Chat and websocket traffic visible
-      Enter        Inserts line break
-      Shift+Enter  Sends text/request
-
-Shortcuts
-      Ctrl+Home    Clears screen
-      Shift+Home   Clears input
+Keyboard shortcuts
+      Enter              Sends text/request
+      Shift+Enter        Inserts line break (multiline request)
+      Ctrl+Home          Clears input
+      Ctrl+Shift+Home    Clears screen
