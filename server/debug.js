@@ -98,7 +98,7 @@ const COLORS = {
 	UP_TO_DATE   : ANSI_COLORS.BRIGHT + ANSI_COLORS.BLUE,
 	REQUIRE      : ANSI_COLORS.BRIGHT + ANSI_COLORS.YELLOW,
 
-	COMMAND      : ANSI_COLORS.BRIGHT + ANSI_COLORS.GREEN,
+	COMMAND      : ANSI_COLORS.BRIGHT + ANSI_COLORS.CYAN,
 	ERROR        : ANSI_COLORS.BRIGHT + ANSI_COLORS.RED,
 	WARNING      : ANSI_COLORS.BRIGHT + ANSI_COLORS.YELLOW,
 	HTTPS        : ANSI_COLORS.DIM    + ANSI_COLORS.WHITE,
@@ -137,7 +137,7 @@ function format_error (error) {
  */
 function color_log (colors = '', heading = '', ...text) {
 	if (colors == '\n') return console.log();
-	if (heading.charAt(0) == '<') heading = '\n' + heading;
+	//...if (heading.charAt(0) == '<') heading = '\n' + heading;
 
 try {
 	heading = String( heading );
@@ -235,22 +235,28 @@ console.log( 'color_log: HEADING' );//...
 
 function dump (data) {
 	if (typeof data == 'undefined') return 'dump undefined';
+	if (data instanceof Error     ) return 'Error: "' + data.message + '"\nStack: ' + data.stack;
+	if (typeof data == 'undefined') return null;
 
-	if (data instanceof Error) {
-		return (
-			'Error: "'
-			+ data.message
-			+ '"\nStack: '
-			+ data.stack
-		);
+	if (data.login) {
+		return [ data.address, data.login.userName, data.login.nickName,
+		]/*{
+			address  : data.address,
+			username : data.login.userName,
+			//...nickname : data.login.nickName,
+			//...factor2  : data.factor2,
+		};*/
+
+	} else if (data.address) {
+		return  [ data.address,
+		];/*{
+			address : data.address,
+			factor2  : data.factor2,
+		};*/
+
+	} else {
+		return JSON.parse( JSON.stringify(data) );   // Re-parsing turns it into a single line
 	}
-
-	if (typeof data == 'undefined') {
-		return null;
-	}
-
-
-	return JSON.parse( JSON.stringify(data) );   // Re-parsing turns it into a single line
 
 } // dump
 

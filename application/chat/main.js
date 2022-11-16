@@ -5,12 +5,11 @@
 
 "use strict";
 
+const fetch = require( 'node-fetch' );
+
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
-
-
-STATUS.CHAT = 'chat';
 
 
 module.exports = function ChatServer (persistent_data, callback) {
@@ -24,11 +23,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.request = {};
 
 	this.request.nick = function (client, request_id, parameters) {
-		color_log(
-			COLORS.PROTOCOL,
-			'<chat.nick>',
-			dump( client ),
-		);
+		color_log( COLORS.COMMAND, '<chat.nick>', dump(client) );
 
 		if (client.login) {
 			//... Check nick validity/availability
@@ -62,11 +57,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.say = function (client, request_id, parameters) {
-		color_log(
-			COLORS.PROTOCOL,
-			'<chat.say>',
-			dump( client ),
-		);
+		color_log( COLORS.COMMAND, '<chat.say>', dump(client)	);
 
 		if (client.login) {
 			const message       = parameters;
@@ -96,7 +87,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.news = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<chat.news>', 'client:', dump(client) );
+		color_log( COLORS.COMMAND, '<chat.news>', dump(client) );
 
 		//throw new Error( 'TEST ERROR' );
 
@@ -106,7 +97,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 		await fetch( url )
 		.then( response => response.text() )
-		//.then( str => new DOMParser().parseFromString( str, 'text/xml' ) )
+	/*
+		.then( str => new DOMParser().parseFromString( str, 'text/xml' ) )
 		.then( data => {
 			console.log(
 				data
@@ -114,7 +106,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 				.map( (entries)=>{
 					return (
 						entries
-						//.split( '\n' )
+						.split( '\n' )
 						.filter( (line)=>{
 							return (
 								   (line.indexOf('<title>') >= 0)
@@ -124,30 +116,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 					);
 				}),
 			);
-	/*
-			const items = data.querySelectorAll( 'item' );
-			let html = ``;
-			items.forEach( (element)=>{
-				const parts = ['title', 'date', 'link'].map( (tag_name)=>{
-					return element.querySelector( tag_name );
-				});
-				console.log( parts );
-				/*
-				response_html += (`
-<article>
-	<h2>
-		<a href="${parts.link}" target="_blank" rel="noopener">
-			${parts.title}
-		</a>
-	</h2>
-	<p>${parts.date}</p>
-</article>
-				`).split('\n').map( line => line.trim() ).join('').trim();
-				self.terminal.print( html );
-				* /
-			});
-	*/
 		});
+	*/
 
 	}; // news
 

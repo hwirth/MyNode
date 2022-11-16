@@ -190,7 +190,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 				pong: ++self.pingNr,
 			}
 		});
-socket.ping();
+//...socket.ping();
 	}; // sendPing
 
 

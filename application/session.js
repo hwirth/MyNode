@@ -270,7 +270,7 @@ module.exports = function SessionHandler (persistent, callback) {
 				userName : client.login.userName,
 			});
 
-			color_log( COLORS.COMMAND, '<session.login>', 'client:', dump(client) );
+			color_log( COLORS.COMMAND, '<session.login>', dump(client) );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
 ;
 			client.send({ notice: user_record.banner || STRINGS.LOGIN_BANNER });
@@ -292,7 +292,7 @@ module.exports = function SessionHandler (persistent, callback) {
 			/*login_request*/true,
 		);
 		if (client.factor2) {
-			color_log( COLORS.COMMAND, '<session.authenticate>', 'client:', dump(client) );
+			color_log( COLORS.COMMAND, '<session.authenticate>', dump(client) );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_AUTHENTICATED );
 		} else {
 			log_warning( 'authenticate', REASONS.NOT_LOGGED_IN, dump(client) );
@@ -304,7 +304,7 @@ module.exports = function SessionHandler (persistent, callback) {
 
 	this.request.logout = function (client, request_id, parameters) {
 		if (client.login) {
-			color_log( COLORS.COMMAND, '<session.logout>', 'client:', dump(client) );
+			color_log( COLORS.COMMAND, '<session.logout>', dump(client) );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 
 			callback.broadcast({
@@ -332,7 +332,7 @@ module.exports = function SessionHandler (persistent, callback) {
 //...throw new Error('TEST ERROR');
 
 		if (client.inGroup( 'mod', 'admin', 'dev') ) {
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
+			color_log( COLORS.COMMAND, '<session.who>', dump(client) );
 
 			const clients = {};
 			Object.keys( persistent.clients ).forEach( (address)=>{
@@ -366,10 +366,10 @@ module.exports = function SessionHandler (persistent, callback) {
 				*/
 			}
 
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending reduced persistent.clients' );
+			color_log( COLORS.COMMAND, '<session.who>', dump(client) );
 			client.respond( STATUS.SUCCESS, request_id, clients );
 		} else {
-			color_log( COLORS.COMMAND, '<session.who>', 'Sending persistent.clients' );
+			color_log( COLORS.COMMAND, '<session.who>', dump(client) );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 

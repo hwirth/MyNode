@@ -21,11 +21,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.request = {};
 
 	this.request.js = function (client, request_id, parameters) {
-		color_log(
-			COLORS.PROTOCOL,
-			'<eval.js>',
-			dump( client ),
-		);
+		color_log( COLORS.COMMAND, '<eval.js>', dump(client) );
 
 		if (client.login) {
 			const message       = parameters;

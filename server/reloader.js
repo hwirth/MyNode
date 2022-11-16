@@ -152,6 +152,9 @@ module.exports = function AppReloader (callback) {
 	async function reload_modules (socket, client_address) {
 		if (DEBUG.RELOADER_TIMES) console.time( '| (re)load time' );
 
+
+		// Find, which files have changed
+
 		if (self.alwaysReload) {
 			invalidate_require_cache();
 
@@ -181,76 +184,74 @@ module.exports = function AppReloader (callback) {
 			}
 		}
 
-		// Re-instantiate  Router
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(47) );
 
-		function show_error (error, ...parameters) {
-			color_log( COLORS.ERROR, '- ERROR ' + '-'.repeat(51) );
-			color_log( COLORS.ERROR, ...parameters );
-			color_log( COLORS.ERROR, 'Error:', error );
-			color_log( COLORS.ERROR, '- /ERROR ' + '-'.repeat(50) );
-		}
+		// Re-require modules
 
-		try {
-			// Reload and reinstantiate main module
-			const router = {
-				url        : SETTINGS.MAIN_MODULE,
-				persistent : self.persistent,
-				callbacks  : {
-					triggerExit : callback.triggerExit,
-					broadcast   : (...params)=>{ self.router.protocols.session.broadcast(...params); },
-					reset       : self.reset,
-				},
+		function report_error (error, error_name = 'ROUTER ERROR 0') {
+			if (!socket) {
+				color_log( COLORS.ERROR, '-'.repeat(59) );
+				color_log( COLORS.ERROR, error_name, 'CANNOT REPORT ERROR: NO SOCKET:', message );
+				color_log( COLORS.ERROR, '-'.repeat(59) );
+				console.log( error );
+				return;
+			}
+
+			const message = {
+				type    : 'application error',
+				message : error.message,
+				error   : format_error( error ),
 			};
 
-			self.router = await new require( router.url ).Router(
-				router.persistent,
-				router.callbacks,
+			try {
+				self.router.protocols.session.broadcast( message );
 
-			).catch( (error)=>{
-				console.log( '#######################################################################' );
-				console.log( '#### self.router = await new require( router.url ).Router().catch() ###' );
-				console.log( '#######################################################################' );
-			});
-
-		} catch (error) {
-			invalidate_require_cache();
-
-			if (socket) {
-				const message = {
-					type    : 'error',
-					message : error.message,
-					error   : format_error( error ),
-				};
-
+			} catch (error) {
 				try {
-					self.router.protocols.session.broadcast( message );
+					const clients = self.persistent.session.clients;
+					Object.keys( clients ).forEach( (address)=>{
+						const client = clients[address];
+						client.send({ 'FATAL SYSTEM FAILURE': format_error(error) });
+					});
 
 				} catch (error) {
-					try {
-						const clients = self.persistent.session.clients;
-						Object.keys( clients ).forEach( (address)=>{
-							const client = clients[address];
-							client.send({ 'FATAL SYSTEM FAILURE': format_error(error) });
-						});
-
-					} catch (error) {
-						color_log( COLORS.ERROR, '-'.repeat(59) );
-						color_log( COLORS.ERROR, 'CANNOT REPORT ERROR:', message );
-						color_log( COLORS.ERROR, '-'.repeat(59) );
-						console.log( error );
-					}
+					color_log( COLORS.ERROR, '-'.repeat(59) );
+					color_log( COLORS.ERROR, error_name,
+						'CANNOT REPORT ERROR: NO CLIENTS:', message );
+					color_log( COLORS.ERROR, '-'.repeat(59) );
+					console.log( error );
 				}
-
-			} else {
-				show_error( error, 'AppReloader-reload_modules:',
-					COLORS.STRONG + 'try' + COLORS.DEFAULT + ' await new require().Router()',
-				);
 			}
 		}
 
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(46) );
 
+		// Reload and reinstantiate main module
+
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(47) );
+
+		const router_args = {
+			url        : SETTINGS.MAIN_MODULE,
+			persistent : self.persistent,
+			callbacks  : {
+				triggerExit : callback.triggerExit,
+				broadcast   : (...params)=>{ self.router.protocols.session.broadcast(...params); },
+				reset       : self.reset,
+			},
+		};
+
+		try {
+			self.router = await new require(
+				router_args.url
+			 ).Router(
+				router_args.persistent,
+				router_args.callbacks,
+			);
+
+		} catch (error) {
+			invalidate_require_cache();
+			report_error( error, 'ROUTER ERROR 1' );
+		}
+
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(46) );
 		if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
 
 	} // reload_modules

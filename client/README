@@ -173,6 +173,8 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] RSS reader
+[ ] https://www.youtube.com/watch?v=0Ip8IpE8pjw - Light Cycle Battle Music Video HD
 [ ] Remote control for DEBUG, SETTINGS, etc.
 [ ] Filter ping instead of secretly hiding
 [ ] ERROR: Router.onMessage:0: Unknown client: ...  after reset, while others connected

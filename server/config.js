@@ -62,7 +62,7 @@ const SETTINGS = {
 	MAIN_MODULE : '../application/router.js',
 
 	MESSAGE_TIMESTAMPS : true,    // Send time with each JSON reply
-	REPORT_HANDLED     : true,    // Always send response handled/rejected
+	REPORT_HANDLED     : !true,    // Always send response handled/rejected
 	LOG_PINGPONG       : false,   // true: Might flood your log output
 	KICK_NO_PONG       : true,    // False: Allow clients to ignore ping updates
 
