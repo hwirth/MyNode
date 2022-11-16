@@ -9,8 +9,9 @@
 // I think a bundler would change that, but this is from the /dist folder!? I also added a volume option to it.
 import * as DUMMY_SamJs from './samjs.js';
 
-import { SETTINGS, PRESETS, DEBUG } from './config.js';
-import { History                  } from './history.js';
+import { SETTINGS, GET  } from './config.js';
+import { PRESETS, DEBUG } from './config.js';
+import { History        } from './history.js';
 
 
 export const DebugConsole = function (callback) {
@@ -384,7 +385,7 @@ console.trace();
 			case 'html': {
 				const iframe = document.createElement( 'iframe' );
 				iframe.className = 'cep htmlfile expand';
-				iframe.src = file_name;
+				iframe.src = file_name + '?included';
 				iframe.setAttribute( 'frameborder', '0' );
 				iframe.setAttribute( 'scrolling', 'no' );
 				iframe.addEventListener( 'load', ()=>{
@@ -485,7 +486,7 @@ setTimeout( ()=>{
 	} // beep
 
 
-// BIT ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// SAM / BIT /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function sam_read (message) {
 		const text = (typeof message == 'string') ? message : JSON.stringify( message, null, ' ' );
@@ -519,7 +520,7 @@ setTimeout( ()=>{
 		if (!self.sam || SETTINGS.SAM_ALWAYS_NEW) {
 			self.sam = new SamJs({
 				singmode : !false,   //false
-				pitch    : 50,       //64
+				pitch    : 35,       //64 Lower = higher voice
 				speed    : 72,       //72
 				mouth    : 128,      //128
 				throat   : 128,      //128
@@ -876,6 +877,7 @@ setTimeout( ()=>{
 
 		if (event.target.parentNode === self.elements.output) {
 			event.target.classList.toggle( 'expand' );
+			event.target.classList.toggle( 'unexpand' );
 		}
 		else if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
 		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
@@ -923,6 +925,32 @@ console.log( event.target );
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	async function on_enter_click (event) {
+
+		// Replace chat commands with actual ones
+		let text = self.elements.input.value.trim();
+		if (text.charAt(0) == '/') {
+			const tokens  = text.slice(1).split(' ');
+			const command = SHORTHAND_COMMANDS[ tokens.shift() ];
+			const rest    = tokens.join(' ');
+			if (command) text = command.replace( '*', rest );
+		}
+
+		if (text.charAt(0) == '.') {
+			self.elements.input.value = parse_short_request( text );
+			focus_prompt();
+			return;
+		}
+
+		if (!perform_local( text )) {
+			await remote_command( text );
+		}
+
+		self.history.add( text );
+		self.elements.input.value = '';
+
+		focus_prompt();
+
+		return;
 
 // LOCAL COMMANDS ////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function perform_local (command) {
@@ -1060,28 +1088,6 @@ console.log( event.target );
 			return result.trim();
 		}
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-		// Replace chat commands with actual ones
-		let text = self.elements.input.value.trim();
-		if (text.charAt(0) == '/') {
-			const tokens  = text.slice(1).split(' ');
-			const command = SHORTHAND_COMMANDS[ tokens.shift() ];
-			const rest    = tokens.join(' ');
-			if (command) text = command.replace( '*', rest );
-		}
-
-		if (text.charAt(0) == '.') text = parse_short_request( text );
-
-		if (!perform_local( text )) {
-			await remote_command( text );
-		}
-
-		self.history.add( text );
-		self.elements.input.value = '';
-
-		focus_prompt();
-
 	} // on_enter_click
 
 
@@ -1195,6 +1201,7 @@ console.log( event.target );
 			)
 			.replace( /&/g, '&amp;' )
 			.replace( /</g, '&lt;'  )
+		/*//...
 			.replaceAll( '&lt;', '###lt###' )
 			.replaceAll( '&gt;', '###gt###' )
 			.replaceAll( '&amp;', '###amp###' )
@@ -1209,6 +1216,24 @@ console.log( event.target );
 			.replaceAll( '###amp###', '&amp;' )
 			.replaceAll( '###gt###', '&gt;' )
 			.replaceAll( '###lt###', '&lt;' )
+		*/
+			//.replaceAll( '\t', '·······|' )
+			.split(' ')
+			.map( (word)=>{
+				if (word.slice(0,8) == 'https://') {
+					const pos_tab = Math.min(
+						(word + ' ').indexOf( ' ' ),
+						(word + '\t').indexOf( '\t' ),
+						(word + '\n').indexOf( '\n' ),
+					);
+					const href = word.slice(0, pos_tab);
+					const rest = word.slice(pos_tab);
+					return '<a target="_blank" href="' + href + '">' + href + '</a>' + rest;
+				} else {
+					return word;
+				}
+			})
+			.join(' ')
 			.replaceAll('\\n', '\n')   // '\\n' for .readme
 			;
 
@@ -1408,8 +1433,17 @@ console.groupEnd();
 			const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
 			CEP_VERSION += '^' + shortcuts;   // For .help
-			show_file( 'issue.txt' );
 
+			if (!GET.has('login')) show_file( 'issue.txt' );
+
+			if (GET.has('username')) self.elements.userName.value = GET.get('username');
+			if (GET.has('nickname')) self.elements.nickName.value = GET.get('nickname');
+			if (GET.has('password')) self.elements.passWord.value = GET.get('password');
+
+			if (GET.has('login')) setTimeout( ()=>{
+				self.elements.login.click();
+				self.elements.enter.click();
+			}, 0);
 			if (self.elements.terminal.classList.contains( 'enabled' )) setTimeout( focus_prompt, 100 );
 		}
 

@@ -173,6 +173,26 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+
+this.request.news = async function (client, request_id, parameters) {
+ ==>
+
+this.request.news = async function (client, request, response) {
+	// no longer client.send()
+	response.toClient( STATUS.SUCCESS, {...});
+	response.broadcast({...});
+	response.toGroup({...});
+}
+[ ] .update.protocol.version,description
+[ ] "Hyperchat"
+[ ] Position cursor exactly after parsing short commands
+[ ] Alt+Ctrl+Pos1: Remove any more history than SETTINGS.KEEP_LINES
+[ ] Click: Start selection, Shift: Range, Ctrl: Togge selected; RMB: Toggle compress/uncompress
+[ ] Middle mouse click: Delete, Shift: Clear from here up
+[ ] SJSON, MJSON
+[ ] Hide messages in non-compacthttps
+[ ] Subscription --> ?Report
+[ ] DC.print: May not convert all https:// links properly (tabs, "rest" will not be examined)
 [ ] broadcast only to subscribers
 [ ] Button scripts (client) use short-request format
 [ ] RSS reader

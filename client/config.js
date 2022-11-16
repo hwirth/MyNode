@@ -15,6 +15,8 @@ export const DEBUG = {
 	},
 };
 
+export const GET = new URLSearchParams( location.search.slice(1) );
+
 export const SETTINGS = {
 	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS : true,

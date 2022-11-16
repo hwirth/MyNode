@@ -1,4 +1,4 @@
-<!DOCTYPE html><html id="top" lang="en" class="init animate"><head><meta charset="UTF-8">
+<!DOCTYPE html><html id="top" lang="en" class="Xincluded"><head><meta charset="UTF-8">
 <title>myNode Developer's Diary</title>
 <link rel="help"          href="README">
 <meta name="author"       content="hmw">
@@ -9,47 +9,80 @@
 <meta name="keywords"     content="node.js,functional programming,hot code reloading">
 <meta name="robots"       content="noindex,nofollow">
 <meta name="viewport"     content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
+<!-- meta name="color-scheme" content="dark light" -->
 <style>
 	* { margin:0; padding:0; }
-	body { color:#fff; background:transparent; font-family:sans-serif; tab-size:4; }
+	body { color:#000; background:#ded; font-family:sans-serif; tab-size:4; }
 	pre, code { font-family:monospace,monospace; font-size:0.9em; }
-	article { position:relative; max-width:54em; border:solid 1px #fff4; border-radius:5px; background:#fff2; margin:1em auto; padding:0 1em; }
+	article {
+		position:relative; background:#fff2; background:#fff; color:#000;
+		max-width:54em; margin:1em auto; padding:0 1em;
+		border:solid 1px #0004; border-radius:5px;
+	}
 	body > :first-child { margin-top:0; }
 	body > :last-child { margin-top:0; }
-	:is(header, footer) > * { display:flex; justify-content:center; margin:5px 0; }
-	article > * { padding:0 2em; }
+	:is(header, footer) > * { display:flex; justify-content:center; margin:5px 0 15px; }
 	h1,h2,h3,h4,h5,h6,p,ul,ol,dl,table,pre { margin:1em 0; }
-	h2 { position:relative; border-bottom:solid 1px #fff4; margin-top:1rem; padding:0; }
-	h2 time { position:absolute; bottom:0; right:0em; width:6em; font-size:0.83rem; text-align:right; font-weight:normal; color:#fffa; }
+	h2 { position:relative; border-bottom:solid 1px #0004; margin-top:1rem; padding:0; }
+	h2 time {
+		position:absolute; bottom:0; right:0em; width:7em;
+		font-size:0.83rem; text-align:right; font-weight:normal; color:#000a;
+	}
+	article > :not(h2) { padding:0 2rem; }
 	li { margin-left:1em; }
 	ul + ul { margin-top:-1em; }
 	[title] { cursor:help; }
-	.niy {  }
+	.included body { color:#fff; background:transparent; }
+	.included article { color:#fff; background:#fff3; }
 	.included :is(header, footer) { display:none; }
+	.included h2,
+	.included article { border-color:#fff4; }
+	.included h2 time { color:#fffa; }
+	.hidden { display:none; }
 </style><script>
+	console.log( 'reload' );
 	addEventListener( 'dblclick', ()=>location.reload() );
-</script></head><body class="included">
+	if (get('included')) addEventListener( 'load', ()=>{
+		document.querySelector( 'html' ).classList.add( 'included' );
+		document.querySelectorAll( 'article' ).forEach( (article, index)=>{
+			article.classList.toggle( 'hidden', index > 0 );
+		});
+	});
+	function get (search) {
+		if ((location.href.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
+		return search.split(' ').reduce( (prev, term)=>{
+			return prev || (location.href.indexOf( term ) >= 0);
+		}, false);
+
+	}
+</script></head><body>
 
 <header><h1>myNode Developer's Diary</h1></header>
 
 <article>
-	<h2>Line Height Woes<time>Tue, 16<sup>h</sup>30<br>Nov 15, 2022</time></h2>
+	<h2>RSS and Clickable Links<time>Wed, 13<sup>h</sup>01<br>Nov 16, 2022</time></h2>
 	<p>
-		I am fighting vertical text alignment. Again. Still again. Something changed with Firefox close to
-		a year ago and I can't figure out what was changed. Firefox insists of adding a pixel to line height,
-		or does some other thing with font rendering with a similar effect.
-	</p>
+		A few tweaks here and there, not all errors caught, because it is impossible without wrapping the
+		response handlers in workser, which might not even be such a bad idea for v2.0.
+	<p>
+		I noticed considerable lag between clicking a toggle and the bit confirming, so I disabled syntax
+		token highlighting. Instead now links are clickable.
+</article>
+
+<article>
+	<h2>Line Height Woes Continue<time>Tue, 16<sup>h</sup>30<br>Nov 15, 2022</time></h2>
+	<p>
+		I keep fighting vertical text alignment since that mysterious Firefox update close to a year ago.
+		Firefox insists of adding a pixel to line height, or does some other thing with font rendering
+		with a similar effect.
 	<p>
 		So far, I get best results in all browsers with tricks like <code>padding:1.5px horiz 2.5px</code>.
-	</p>
 	<p>
 		I kept asking around since many of my layouts "broke" that day, and the really odd part about it is,
 		that nobody has even noticed. Either they all no longer test with all major browsers, or they have
 		some normalizers, that have found a solution. Perhaps I should try a normalizer and see, if they
 		prevent the problem from happening. That way I would find the trick and also what was changed in
 		Firefox.
-	</p>
 </article>
 
 <article>
@@ -59,12 +92,10 @@
 		of mistake, like forgetting make a function return a Promise. I often get error stacks completely unrelated
 		to the mistake at hand, or no error is displayed even on the shell at all. At first it was my lack of
 		understanding. but after learning and talking to people I found, that it can't be done reliably.
-	</p>
 	<p>
 		Someone gave me the idea to run suspect code in a worker and see, if it crashes, which will not "mix"
 		bogus asynchronous functions with the main thread. So I will have to refactor my prototype to run the
 		application code inside a worker, which also may come with the benefit of some scalability.
-	</p>
 	<pre><code>
 // These functions are hot reloaded on each websocket request.
 // We have no control over any mistakes being made by a dev in these files.
@@ -134,6 +165,7 @@ for (let name in test_functions) {
 		<li><abbr>IRC</abbr> gateway
 		<li><abbr>SMS</abbr> gateway
 		<li>Email
+		<li>Torrent
 		<li>Server logs (/var/log)
 		<li>Server configuration (/etc)
 		<li>Server control (systemctl, NetworkManager, ModemManager)
@@ -146,7 +178,6 @@ for (let name in test_functions) {
 	<p>
 		After quite a while has passed since I wrote a voice chat prototype with node.js,
 		time has come for another project!
-	</p>
 </article>
 
 <footer><span>copy(l)eft 2022 - <a href="https://spielwiese.central-dogma.at">spielwiese.central-dogma.at</a></span></footer>

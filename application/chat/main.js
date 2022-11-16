@@ -98,32 +98,41 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 	this.request.news = async function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<chat.news>', dump(client) );
+
+		if (typeof parameters.clear != 'undefined') {
+			persistent_data.news = {};
+			await self.onPollRSS();
+			client.respond( STATUS.SUCCESS, request_id, 'RSS cache cleared' );
+			return;
+		}
+
 		client.respond( STATUS.SUCCESS, request_id, persistent_data.news );
 
 	}; // news
 
 
-	this.onPollRSS = async function () {
-		const report_items = [];
-		const url          = 'https://rss.orf.at/news.xml';
-		const feed         = await rss_parser.parseURL( url );
+	this.onPollRSS = async function (url = 'https://rss.orf.at/news.xml') {
+		const feed = await rss_parser.parseURL( url );
+		const report_items = {};
 
 		feed.items.forEach( (item)=>{
-			const key = item.title;
-
+			const key = item.date;
 			if( !persistent_data.news[key] ) {   //... parameters.all
-				persistent_data.news[key] = item;
-				report_items.push( item );
+				const new_item = {
+					//...date  : item.date,
+					title : item.title,
+					link  : item.link,
+				};
+				persistent_data.news[key] = new_item;
+				report_items[key] = new_item;
 			}
 		});
 
-		if (report_items.length > 0) {
+		if (Object.keys( report_items ).length > 0) {
 			callback.broadcast({
 				type    : 'rss',
-				message : {
-					title: feed.title,
-					items: report_items,
-				},
+				title: feed.title,
+				items: report_items,
 			});
 		}
 
@@ -159,7 +168,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 			});
 		}
 
-		self.rssInterval = setInterval( self.onPollRSS, 3000 );
+		self.rssInterval = setInterval( self.onPollRSS, 60*1000 );
 
 		return Promise.resolve();
 

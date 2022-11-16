@@ -8,6 +8,12 @@
 .terminal {
 	--font-family          : terminal;
 
+	--a-color   : #0af;
+	--a-hover   : #88f;
+	--a-visited : #b8f;
+	--a-active  : #0ff;
+	--a-focus   : #fff;
+
 	--input-color        : #000;
 	--input-bg           : #fff;
 	--input-border       : solid 1px #444;
@@ -73,17 +79,11 @@ body.dark_mode {}
 
 /* PAGE LAYOUT */
 
-body {
-	--a-color   : #444;
-	--a-hover   : #000;
-	--a-visited : #622;
-	--a-active  : #008;
-	--a-focus   : #00f;
-}
+body {}
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
-html, body { width:100%; height:100%; }
+html, body { width:100%; height:100%; font-family:terminal; }
 :not(.init) body {
 	background-color:#000;
 	background-image:url(/images/bg_grid.jpg);   /******************************************************** GRID **/
@@ -97,7 +97,7 @@ html:not(.init)::after {
 	outline:solid 1px #fff6;
 	border-radius:3px;
 	padding:2px 5px;
-	font-family:terminal; font-size:0.7em; line-height:1.1em; text-align:center;
+	font-size:0.7em; line-height:1.1em; text-align:center;
 	background:#0007; color:#fc0;
 }
 :not(.init) body::after {
@@ -114,16 +114,11 @@ html:not(.init)::after {
 
 :focus { outline:none; }
 
-a        { color:var(--a-color); text-decoration:none; }
-a:hover  { color:var(--a-hover); text-decoration:underline; }
-a:active { color:var(--a-active); }
-a:focus  { color:var(--a-focus); }
-
 h1 { font-size:1.35em; }
 h2 { font-size:1.1em; }
 
-footer { display:none; }
-
+header {
+}
 
 /* DEBUG CONSOLE */
 
@@ -151,7 +146,6 @@ footer { display:none; }
 	color:#fff;
 	background:#06c;
 }
-
 .terminal :is(h2, input, button, span, code, ::before, ::after, .toolbar, textarea, pre) {
 	font-family:terminal; font-size:1rem; line-height:var(--terminal-line-height);
 	tab-size:var(--tab-size);
@@ -167,7 +161,12 @@ footer { display:none; }
 	;
 }
 
-/* CONTROLS */
+.terminal a         { color:var(--a-color ); text-decoration:underline; }
+.terminal a:hover   { color:var(--a-hover ); }
+.terminal a:visited { color:var(--a-hover ); }
+.terminal a:active  { color:var(--a-active); }
+.terminal a:focus   { color:var(--a-focus ); }
+
 .terminal input {
 	border:var(--input-border);
 	border-radius:var(--input-radius);
@@ -351,15 +350,20 @@ X.terminal nav.tasks button.active { background-color:#570; }
 }
 
 .terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
-.terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; padding-top:2px; padding-bottom:2px; }
-.terminal .separators pre:nth-child(2n+1) { Xbackground:#fff4; }
+.terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; }
 .terminal .compact pre:hover { background:#fff4; cursor:pointer; }
-.terminal .compact pre.expand:hover { background:unset; cursor:pointer; }
+.terminal :not(.debug).compact pre.expand:hover { background:unset; cursor:pointer; }
+.terminal :not(.compact).overflow pre.unexpand,
 .terminal .compact.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
 .terminal .compact.separators pre:hover { border-width:1px 0; margin-top:-1px; }
+.terminal :not(.compact) pre.unexpand,
 .terminal .compact pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
+
+.terminal output[class]:not(.compact) pre.unexpand { margin-bottom:0.5em; }
+X.terminal output.compact pre.unexpand { margin-bottom:0; }
 .terminal output.compact.last pre:last-child,/*//...*/
 .terminal .compact pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
+
 
 .terminal pre { display:block; }
 .terminal .debug .cep       pre.cep,
@@ -383,7 +387,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 .terminal.fancy :is(textarea, pre) { padding-left:50px; }
 .terminal.fancy pre::before {
 	content:'';
-	position:absolute; left:5px; top:2px;
+	position:absolute; left:5px; top:1px;
 	width:21px; height:12px;
 	outline:solid 1px #fff2; border-radius:100%;
 	background:radial-gradient(ellipse at center, #fffc, #fff8 1px, #fff1 5px, #fff0 6px);
@@ -397,8 +401,8 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	content:'Msg'; line-height:12px; font-size:0.7em; text-align:center;
 	outline:none; border-radius:3px; background:#0003;
 }
-.terminal.fancy .chat pre.chat::before { color:#0af; }
-.terminal.fancy .chat pre.chat.expand::before { background:#fff6; }
+.terminal.fancy .debug pre.chat::before { color:#0af; }
+.terminal.fancy pre.chat.unexpand::before { background:#fff6; }
 
 .terminal iframe { position:relative; width:calc(100% - 70px); margin-left:50px; }
 
