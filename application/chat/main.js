@@ -5,7 +5,9 @@
 
 "use strict";
 
-const fetch = require( 'node-fetch' );
+const fetch     = require( 'node-fetch' );
+const DomParser = require( 'dom-parser' );
+const RssParser = require( 'rss-parser' );
 
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { color_log, dump } = require( '../../server/debug.js' );
@@ -15,6 +17,10 @@ const { REASONS, STATUS } = require( '../constants.js' );
 module.exports = function ChatServer (persistent_data, callback) {
 	const self = this;
 
+	const dom_parser = new DomParser();
+	const rss_parser = new RssParser();
+
+	this.rssInterval;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
@@ -86,40 +92,42 @@ module.exports = function ChatServer (persistent_data, callback) {
 	}; // request.say
 
 
+// NEWS //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	if (!persistent_data.news) persistent_data.news = {};
+
 	this.request.news = async function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<chat.news>', dump(client) );
-
-		//throw new Error( 'TEST ERROR' );
-
-		const url = 'https://rss.orf.at/news.xml';
-
-		let response_html = '';
-
-		await fetch( url )
-		.then( response => response.text() )
-	/*
-		.then( str => new DOMParser().parseFromString( str, 'text/xml' ) )
-		.then( data => {
-			console.log(
-				data
-				.split( '<item' )
-				.map( (entries)=>{
-					return (
-						entries
-						.split( '\n' )
-						.filter( (line)=>{
-							return (
-								   (line.indexOf('<title>') >= 0)
-								|| (line.indexOf('<link>' ) >= 0)
-							);
-						})
-					);
-				}),
-			);
-		});
-	*/
+		client.respond( STATUS.SUCCESS, request_id, persistent_data.news );
 
 	}; // news
+
+
+	this.onPollRSS = async function () {
+		const report_items = [];
+		const url          = 'https://rss.orf.at/news.xml';
+		const feed         = await rss_parser.parseURL( url );
+
+		feed.items.forEach( (item)=>{
+			const key = item.title;
+
+			if( !persistent_data.news[key] ) {   //... parameters.all
+				persistent_data.news[key] = item;
+				report_items.push( item );
+			}
+		});
+
+		if (report_items.length > 0) {
+			callback.broadcast({
+				type    : 'rss',
+				message : {
+					title: feed.title,
+					items: report_items,
+				},
+			});
+		}
+
+	}; // onPollRSS
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -129,6 +137,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.exit' );
 
+		clearInterval( self.rssInterval );
 		return Promise.resolve();
 
 	}; // exit
@@ -149,6 +158,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 				persistent_data[key] = data[key];
 			});
 		}
+
+		self.rssInterval = setInterval( self.onPollRSS, 3000 );
 
 		return Promise.resolve();
 

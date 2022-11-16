@@ -190,7 +190,7 @@ module.exports = function AppReloader (callback) {
 		function report_error (error, error_name = 'ROUTER ERROR 0') {
 			if (!socket) {
 				color_log( COLORS.ERROR, '-'.repeat(59) );
-				color_log( COLORS.ERROR, error_name, 'CANNOT REPORT ERROR: NO SOCKET:', message );
+				color_log( COLORS.ERROR, error_name, 'CANNOT REPORT ERROR: NO SOCKET:', error.message );
 				color_log( COLORS.ERROR, '-'.repeat(59) );
 				console.log( error );
 				return;
@@ -226,8 +226,6 @@ module.exports = function AppReloader (callback) {
 
 		// Reload and reinstantiate main module
 
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--init' + '-'.repeat(47) );
-
 		const router_args = {
 			url        : SETTINGS.MAIN_MODULE,
 			persistent : self.persistent,
@@ -237,6 +235,13 @@ module.exports = function AppReloader (callback) {
 				reset       : self.reset,
 			},
 		};
+
+		if (self.router) {
+			if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '-'.repeat(49) + COLORS.STRONG + 'EXIT' );
+			self.router.exit();
+		}
+
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '-'.repeat(49) + COLORS.STRONG + 'INIT' );
 
 		try {
 			self.router = await new require(
@@ -251,7 +256,7 @@ module.exports = function AppReloader (callback) {
 			report_error( error, 'ROUTER ERROR 1' );
 		}
 
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '--/init' + '-'.repeat(46) );
+		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '-'.repeat(48) + COLORS.STRONG + '/INIT' );
 		if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
 
 	} // reload_modules

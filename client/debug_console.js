@@ -49,6 +49,7 @@ export const DebugConsole = function (callback) {
 { menu:'chat' , name:'reset'  , script: 'mcp\n\trestart\n\t\ttoken: ' },
 { menu:'chat' , name:'clear'  , script: '/clear' },
 { menu:'chat' , name:'help'   , script: '/help' },
+{ menu:'chat' , name:'news'   , script: 'chat\n\tnews' },
 	];
 
 	const SHORTHAND_COMMANDS = {

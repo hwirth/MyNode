@@ -155,7 +155,7 @@ WS_PORT               1337
 
 5. Installation
 ===============
-$ npm install ws follow-redirects re-require-module
+$ npm install ws follow-redirects node-fetch@2
 
 Upgrade node:
 sudo npm cache clean -f
@@ -173,6 +173,8 @@ ssh -p <port> -L 1339:127.0.0.1:1339 spielwiese
 
 6. TODO
 =======
+[ ] broadcast only to subscribers
+[ ] Button scripts (client) use short-request format
 [ ] RSS reader
 [ ] https://www.youtube.com/watch?v=0Ip8IpE8pjw - Light Cycle Battle Music Video HD
 [ ] Remote control for DEBUG, SETTINGS, etc.

@@ -97,8 +97,9 @@ module.exports.Router = function (persistent, callback) {
 			Object.keys( persistent.session.clients ).forEach( (address)=>{
 				const client = persistent.session.clients[address];
 				const new_message = {
-					tag      : request_id.tag,
+					//...?settings  address  : client_address,
 					type     : 'error',
+					tag      : request_id.tag,
 					request  : request_id.request || null,
 					success  : false,
 					reason   : REASONS.APPLICATION_ERROR,
@@ -106,7 +107,7 @@ module.exports.Router = function (persistent, callback) {
 
 				if (client.inGroup('admin', 'dev')) new_message.error = format_error( error );
 
-				callback.broadcast({ broadcast: new_message });
+				callback.broadcast( new_message );
 			});
 		}
 
@@ -345,6 +346,7 @@ module.exports.Router = function (persistent, callback) {
 			},
 			chat    : { template: ChatServer,
 				callbacks : [
+					'broadcast',
 					'getAllClients',
 				],
 			},

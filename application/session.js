@@ -82,7 +82,7 @@ module.exports = function SessionHandler (persistent, callback) {
 		}
 
 		//...if (typeof message != 'string') message = JSON.stringify( message, null, '\t' );
-
+if (message.broadcast) console.trace();
 		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
 		const bulletin = {
 			broadcast: {
@@ -466,8 +466,6 @@ if (!client.login) throw new Error( 'NO CLIENT' );
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.exit' );
-
-		callback.broadcast({ type: 'restart' });
 
 		return new Promise( done => setTimeout(done, SETTINGS.TIMEOUT.SOCKET_CLOSE) );
 
