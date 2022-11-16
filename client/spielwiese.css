@@ -81,7 +81,13 @@ body.dark_mode {}
 
 body {}
 
-* { margin:0; padding:0; box-sizing:border-box; }
+* { margin:0; padding:0; box-sizing:border-box; font-family:terminal; }
+
+a { color:#fc0; }
+a:visited { color:#f80; }
+a:active { color:#ff0; }
+a:focus { color:#ff0; }
+a:hover { color:#fd8; }
 
 html, body { width:100%; height:100%; font-family:terminal; }
 :not(.init) body {
@@ -91,6 +97,7 @@ html, body { width:100%; height:100%; font-family:terminal; }
 	Xbackground-size:cover;
 	background-size:100% 100%;
 }
+html:not(.init) body > header,
 html:not(.init)::after {
 	content:'WHAT IS\AMY NODE'; white-space:pre;
 	position:absolute; bottom:20px; left:30px; transform:translate(-50%,-50%);
@@ -99,10 +106,11 @@ html:not(.init)::after {
 	padding:2px 5px;
 	font-size:0.7em; line-height:1.1em; text-align:center;
 	background:#0007; color:#fc0;
+	pointer-events:none;
 }
 :not(.init) body::after {
 	content:'';
-	position:absolute; top:0; left:0;
+	position:absolute; top:0; left:0; z-index:-1;
 	height:100%; width:100%;
 	background-color:#2220;
 	background-image:url(/images/beam.png);   /*********************************************************** BEAM **/
@@ -117,8 +125,15 @@ html:not(.init)::after {
 h1 { font-size:1.35em; }
 h2 { font-size:1.1em; }
 
-header {
+html:not(.init) body > header {
+	content:unset;
+	position:absolute; bottom:60px; z-index:9;
+	width:5em; Xheight:3em;
+	white-space:normal; text-transform:uppercase;
+	pointer-events:auto;
 }
+body > header a { text-decoration:none; }
+body > header a:hover { text-decoration:underline; }
 
 /* DEBUG CONSOLE */
 
