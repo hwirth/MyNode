@@ -59,7 +59,7 @@ module.exports = function MasterControl (persistent, callback) {
 	this.request = {};
 
 	this.request.token = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<mcp.token>', dump(client) );
+		color_log( COLORS.COMMAND, '<mcp.token>', client );
 
 		if (!client.inGroup( 'admin', 'dev' )) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
@@ -127,7 +127,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 	this.request.reset = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<mcp.reset>', dump(client) );
+		color_log( COLORS.COMMAND, '<mcp.reset>', client );
 
 		if (!client.inGroup('dev')) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
@@ -143,7 +143,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 	this.request.restart = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<mcp.restart>', dump(client) );
+		color_log( COLORS.COMMAND, '<mcp.restart>', client );
 
 		const provided_token = String( parameters.token || null );
 
@@ -225,7 +225,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	// Mistake in application code: Uses a Promise, doesn't catch
 	this.request.crashSync = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<mcp.crashSync>', dump(client) );
+		color_log( COLORS.COMMAND, '<mcp.crashSync>', client );
 
 		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
@@ -233,7 +233,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	// Mistake in application code: Uses a Promise, doesn't await
 	this.request.crashAsync = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<mcp.crashAsync>', dump(client) );
+		color_log( COLORS.COMMAND, '<mcp.crashAsync>', client );
 
 		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
@@ -241,7 +241,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	// This will get caught properly:
 	this.request.crashSafe = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<mcp.crashSafe>', dump(client) );
+		color_log( COLORS.COMMAND, '<mcp.crashSafe>', client );
 
 		await fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
@@ -321,11 +321,16 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 	}; // exit
 
 
-	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
-
+	this.reset = function () {
+		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'ServerManager.reset' );
 		create_new_access_token();
 
+	}; // reset
+
+
+	this.init = function () {
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
+		if (Object.keys( persistent ).length == 0) self.reset();
 		return Promise.resolve();
 
 	}; // init
@@ -333,7 +338,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	self.init().then( ()=>self );   // const manager = await new ServerManager();
 
-}; // MasterControlProgram
+}; // ServerManager
 
 
 //EOF

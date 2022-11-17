@@ -227,16 +227,19 @@ module.exports = function AccessControl (persistent, callback) {
 	}; // exit
 
 
-	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init' );
-
-		if (Object.keys( persistent ).length == 0) {
-			persistent.configuration = null;
-			persistent.rules = {};
-		}
+	this.reset = function () {
+		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'Access.reset' );
+		persistent.configuration = null;
+		persistent.rules = {};
 
 		self.loadConfiguration( PROTOCOL_DESCRIPTION );
 
+	}; // reset
+
+
+	this.init = function () {
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init' );
+		if (Object.keys( persistent ).length == 0) self.reset();
 		return Promise.resolve();
 
 	}; // init

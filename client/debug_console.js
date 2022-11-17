@@ -35,9 +35,9 @@ export const DebugConsole = function (callback) {
 
 	const BUTTON_SCRIPTS = [
 { menu:'send' , name:'login'  , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N' },
-{ menu:'send' , name:'root'   , script: 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\nchat\n\tnick: ' },
-{ menu:'send' , name:'user'   , script: 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\nchat\n\tnick: ' },
-{ menu:'send' , name:'guest'  , script: 'session\n\tlogin\n\t\tusername: guest\nchat\n\tnick: ' },
+{ menu:'send' , name:'root'   , script: 'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
+{ menu:'send' , name:'user'   , script: 'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
+{ menu:'send' , name:'guest'  , script: 'session\n\tlogin\n\t\tusername: guest\n%N' },
 { menu:'send' , name:'logout' , script: 'session\n\tlogout' },
 { menu:'send' , name:'connect'    , script: '/connect ' + SETTINGS.WEBSOCKET.URL },
 { menu:'send' , name:'disconnect' , script: '/disconnect' },
@@ -893,16 +893,15 @@ setTimeout( ()=>{
 		;
 
 		if (event.target.parentNode === self.elements.output) {
+			// Toggle .compact
 			const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
 			const clicked_element = event.target.closest( 'pre' );
-console.log( 't', event.target );
-console.log( 'l', last_element );
-console.log( 'c', clicked_element );
 			if (clicked_element === last_element) {
+				// Don't .compact, instead toggle "uncollapse last message"
 				self.toggles.last.toggle();
 			} else {
-				event.target.classList.toggle( 'expand' );
-				event.target.classList.toggle( 'unexpand' );
+				event.target.classList.toggle( 'expand' );     // Force it to expand
+				event.target.classList.toggle( 'unexpand' );   //...Keep track of user-clicked expands
 			}
 		}
 		else if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )

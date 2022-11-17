@@ -139,9 +139,31 @@ function format_error (error) {
  * Creates nice output to the console while debugging, and/or writes text sans color to a log file.
  * See also  config.js: SETTINGS.LOG.*
  */
-function color_log (colors = '', heading = '', ...text) {
+function color_log (colors = '', heading = '', ...text_list) {
 	if (colors == '\n') return console.log();
 	//...if (heading.charAt(0) == '<') heading = '\n' + heading;
+
+
+	function dump_client (client) {
+		if (client.login) return [
+			client.address,
+			client.login.userName,
+			client.login.nickName,
+			client.factor2,
+
+		]; else return [
+			client.address,
+			client.factor2,
+		];
+
+	} // dump_client
+
+	const text = [...text_list];
+
+	if (text[0] && (typeof text[0].idleSince != 'undefined')) {
+		text[0] = dump_client( text[0] );
+	}
+
 
 try {
 	heading = String( heading );
@@ -166,10 +188,10 @@ console.log( 'color_log: HEADING' );//...
 		: heading + COLORS.RESET
 		;
 	/*
-		if ([...text].length >= 1) {
+		if (text.length >= 1) {
 			console.log(
 				date + colors + colored_heading,
-				...[...text].map( (entry)=>{
+				...text.map( (entry)=>{
 					return JSON.parse( JSON.stringify( entry, /*replacer* /null, '\t' ));
 				}),
 				COLORS.RESET,
@@ -200,7 +222,7 @@ console.log( 'color_log: HEADING' );//...
 
 			let data = date + heading;
 
-			[...text].forEach( (entry)=>{
+			text.forEach( (entry)=>{
 				if (typeof entry == 'string') {
 					entry = entry.replace( /\x1b\[[0-9;]*m/g, '' );
 				}
@@ -237,27 +259,34 @@ console.log( 'color_log: HEADING' );//...
 } // color_log
 
 
-function dump (data) {
+function dump (data, short_format = false) {
 	if (typeof data == 'undefined') return 'dump undefined';
 	if (data instanceof Error     ) return 'Error: "' + data.message + '"\nStack: ' + data.stack;
 	if (typeof data == 'undefined') return null;
 
-	if (data.login) {
-		return [ data.address, data.login.userName, data.login.nickName,
-		]/*{
-			address  : data.address,
-			username : data.login.userName,
-			//...nickname : data.login.nickName,
-			//...factor2  : data.factor2,
-		};*/
-
+	if (data.login && short_format) {
+		return [ data.address, data.login.userName, data.login.nickName, data.login.factor2 ];
+/*
+		if (short_format) {
+			return [ data.address, data.login.userName, data.login.nickName ];
+		} else {
+			return {
+				address  : data.address,
+				username : data.login.userName,
+				nickname : data.login.nickName,
+				factor2  : data.factor2,
+			};
+		}
 	} else if (data.address) {
-		return  [ data.address,
-		];/*{
-			address : data.address,
-			factor2  : data.factor2,
-		};*/
-
+		if (short_format) {
+			return  [ data.address ];
+		} else {
+			return {
+				address : data.address,
+				factor2 : data.factor2,
+			};
+		}
+*/
 	} else {
 		return JSON.parse( JSON.stringify(data) );   // Re-parsing turns it into a single line
 	}

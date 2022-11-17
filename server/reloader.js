@@ -25,8 +25,6 @@ module.exports = function AppReloader (callback) {
 	this.router;
 	this.persistent;
 
-	this.alwaysReload;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HOT CODE RELOAD
@@ -155,7 +153,7 @@ module.exports = function AppReloader (callback) {
 
 		// Find, which files have changed
 
-		if (self.alwaysReload) {
+		if (SETTINGS.ROUTER_ALWAYS_RELOAD) {
 			invalidate_require_cache();
 
 		} else {
@@ -340,8 +338,6 @@ module.exports = function AppReloader (callback) {
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
-
-		self.alwaysReload = false;
 
 		return new Promise( async (done)=>{
 			await self.reset();

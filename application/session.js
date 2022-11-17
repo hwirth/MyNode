@@ -186,7 +186,7 @@ if (message.broadcast) console.trace();
 
 		/*
 		if (Object.keys(parameters).length == 0) {
-			client.respond( STATUS.SUCCESS, request_id, {client: dump(client)} );
+			client.respond( STATUS.SUCCESS, request_id, {client: client} );
 
 		} else {
 			const command = Object.keys( parameters )[0];
@@ -199,26 +199,26 @@ if (message.broadcast) console.trace();
 
 	this.request.login = function (client, request_id, parameters) {
 		if (client.login) {
-			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, dump(client) );
+			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.ALREADY_LOGGED_IN );
 			return;
 		}
 
 		if (!parameters.username) {
-			log_warning( 'login', REASONS.BAD_USERNAME, dump(client) );
+			log_warning( 'login', REASONS.BAD_USERNAME, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			return;
 		}
 
 		if (!parameters.password && (parameters.username != 'guest')) {
-			log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
+			log_warning( 'login', REASONS.BAD_PASSWORD, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_PASSWORD );
 			return;
 		}
 
 		const user_record = persistent.accounts[parameters.username];
 		if (!user_record) {
-			log_warning( 'login', REASONS.INVALID_USERNAME, dump(client) );
+			log_warning( 'login', REASONS.INVALID_USERNAME, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			return;
 
@@ -270,14 +270,14 @@ if (message.broadcast) console.trace();
 				userName : client.login.userName,
 			});
 
-			color_log( COLORS.COMMAND, '<session.login>', dump(client) );
+			color_log( COLORS.COMMAND, '<session.login>', client );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
 ;
 			client.send({ notice: user_record.banner || STRINGS.LOGIN_BANNER });
 
 // /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		} else {
-			log_warning( 'login', REASONS.BAD_PASSWORD, dump(client) );
+			log_warning( 'login', REASONS.BAD_PASSWORD, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.BAD_PASSWORD );
 		}
 
@@ -292,10 +292,10 @@ if (message.broadcast) console.trace();
 			/*login_request*/true,
 		);
 		if (client.factor2) {
-			color_log( COLORS.COMMAND, '<session.authenticate>', dump(client) );
+			color_log( COLORS.COMMAND, '<session.authenticate>', client );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_AUTHENTICATED );
 		} else {
-			log_warning( 'authenticate', REASONS.NOT_LOGGED_IN, dump(client) );
+			log_warning( 'authenticate', REASONS.NOT_LOGGED_IN, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.AUTHENTICATION_FAILED );
 		}
 
@@ -304,7 +304,7 @@ if (message.broadcast) console.trace();
 
 	this.request.logout = function (client, request_id, parameters) {
 		if (client.login) {
-			color_log( COLORS.COMMAND, '<session.logout>', dump(client) );
+			color_log( COLORS.COMMAND, '<session.logout>', client );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 
 			callback.broadcast({
@@ -317,7 +317,7 @@ if (message.broadcast) console.trace();
 			client.login = false;
 
 		} else {
-			log_warning( 'logout', REASONS.NOT_LOGGED_IN, dump(client) );
+			log_warning( 'logout', REASONS.NOT_LOGGED_IN, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.NOT_LOGGED_IN );
 		}
 
@@ -332,7 +332,7 @@ if (message.broadcast) console.trace();
 //...throw new Error('TEST ERROR');
 
 		if (client.inGroup( 'mod', 'admin', 'dev') ) {
-			color_log( COLORS.COMMAND, '<session.who>', dump(client) );
+			color_log( COLORS.COMMAND, '<session.who>', client );
 
 			const clients = {};
 			Object.keys( persistent.clients ).forEach( (address)=>{
@@ -366,10 +366,10 @@ if (message.broadcast) console.trace();
 				*/
 			}
 
-			color_log( COLORS.COMMAND, '<session.who>', dump(client) );
+			color_log( COLORS.COMMAND, '<session.who>', client );
 			client.respond( STATUS.SUCCESS, request_id, clients );
 		} else {
-			color_log( COLORS.COMMAND, '<session.who>', dump(client) );
+			color_log( COLORS.COMMAND, '<session.who>', client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
@@ -378,7 +378,7 @@ if (message.broadcast) console.trace();
 
 	this.request.kick = async function (client, request_id, parameters) {
 		if (!client.inGroup( 'mod', 'admin', 'dev' )) {
-			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
+			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
@@ -394,15 +394,15 @@ if (!client.login) throw new Error( 'NO CLIENT' );
 
 		if (!target_client) {
 			if (parameters.address) {
-				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, dump(client) );
+				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
 				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS );
 			}
 			else if (parameters.username) {
-				log_warning( 'kick', REASONS.INVALID_USERNAME, dump(client) );
+				log_warning( 'kick', REASONS.INVALID_USERNAME, client );
 				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			}
 			else {
-				log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, dump(client) );
+				log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, client );
 				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
 			}
 
@@ -450,7 +450,7 @@ if (!client.login) throw new Error( 'NO CLIENT' );
 
 	this.request.status = function (client, request_id, parameters) {
 		if (Object.keys(parameters).length == 0) {
-			client.respond( STATUS.SUCCESS, request_id, {client: dump(client)} );
+			client.respond( STATUS.SUCCESS, request_id, {client: client} );
 
 		} else {
 			const command = Object.keys( parameters )[0];
@@ -472,55 +472,45 @@ if (!client.login) throw new Error( 'NO CLIENT' );
 	}; // exit
 
 
-	function load_data () {
-		color_log( COLORS.SESSION, 'SessionHandler-load_data' );
+	this.reset = function () {
+		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'SessionHandler.reset' );
 
-		return ;
+		const data = {
+			accounts: {
+				'root': {
+					password: '12345',
+					groups: [
+						'admin',
+						'dev',
+					],
+					maxIdleTime: null,
+				},
+				'guest': {
+					password: null,
+					maxIdleTime: 5*60*1000,
+				},
+				'user': {
+					password: 'pass2',
+					maxIdleTime: 5*60*1000,
+				},
+				'idler': {
+					password: 'pass3',
+				},
+			}, // accounts
+			clients: {
+			}, // clients
+		};
 
-	} // load_data
+		Object.keys( data ).forEach( (key)=>{
+			persistent[key] = data[key];
+		});
 
-
-	function save_data () {
-		color_log( COLORS.SESSION, 'SessionHandler-save_data' );
-
-	} // save_data
+	}; // reset
 
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.init' );
-
-		if (Object.keys( persistent ).length == 0) {
-			// "Load from database"
-			const data = {
-				accounts: {
-					'root': {
-						password: '12345',
-						groups: [
-							'admin',
-							'dev',
-						],
-						maxIdleTime: null,
-					},
-					'guest': {
-						password: null,
-						maxIdleTime: 5*60*1000,
-					},
-					'user': {
-						password: 'pass2',
-						maxIdleTime: 5*60*1000,
-					},
-					'idler': {
-						password: 'pass3',
-					},
-				}, // accounts
-				clients: {
-				}, // clients
-			};
-			Object.keys( data ).forEach( (key)=>{
-				persistent[key] = data[key];
-			});
-		}
-
+		if (Object.keys( persistent ).length == 0) self.reset();
 		return Promise.resolve();
 
 	}; // init

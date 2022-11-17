@@ -292,7 +292,7 @@ X.terminal button.token,
 .terminal header > :nth-child(3) { flex-grow:0; justify-content:end; }
 .terminal header > :nth-child(4) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(1) { flex-grow:0; }
-.terminal footer > :nth-child(2) { flex-grow:1; border:solid 1px #fff4; border-width:0 0 0 1px; }
+.terminal footer > :nth-child(2) { flex-grow:1; }
 .terminal footer > :nth-child(3) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(4) { flex-grow:0; justify-content:end; }
 
@@ -339,7 +339,8 @@ X.terminal:not(.connected) .chat .items,
 .terminal footer.toolbar > nav:focus-within .items { bottom:100%; top:unset; }
 
 /* Other UI */
-.terminal button.cep { background:#fff4; }
+.terminal button.cep,/* { background:#fff4; } */
+.terminal .connection { border:solid 1px #fff4; border-width:0 1px 0 0; border-radius:5px; background:#fff2; }
 .terminal .connection.success { font-weight:bold; color:#080; transition:color 0.2s linear; }
 .terminal .connection.ping { color:#0a0; }
 .terminal.animate .connection.ping {
@@ -359,6 +360,10 @@ X.terminal:not(.connected) .chat .items,
 	Xfont-variant-numeric: diagonal-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
+}
+.terminal nav span.status {
+	padding-left:10px;
+	padding-right:10px;
 }
 
 

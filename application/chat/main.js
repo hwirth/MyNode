@@ -14,7 +14,7 @@ const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
 
-module.exports = function ChatServer (persistent_data, callback) {
+module.exports = function ChatServer (persistent, callback) {
 	const self = this;
 
 	const dom_parser = new DomParser();
@@ -29,7 +29,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.request = {};
 
 	this.request.nick = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<chat.nick>', dump(client) );
+		color_log( COLORS.COMMAND, '<chat.nick>', client );
 
 		if (client.login) {
 			//... Check nick validity/availability
@@ -64,7 +64,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.say = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<chat.say>', dump(client)	);
+		color_log( COLORS.COMMAND, '<chat.say>', client	);
 
 		if (client.login) {
 			const message       = parameters;
@@ -94,7 +94,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.html = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<chat.html>', dump(client)	);
+		color_log( COLORS.COMMAND, '<chat.html>', client	);
 
 		if (client.login) {
 			const message       = parameters;
@@ -128,7 +128,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 // NEWS //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 /*
 	this.onPollRSS = async function () {
-		const rss_data = persistent_data.rss;
+		const rss_data = persistent.rss;
 
 		const feed = rss_data.feeds[rss_data.next];
 		rss_data.next = (rss_data.next + 1) % rss_data.feeds.length;
@@ -172,7 +172,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	function reset_rss_data () {
-		persistent_data.rss = {
+		persistent.rss = {
 			feeds: [
 				{ enabled:true, name:'standard' , url:'https://www.derstandard.at/rss' },
 				{ enabled:true, name:'orf'      , url:'https://rss.orf.at/news.xml'    },
@@ -187,8 +187,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	function  init_rss () {
-		if (!persistent_data.rss) reset_rss_data();
-		self.rssInterval = setInterval( self.onPollRSS, persistent_data.rss.interval );
+		if (!persistent.rss) reset_rss_data();
+		self.rssInterval = setInterval( self.onPollRSS, persistent.rss.interval );
 	}
 
 
@@ -199,15 +199,15 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 	this.request.rss = async function (client, request_id, parameters) {
 		if (typeof parameters.clear != 'undefined') {
-			color_log( COLORS.COMMAND, '<chat.rss.clear>', dump(client) );
+			color_log( COLORS.COMMAND, '<chat.rss.clear>', client );
 			reset_rss_data();
 			await self.onPollRSS();
 			client.respond( STATUS.SUCCESS, request_id, 'RSS cache cleared' );
 			return;
 		}
 
-		color_log( COLORS.COMMAND, '<chat.rss>', dump(client) );
-		client.respond( STATUS.SUCCESS, request_id, persistent_data.rss );
+		color_log( COLORS.COMMAND, '<chat.rss>', client );
+		client.respond( STATUS.SUCCESS, request_id, persistent.rss );
 
 	}; // news
 */
@@ -226,24 +226,15 @@ module.exports = function ChatServer (persistent_data, callback) {
 	}; // exit
 
 
-	function load_data () {
-		return {};
+	this.reset = function () {
+		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'ChatServer.reset' );
 
-	} // load_data
+	}; // reset
 
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.init' );
-
-		if (Object.keys( persistent_data ).length == 0) {
-			const data = load_data();
-			Object.keys( data ).forEach( (key)=>{
-				persistent_data[key] = data[key];
-			});
-		}
-
-		//init_rss();
-
+		if (Object.keys( persistent ).length == 0) self.reset();
 		return Promise.resolve();
 
 	}; // init

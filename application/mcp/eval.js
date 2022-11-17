@@ -10,7 +10,7 @@ const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
 
-module.exports = function ChatServer (persistent_data, callback) {
+module.exports = function ChatServer (persistent, callback) {
 	const self = this;
 
 
@@ -63,20 +63,10 @@ module.exports = function ChatServer (persistent_data, callback) {
 	}; // exit
 
 
-	function load_data () {
-		return {};
-
-	} // load_data
-
-
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.init' );
 
-		if (Object.keys( persistent_data ).length == 0) {
-			const data = load_data();
-			Object.keys( data ).forEach( (key)=>{
-				persistent_data[key] = data[key];
-			});
+		if (Object.keys( persistent ).length == 0) {
 		}
 
 		return Promise.resolve();

@@ -14,7 +14,7 @@ const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
 
-module.exports = function ChatServer (persistent_data, callback) {
+module.exports = function ChatServer (persistent, callback) {
 	const self = this;
 
 	const dom_parser = new DomParser();
@@ -23,24 +23,12 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.rssInterval;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HELPERS
+// RSS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function start_interval () {
-		if (self.rssInterval) stop_interval();
-		self.rssInterval = setInterval( poll_next_server, persistent_data.interval );
-	};
-
-
-	function stop_interval () {
-		clearInterval( self.rssInterval );
-		self.rssInterval = null;
-	};
-
-
-	async function poll_feed (feed) {
-		if (!persistent_data.items[feed.name]) persistent_data.items[feed.name] = {};
-		const feed_items   = persistent_data.items[feed.name];
+	async function poll (feed) {
+		if (!persistent.items[feed.name]) persistent.items[feed.name] = {};
+		const feed_items   = persistent.items[feed.name];
 		const report_items = {};
 
 		color_log( COLORS.RSS_ENABLED, 'RSS:', 'polling:', feed.name );
@@ -75,20 +63,32 @@ module.exports = function ChatServer (persistent_data, callback) {
 			});
 		}
 
-	} // poll_feed
+	} // poll
 
 
 	function poll_next_server () {
-		persistent_data.next = (persistent_data.next + 1) % persistent_data.feeds.length;
-		const feed = persistent_data.feeds[persistent_data.next];
+		persistent.next = (persistent.next + 1) % persistent.feeds.length;
+		const feed = persistent.feeds[persistent.next];
 
 		if (feed.enabled) {
-			poll_feed( feed );
+			poll( feed );
 		} else {
 			color_log( COLORS.RSS_DISABLED, 'RSS:', 'disabled:', feed.name );
 		}
 
 	}; // poll_next_server
+
+
+	function start_interval () {
+		if (self.rssInterval) stop_interval();
+		self.rssInterval = setInterval( poll_next_server, persistent.interval );
+	};
+
+
+	function stop_interval () {
+		clearInterval( self.rssInterval );
+		self.rssInterval = null;
+	};
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -98,7 +98,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.request = {};
 
 	this.request.reset = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.reset>', dump(client) );
+		color_log( COLORS.COMMAND, '<rss.reset>', client );
 		reset_data();
 		client.respond( STATUS.SUCCESS, request_id, 'RSS cache reset' );
 
@@ -106,25 +106,25 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.status = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.list>', dump(client) );
+		color_log( COLORS.COMMAND, '<rss.list>', client );
 		client.respond( STATUS.SUCCESS, request_id, {
-			interval : persistent_data.interval,
-			next     : persistent_data.next,
-			feeds    : persistent_data.feeds,
+			interval : persistent.interval,
+			next     : persistent.next,
+			feeds    : persistent.feeds,
 		});
 
 	}; // request.status
 
 
 	this.request.toggle = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.toggle>', dump(client) );
+		color_log( COLORS.COMMAND, '<rss.toggle>', client );
 
 		if (typeof parameters != 'string') {
 			client.respond( STATUS.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
 			return;
 		}
 
-		const feed = persistent_data.feeds.find( f => f.name == parameters );
+		const feed = persistent.feeds.find( f => f.name == parameters );
 
 		if (!feed) {
 			client.respond( STATUS.FAILURE, request_id, 'Unknown feed name' );
@@ -132,7 +132,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 		}
 
 		feed.enabled = !feed.enabled;
-		poll_feed( feed );
+		poll( feed );
 		self.request.status( client, request_id, {} );
 
 		client.respond( STATUS.SUCCESS, request_id );
@@ -141,14 +141,14 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.interval = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.interval>', dump(client) );
+		color_log( COLORS.COMMAND, '<rss.interval>', client );
 
 		function isNumeric (string) {
 			return !isNaN(parseFloat(string)) && isFinite(string);
 		}
 
 		if (isNumeric( parameters )) {
-			persistent_data.interval = parameters*1000;
+			persistent.interval = parameters*1000;
 			start_interval();
 			client.respond( STATUS.SUCCESS, request_id );
 			return;
@@ -163,13 +163,13 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 
 	this.request.show = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.show>', dump(client) );
+		color_log( COLORS.COMMAND, '<rss.show>', dump_client(client) );
 
 		const feed_name = parameters;
 
-		let result = persistent_data;
-		if ((typeof parameters == 'string') && (persistent_data.items[feed_name])) {
-			result = persistent_data.items[feed_name];
+		let result = persistent;
+		if ((typeof parameters == 'string') && (persistent.items[feed_name])) {
+			result = persistent.items[feed_name];
 		}
 
 		client.respond( STATUS.SUCCESS, request_id, result );
@@ -189,30 +189,35 @@ module.exports = function ChatServer (persistent_data, callback) {
 	}; // exit
 
 
-	function reset_data () {
-		const p = persistent_data;
+	this.reset = function () {
+		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'RSSServer.reset' );
 
-		p.feeds = [
-			{ enabled:false, name:'standard' , url:'https://www.derstandard.at/rss' },
-			{ enabled:false, name:'orf'      , url:'https://rss.orf.at/news.xml'    },
-			{ enabled:false, name:'fefe'     , url:'https://blog.fefe.de/rss.xml'   },
-		];
+		const data = {
+			feeds: [
+				{ enabled:false, name:'standard' , url:'https://www.derstandard.at/rss' },
+				{ enabled:false, name:'orf'      , url:'https://rss.orf.at/news.xml'    },
+				{ enabled:false, name:'fefe'     , url:'https://blog.fefe.de/rss.xml'   },
+			],
+			next     : -1,
+			interval : 10*60*1000,
+			items    : {},
+		};
 
-		p.next     = -1;
-		p.interval = 10*60*1000;
-		p.items    = {};
-
-		p.feeds.forEach( (feed)=>{
-			feed.nrItems = null;
-			poll_next_server()
+		Object.keys( data ).forEach( (key)=>{
+			persistent[key] = data[key];
 		});
 
-	} // reset_data
+		persistent.feeds.forEach( (feed)=>{
+			feed.nrItems = null;
+			poll( feed );
+		});
+
+	}; // reset
 
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'RSSServer.init' );
-		if (!persistent_data.feeds) reset_data();
+		if (Object.keys( persistent ).length == 0) self.reset();
 		start_interval();
 		return Promise.resolve();
 

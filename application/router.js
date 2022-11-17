@@ -295,6 +295,12 @@ module.exports.Router = function (persistent, callback) {
 	}; // exit
 
 
+	this.reset = function () {
+		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'Router.reset' );
+
+	}; // reset
+
+
 	this.init = async function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Router.init' );
 
@@ -323,17 +329,20 @@ module.exports.Router = function (persistent, callback) {
 		};
 
 		const registered_protocols = {
-			session : { template: SessionHandler,
+			session: {
+				template: SessionHandler,
 				callbacks: [
 					'broadcast',
 					'verifyToken',
 					'getAllClients',
 				],
 			},
-			access  : { template: AccessControl },
-
+			access: {
+				template: AccessControl,
+			},
 			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
-			mcp     : { template: MasterControl,
+			mcp: {
+				template: MasterControl,
 				callbacks : [
 					'broadcast',
 					'reset',
@@ -345,13 +354,15 @@ module.exports.Router = function (persistent, callback) {
 					'triggerExit',
 				],
 			},
-			chat    : { template: ChatServer,
+			chat: {
+				template: ChatServer,
 				callbacks : [
 					'broadcast',
 					'getAllClients',
 				],
 			},
-			rss     : { template: RSSServer,
+			rss: {
+				template: RSSServer,
 				callbacks : [
 					'broadcast',
 				],
