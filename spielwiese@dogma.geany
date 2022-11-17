@@ -28,7 +28,7 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=23
+current_page=11
 FILE_NAME_0=0;Sh;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fstart_server.sh;0;8
 FILE_NAME_1=2327;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fapplication%2Faccess.js;0;8
 FILE_NAME_2=5097;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fapplication%2Fclient.js;0;8
@@ -40,7 +40,7 @@ FILE_NAME_7=985;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspi
 FILE_NAME_8=1450;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fapplication%2Fmcp%2Fmain.js;0;8
 FILE_NAME_9=4615;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fserver%2Fconfig.js;0;8
 FILE_NAME_10=0;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fserver%2Fconstants.js;0;8
-FILE_NAME_11=3902;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fserver%2Fdebug.js;0;8
+FILE_NAME_11=4287;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fserver%2Fdebug.js;0;8
 FILE_NAME_12=14680;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fserver%2Fmain.js;0;8
 FILE_NAME_13=6202;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fserver%2Freloader.js;0;8
 FILE_NAME_14=497;Javascript;0;EUTF-8;1;1;0;%2Frun%2Fmedia%2Fhmw%2Fdogma-www%2Fspielwiese.central-dogma.at%2Fwebsocket%2Fclient%2Fconfig.js;0;8
