@@ -12,14 +12,14 @@ const { STATUS, REASONS } = require( './constants.js' );
 
 
 const PROTOCOL_DESCRIPTION = (`
-	connecting: {session:{login:{username:literal=guest}}}
-	connecting: {session:{login:{username:literal=guest,nickname:string}}}
-	connecting: {session:{login:{username:string,password:string}}}
-	connecting: {session:{login:{username:string,password:string,factor2:string}}}
-	connecting: {session:{login:{username:string,nickname:string,password:string}}}
-	connecting: {session:{login:{username:string,nickname:string,password:string,factor2:string}}}
-	connecting,guest,user,mod,admin,dev,owner: {help:*}
-	connecting,guest,user,mod,admin,dev,owner: {session:{status:empty}}
+	connected: {session:{login:{username:literal=guest}}}
+	connected: {session:{login:{username:literal=guest,nickname:string}}}
+	connected: {session:{login:{username:string,password:string}}}
+	connected: {session:{login:{username:string,password:string,factor2:string}}}
+	connected: {session:{login:{username:string,nickname:string,password:string}}}
+	connected: {session:{login:{username:string,nickname:string,password:string,factor2:string}}}
+	connected,guest,user,mod,admin,dev,owner: {help:*}
+	connected,guest,user,mod,admin,dev,owner: {session:{status:empty}}
 	guest,user,mod,admin,dev,owner: {session:{who:empty}}
 	guest,user,mod,admin,dev,owner: {session:{who:{username:string}}}
 	guest,user,mod,admin,dev,owner: {chat:{say:string}}
@@ -50,16 +50,16 @@ module.exports = function AccessControl (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function format_source (configuration, show_line_numbers = true) {
-		const line_number        = (index) => (show_line_numbers ? (index + ': ') : '');
-		const comments_removed   = line => line.split('#', 1)[0].trim();
+		const comments_removed   = line  => line.split('#', 1)[0].trim();
+		const empty_lines        = line  => (line.length > 0);
+		const line_number        = index => (show_line_numbers ? (index + ': ') : '');
 		const line_numbers_added = (line, index) => { return line_number(index) + line };
-		const empty_lines        = (line, index) => (line.length > line_number(index).length);
 		return (
 			configuration
 			.trim().split( '\n' )
 			.map( comments_removed )
-			.map( line_numbers_added )
 			.filter( empty_lines )
+			.map( line_numbers_added )
 			.join( '\n' )
 		);
 
@@ -71,7 +71,7 @@ module.exports = function AccessControl (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function parse_configuration (configuration) {
-		const groups = ['connecting', 'guest', 'user', 'mod', 'admin', 'dev', 'owner'];
+		const groups = ['connected', 'guest', 'user', 'mod', 'admin', 'dev', 'owner'];
 
 		const without_comments = line => line.split('#', 1)[0].trim();
 		const to_objects       = (line, index) => { return {source: index, text: line}; };

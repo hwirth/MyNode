@@ -46,7 +46,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 
 			client.login.nickName = new_nick;
 
-			client.broadcast({
+			callback  .broadcast({
+				address  : client.address,
 				type     : 'nickName',
 				userName : client.login.userName,
 				nickName : new_nick,
@@ -92,52 +93,124 @@ module.exports = function ChatServer (persistent_data, callback) {
 	}; // request.say
 
 
-// NEWS //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	this.request.html = function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<chat.html>', dump(client)	);
 
-	if (!persistent_data.news) persistent_data.news = {};
+		if (client.login) {
+			const message       = parameters;
+			const t0            = Date.now();
+			const all_clients   = callback.getAllClients();
+			const authenticated = client_address => all_clients[client_address].login;
 
-	this.request.news = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<chat.news>', dump(client) );
+			Object.keys( all_clients )
+			.filter( authenticated )
+			.forEach( (recipient)=>{
+				all_clients[recipient].send({
+					update: {
+						type     : 'html',
+						time     : t0,
+						userName : client.login.userName,
+						nickName : client.login.nickName,
+						message  : message,
+					},
+				});
+			});
 
-		if (typeof parameters.clear != 'undefined') {
-			persistent_data.news = {};
-			await self.onPollRSS();
-			client.respond( STATUS.SUCCESS, request_id, 'RSS cache cleared' );
-			return;
+			client.respond( STATUS.SUCCESS, request_id );
+
+		} else {
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
-		client.respond( STATUS.SUCCESS, request_id, persistent_data.news );
-
-	}; // news
+	}; // request.html
 
 
-	this.onPollRSS = async function (url = 'https://rss.orf.at/news.xml') {
-		const feed = await rss_parser.parseURL( url );
+// NEWS //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+/*
+	this.onPollRSS = async function () {
+		const rss_data = persistent_data.rss;
+
+		const feed = rss_data.feeds[rss_data.next];
+		rss_data.next = (rss_data.next + 1) % rss_data.feeds.length;
+
+		if (!feed.enabled) return;
+
+		if (!rss_data.items[feed.name]) rss_data.items[feed.name] = {};
+		const feed_items   = rss_data.items[feed.name];
 		const report_items = {};
 
-		feed.items.forEach( (item)=>{
-			const key = item.date;
-			if( !persistent_data.news[key] ) {   //... parameters.all
+		const result = await rss_parser.parseURL( feed.url );
+
+		result.items.forEach( (item)=>{
+			const key
+			=  item.date
+			|| item.pubDate
+			|| item.isoDate
+			|| item.guid
+			|| item.title
+			;
+
+			if( !feed_items[key] ) {
 				const new_item = {
 					//...date  : item.date,
 					title : item.title,
 					link  : item.link,
 				};
-				persistent_data.news[key] = new_item;
-				report_items[key] = new_item;
+				feed_items[key] = report_items[key] = new_item;
 			}
 		});
 
 		if (Object.keys( report_items ).length > 0) {
 			callback.broadcast({
-				type    : 'rss',
-				title: feed.title,
-				items: report_items,
+				type  : 'rss',
+				feed  : feed.name,
+				items : report_items,
 			});
 		}
 
 	}; // onPollRSS
 
+
+	function reset_rss_data () {
+		persistent_data.rss = {
+			feeds: [
+				{ enabled:true, name:'standard' , url:'https://www.derstandard.at/rss' },
+				{ enabled:true, name:'orf'      , url:'https://rss.orf.at/news.xml'    },
+				{ enabled:true, name:'fefe'     , url:'https://blog.fefe.de/rss.xml'   },
+			],
+			next     : 0,
+			interval : 10*60*1000,
+			items    : {},
+		};
+
+	} // reset_rss_data
+
+
+	function  init_rss () {
+		if (!persistent_data.rss) reset_rss_data();
+		self.rssInterval = setInterval( self.onPollRSS, persistent_data.rss.interval );
+	}
+
+
+	function exit_rss () {
+		clearInterval( self.rssInterval );
+	}
+
+
+	this.request.rss = async function (client, request_id, parameters) {
+		if (typeof parameters.clear != 'undefined') {
+			color_log( COLORS.COMMAND, '<chat.rss.clear>', dump(client) );
+			reset_rss_data();
+			await self.onPollRSS();
+			client.respond( STATUS.SUCCESS, request_id, 'RSS cache cleared' );
+			return;
+		}
+
+		color_log( COLORS.COMMAND, '<chat.rss>', dump(client) );
+		client.respond( STATUS.SUCCESS, request_id, persistent_data.rss );
+
+	}; // news
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
@@ -146,7 +219,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.exit' );
 
-		clearInterval( self.rssInterval );
+		//exit_rss();
+
 		return Promise.resolve();
 
 	}; // exit
@@ -168,7 +242,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 			});
 		}
 
-		self.rssInterval = setInterval( self.onPollRSS, 60*1000 );
+		//init_rss();
 
 		return Promise.resolve();
 

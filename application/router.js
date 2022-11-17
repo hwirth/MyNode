@@ -305,6 +305,7 @@ module.exports.Router = function (persistent, callback) {
 		const AccessControl  = require( './access.js' );
 		const MasterControl  = require( './mcp/main.js' );
 		const ChatServer     = require( './chat/main.js' );
+		const RSSServer      = require( './rss/main.js' );
 
 		const registered_callbacks = {
 			broadcast              : (...params)=>{ return self.protocols.session.broadcast(...params); },
@@ -348,6 +349,11 @@ module.exports.Router = function (persistent, callback) {
 				callbacks : [
 					'broadcast',
 					'getAllClients',
+				],
+			},
+			rss     : { template: RSSServer,
+				callbacks : [
+					'broadcast',
 				],
 			},
 		};

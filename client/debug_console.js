@@ -48,9 +48,9 @@ export const DebugConsole = function (callback) {
 { menu:'chat' , name:'kroot'  , script: 'session\n\tkick\n\t\tusername: root' },
 { menu:'chat' , name:'kuser'  , script: 'session\n\tkick\n\t\tusername: user' },
 { menu:'chat' , name:'reset'  , script: 'mcp\n\trestart\n\t\ttoken: ' },
-{ menu:'chat' , name:'clear'  , script: '/clear' },
-{ menu:'chat' , name:'help'   , script: '/help' },
 { menu:'chat' , name:'news'   , script: 'chat\n\tnews' },
+{ menu:'chat' , name:'help'   , script: '/help' },
+{ menu:'chat' , name:'clear'  , script: '/clear' },
 	];
 
 	const SHORTHAND_COMMANDS = {
@@ -59,7 +59,7 @@ export const DebugConsole = function (callback) {
 	};
 
 	const HTML_TERMINAL = (`
-<form class="terminal">
+<div class="terminal">
 	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
 		<output class="Xlast"></output>
 		<textarea autocomplete="off"></textarea>
@@ -88,7 +88,7 @@ export const DebugConsole = function (callback) {
 			<button class="submit" title="Execute command/send chat text">Enter</button>
 			<div class="items">
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
-				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" autofocus>
+				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
 				<input type="password" name="password" placeholder="Password" autocomplete="password">
 				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
 			</div>
@@ -101,7 +101,7 @@ export const DebugConsole = function (callback) {
 			<button class="close" title="Minimize terminal">Exit</button>
 		</nav>
 	</footer>
-</form>
+</div>
 	`); // HTML_TERMINAL
 
 	const HTML_YOUTUBE = (`
@@ -148,12 +148,17 @@ export const DebugConsole = function (callback) {
 		action    : ()=>{ self.toggles.keyBeep.toggle(); },
 	},{
 		event     : 'keydown',
+		key       : 'l',
+		modifiers : ['alt'],
+		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
+	},{
+		event     : 'keydown',
 		key       : 'm',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.tts.toggle(); },
 	},{
 		event     : 'keydown',
-		key       : 'o',
+		key       : 'v',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.overflow.toggle(); },
 	},{
@@ -928,6 +933,9 @@ console.log( event.target );
 
 		// Replace chat commands with actual ones
 		let text = self.elements.input.value.trim();
+
+		if (text.trim() == '') return;
+
 		if (text.charAt(0) == '/') {
 			const tokens  = text.slice(1).split(' ');
 			const command = SHORTHAND_COMMANDS[ tokens.shift() ];
@@ -936,9 +944,9 @@ console.log( event.target );
 		}
 
 		if (text.charAt(0) == '.') {
-			self.elements.input.value = parse_short_request( text );
-			focus_prompt();
-			return;
+			text = self.elements.input.value = parse_short_request( text );
+			//...? focus_prompt();
+			//...? return;
 		}
 
 		if (!perform_local( text )) {
@@ -1092,6 +1100,134 @@ console.log( event.target );
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// PRINT
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.print = function (message, class_name = null) {
+
+		function highlight () {
+			// Decorate tokens with HTML
+			const class_names = [
+		/*
+				'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
+				'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
+		*/
+				'true'     , 'false'   , 'null'
+			];
+			const tokens = [
+		/*
+				'/', '.', ':', ';', '{',
+				'[', '(', ')', ']', '}',
+		*/
+				'true', 'false', 'null',
+			];
+
+			const replace_href = (word)=>{
+				//...! Ignores tab-prefixed "words":
+				if ((word.slice(0,7) == 'http://') || (word.slice(0,8) == 'https://')) {
+					const pos_tab = Math.min(
+						(word + ' ').indexOf( ' ' ),
+						(word + '\t').indexOf( '\t' ),
+						(word + '\n').indexOf( '\n' ),
+					);
+					const href = word.slice(0, pos_tab);
+					const rest = word.slice(pos_tab);
+					return '<a target="_blank" href="' + href + '">' + href + '</a>' + rest;
+				} else {
+					return word;
+				}
+			};
+
+			let message_html = (
+				(typeof message == 'string')
+				? message
+				: self.requestToText( message )
+			)
+			.replace( /&/g, '&amp;' )
+			.replace( /</g, '&lt;'  )
+			.replaceAll('\\n', '\n')   // '\\n' for .readme
+			.replaceAll( '&lt;', '###lt###' )
+			.replaceAll( '&gt;', '###gt###' )
+			.replaceAll( '&amp;', '###amp###' )
+			;
+
+			tokens.forEach( (token, index)=>{
+				const html = '<code class="' + class_names[index] + '">' + token + '</code>';
+				message_html = message_html.replaceAll( token, html );
+			});
+
+			message_html = message_html
+			.replaceAll( '###amp###', '&amp;' )
+			.replaceAll( '###gt###', '&gt;' )
+			.replaceAll( '###lt###', '&lt;' )
+			.split(' ').map( replace_href ).join(' ')
+			.split('\n').map( replace_href).join('\n')
+			;
+
+			return message_html;
+		}
+
+
+		// Let user scroll up   //... Make optional
+		const o = self.elements.output;
+		const do_scroll = (o.scrollHeight - o.scrollTop == o.clientHeight);
+
+		let print_message = null;
+		if (message.html) {
+			print_message = message.html.replaceAll( '<a href', '<a target="_blank" href' );
+			class_name = 'html';
+
+		} else {
+			print_message
+			= (typeof message == 'string')
+			? message
+			: highlight( JSON.stringify(message, null, '\t') )
+			;
+		}
+
+		// Create DOM element
+		const new_element = document.createElement( 'pre' );
+		if (class_name) new_element.className = class_name;
+		new_element.innerHTML = print_message;
+		self.elements.output.appendChild( new_element );
+
+		['response', 'broadcast'].forEach( (category)=>{
+			if (message[category] && message[category].type) {
+				new_element.dataset.type = message[category].type;
+			}
+		});
+
+		if (false || do_scroll) scroll_down();//...
+
+
+		// Visualize/sonifiy success/failure
+		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
+			self.bit.say( message.broadcast.success );
+		}
+
+		if (message.response && (typeof message.response.success != 'undefined')) {
+			// We might receive several responses, when we sent several requersts,
+			// so we tell the bit to stack its answers:
+			self.bit.say( message.response.success, message.response.request - 1 );
+		}
+
+	}; // print
+
+
+	this.clearScreen = function () {
+		self.elements.output.innerHTML = '';
+
+	} // clearScreen
+
+
+	this.clearInput = function () {
+		self.elements.input.value = '';
+		scroll_down();
+
+	} // clearScreen
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // WEBSOCKET
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -1154,8 +1290,13 @@ console.log( event.target );
 					self.print( {[sender]: message.update.message}, 'chat' );
 					break;
 				}
+				case 'html': {
+					print_message();
+					self.print({ html:message.update.message });
+					break;
+				}
 				default: {
-					self.print( 'Unknown update', 'error' );
+					self.print( message, 'error' );
 				}
 			}
 		}
@@ -1173,125 +1314,6 @@ console.log( event.target );
 		}
 
 	}; // onReceive
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PRINT
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.print = function (message, class_name = null) {
-
-		function highlight () {
-			// Decorate tokens with HTML
-			const class_names = [
-				'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
-				'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
-				'true'     , 'false'   , 'null'
-			];
-			const tokens = [
-				'/', '.', ':', ';', '{',
-				'[', '(', ')', ']', '}',
-				'true', 'false', 'null',
-			];
-
-			let message_html = (
-				(typeof message == 'string')
-				? message
-				: self.requestToText( message )
-			)
-			.replace( /&/g, '&amp;' )
-			.replace( /</g, '&lt;'  )
-		/*//...
-			.replaceAll( '&lt;', '###lt###' )
-			.replaceAll( '&gt;', '###gt###' )
-			.replaceAll( '&amp;', '###amp###' )
-			;
-
-			tokens.forEach( (token, index)=>{
-				const html = '<code class="' + class_names[index] + '">' + token + '</code>';
-				message_html = message_html.replaceAll( token, html );
-			});
-
-			message_html = message_html
-			.replaceAll( '###amp###', '&amp;' )
-			.replaceAll( '###gt###', '&gt;' )
-			.replaceAll( '###lt###', '&lt;' )
-		*/
-			//.replaceAll( '\t', '·······|' )
-			.split(' ')
-			.map( (word)=>{
-				if (word.slice(0,8) == 'https://') {
-					const pos_tab = Math.min(
-						(word + ' ').indexOf( ' ' ),
-						(word + '\t').indexOf( '\t' ),
-						(word + '\n').indexOf( '\n' ),
-					);
-					const href = word.slice(0, pos_tab);
-					const rest = word.slice(pos_tab);
-					return '<a target="_blank" href="' + href + '">' + href + '</a>' + rest;
-				} else {
-					return word;
-				}
-			})
-			.join(' ')
-			.replaceAll('\\n', '\n')   // '\\n' for .readme
-			;
-
-			return message_html;
-		}
-
-
-		// Let user scroll up   //... Make optional
-		const o = self.elements.output;
-		const do_scroll = (o.scrollHeight - o.scrollTop == o.clientHeight);
-
-		const print_message
-		= (typeof message == 'string')
-		? message
-		: highlight( JSON.stringify(message, null, '\t') )
-		;
-
-		// Create DOM element
-		const new_element = document.createElement( 'pre' );
-		if (class_name) new_element.className = class_name;
-		new_element.innerHTML = print_message;
-		self.elements.output.appendChild( new_element );
-
-		if (!false || do_scroll) scroll_down();
-
-		['response', 'broadcast'].forEach( (category)=>{
-			if (message[category] && message[category].type) {
-				new_element.dataset.type = message[category].type;
-			}
-		});
-
-		// Visualize/sonifiy success/failure
-		if (message.response && (typeof message.response.success != 'undefined')) {
-			const success = message.response.success ? 'yes' : 'no';
-
-			// We might receive several responses, when we sent several requersts,
-			// so we tell the bit to stack its answers:
-			self.bit.say( message.response.success, message.response.request - 1 );
-		}
-
-		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
-			self.bit.say( message.broadcast.success ? 'yes' : 'no' );
-		}
-
-	}; // print
-
-
-	this.clearScreen = function () {
-		self.elements.output.innerHTML = '';
-
-	} // clearScreen
-
-
-	this.clearInput = function () {
-		self.elements.input.value = '';
-		scroll_down();
-
-	} // clearScreen
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1331,7 +1353,7 @@ console.dir( self.toggles );
 console.groupEnd();
 
 		// Disable <form> submission
-		self.elements.terminal.addEventListener( 'submit', event => event.preventDefault() );
+		//...self.elements.terminal.addEventListener( 'submit', event => event.preventDefault() );
 
 
 		// Resume audio context after page load
@@ -1444,7 +1466,14 @@ console.groupEnd();
 				self.elements.login.click();
 				self.elements.enter.click();
 			}, 0);
-			if (self.elements.terminal.classList.contains( 'enabled' )) setTimeout( focus_prompt, 100 );
+
+			if (self.elements.terminal.classList.contains( 'enabled' )) {
+				setTimeout( focus_prompt, 100 );
+			} else {
+				setTimeout( ()=>{
+					document.querySelector( 'form [name=nickname]' ).focus();
+				}, 100);
+			}
 		}
 
 		init_prompt();

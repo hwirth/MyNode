@@ -183,6 +183,21 @@ this.request.news = async function (client, request, response) {
 	response.broadcast({...});
 	response.toGroup({...});
 }
+
+[ ] All messages: <category, type=x, x> - key name for data is same as type
+[ ] generic reset for all services
+[?] switch.js - how?
+[ ] GEH: Don't crash, restart reloader
+[ ] autoexec.bat
+[ ] Don't insert <pre html>, insert the html directly
+[ ] Scroll down, when last entry clicked and expanded
+[ ] Max scrollback: Clear by filter rules, capture mode
+[ ] Filter: Categories, Types, Subscriptions. Discard: ...
+[ ] Menu button blinks, if sub-item triggered by kbd
+[ ] Shift+Pg{Up,Down}
+[ ] Chasing the bit: "No"
+[ ] cron
+[ ] Invert expand/unexpand
 [ ] .update.protocol.version,description
 [ ] "Hyperchat"
 [ ] Position cursor exactly after parsing short commands

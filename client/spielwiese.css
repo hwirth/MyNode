@@ -132,15 +132,55 @@ html:not(.init) body > header {
 	white-space:normal; text-transform:uppercase;
 	pointer-events:auto;
 }
+
+body { overflow:hidden; }
 body > header a { text-decoration:none; }
 body > header a:hover { text-decoration:underline; }
+
+body > form {
+	position:absolute; top:47%; left:50%; transform:translate(-50%,-50%);
+	display:flex; flex-direction:column; gap:5px; justify-content:center; align-items:center;
+	border-radius:100%;
+	padding:100px 200px;
+	background:#0004; color:#fffa;
+	background:radial-gradient(circle at center, #000, #000 35%, #08f3 41%, #f006 45%, #f003 50%, #fc00 100%);
+	box-shadow:
+		0 0 0 3px #f004,
+		inset 0 0 20vmin 20vmin #000a,
+		0 0 50px 1px #28cc
+	;
+	opacity:0;
+	transition:all 1s ease-in-out;
+}
+body > form:focus::after {
+	content:'Authenticate.'; text-transform:uppercase; color:#fc0;
+	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+}
+body > form:hover,/* { opacity:0.7; padding:20vmin 40vmin; }*/
+body > form:focus-within { opacity:1; padding:40vmin 80vmin; }
+
+body > form label { width:100%; display:none; }
+body > form span { display:none; }
+body > form input {
+	width:12em; height:2em; line-height:2em;
+	border:solid 1px #fff8; border-radius:5px;
+	background:#0004; color:#fc0;
+	text-align:center;
+}
+body > form input:hover { background:#0408; color:#fffe; }
+body > form input:focus { background:#0408; color:#fff; text-align:left; padding-left:5px; }
+body > form input::placeholder { font-family:terminal; font-size:1em; color:#fff; }
+body > form input:hover::placeholder { color:#0f0c; }
+body > form input:focus::placeholder { color:#fff; text-align:center; }
+body > form input[type=submit] { color:#0f08; font-weight:bold; text-align:center; }
+body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-left:0; }
 
 /* DEBUG CONSOLE */
 
 /* MAIN LAYOUT */
 .terminal.enabled { display:grid; }
 .terminal {
-	position:absolute; bottom:0; left:0; z-index:999;
+	position:absolute; top:0; left:0; z-index:999; transform:unset;
 	display:none; grid-template-rows:min-content auto min-content;
 	grid-template-areas:"r0" "r1" "r2";
 	width:100%; height:100%;
@@ -169,10 +209,15 @@ body > header a:hover { text-decoration:underline; }
 .terminal .toolbar *,
 .terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre) {
 	text-shadow:
-		 1px  0px #0008,
-		-1px  0px #0008,
-		 0px  1px #0008,
-		 0px -1px #0008
+		 1px  0px #000a,
+		-1px  0px #000a,
+		 0px  1px #000a,
+		 0px -1px #000a,
+
+		 2px  0px #0004,
+		-2px  0px #0004,
+		 0px  2px #0004,
+		 0px -2px #0004
 	;
 }
 
@@ -328,7 +373,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	background-image:url(/images/beam.png);   /*********************************************************** BEAM **/
 	background-position:6px center;
 	background-repeat:no-repeat;
-	background-size:calc(96px / 2) calc(100% - 3.6rem);
+	background-size:calc(96px / 2) calc(100% - 2.4em - 4px - 20px);
 	filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
 }
 .terminal.fancy.connected::after { filter:hue-rotate(0deg); }
@@ -372,7 +417,7 @@ X.terminal nav.tasks button.active { background-color:#570; }
 .terminal .compact.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
 .terminal .compact.separators pre:hover { border-width:1px 0; margin-top:-1px; }
 .terminal :not(.compact) pre.unexpand,
-.terminal .compact pre { white-space:normal; Xoverflow:hidden; padding-top:0; padding-bottom:0; }
+.terminal .compact pre { white-space:normal; Xoverflow:hidden; padding-top:1px; padding-bottom:1px; }
 
 .terminal output[class]:not(.compact) pre.unexpand { margin-bottom:0.5em; }
 X.terminal output.compact pre.unexpand { margin-bottom:0; }

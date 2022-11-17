@@ -30,8 +30,7 @@ module.exports = function MasterControl (persistent, callback) {
 			// Delay output for nicer log filegue
 			console.log( COLORS.MCP + 'MCP .' + '='.repeat(14) + '.' );
 			console.log( COLORS.MCP + 'MCP | TOKEN:', COLORS.TOKEN + formatted_token, COLORS.MCP + '|' );
-			console.log( COLORS.MCP + "MCP '" + '='.repeat(14) + "'" );
-			console.log( COLORS.DEFAULT );
+			console.log( COLORS.MCP + "MCP '" + '='.repeat(14) + "'" + COLORS.DEFAULT );
 		});
 
 		current_access_token = new_token;
