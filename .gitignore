@@ -4,3 +4,7 @@ node_modules
 .work
 hardcopy.*
 screenlog.*
+*.geany
+*.1
+*.2
+*.3

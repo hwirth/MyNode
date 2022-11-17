@@ -38,15 +38,7 @@ module.exports = function ChatServer (persistent_data, callback) {
 	};
 
 
-	async function poll_next_server () {
-		persistent_data.next = (persistent_data.next + 1) % persistent_data.feeds.length;
-		const feed = persistent_data.feeds[persistent_data.next];
-
-		if (!feed.enabled) {
-			color_log( COLORS.RSS_DISABLED, 'RSS:', 'disabled:', feed.name );
-			return;
-		}
-
+	async function poll_feed (feed) {
 		if (!persistent_data.items[feed.name]) persistent_data.items[feed.name] = {};
 		const feed_items   = persistent_data.items[feed.name];
 		const report_items = {};
@@ -81,6 +73,19 @@ module.exports = function ChatServer (persistent_data, callback) {
 				feed  : feed.name,
 				items : report_items,
 			});
+		}
+
+	} // poll_feed
+
+
+	function poll_next_server () {
+		persistent_data.next = (persistent_data.next + 1) % persistent_data.feeds.length;
+		const feed = persistent_data.feeds[persistent_data.next];
+
+		if (feed.enabled) {
+			poll_feed( feed );
+		} else {
+			color_log( COLORS.RSS_DISABLED, 'RSS:', 'disabled:', feed.name );
 		}
 
 	}; // poll_next_server
@@ -127,6 +132,8 @@ module.exports = function ChatServer (persistent_data, callback) {
 		}
 
 		feed.enabled = !feed.enabled;
+		poll_feed( feed );
+		self.request.status( client, request_id, {} );
 
 		client.respond( STATUS.SUCCESS, request_id );
 

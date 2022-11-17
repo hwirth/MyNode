@@ -22,6 +22,7 @@
 
 	--button-color          : #fff;
 	--button-bg             : #555;
+	--button-special-bg     : #676;
 	--button-submit-color   : #fff;
 	--button-submit-bg      : #c50;
 	--button-close-color    : #fff;
@@ -249,6 +250,18 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 .terminal button.submit  { background:var(--button-submit-bg ); color:var(--button-submit-color ); }
 .terminal button.close   { background:var(--button-close-bg  ); color:var(--button-close-color  ); }
 .terminal button.enabled { background:var(--button-enabled-bg); color:var(--button-enabled-color); }
+.terminal button.blink {
+	animation: TOGGLE 0.5s linear 1;
+}
+@keyframes TOGGLE {
+	   0% { background-color:var(--terminal-button-bg); }
+	  11% { background-color:#ff0; }
+	  22% { background-color:var(--terminal-button-bg); }
+	  33% { background-color:#ff0; }
+	  44% { background-color:var(--terminal-button-bg); }
+	  55% { background-color:#ff0; }
+	  66% { background-color:var(--terminal-button-bg); }
+}
 
 .terminal button.login,
 .terminal button.logout,
@@ -258,12 +271,12 @@ X.terminal button.token,
 .terminal button.clear,
 .terminal button.help,
 .terminal button.connect,
-.terminal button.disconnect { background:#676; }
+.terminal button.disconnect { background:var(--button-special-bg); }
 
 /* TOOLBARS */
 .terminal .toolbar {
 	position:relative;
-	display:inline-flex; flex-wrap:wrap; Xalign-items:center; Xjustify-content:center;
+	display:inline-flex; flex-wrap:wrap;
 	border-radius:5px;
 	background:#fff3; color:#fff;
 	Xbox-shadow:inset 0 0 0 1px #fff5;
@@ -274,12 +287,12 @@ X.terminal button.token,
 	user-select:none; cursor:default;
 }
 .terminal .toolbar > * { Xposition:relative; display:flex; }
-.terminal header > :nth-child(1) { flex-grow:1; }
-.terminal header > :nth-child(2) { flex-grow:0; justify-content:end; }
+.terminal header > :nth-child(1) { flex-grow:0; }
+.terminal header > :nth-child(2) { flex-grow:1; justify-content:center; }
 .terminal header > :nth-child(3) { flex-grow:0; justify-content:end; }
 .terminal header > :nth-child(4) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(1) { flex-grow:0; }
-.terminal footer > :nth-child(2) { flex-grow:1; }
+.terminal footer > :nth-child(2) { flex-grow:1; border:solid 1px #fff4; border-width:0 0 0 1px; }
 .terminal footer > :nth-child(3) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(4) { flex-grow:0; justify-content:end; }
 
@@ -325,9 +338,6 @@ X.terminal:not(.connected) .chat .items,
 .terminal footer.toolbar > nav:focus .items,
 .terminal footer.toolbar > nav:focus-within .items { bottom:100%; top:unset; }
 
-X.terminal nav.tasks button { background-color:#460; }
-X.terminal nav.tasks button.active { background-color:#570; }
-
 /* Other UI */
 .terminal button.cep { background:#fff4; }
 .terminal .connection.success { font-weight:bold; color:#080; transition:color 0.2s linear; }
@@ -339,7 +349,6 @@ X.terminal nav.tasks button.active { background-color:#570; }
 	background-repeat:no-repeat;
 }
 .terminal .time {
-	flex-grow:1;
 	Xfont-variant-numeric: normal;
 	Xfont-variant-numeric: ordinal;
 	font-variant-numeric: slashed-zero;
@@ -411,16 +420,16 @@ X.terminal nav.tasks button.active { background-color:#570; }
 
 .terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
 .terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; }
-.terminal .compact pre:hover { background:#fff4; cursor:pointer; }
+.terminal output pre:hover { Xbackground:#fff4; color:#fff; cursor:pointer; }
 .terminal :not(.debug).compact pre.expand:hover { background:unset; cursor:pointer; }
 .terminal :not(.compact).overflow pre.unexpand,
 .terminal .compact.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
 .terminal .compact.separators pre:hover { border-width:1px 0; margin-top:-1px; }
+.terminal output.compact.last pre.unexpand:last-child,
 .terminal :not(.compact) pre.unexpand,
 .terminal .compact pre { white-space:normal; Xoverflow:hidden; padding-top:1px; padding-bottom:1px; }
 
 .terminal output[class]:not(.compact) pre.unexpand { margin-bottom:0.5em; }
-X.terminal output.compact pre.unexpand { margin-bottom:0; }
 .terminal output.compact.last pre:last-child,/*//...*/
 .terminal .compact pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 

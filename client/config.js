@@ -79,6 +79,7 @@ export const PRESETS = {
 		ANIMATE    : !get( 'animate' ),
 		FANCY      : !get( 'fancy' ),
 		KEY_BEEP   : get( 'keybeep' ),
+		LAST       : !get( 'last' ),
 		TTS        : !get( 'tts' ),
 	},
 

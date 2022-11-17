@@ -283,11 +283,11 @@ module.exports = function AppReloader (callback) {
 	this.onMessage = async function (socket, client_address, json_string) {
 		let message = null;
 
-		//try {
+		//...try {
 			message = JSON.parse( String(json_string) );
-		//} catch (error) {
-		//	color_log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
-		//}
+		//...} catch (error) {
+		//...	color_log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
+		//...}
 
 		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 

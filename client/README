@@ -184,6 +184,10 @@ this.request.news = async function (client, request, response) {
 	response.toGroup({...});
 }
 
+[ ] Toggles.toggle -->  Change URL accordingly ("Update your bookmark to save settings")
+[ ] Increase color contrast on hover
+[ ] Reloader: persistent --> name clash with persistent_data
+    Hand over global persistence object, but only containing designated sub-objects
 [ ] All messages: <category, type=x, x> - key name for data is same as type
 [ ] generic reset for all services
 [?] switch.js - how?
@@ -336,6 +340,20 @@ router:
 
 
 
+
+m	category
+m		type
+o		timestamp
+o		success
+m		<type>
+
+	response
+o		timestamp
+m		type
+m		tag
+m		request
+o?		success/<type>?
+m
 
 
 

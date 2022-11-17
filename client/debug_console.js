@@ -61,12 +61,15 @@ export const DebugConsole = function (callback) {
 	const HTML_TERMINAL = (`
 <div class="terminal">
 	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
-		<output class="Xlast"></output>
+		<output class="last"></output>
 		<textarea autocomplete="off"></textarea>
 	</main>
 	<header class="toolbar">
 		<nav class="tasks">
 			<button class="cep enabled" title="Client End Point">CEP</button>
+		</nav>
+		<nav>
+			<span class="time"></span>
 		</nav>
 		<nav class="filter">
 			<button>Filter</button>
@@ -82,7 +85,7 @@ export const DebugConsole = function (callback) {
 			<span class="connection warning">OFFLINE</span>
 		</nav>
 		<nav>
-			<span class="time"></span>
+			<span class="status">Ready.</span>
 		</nav>
 		<nav class="send">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
@@ -150,7 +153,7 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'l',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
+		action    : ()=>{ self.toggles.last.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'm',
@@ -171,6 +174,11 @@ export const DebugConsole = function (callback) {
 		key       : 't',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.terminal.toggle(); },
+	},{
+		event     : 'keydown',
+		key       : 'x',
+		modifiers : ['alt'],
+		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
 	},{
 		event     : 'keydown',
 		key       : 'ArrowUp',
@@ -204,6 +212,7 @@ export const DebugConsole = function (callback) {
 			send         : container.querySelector( '.send .items'     ),
 			chat         : container.querySelector( '.chat .items'     ),
 			toggles      : container.querySelector( '.toggles .items'  ),
+			btnToggles   : container.querySelector( '.toggles button'  ),
 			filter       : container.querySelector( '.filter .items'   ),
 			debug        : container.querySelector( '.debug .items'    ),
 			output       : container.querySelector( 'output'           ),
@@ -229,6 +238,7 @@ export const DebugConsole = function (callback) {
 			animate      : container.querySelector( 'button.animate'  ),
 			fancy        : container.querySelector( 'button.fancy'    ),
 			keyBeep      : container.querySelector( 'button.key_beep' ),
+			//...last         : container.querySelector( 'button.last'     ),
 			tts          : container.querySelector( 'button.tts'      ),
 		};
 
@@ -260,6 +270,7 @@ export const DebugConsole = function (callback) {
 { name:'compact'    , preset:T.COMPACT    , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compact'    },
 { name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'O',  caption:'Overflow'   },
 { name:'separators' , preset:T.SEPARATORS , target:output   , menu:'toggles' , shortcut:'S',  caption:'Separators' },
+{ name:'last'       , preset:T.LAST       , target:output   , menu:'toggles' , shortcut:'L',  caption:'Show Last'  },
 { name:'keyBeep'    , preset:T.KEY_BEEP   , target:terminal , menu:'toggles' , shortcut:'K',  caption:'Key Beep'   },
 { name:'animate'    , preset:T.ANIMATE    , target:terminal , menu:'toggles' , shortcut:'A',  caption:'Animations' },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'      },
@@ -311,9 +322,10 @@ export const DebugConsole = function (callback) {
 				 if (toggle.name == 'terminal') {
 					self.elements.html.classList.toggle( 'animate', !toggle.enabled );
 				}
-console.log( 'toggle.name', toggle.name );
-console.trace();
+
 				self.bit.say( toggle.enabled );//..., /*delay*/0, (toggle.name == 'tts') );
+				self.elements.btnToggles.classList.add( 'blink' );
+				setTimeout( ()=>self.elements.btnToggles.classList.remove('blink'), 500 );
 			}
 
 			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
@@ -881,8 +893,17 @@ setTimeout( ()=>{
 		;
 
 		if (event.target.parentNode === self.elements.output) {
-			event.target.classList.toggle( 'expand' );
-			event.target.classList.toggle( 'unexpand' );
+			const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
+			const clicked_element = event.target.closest( 'pre' );
+console.log( 't', event.target );
+console.log( 'l', last_element );
+console.log( 'c', clicked_element );
+			if (clicked_element === last_element) {
+				self.toggles.last.toggle();
+			} else {
+				event.target.classList.toggle( 'expand' );
+				event.target.classList.toggle( 'unexpand' );
+			}
 		}
 		else if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
 		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
@@ -1270,6 +1291,14 @@ console.log( event.target );
 		catch { /* Assume string */ }
 
 		if (!message.update) {
+			const category = Object.keys( message )[0];
+			switch (category) {
+				case 'broadcast': {
+					if (message.broadcast.type == 'rss') {
+					}
+				}
+			}
+
 			print_message();
 
 		} else {

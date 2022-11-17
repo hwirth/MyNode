@@ -43,11 +43,7 @@ const Main = function () {
 	function log_header (color, text, extra_dashes = 0) {
 		if (!DEBUG.BANNER_HEADERS) return;
 
-		const banner
-		= '--[ '
-		+ text
-		+ ' ]'
-		+ ('-').repeat(
+		const banner = '--[ ' + text + ' ]' + ('-').repeat(
 			79               // Total line max
 			- 20             // Timestamp
 			- text.length
@@ -99,11 +95,10 @@ const Main = function () {
 
 
 	this.onMessage = async function (socket, client_address, json_string) {
-		const request_nr = ++message_id;
-
-		const message = JSON.parse(String( json_string )); //...? Why String
+		const request_nr  = ++message_id;
+		const message     = JSON.parse(String( json_string )); //...? Why String
 		const is_pingpong = message.session && message.session.pong;
-		const do_log = (!is_pingpong || (is_pingpong && SETTINGS.LOG_PINGPONG));
+		const do_log      = (!is_pingpong || (is_pingpong && SETTINGS.LOG_PINGPONG));
 
 		if (do_log) log_header(
 			COLORS.TRAFFIC,
