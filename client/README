@@ -47,7 +47,7 @@ live in sub-directories.
 	./server/config.js           Provides hard coded constants and values from the configuration file
 	./server/reloader.js         Hot code-reloading. Reinstantiates the application for each request
 	./application/               Hot reloadable code, responses to messages from the websocket
-	./application/router.js      Calls according response handler to requested protocol/command
+	./application/router.js      Calls response handler according to requested protocol/command
 	./application/session.js     Main protocol, handles accounts and logins
 	./application/client.js
 	./application/chat/chat.js   Custom server protocol, simple text chat
