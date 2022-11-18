@@ -31,16 +31,18 @@ export const DebugConsole = function (callback) {
 	if (DEBUG.WINDOW_APP) window.CEP = this;
 
 	this.reloadCSS = function  () {
-		console.log( 'Reloading CSS' );
-		let link = document.querySelector( 'link[rel=stylesheet]' );
-		link.parentNode.removeChild( link );
-		link = document.createElement( 'link' );
-		link.rel  = 'stylesheet';
-		link.href = 'spielwiese.css?' + Date.now();
-		link.type = 'text/css';
-		document.querySelector('head').appendChild( link );
+		self.status( 'Styles reloaded', /*clear*/true );
+		const head = document.querySelector('head');
+		const remove_link = head.querySelector( '[rel=stylesheet]' );
+		const new_link = document.createElement( 'link' );
+		new_link.rel  = 'stylesheet';
+		new_link.href = 'spielwiese.css?' + Date.now();
+		new_link.type = 'text/css';
+		head.appendChild( new_link );
+		setTimeout( ()=>remove_link.parentNode.removeChild(remove_link), 1000 );
 
 	}; // reloadCSS
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
@@ -83,7 +85,7 @@ export const DebugConsole = function (callback) {
 		<textarea autocomplete="off"></textarea>
 	</main>
 	<header class="toolbar">
-		<nav class="tasks"><button class="cep enabled" title="Client End Point">CEP</button></nav>
+		<nav class="tasks"><button class="cep enabled" title="Remote Site">MyNonde</button></nav>
 		<nav><span class="time"></span></nav>
 		<nav class="filter">
 			<button>Filter</button>
@@ -95,7 +97,7 @@ export const DebugConsole = function (callback) {
 		</nav>
 	</header>
 	<footer class="toolbar">
-		<nav><span class="connection warning">OFFLINE</span></nav>
+		<nav><button class="connection warning">OFFLINE</button></nav>
 		<nav><span class="status"></span></nav>
 		<nav class="send">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
@@ -132,7 +134,7 @@ export const DebugConsole = function (callback) {
 ></iframe>
 	`); // HTML_YOUTUBE
 
-	const KEYBOARD_SHORTCUTS = [{
+	const KEYBOARD_SHORTCUTS = [{   // key: Keep in sync with toggles. Atm. only Alt+Key works with toggles.
 		event     : 'keydown',
 		key       : 'a',
 		modifiers : ['alt'],
@@ -254,7 +256,7 @@ export const DebugConsole = function (callback) {
 		const T = PRESETS.TOGGLE;
 		const F = PRESETS.FILTER;
 
-		return [
+		return [                                                    // shortcut: Sync with KbdSC
 { name:'terminal'   , preset:T.TERMINAL   , target:terminal , menu:null      , shortcut:'T',  caption:null         },
 { name:'debug'      , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:'Chat'       },
 { name:'cep'        , preset:F.CEP        , target:output   , menu:'filter'  , shortcut:null, caption:'CEP'        },
@@ -265,7 +267,7 @@ export const DebugConsole = function (callback) {
 { name:'request'    , preset:F.REQUEST    , target:output   , menu:'filter'  , shortcut:null, caption:'Request'    },
 { name:'response'   , preset:F.RESPONSE   , target:output   , menu:'filter'  , shortcut:null, caption:'Response'   },
 { name:'compact'    , preset:T.COMPACT    , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compact'    },
-{ name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'O',  caption:'Overflow'   },
+{ name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'V',  caption:'Overflow'   },
 { name:'separators' , preset:T.SEPARATORS , target:output   , menu:'toggles' , shortcut:'S',  caption:'Separators' },
 { name:'last'       , preset:T.LAST       , target:output   , menu:'toggles' , shortcut:'L',  caption:'Show Last'  },
 { name:'keyBeep'    , preset:T.KEY_BEEP   , target:terminal , menu:'toggles' , shortcut:'K',  caption:'Key Beep'   },
@@ -363,7 +365,9 @@ export const DebugConsole = function (callback) {
 
 
 	function adjust_textarea () {
-		const is_request = (self.elements.input.value.indexOf('\n') >= 0);
+		const bang = self.elements.input.value.charAt( 0 );
+		const has_newlines = (self.elements.input.value.indexOf('\n') >= 0);
+		const is_request = has_newlines || (bang == '/') || (bang == '.');
 		self.elements.input.classList.toggle( 'request', is_request );
 
 		const lines = self.elements.input.value.split('\n');
@@ -388,8 +392,10 @@ export const DebugConsole = function (callback) {
 
 
 	function animate_ping (transmit = false) {
+		self.elements.buttonCEP.classList.add( transmit ? 'transmit' : 'ping' );
 		self.elements.connection.classList.add( transmit ? 'transmit' : 'ping' );
 		setTimeout( ()=>{
+			self.elements.buttonCEP.classList.remove( transmit ? 'transmit' : 'ping' );
 			self.elements.connection.classList.remove( transmit ? 'transmit' : 'ping' );
 		}, SETTINGS.TIMEOUT.PING_CSS);
 
@@ -958,7 +964,10 @@ setTimeout( ()=>{
 		// Replace chat commands with actual ones
 		let text = self.elements.input.value.trim();
 
-		if (text.trim() == '') return;
+		if (text.trim() == '') {
+			if (event.button === 0) self.print( '', 'mark' );
+			return;
+		}
 
 		if (text.charAt(0) == '/') {
 			const tokens  = text.slice(1).split(' ');
@@ -1255,16 +1264,33 @@ setTimeout( ()=>{
 
 // STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const status_messages = [];
+	let status_messages = [];
 	let status_timeout = null;
 
-	this.status = function (html) {
+	this.status = function (html, clear = false) {
+		if (clear) return self.status( html );
+
+		if (html === null) {
+			clearTimeout( status_timeout );
+			status_timeout = null;
+			status_messages = [];
+			self.elements.status.classList.add( 'fade_out' );
+			setTimeout( ()=>{
+				self.elements.status.innerHTML = '';
+				self.elements.status.classList.remove( 'fade_out' );
+			}, SETTINGS.TIMEOUT.STATUS_FADE);
+			return;
+		}
+
 		status_messages.push( html );
 		if (status_timeout === null) next();
 
 		function next () {
 			if (status_messages.length == 0) {
 				status_timeout = null;
+				setTimeout( ()=>{
+					if (status_timeout === null) self.status( null );
+				}, 1000)
 			} else {
 				self.elements.status.classList.add( 'fade_out' );
 
@@ -1330,51 +1356,16 @@ setTimeout( ()=>{
 		try   { message = JSON.parse( event.data ); }
 		catch { /* Assume string */ }
 
-		if (!message.update) {
-			const category = Object.keys( message )[0];
-			switch (category) {
-				case 'broadcast': {
-					if (message.broadcast.type == 'rss') {
-						Object.values(message.broadcast.items).forEach( (entry, index)=>{
-							self.status(
-								'<a href="'
-								+ entry.link
-								+ '">'
-								+ entry.title
-								+ '</a>'
-							);
-						});
-					}
-					break;
-				}
-				case 'response': {
-					const response = message.response;
-					switch (response.command) {
-						case 'session.login': {
-							if (response.result != 'Already logged in') {
-								self.elements.connection.classList.add( 'attached' );
-								self.elements.connection.innerText = 'Attached';
-							}
-							break;
-						}
-						case 'session.logout': {
-							self.elements.connection.classList.remove( 'attached' );
-							self.elements.connection.innerText = 'Connected';
-							break;
-						}
-					}
-					break;
-				}
-			}
-
-			print_message();
-
-		} else {
+		if (message.update) {
 			switch (message.update.type) {
 				case 'ping': {
 					if (!DEBUG.HIDE_MESSAGES.PING) print_message();
 					callback.send( {session:{ pong: message.update.pong }} );
 					animate_ping();
+					return;
+				}
+				case 'servername': {
+					self.elements.buttonCEP.innerText = message.update.name;
 					return;
 				}
 				case 'chat': {
@@ -1389,17 +1380,73 @@ setTimeout( ()=>{
 					return;
 				}
 				case 'reload': {
-					const href = document.querySelector( '[rel=stylesheet]' ).href;
-					if (message.update.reload == 'spielwiese.css') {
-						self.reloadCSS();
-						print_message();
-						return;
+					switch (message.update.file) {
+						case 'spielwiese.css': {
+							self.reloadCSS();
+							print_message();
+							return;
+						}
+						case 'debug_console.js':  // fall through
+						case 'main.js': {
+							location.reload();
+							return;
+						}
 					}
 					break;
 				}
 			}
 
-			self.print( message, 'error' );
+			self.print( message, 'update error' );
+			return;
+
+		} else {
+			const category = Object.keys( message )[0];
+			switch (category) {
+				case 'broadcast': {
+					if (message.broadcast.type == 'rss') {
+						Object.values(message.broadcast.items).forEach( (entry, index)=>{
+							self.status(
+								'<a href="'
+								+ entry.link
+								+ '">'
+								+ message.broadcast.feed
+								+ ': '
+								+ entry.title
+								+ '</a>'
+							);
+						});
+					}
+					break;
+				}
+				case 'response': {
+					const response = message.response;
+					const result   = message.response.result;
+					switch (response.command) {
+						case 'session.login': {
+							if (response.result != 'Already logged in') {
+								self.elements.connection.classList.add( 'attached' );
+								self.elements.connection.innerText
+								= result.login.nickName || result.login.userName;
+							}
+							break;
+						}
+						case 'chat.nick': {
+							if (response.success) {
+								self.elements.connection.innerText = result;
+							}
+							break;
+						}
+						case 'session.logout': {
+							self.elements.connection.classList.remove( 'attached' );
+							self.elements.connection.innerText = 'Connected';
+							break;
+						}
+					}
+					break;
+				}
+			}
+
+			print_message();
 		}
 
 		function print_message () {
@@ -1505,6 +1552,14 @@ console.groupEnd();
 		});
 
 
+		// BUTTON: "CEP"
+		self.elements.buttonCEP.addEventListener( 'click', ()=>self.reloadCSS() );
+
+
+		// Status bar
+		self.elements.status.addEventListener( 'click', ()=>self.status( null ) );
+
+
 		// BUTTON: "Enter"
 		self.requestId = 0;
 		self.elements.enter.addEventListener( 'click', on_enter_click );
@@ -1513,9 +1568,6 @@ console.groupEnd();
 		// BUTTON: "Exit"
 		self.elements.close.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
 
-
-		// BUTTON: "CEP"
-		self.elements.buttonCEP.addEventListener( 'click', ()=>self.reloadCSS() );
 
 
 		// LOGIN FORM

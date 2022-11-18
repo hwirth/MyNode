@@ -37,7 +37,7 @@
 	function show_status (text) { document.querySelector( 'header.noscript p').innerHTML = text; }
 </script><style class="noscript">
 	* { margin:0; padding:0; box-sizing:border-box; }
-	.init body { width:100%; height:100%; background:#fff; color:#000; }
+	.init body { width:100%; height:100%; background:#000; color:#fc0; }
 	.init body > :not(.noscript) { display:none; }
 	.init header { width:100%; height:100%; text-align:center;
 		display:flex; flex-direction:column; align-items:center; justify-content:center; }
@@ -48,9 +48,8 @@
 	<header class="noscript">
 		<h1>
 			<img src="/images/spielwiese.png" alt="Site icon">
-			<br>
-			spielwiese <small>Research Project</small>
 		</h1>
+		<h2>spielwiese</h2>
 		<p>Please enable JavaScript</p>
 	</header>
 	<script class="noscript"> show_status('Loading'); </script>

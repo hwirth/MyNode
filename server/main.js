@@ -224,8 +224,16 @@ const Main = function () {
 			self.wsServer.handleUpgrade( request, socket, head, (socket)=>{
 				self.wsServer.emit( 'connection', socket, request );
 				socket.send( //JSON.stringify({ [
-					'Welcome on ' + SETTINGS.SERVER_NAME + '.'
+					'Welcome on ' + SETTINGS.SERVER_BANNER + '.'
 				//: {},] })
+				);
+				socket.send(
+					JSON.stringify({
+						update: {
+							type: 'servername',
+							name: SETTINGS.SERVER_NAME,
+						},
+					}),
 				);
 			});
 

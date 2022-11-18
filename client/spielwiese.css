@@ -231,7 +231,7 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 .terminal input {
 	border:var(--input-border);
 	border-radius:var(--input-radius);
-	border:var(--input-border); border-radius:0.25em;
+	border:var(--input-border); border-radius:0.5px;
 	background:var(--terminal-input-bg); color:var(--terminal-input-color);
 }
 .terminal input:focus {
@@ -244,6 +244,16 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 	border-radius:5px;
 	background: var(--button-bg); color:var(--button-color);
 	white-space:nowrap;
+	box-shadow:
+		inset -1px -1px 1px 1px #0001,
+		inset  1px  1px 1px 1px #fff1
+	;
+}
+.terminal button:active {
+	box-shadow:
+		inset  1px  1px 1px 1px #0001,
+		inset -1px -1px 1px 1px #fff1
+	;
 }
 .terminal button:focus,
 .terminal button:hover   { filter:brightness(1.5); }
@@ -276,7 +286,7 @@ X.terminal button.token,
 /* TOOLBARS */
 .terminal .toolbar {
 	position:relative;
-	display:inline-flex; flex-wrap:wrap;
+	display:inline-flex;
 	border-radius:5px;
 	background:#fff3; color:#fff;
 	box-shadow:
@@ -285,16 +295,19 @@ X.terminal button.token,
 	;
 	user-select:none; cursor:default;
 }
-.terminal .toolbar > * { Xposition:relative; display:flex; }
+.terminal .toolbar > * { Xposition:relative; display:inline-flex; flex-shrink:0; }
 .terminal header > :nth-child(1) { flex-grow:0; }
 .terminal header > :nth-child(2) { flex-grow:1; justify-content:center; }
 .terminal header > :nth-child(3) { flex-grow:0; justify-content:end; }
 .terminal header > :nth-child(4) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(1) { flex-grow:0; }
-.terminal footer > :nth-child(2) { flex-grow:1; }
+.terminal footer > :nth-child(2) { flex-grow:1; flex-shrink:1; }
 .terminal footer > :nth-child(3) { flex-grow:0; justify-content:end; }
 .terminal footer > :nth-child(4) { flex-grow:0; justify-content:end; }
 
+.terminal .toolbar * { overflow:hidden; }
+
+/* Fighting line height */
 .terminal button,
 .terminal input { height:calc(1.2rem + 2px); padding:2.5px 5px 1.5px 7px/*//...?*/; }
 .terminal .toolbar,
@@ -338,47 +351,24 @@ X.terminal:not(.connected) .chat .items,
 .terminal footer.toolbar > nav:focus-within .items { bottom:100%; top:unset; }
 
 /* Other UI */
-.terminal button.cep,/* { background:#fff4; } */
-.terminal .connection { border:solid 1px #fff4; border-width:0 1px 0 0; border-radius:5px; background:#fff2; }
+.terminal button.cep,
+.terminal .connection { border:solid 1px #fff4; border-width:0 1px 0 0; background:#fff2; }
+.terminal.connected button.cep { background:#08f4; Xcolor:#6af; }
 .terminal .connection  { font-weight:bold; color:#ca0; transition:color 0.2s linear; }
-.terminal .connection.connected { color:#6afc; }
-.terminal .connection.attached { color:#6af; }
-.terminal .connection.ping { color:#0a0; background:#8f82; }
+.terminal.connected .connection { color:#6afc; background:#08f4; }
+.terminal .connection.attached { color:#6af; color:#fff; }
+.terminal .toolbar button.transmit,
+.terminal .toolbar button.ping { background:#4af6; }
 .terminal.fancy nav .connection::before {
 	content:''; display:none;
 }
-.terminal.fancy .connection.transmit::before,
-.terminal.fancy .connection.ping::before {
+.terminal.fancy button.transmit::before,
+.terminal.fancy button.ping::before {
 	display:block;
-	position:absolute; bottom:100%; left:14px; z-index:-1;
-	width:12px; height:0;
-	background:linear-gradient(to right, #0ff0, #0ff2 40%, #ffff 41%, #ffff 59%, #0ff2 60%, #0ff0 100%);
+	position:absolute; bottom:100%; left:10px; z-index:-1;
+	width:20px; height:0;
+	background:linear-gradient(to right, #0ff0, #0ff2 40%, #ffff 49%, #ffff 51%, #0ff2 60%, #0ff0 100%);
 	height:calc(100vh - 2 * (1.2rem + 2px + 10px));
-	animation:PING 0.4s linear;
-	opacity:0;
-}
-@keyframes PING {
-	  0% { opacity:0; }
-	  1% { opacity:1; }
-	  9% { opacity:1; }
-	 10% { opacity:0; }
-	 20% { opacity:0; }
-	 21% { opacity:1; }
-	 29% { opacity:1; }
-	 30% { opacity:0; }
-	 40% { opacity:0; }
-	 41% { opacity:1; }
-	 49% { opacity:1; }
-	 50% { opacity:0; }
-	 60% { opacity:0; }
-	 61% { opacity:1; }
-	 69% { opacity:1; }
-	 70% { opacity:0; }
-	 80% { opacity:0; }
-	 81% { opacity:1; }
-	 89% { opacity:1; }
-	 90% { opacity:0; }
-	100% { opacity:0; }
 }
 
 .terminal .time {
@@ -394,7 +384,8 @@ X.terminal:not(.connected) .chat .items,
 	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
 }
 
-.terminal .status a { text-decoration:none; }
+.terminal .status { position:relative; }
+.terminal .status a { display:inline-block; text-decoration:none; height:1rem; }
 .terminal .status a:hover { color:#acf; text-decoration:underline; }
 .terminal nav span.status {
 	padding-left:10px;
@@ -405,14 +396,13 @@ X.terminal:not(.connected) .chat .items,
 	opacity:0;
 }
 
-
 .terminal.fancy {
 	background:unset;
 	background-image:url(/images/bg_grid3.jpg);   /******************************************************* GRID **/
 	background-size:cover;
 	background-size:auto 100%;
 	background-position:center;
-	transition:background-image 0.5s ease-in-out;
+	Xtransition:background-image 0.5s ease-in-out;
 }
 .terminal.fancy.connected { opacity:1; }
 @media (min-aspect-ratio: 4/3) {
@@ -454,6 +444,7 @@ X.terminal:not(.connected) .chat .items,
 .terminal.fancy.animate.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 7%, #0000 10%); }
 .terminal.fancy.animate.no  output::after { background:radial-gradient(circle at center, #f003, #8002 7%, #0000 10%); }
 
+/* OUTPUT */
 .terminal output {
 	margin-top:1em;
 	color:var(--terminal-text-color);
@@ -462,6 +453,7 @@ X.terminal:not(.connected) .chat .items,
 	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 }
 
+/* Hover, expand */
 .terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
 .terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; }
 .terminal output pre:hover { Xbackground:#fff4; color:#fff; cursor:pointer; }
@@ -471,12 +463,30 @@ X.terminal:not(.connected) .chat .items,
 .terminal .compact.separators pre:hover { border-width:1px 0; margin-top:-1px; }
 .terminal output.compact.last pre.unexpand:last-child,
 .terminal :not(.compact) pre.unexpand,
-.terminal .compact pre { white-space:normal; Xoverflow:hidden; padding-top:1px; padding-bottom:1px; }
+.terminal .compact pre { white-space:normal; padding-top:1px; padding-bottom:1px; }
 
+/* Last */
 .terminal output[class]:not(.compact) pre.unexpand { margin-bottom:0.5em; }
 .terminal output.compact.last pre:last-child,/*//...*/
 .terminal .compact pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
+/* Marker */
+Xhr { width:calc(100% - 35px); height:1px; color:#09f8; }
+.terminal pre.mark { position:relative; display:block; }
+.terminal pre.mark::after {
+	content:'';
+	display:block; position:relative;
+	width:calc(100%);
+}
+hr,
+.terminal pre.mark::after {
+	transform:translate(-35px, 6px);
+	height:1.2em;
+	outline:none;
+	border:solid 1px #09f8; border-width:1px 0 0;
+	margin-bottom:6.5px;
+	color:transparent;
+}
 
 .terminal pre { display:block; }
 .terminal .debug .cep       pre.cep,
@@ -496,6 +506,7 @@ X.terminal:not(.connected) .chat .items,
 .terminal pre.request   { color:var(--terminal-request-color)   }
 .terminal pre.response  { color:var(--terminal-response-color)  }
 .terminal pre.chat      { color:var(--terminal-chat-color)      }
+.terminal pre.error     { color:var(--terminal-error-color)     }
 
 .terminal.fancy :is(textarea, pre) { padding-left:50px; }
 .terminal.fancy pre::before {
@@ -538,7 +549,7 @@ X.terminal:not(.connected) .chat .items,
 .terminal code.curlyC   { color:#bbb; }
 */
 
-
+/* INPUT */
 .terminal textarea {
 	width:100%; border:none;
 	background:transparent; color:var(--terminal-chat-color);
@@ -563,11 +574,11 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	animation: BEAM 0.1s ease-in-out infinite;
 }
 @keyframes BEAM {
-	  0% { opacity:1.0; }
-	 49% { opacity:1.0; }
-	 50% { opacity:0.9; }
-	 99% { opacity:0.9; }
-	100% { opacity:1.0; }
+	  0% { opacity:1.0;  }
+	 49% { opacity:1.0;  }
+	 50% { opacity:0.95; }
+	 99% { opacity:0.95; }
+	100% { opacity:1.0;  }
 	/*
 	   0% { opacity:1.0; }
 	  42% { opacity:0.98; }
@@ -575,6 +586,24 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	  93% { opacity:0.9; }
 	 100% { opacity:1.0; }
 	 */
+}
+
+/* Transmission */
+X.terminal.fancy .toolbar button.transmit::before,
+X.terminal.fancy .toolbar button.ping::before {
+	animation:TRANSMISSION 0.4s linear;
+	opacity:0;
+}
+@keyframes TRANSMISSION {
+	  0% { opacity:0;   }
+	  1% { opacity:1;   }
+	 30% { opacity:1;   }
+	 31% { opacity:0.6; }
+	 50% { opacity:0.9; }
+	 68% { opacity:0.6; }
+	 69% { opacity:1;   }
+	 99% { opacity:1;   }
+	100% { opacity:0;   }
 }
 
 /* MCP */

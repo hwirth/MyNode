@@ -43,7 +43,8 @@ let base_dir = __dirname.split( path.sep );  base_dir.pop();  base_dir = base_di
 const server_name = (config_file.SERVER_NAME || PROGRAM_VERSION);
 
 const SETTINGS = {
-	SERVER_NAME: (`
+	SERVER_NAME   : server_name,
+	SERVER_BANNER : (`
  __  __       _   _           _
 |  \\/  |_   _| \\ | | ___   __| | ___
 | |\\/| | | | |  \\| |/ _ \\ / _\` |/ _ \\
@@ -67,7 +68,7 @@ const SETTINGS = {
 	PING: {
 		LOG      : !true,      // true: Might flood your log output
 		KICK     : true,       // false: Allow clients to ignore ping updates
-		INTERVAL : 60*1000,
+		INTERVAL : 6*1000,
 	},
 
 	LOG_PINGPONG         : false,

@@ -271,7 +271,7 @@ if (message.broadcast) console.trace();
 			});
 
 			color_log( COLORS.COMMAND, '<session.login>', client );
-			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_IN );
+			client.respond( STATUS.SUCCESS, request_id, client );
 ;
 			client.send({ notice: user_record.banner || STRINGS.LOGIN_BANNER });
 
@@ -331,40 +331,19 @@ if (message.broadcast) console.trace();
 //...color_log( COLORS.ERROR, 'TEST ERROR.' );
 //...throw new Error('TEST ERROR');
 
-		if (client.inGroup( 'mod', 'admin', 'dev') ) {
-			color_log( COLORS.COMMAND, '<session.who>', client );
-
-			const clients = {};
-			Object.keys( persistent.clients ).forEach( (address)=>{
-				clients[address] = dump( persistent.clients[address] );
-			});
-
-			client.respond( STATUS.SUCCESS, request_id, clients );
-
-		} else if (client.login) {
+		if (client.login) {
 			const clients = {};
 			Object.keys( persistent.clients ).forEach( (address)=>{
 				const login = persistent.clients[address].login;
 				if (login) {
-					clients[login.userName] = {
+					clients[address] = {
+						userName: login.userName,
 						nickName: login.nickName || null,
 					};
+				} else {
+					clients[address] = null;
 				}
 			});
-
-			for (let address in clients) {
-				/*
-				clients[address]
-				= (clients[address].login)
-				? {
-					userName: clients[address].login.userName,
-					nickName: clients[address].login.nickName,
-
-				}
-				: { login: false }
-				;
-				*/
-			}
 
 			color_log( COLORS.COMMAND, '<session.who>', client );
 			client.respond( STATUS.SUCCESS, request_id, clients );
@@ -374,6 +353,26 @@ if (message.broadcast) console.trace();
 		}
 
 	}; // who
+
+
+	this.request.clients = async function (client, request_id, parameters) {
+
+		if (client.login) {
+			color_log( COLORS.COMMAND, '<session.clients>', client );
+
+			const clients = {};
+			Object.keys( persistent.clients ).forEach( (address)=>{
+				clients[address] = dump( persistent.clients[address] );
+			});
+
+			client.respond( STATUS.SUCCESS, request_id, clients );
+
+		} else {
+			color_log( COLORS.COMMAND, '<session.clients>', client );
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+		}
+
+	}; // clients
 
 
 	this.request.kick = async function (client, request_id, parameters) {

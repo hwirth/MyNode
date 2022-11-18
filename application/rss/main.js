@@ -100,7 +100,7 @@ module.exports = function ChatServer (persistent, callback) {
 
 	this.request.reset = async function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<rss.reset>', client );
-		reset_data();
+		self.reset( /*force*/true );
 		client.respond( STATUS.SUCCESS, request_id, 'RSS cache reset' );
 
 	}; // request.clear
@@ -227,28 +227,33 @@ module.exports = function ChatServer (persistent, callback) {
 	}; // exit
 
 
-	this.reset = function () {
+	this.reset = function (force = false) {
 		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'RSSServer.reset' );
 
-		const data = {
-			feeds: [
-				{ enabled:false, name:'Standard' , url:'https://www.derstandard.at/rss' },
-				{ enabled:false, name:'ORF'      , url:'https://rss.orf.at/news.xml'    },
-				{ enabled:false, name:'Fefe'     , url:'https://blog.fefe.de/rss.xml'   },
-			],
-			next     : 0,
-			interval : 10*60*1000,
-			items    : {},
-		};
+		if (force || Object.keys( persistent ).length == 0) {
+			const data = {
+				feeds: [
+{ enabled:false, name:'Der Standard'              , url:'https://www.derstandard.at/rss' },
+{ enabled:false, name:'www.orf.at'                , url:'https://rss.orf.at/news.xml'    },
+{ enabled:false, name:'Fefes Blog'                , url:'https://blog.fefe.de/rss.xml'   },
+{ enabled:false, name:'BBC World'                 , url:'http://feeds.bbci.co.uk/news/world/rss.xml' },
+{ enabled:false, name:'BBC Science & Environment' , url:'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml' },
+{ enabled:false, name:'BBC Technology'            , url:'http://feeds.bbci.co.uk/news/technology/rss.xml' },
+				],
+				next     : 0,
+				interval : 10*60*1000,
+				items    : {},
+			};
 
-		Object.keys( data ).forEach( (key)=>{
-			persistent[key] = data[key];
-		});
+			Object.keys( data ).forEach( (key)=>{
+				persistent[key] = data[key];
+			});
 
-		persistent.feeds.forEach( (feed)=>{
-			feed.nrItems = null;
-			poll( feed );
-		});
+			persistent.feeds.forEach( (feed)=>{
+				feed.nrItems = null;
+				poll( feed );
+			});
+		}
 
 	}; // reset
 

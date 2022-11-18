@@ -32,7 +32,7 @@ export const SETTINGS = {
 	},
 
 	TIMEOUT: {
-		PING_CSS         : 400,
+		PING_CSS         : 100,
 		RECONNECT        : 200,   //1000 ms
 		STATUS_FADE      : 1000,
 		STATUS_SHOW      : 6000,

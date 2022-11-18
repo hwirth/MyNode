@@ -317,7 +317,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.exit' );
-
+		self.fsWatcher.close();
 		return Promise.resolve();
 
 	}; // exit
@@ -336,17 +336,15 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
 		self.reset();
 
-		fs.watch( SETTINGS.BASE_DIR + 'client', (event, filename)=>{
-			console.log( 'fs.watch: event:' + event );
+		self.fsWatcher = fs.watch( SETTINGS.BASE_DIR + 'client', (event, filename)=>{
 			if (filename && (filename.charAt(0) != '.')) {
-				//console.log( 'filename provided: ' + filename );
 				const all_clients = callback.getAllClients();
 
 				Object.keys( all_clients )
 				.forEach( (key)=>{
 					all_clients[key].update({
-						type     : 'reload',
-						reload   : filename,
+						type : 'reload',
+						file : filename,
 					});
 				});
 			} else {

@@ -54,7 +54,7 @@ module.exports = function ChatServer (persistent, callback) {
 				oldNick  : old_nick,
 			});
 
-			client.respond( STATUS.SUCCESS, request_id, REASONS.NICKNAME_CHANGED );
+			client.respond( STATUS.SUCCESS, request_id, new_nick );
 
 		} else {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );

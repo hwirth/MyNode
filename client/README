@@ -184,6 +184,14 @@ this.request.news = async function (client, request, response) {
 	response.toGroup({...});
 }
 
+[ ] mcp.update.{all|css|html|js} [for {user|group|address}]
+[ ] Invert "overflow" - Bit should say yes, when all is shown
+[ ] reload: debug_console.js -- use ?timestamp
+[ ] Registry of all responses/updates/broadcasts/notices --> CEP filter, MyN subscription
+[ ] Validate and vet HTML
+[ ] common protocol.{status,reset,load,save}
+[ ] session.restore <-- client collected messages
+[ ] End key scrolls down, Ctrl+End toggles some scroll mode
 [ ] mcp: service start/stop/status/reload/reset(wipe)
 [ ] Respect SETTINGS.MESSAGE_TIMESTAMPS everywhere
 [ ] Toggles.toggle -->  Change URL accordingly ("Update your bookmark to save settings")
@@ -213,7 +221,7 @@ this.request.news = async function (client, request, response) {
 [ ] SJSON, MJSON
 [ ] Hide messages in non-compacthttps
 [ ] Subscription --> ?Report
-[ ] DC.print: May not convert all https:// links properly (tabs, "rest" will not be examined)
+[ ] print: May not convert all https:// links properly (tabs, "rest" will not be examined)
 [ ] broadcast only to subscribers
 [ ] Button scripts (client) use short-request format
 [ ] RSS reader
