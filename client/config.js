@@ -77,7 +77,7 @@ export const PRESETS = {
 	TOGGLE: {
 		TERMINAL   : get( 'terminal' ),
 		COMPACT    : get( 'compact' ),
-		SEPARATORS : !get( 'separators' ),
+		SEPARATORS : get( 'separators' ),
 		OVERFLOW   : get( 'overflow' ),
 		ANIMATE    : !get( 'animate' ),
 		FANCY      : !get( 'fancy' ),

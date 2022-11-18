@@ -833,6 +833,14 @@ setTimeout( ()=>{
 			event.preventDefault();
 			self.elements.enter.click();
 
+	 	} else if ((event.keyCode == 13) && (event.shiftKey || !event.ctrlKey || !event.altKey)) {
+			const text = self.elements.input.value;
+			if (text.charAt( 0 ) == '.') {
+				self.elements.input.value = parse_short_request( text );
+				adjust_textarea();
+				return;
+			}
+
 		} else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
 			event.preventDefault();
