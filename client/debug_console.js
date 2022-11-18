@@ -1375,16 +1375,14 @@ setTimeout( ()=>{
 					return;
 				}
 				case 'html': {
-					print_message();
 					self.print({ html: message.update.html });
-					return;
+					return print_message();
 				}
 				case 'reload': {
 					switch (message.update.file) {
 						case 'spielwiese.css': {
 							self.reloadCSS();
-							print_message();
-							return;
+							return print_message();
 						}
 						case 'debug_console.js':  // fall through
 						case 'main.js': {
@@ -1392,12 +1390,16 @@ setTimeout( ()=>{
 							return;
 						}
 					}
+					self.status(
+						'The file ' + message.update.file + ' was reloaded.',
+						/*clear*/true,
+					);
+					return print_message();
 					break;
 				}
 			}
 
-			self.print( message, 'update error' );
-			return;
+			return self.print( message, 'update error' );
 
 		} else {
 			const category = Object.keys( message )[0];
@@ -1446,7 +1448,7 @@ setTimeout( ()=>{
 				}
 			}
 
-			print_message();
+			return print_message();
 		}
 
 		function print_message () {

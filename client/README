@@ -184,6 +184,9 @@ this.request.news = async function (client, request, response) {
 	response.toGroup({...});
 }
 
+[ ] Last chat entry uncollapsed in Chat Mode
+[ ] Dump clicked message to console
+[ ] message-id, edit/delete everywhere via update
 [ ] mcp.update.{all|css|html|js} [for {user|group|address}]
 [ ] Invert "overflow" - Bit should say yes, when all is shown
 [ ] reload: debug_console.js -- use ?timestamp

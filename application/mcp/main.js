@@ -76,20 +76,22 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 	this.request.status = function (client, request_id, parameters) {
+		let response = null;
+
 		if (parameters.persistent || (parameters.persistent === null)) {
 			if (client.login) {
 				if (client.inGroup( 'admin', 'dev' )) {
-					client.respond(
+					response = [
 						STATUS.SUCCESS,
 						request_id,
 						callback.getAllPersistentData(),
-					);
+					];
 				} else {
-					client.respond(
+					response = [
 						STATUS.SUCCESS,
 						request_id,
 						REASONS.INSUFFICIENT_PERMS,
-					);
+					];
 				}
 			}
 
@@ -101,7 +103,7 @@ module.exports = function MasterControl (persistent, callback) {
 					return { ...previous, [key]: formatted }
 				}, {});
 
-				client.respond(
+				response = [
 					STATUS.SUCCESS,
 					request_id,
 					{
@@ -113,17 +115,19 @@ module.exports = function MasterControl (persistent, callback) {
 							rules: callback.getProtocolDescription().split('\n'),
 						},
 					},
-				);
+				];
 
 			} else {
-				client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+				response = [ STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS ];
 			}
 
 
 		} else {
 			const command = Object.keys( parameters )[0];
-			client.respond( STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
+			response = [ STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} ];
 		}
+
+		client.respond( response );
 
 	}; // status
 

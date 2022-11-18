@@ -10,8 +10,8 @@ Click the "Chat" button or press Alt+D to switch the mode.
 While in debug mode, the toggles in the Chat menu let you
 select, which types of messages to show.
 
-Sending JSON Messages
----------------------
+Multiline Requests (mJSON)
+--------------------------
 You can enter tab-indented pseudo-JSON, in order to send
 arbitrary requests to the server. In essence, you type a
 JSON object without the curly braces and quotation marks.
@@ -20,8 +20,8 @@ You type:                 Resulting JSON:
 
 session                   {
     login                     "session":{
-      username: Mr. Me            "login":{
-      password: secRet                "username":"Mr. Me",
+        username: Mr. Me          "login":{
+        password: secRet              "username":"Mr. Me",
 chat                                  "password":"secRet"
     nick: me                      }
                               },
@@ -31,6 +31,17 @@ chat                                  "password":"secRet"
                           }
 
 You MUST USE the TAB KEY for indenting.
+
+Short Requests (sJSON)
+----------------------
+As long as all parameters don't contain dots (".") or
+semicolons, you can use the shortened single-line format.
+The example from above in sJSON:
+
+.session.login.username:Mr Me,password:secRet...chat.nick:me
+
+Where a dot stands for indentation/nesting, a double dot
+unindents, triple dots unindent 2 times and so on.
 
 Keyboard
 --------
