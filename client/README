@@ -184,6 +184,15 @@ this.request.news = async function (client, request, response) {
 	response.toGroup({...});
 }
 
+[ ] Client: Click to "install" updates (reloads)
+[ ] Post client errors, store on server
+[ ] Log: commands, errors, chat?
+[ ] Online users next to user name in bottom left corner
+[ ] User menu: Whisper, send file, call, kick/ban, reload client, script, rpg action
+[ ] Johhny Mnemonic puzzle: factor2
+[ ] Modules can register for top left "Spielwiese" button ("Available Apps")
+[ ] ESC+Backspace: Delete word
+[ ] Automatic help, when incomplete command, tab completion
 [ ] Last chat entry uncollapsed in Chat Mode
 [ ] Dump clicked message to console
 [ ] message-id, edit/delete everywhere via update
@@ -203,6 +212,7 @@ this.request.news = async function (client, request, response) {
     Hand over global persistence object, but only containing designated sub-objects
 [ ] All messages: <category, type=x, x> - key name for data is same as type
 [ ] generic reset for all services
+[#] Services export rule source
 [?] switch.js - how?
 [ ] GEH: Don't crash, restart reloader
 [ ] autoexec.bat

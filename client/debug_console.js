@@ -710,6 +710,54 @@ setTimeout( ()=>{
 	}; // textToRequest
 
 
+	function parse_short_request (text) {
+		const parts = text.slice(1).split('.')
+		let result = '';
+		let indentation = 0;
+
+		while (parts.length > 0) {
+			const part = parts.shift();
+
+			if (part === '') {
+				--indentation;
+				if (indentation < 0) throw new Error( 'Malformed short request' );
+
+			} else {
+				const pos_comma = part.indexOf( ',' );
+				if (pos_comma >= 0) {
+					part.split( ',' ).forEach( (sub_part)=>{
+						result
+						+= '\n'
+						+  '\t'.repeat( indentation )
+						+  sub_part.replace( '=', ':' )
+						;
+					});
+
+				} else {
+					const pos_equals = part.indexOf( '=' );
+					if (pos_equals >= 0) {
+						result
+						+= '\n'
+						+  '\t'.repeat( indentation )
+						+  part.replace( '=', ':' )
+						;
+					} else {
+						result
+						+= '\n'
+						+  '\t'.repeat( indentation )
+						+  part
+						;
+						++indentation;
+					}
+				}
+			}
+		}
+
+		return result.trim();
+
+	} // parse_short_request
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CLOCK
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1077,60 +1125,6 @@ setTimeout( ()=>{
 			}
 		}
 
-// SHORT REMOTE //////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-		// session.who
-		// chat.nick=name
-		// session.login.username=test,password=thing,sub:thing=1.fail
-		// session.login.username=test,password=thing,sub.thing=1..session.status
-		// session.login.username=test,password=thing,sub.thing=1..session.status
-
-		function parse_short_request (text) {
-			const parts = text.slice(1).split('.')
-			let result = '';
-			let indentation = 0;
-
-			while (parts.length > 0) {
-				const part = parts.shift();
-
-				if (part === '') {
-					--indentation;
-					if (indentation < 0) throw new Error( 'Malformed short request' );
-
-				} else {
-					const pos_comma = part.indexOf( ',' );
-					if (pos_comma >= 0) {
-						part.split( ',' ).forEach( (sub_part)=>{
-							result
-							+= '\n'
-							+  '\t'.repeat( indentation )
-							+  sub_part.replace( '=', ':' )
-							;
-						});
-
-					} else {
-						const pos_equals = part.indexOf( '=' );
-						if (pos_equals >= 0) {
-							result
-							+= '\n'
-							+  '\t'.repeat( indentation )
-							+  part.replace( '=', ':' )
-							;
-						} else {
-							result
-							+= '\n'
-							+  '\t'.repeat( indentation )
-							+  part
-							;
-							++indentation;
-						}
-					}
-				}
-			}
-
-			return result.trim();
-		}
-
 	} // on_enter_click
 
 
@@ -1391,7 +1385,7 @@ setTimeout( ()=>{
 						}
 					}
 					self.status(
-						'The file ' + message.update.file + ' was reloaded.',
+						'The file ' + message.update.file + ' was updated.',
 						/*clear*/true,
 					);
 					return print_message();
@@ -1423,8 +1417,9 @@ setTimeout( ()=>{
 						}
 						case 'error': {
 							self.status(
-								'<span class="error">Error</span>: '
-								+ message.broadcast.reason
+								'<span><span class="warning">Warning</span>: '
+								+ message.broadcast.error
+								+ '</span>'
 								,
 								/*clear*/true,
 							);
@@ -1439,7 +1434,7 @@ setTimeout( ()=>{
 					switch (response.command) {
 						case 'session.login': {
 							if (response.result != 'Already logged in') {
-								self.elements.connection.classList.add( 'attached' );
+								self.elements.connection.classList.add( 'authenticated' );
 								self.elements.connection.innerText
 								= result.login.nickName || result.login.userName;
 							}
@@ -1452,7 +1447,7 @@ setTimeout( ()=>{
 							break;
 						}
 						case 'session.logout': {
-							self.elements.connection.classList.remove( 'attached' );
+							self.elements.connection.classList.remove( 'authenticated' );
 							self.elements.connection.innerText = 'Connected';
 							break;
 						}

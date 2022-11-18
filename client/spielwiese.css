@@ -315,15 +315,15 @@ X.terminal button.token,
 .terminal .toolbar nav > :is(div, span) { padding:3px 5px; vertical-align:middle; }
 
 /* PATH */
-.terminal .toolbar .path {
+X.terminal .toolbar .path {
 	font-weight:bold;
 	text-shadow:none;
 	gap:0px;
 }
-.terminal .toolbar .path span { padding:3px 0; }
-.terminal .toolbar .path > :first-child { padding-left:5px; }
-.terminal .toolbar .path > ::after { content:'>'; padding:0 3px 0 2px; color:#fffa; font-weight:normal; }
-.terminal .toolbar .path > :last-child::after { content:none; }
+X.terminal .toolbar .path span { padding:3px 0; }
+X.terminal .toolbar .path > :first-child { padding-left:5px; }
+X.terminal .toolbar .path > ::after { content:'>'; padding:0 3px 0 2px; color:#fffa; font-weight:normal; }
+X.terminal .toolbar .path > :last-child::after { content:none; }
 
 /* MENUS */
 .terminal .toolbar > nav .items,
@@ -356,7 +356,7 @@ X.terminal:not(.connected) .chat .items,
 .terminal.connected button.cep { background:#08f4; Xcolor:#6af; }
 .terminal .connection  { font-weight:bold; color:#ca0; transition:color 0.2s linear; }
 .terminal.connected .connection { color:#6afc; background:#08f4; }
-.terminal .connection.attached { color:#6af; color:#fff; }
+.terminal .connection.authenticated { color:#6af; color:#fff; }
 .terminal .toolbar button.transmit,
 .terminal .toolbar button.ping { background:#4af6; }
 .terminal.fancy nav .connection::before {
@@ -395,6 +395,7 @@ X.terminal:not(.connected) .chat .items,
 .terminal nav span.status.fade_out {
 	opacity:0;
 }
+.terminal nav span.status > * { display:inline-block; line-height:1.2rem; transform:translate(0,-0.1rem); }
 
 .terminal.fancy {
 	background:unset;
@@ -455,12 +456,12 @@ X.terminal:not(.connected) .chat .items,
 
 /* Hover, expand */
 .terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
-.terminal .separators pre { border:solid 1px #fff4; border-width:0 0 1px; }
+.terminal .separators pre { Xborder:solid 1px #fff4; Xborder-width:0 0 1px; margin:5px 0; }
 .terminal output pre:hover { Xbackground:#fff4; color:#fff; cursor:pointer; }
 .terminal :not(.debug).compact pre.expand:hover { background:unset; cursor:pointer; }
 .terminal :not(.compact).overflow pre.unexpand,
 .terminal .compact.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
-.terminal .compact.separators pre:hover { border-width:1px 0; margin-top:-1px; }
+.terminal .compact.separators pre:hover { Xborder-width:1px 0; Xmargin-top:-1px; }
 .terminal output.compact.last pre.unexpand:last-child,
 .terminal :not(.compact) pre.unexpand,
 .terminal .compact pre { white-space:normal; padding-top:0px; padding-bottom:0px; }

@@ -101,7 +101,7 @@ module.exports = function MasterControl (persistent, callback) {
 		} else if (Object.keys(parameters).length > 0) {
 			color_log( COLORS.COMMAND, '<mcp.status.persistent>', client );
 
-			let uptime, memory, settings, debug, access;
+			let add_uptime, add_memory, add_settings, add_debug, add_access;
 
 			const memory_usage = process.memoryUsage();
 			const memory_info = Object.entries(memory_usage).reduce( (previous, [key, value]) => {
@@ -138,7 +138,7 @@ module.exports = function MasterControl (persistent, callback) {
 
 		} else {
 			const command = Object.keys( parameters )[0];
-			response = [ STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} ];
+			response = [ STATUS.FAILURE, request_id, {['Command ' + command]: REASONS.INVALID_REQUEST} ];
 		}
 
 		client.respond( ...response );

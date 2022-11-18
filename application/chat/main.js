@@ -46,7 +46,7 @@ module.exports = function ChatServer (persistent, callback) {
 
 			client.login.nickName = new_nick;
 
-			callback  .broadcast({
+			callback.broadcast({
 				address  : client.address,
 				type     : 'nickName',
 				userName : client.login.userName,
@@ -55,6 +55,7 @@ module.exports = function ChatServer (persistent, callback) {
 			});
 
 			client.respond( STATUS.SUCCESS, request_id, new_nick );
+			color_log( COLORS.COMMAND, '<chat.nick>', client );
 
 		} else {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
