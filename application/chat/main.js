@@ -14,20 +14,22 @@ const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
 
-module.exports = function ChatServer (persistent, callback) {
+module.exports = function ChatServer (persistent, callback, meta) {
 	const self = this;
+
+	this.request = {};
 
 	const dom_parser = new DomParser();
 	const rss_parser = new RssParser();
 
 	this.rssInterval;
 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.request = {};
-
+	meta( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
 	this.request.nick = function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<chat.nick>', client );
 
@@ -64,6 +66,7 @@ module.exports = function ChatServer (persistent, callback) {
 	}; // request.nick
 
 
+	meta( 'guest,user,mod,admin,dev,owner: {chat:{say:string}}' );
 	this.request.say = function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<chat.say>', client	);
 
@@ -92,6 +95,7 @@ module.exports = function ChatServer (persistent, callback) {
 	}; // request.say
 
 
+	meta( 'mod,admin,dev,owner: {chat:{html:string}}' );
 	this.request.html = function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<chat.html>', client	);
 

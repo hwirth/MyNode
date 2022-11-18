@@ -16,6 +16,8 @@ const WebSocketClient = require( './client.js' );
 module.exports = function SessionHandler (persistent, callback) {
 	const self = this;
 
+	this.request = {};
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
@@ -174,7 +176,6 @@ if (message.broadcast) console.trace();
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.request = {};
 	this.guestNr = 0;
 
 	this.request.pong = function (client, request_id, parameters) {

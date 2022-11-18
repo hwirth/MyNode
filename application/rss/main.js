@@ -17,6 +17,8 @@ const { REASONS, STATUS } = require( '../constants.js' );
 module.exports = function ChatServer (persistent, callback) {
 	const self = this;
 
+	this.request = {};
+
 	const dom_parser = new DomParser();
 	const rss_parser = new RssParser();
 
@@ -95,8 +97,6 @@ module.exports = function ChatServer (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.request = {};
 
 	this.request.reset = async function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<rss.reset>', client );

@@ -22,8 +22,9 @@ const PROTOCOL_DESCRIPTION = (`
 	connected,guest,user,mod,admin,dev,owner: {session:{status:empty}}
 	guest,user,mod,admin,dev,owner: {session:{who:empty}}
 	guest,user,mod,admin,dev,owner: {session:{who:{username:string}}}
-	guest,user,mod,admin,dev,owner: {chat:{say:string}}
 	guest,user,mod,admin,dev,owner: {chat:{nick:string}}
+	guest,user,mod,admin,dev,owner: {chat:{say:string}}
+	mod,admin,dev,owner: {chat:{html:string}}
 	mod,admin,dev,owner: {session:{who:{address:address}}}
 	mod,admin,dev,owner: {session:{kick:{username:string}}}
 	mod,admin,dev,owner: {session:{who:{address:address}}}
@@ -41,6 +42,8 @@ const PROTOCOL_DESCRIPTION = (`
 
 module.exports = function AccessControl (persistent, callback) {
 	const self = this;
+
+	this.request = {};
 
 	this.rules;
 
@@ -166,9 +169,9 @@ module.exports = function AccessControl (persistent, callback) {
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.request = {};
-
 	this.request.rules = function (client, request_id, parameters) {
+		return client.respond( STATUS.SUCCESS, request_id, persistent.descriptionState );
+
 		const command = Object.keys( parameters )[0];
 
 		switch (command) {

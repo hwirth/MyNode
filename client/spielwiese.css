@@ -23,10 +23,10 @@
 	--button-color          : #fff;
 	--button-bg             : #555;
 	--button-special-bg     : #676;
-	--button-submit-color   : #fff;
-	--button-submit-bg      : #c50;
-	--button-close-color    : #fff;
-	--button-close-bg       : #c50;
+	--button-enter-color    : #fff;
+	--button-enter-bg       : #a42;
+	--button-close-color    : var(--button-enter-color);
+	--button-close-bg       : var(--button-enter-bg);
 	--button-enabled-color  : #fff;
 	--button-enabled-bg     : #676;
 	--button-enabled-border : unset;
@@ -198,6 +198,14 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 .terminal .shell textarea { grid-area:m1; }
 
 /* Common */
+.terminal {
+	--scrollbar-thumb-color:#08f4; --scrollbar-track-color:#0660;
+	scrollbar-color:var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+}
+.terminal ::-webkit-scrollbar { opacity:1; width:9px; height:9px; }
+.terminal ::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb-color); }
+.terminal ::-webkit-scrollbar-track { background:var(--scrollbar-track-color); }
+
 .terminal ::selection {
 	color:#fff;
 	background:#06c;
@@ -255,22 +263,23 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 		inset -1px -1px 1px 1px #fff1
 	;
 }
+.terminal .toolbar > nav:hover > button,
 .terminal button:focus,
 .terminal button:hover   { filter:brightness(1.5); }
-.terminal button.submit  { background:var(--button-submit-bg ); color:var(--button-submit-color ); }
+.terminal button.enter   { background:var(--button-enter-bg  ); color:var(--button-enter-color  ); }
 .terminal button.close   { background:var(--button-close-bg  ); color:var(--button-close-color  ); }
 .terminal button.enabled { background:var(--button-enabled-bg); color:var(--button-enabled-color); }
 .terminal button.blink {
 	animation: TOGGLE 0.5s linear 1;
 }
 @keyframes TOGGLE {
-	 0% { background-color:var(--terminal-button-bg); }
-	11% { background-color:#ff0; }
-	22% { background-color:var(--terminal-button-bg); }
-	33% { background-color:#ff0; }
-	44% { background-color:var(--terminal-button-bg); }
-	55% { background-color:#ff0; }
-	66% { background-color:var(--terminal-button-bg); }
+	 0% { filter:brightness(2) contrast(1); }
+	11% { filter:brightness(1) contrast(2); }
+	22% { filter:brightness(2) contrast(1); }
+	33% { filter:brightness(1) contrast(2); }
+	44% { filter:brightness(2) contrast(1); }
+	55% { filter:brightness(1) contrast(2); }
+	66% { filter:brightness(2) contrast(1); }
 }
 
 .terminal button.login,

@@ -100,7 +100,7 @@ export const DebugConsole = function (callback) {
 		<nav><button class="connection warning">OFFLINE</button></nav>
 		<nav><span class="status"></span></nav>
 		<nav class="send">
-			<button class="submit" title="Execute command/send chat text">Enter</button>
+			<button class="enter" title="Execute command/send chat text">Enter</button>
 			<form class="items">
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
 				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
@@ -163,7 +163,7 @@ export const DebugConsole = function (callback) {
 		event     : 'keydown',
 		key       : 'l',
 		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.last.toggle(); },
+		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
 	},{
 		event     : 'keydown',
 		key       : 'm',
@@ -186,9 +186,9 @@ export const DebugConsole = function (callback) {
 		action    : ()=>{ self.toggles.terminal.toggle(); },
 	},{
 		event     : 'keydown',
-		key       : 'x',
+		key       : 'y',
 		modifiers : ['alt'],
-		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
+		action    : ()=>{ self.toggles.last.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'ArrowUp',
@@ -226,7 +226,7 @@ export const DebugConsole = function (callback) {
 			toggles      : container.querySelector( '.toggles .items'  ),
 			btnToggles   : container.querySelector( '.toggles button'  ),
 			filter       : container.querySelector( '.filter .items'   ),
-			debug        : container.querySelector( '.debug .items'    ),
+		debug        : container.querySelector( '.debug .items'    ),
 			output       : container.querySelector( 'output'           ),
 			input        : container.querySelector( 'textarea'         ),
 			// Login form
@@ -235,7 +235,7 @@ export const DebugConsole = function (callback) {
 			passWord     : container.querySelector( '[name=password]' ),
 			factor2      : container.querySelector( '[name=factor2]'  ),
 			// Additional menu buttons are addeded to .elements later under "Login form"
-			enter        : container.querySelector( '.submit' ),
+			enter        : container.querySelector( '.enter' ),
 			close        : container.querySelector( '.close'  ),//...! => exit
 			// Filter
 			debug        : container.querySelector( 'button.debug'     ),
@@ -269,7 +269,7 @@ export const DebugConsole = function (callback) {
 { name:'compact'    , preset:T.COMPACT    , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compact'    },
 { name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'V',  caption:'Overflow'   },
 { name:'separators' , preset:T.SEPARATORS , target:output   , menu:'toggles' , shortcut:'S',  caption:'Separators' },
-{ name:'last'       , preset:T.LAST       , target:output   , menu:'toggles' , shortcut:'L',  caption:'Show Last'  },
+{ name:'last'       , preset:T.LAST       , target:output   , menu:'toggles' , shortcut:'Y',  caption:'Show Last'  },
 { name:'keyBeep'    , preset:T.KEY_BEEP   , target:terminal , menu:'toggles' , shortcut:'K',  caption:'Key Beep'   },
 { name:'animate'    , preset:T.ANIMATE    , target:terminal , menu:'toggles' , shortcut:'A',  caption:'Animations' },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'      },
@@ -323,8 +323,10 @@ export const DebugConsole = function (callback) {
 				}
 
 				self.bit.say( toggle.enabled );//..., /*delay*/0, (toggle.name == 'tts') );
-				self.elements.btnToggles.classList.add( 'blink' );
-				setTimeout( ()=>self.elements.btnToggles.classList.remove('blink'), 500 );
+				self.elements.btnToggles.classList.add( 'blink', toggle.enabled ? 'success' : 'error' );
+				setTimeout( ()=>{
+					self.elements.btnToggles.classList.remove( 'blink', 'success', 'error' );
+				}, 500 );
 			}
 
 			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
@@ -960,19 +962,7 @@ setTimeout( ()=>{
 		else if (event.target === self.elements.shell ) focus_prompt( +1 )
 		;
 
-		if (event.target.parentNode === self.elements.output) {
-			// Toggle .compact
-			const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
-			const clicked_element = event.target.closest( 'pre' );
-			if (clicked_element === last_element) {
-				// Don't .compact, instead toggle "uncollapse last message"
-				self.toggles.last.toggle();
-			} else {
-				event.target.classList.toggle( 'expand' );     // Force it to expand
-				event.target.classList.toggle( 'unexpand' );   //...Keep track of user-clicked expands
-			}
-		}
-		else if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
+		if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
 		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
 		else if (event.target === self.elements.asGuest) fill( 'guest' , '' )
 		;
@@ -988,6 +978,20 @@ setTimeout( ()=>{
 
 	function on_dblclick (event) {
 		if (event.target.tagName == 'BODY') return self.toggles.terminal.toggle();
+
+		if (event.target.parentNode === self.elements.output) {
+			// Toggle .compact
+			const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
+			const clicked_element = event.target.closest( 'pre' );
+			if (clicked_element === last_element) {
+				// Don't .compact, instead toggle "uncollapse last message"
+				self.toggles.last.toggle();
+			} else {
+				event.target.classList.toggle( 'expand' );     // Force it to expand
+				event.target.classList.toggle( 'unexpand' );   //...Keep track of user-clicked expands
+			}
+			return;
+		}
 
 		const shift = event.shiftKey;
 		const ctrl = event.ctrlKey;
@@ -1386,16 +1390,14 @@ setTimeout( ()=>{
 							self.reloadCSS();
 							return print_message();
 						}
-						case 'debug_console.js':  // fall through
-						case 'main.js': {
+						//...case 'debug_console.js':  // fall through
+						//...case 'main.js':
+						case 'index.html': {
 							location.reload();
 							return;
 						}
 					}
-					self.status(
-						'The file ' + message.update.file + ' was updated.',
-						/*clear*/true,
-					);
+					self.status( 'The file ' + message.update.file + ' was updated.' );
 					return print_message();
 					break;
 				}
@@ -1432,6 +1434,14 @@ setTimeout( ()=>{
 								/*clear*/true,
 							);
 							break;
+						}
+						case 'reload': {
+							Object.keys( message.broadcast.reload )
+							.forEach( (file_name)=>{
+								self.status(
+									'The file ' + file_name + ' was updated.',
+								);
+							});
 						}
 					}
 					break;
@@ -1528,6 +1538,7 @@ console.groupEnd();
 			if (self.audioContext.state == 'suspended') self.audioContext.resume();
 			removeEventListener( 'keydown', activate_audio );
 			removeEventListener( 'mouseup', activate_audio );
+			self.status( 'Audio context resumed.', /*clear*/true );
 		}
 		addEventListener( 'keydown', activate_audio );
 		addEventListener( 'mouseup', activate_audio );
@@ -1650,6 +1661,9 @@ console.groupEnd();
 				}, 100);
 			}
 
+			if (!self.audioContext || (self.audioContext.state == 'suspended')) {
+				self.status( 'User gesture required to activate audio.' );
+			}
 			self.status( 'Ready.' );
 		}
 

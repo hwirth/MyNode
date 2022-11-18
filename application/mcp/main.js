@@ -17,6 +17,8 @@ const { RESPONSE, REASONS, STATUS, STRINGS } = require( '../constants.js' );
 module.exports = function MasterControl (persistent, callback) {
 	const self = this;
 
+	this.request = {};
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // GRANT ACCESS
@@ -120,7 +122,8 @@ module.exports = function MasterControl (persistent, callback) {
 				if (has('settings'  )) add_uptime     = SETTINGS;
 				if (has('debug'     )) add_debug      = DEBUG;
 				if (has('access'    )) add_access     = {
-					rules: callback.getProtocolDescription().split('\n'),
+					rules : callback.getProtocolDescription().split('\n'),
+					meta  : callback.getAllPersistentData().access.descriptionState,
 				};
 			//...}
 

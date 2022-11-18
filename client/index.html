@@ -33,10 +33,14 @@
 <meta name="viewport"     content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <script src="main.js"     type="module"></script>
-<script class="noscript">
+<script class="Xnoscript">
 	function show_status (text) { document.querySelector( 'header.noscript p').innerHTML = text; }
+	function show_boot_error () {
+		document.querySelector( 'html' ).classList.add( 'init' );
+		show_status( "Oops...?<h3>Please stand by</h3><img src='/images/rtfm.png'><br>Shouldn't take long." );
+	}
 	function watchdog () {
-		show_status( "Oops...?<h3>Please stand by</h3><img src='/images/rtfm.png'><br>Shouldn't take long..." );
+		show_boot_error();
 		setTimeout( ()=>location.reload(), 3000 );
 	}
 	addEventListener( 'error', watchdog );

@@ -373,7 +373,15 @@ module.exports.Router = function (persistent, callback) {
 		};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+		const declared_rules = [];
+		function meta (rule) {
+			//...console.log( COLORS.ACCESS + 'RULE' + COLORS.RESET + ': ' + rule );
+			declared_rules.push( rule );
+		}
+
+
 		// Instantiate protocols
+
 		const load_requests = Object.keys( registered_protocols ).map( async (protocol_name)=>{
 			if (!persistent[protocol_name]) {
 				color_log( COLORS.PROTOCOL, 'No persistent data for protocol:', protocol_name );
@@ -388,13 +396,32 @@ module.exports.Router = function (persistent, callback) {
 				new_callbacks[name] = registered_callbacks[name];
 			});
 
-			self.protocols[protocol_name] =
-				await new protocol.template( data, new_callbacks );
+			self.protocols[protocol_name] = await new protocol.template( data, new_callbacks, meta );
 		});
 
 		await Promise.all( load_requests );
 
-		color_log( COLORS.ROUTER, 'Protocols:', Object.keys(self.protocols) );
+
+		// Protocol description
+
+		const registered_rules   = registered_callbacks.getProtocolDescription().split('\n');
+		const validation_results = { registered:{}, declared:{} };
+
+		function log (type, rule, good) {
+			validation_results[type][rule] = !!good;
+			//...color_log( COLORS[good ? 'ROUTER' : 'WARNING'], type + ':', rule );
+		}
+
+		declared_rules.forEach( (description)=>{
+			const found = registered_rules.find( rule => rule == description );
+			log( 'declared', description, found );
+		});
+		registered_rules.forEach( (description)=>{
+			const found = declared_rules.find( rule => rule == description );
+			log( 'registered', description, found );
+		});
+persistent.access.descriptionState = validation_results;
+		//color_log( COLORS.ROUTER, 'Protocols:', Object.keys(self.protocols), validation_results );
 
 		return Promise.resolve();
 

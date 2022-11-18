@@ -194,9 +194,6 @@ const Application = function () {
 		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
 		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
 
-		removeEventListener( 'error', reboot );
-		removeEventListener( 'unhandledrejection', reboot );
-
 	}; // init
 
 
@@ -209,7 +206,15 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // PROGRAM ENTRY POINT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
+/*
+addEventListener( 'error', reboot );
+addEventListener( 'unhandledrejection', reboot );
+function reboot (error) {
+	console.log( error );
+	show_boot_error();
+	setTimeout( ()=>location.reload(), 6000 );
+}
+*/
 addEventListener( 'load', async ()=>{
 	show_status( 'Initializing' );
 
@@ -219,7 +224,11 @@ addEventListener( 'load', async ()=>{
 	show_status( 'Connecting' );
 	//await delay(1500);
 
-	await new Application().catch( e => console.log(e) );
+	//try {
+		await new Application().catch( e => console.log(e) );
+	//} catch (error) {
+	//	reboot(error);
+	//}
 
 	document.querySelectorAll( '.noscript' ).forEach( (element)=>{
 		element.parentNode.removeChild( element );
