@@ -101,7 +101,7 @@ export const WebSocketClient = function (parameters = {}) {
 			}
 
 			// Hide ping/pong log messages
-			const is_pingpong    = message.update && message.update.pong;
+			const is_pingpong = message.update && message.update.pong;
 			const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
 			if (do_log) {
 				console.groupCollapsed(

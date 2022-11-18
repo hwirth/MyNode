@@ -5,6 +5,8 @@
 
 "use strict";
 
+const fs = require( 'fs' );
+
 const { SETTINGS          } = require( '../../server/config.js' );
 const { DEBUG, COLORS     } = require( '../../server/debug.js' );
 const { color_log, dump   } = require( '../../server/debug.js' );
@@ -323,6 +325,8 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.reset = function () {
 		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'ServerManager.reset' );
+		if (Object.keys( persistent ).length == 0) ;
+
 		create_new_access_token();
 
 	}; // reset
@@ -330,7 +334,25 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
-		if (Object.keys( persistent ).length == 0) self.reset();
+		self.reset();
+
+		fs.watch( SETTINGS.BASE_DIR + 'client', (event, filename)=>{
+			console.log( 'fs.watch: event:' + event );
+			if (filename && (filename.charAt(0) != '.')) {
+				//console.log( 'filename provided: ' + filename );
+				const all_clients = callback.getAllClients();
+
+				Object.keys( all_clients )
+				.forEach( (key)=>{
+					all_clients[key].update({
+						type     : 'reload',
+						reload   : filename,
+					});
+				});
+			} else {
+				//console.log( 'filename not provided' );
+			}
+		});
 		return Promise.resolve();
 
 	}; // init

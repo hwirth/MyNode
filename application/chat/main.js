@@ -73,14 +73,12 @@ module.exports = function ChatServer (persistent, callback) {
 			const authenticated = client_address => all_clients[client_address].login;
 
 			Object.keys( all_clients ).filter( authenticated ).forEach( (recipient)=>{
-				all_clients[recipient].send({
-					update: {
-						type     : 'chat',
-						time     : t0,
-						userName : client.login.userName,
-						nickName : client.login.nickName,
-						message  : message,
-					},
+				all_clients[recipient].update({
+					type     : 'chat',
+					time     : t0,
+					userName : client.login.userName,
+					nickName : client.login.nickName,
+					chat     : message,
 				});
 			});
 
@@ -104,15 +102,13 @@ module.exports = function ChatServer (persistent, callback) {
 
 			Object.keys( all_clients )
 			.filter( authenticated )
-			.forEach( (recipient)=>{
-				all_clients[recipient].send({
-					update: {
-						type     : 'html',
-						time     : t0,
-						userName : client.login.userName,
-						nickName : client.login.nickName,
-						message  : message,
-					},
+			.forEach( (key)=>{
+				all_clients[key].update({
+					type     : 'html',
+					time     : t0,
+					userName : client.login.userName,
+					nickName : client.login.nickName,
+					html     : message,
 				});
 			});
 
@@ -229,12 +225,14 @@ module.exports = function ChatServer (persistent, callback) {
 	this.reset = function () {
 		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'ChatServer.reset' );
 
+		if (Object.keys( persistent ).length == 0) ;
+
 	}; // reset
 
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ChatServer.init' );
-		if (Object.keys( persistent ).length == 0) self.reset();
+		self.reset();
 		return Promise.resolve();
 
 	}; // init

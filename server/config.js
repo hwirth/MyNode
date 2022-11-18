@@ -62,9 +62,16 @@ const SETTINGS = {
 	MAIN_MODULE : '../application/router.js',
 
 	MESSAGE_TIMESTAMPS   : true,    // Send time with each JSON reply
-	REPORT_HANDLED       : !true,    // Always send response handled/rejected
-	LOG_PINGPONG         : false,   // true: Might flood your log output
-	KICK_NO_PONG         : true,    // False: Allow clients to ignore ping updates
+	REPORT_HANDLED       : !true,   // Always send response handled/rejected
+
+	PING: {
+		LOG      : !true,      // true: Might flood your log output
+		KICK     : true,       // false: Allow clients to ignore ping updates
+		INTERVAL : 60*1000,
+	},
+
+	LOG_PINGPONG         : false,
+	KICK_NO_PONG         : true,
 	ROUTER_ALWAYS_RELOAD : false,
 
 	LOG: {
@@ -89,8 +96,6 @@ const SETTINGS = {
 		SOCKET_CLOSE  : 300,
 		LOGIN         : 5*1000,
 		IDLE          : 5*1000,
-		PING_INTERVAL : 3*1000,
-		PING          : 2000,   //... ws has this?
 	},
 
 }; // SETTINGS

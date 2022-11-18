@@ -6,6 +6,7 @@
 "use strict";
 
 export const DEBUG = {
+	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
 	WEBSOCKET       : !false,
 	KEYBOARD_EVENTS : false,
 
@@ -31,8 +32,10 @@ export const SETTINGS = {
 	},
 
 	TIMEOUT: {
-		CONNECTION_PING  : 500,
+		PING_CSS         : 400,
 		RECONNECT        : 200,   //1000 ms
+		STATUS_FADE      : 1000,
+		STATUS_SHOW      : 6000,
 		BEEP_IGNORE      : 100,
 		BIT_ANSWER_COLOR : 200,
 		BIT_ANSWER_SOUND : 270,

@@ -84,7 +84,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		if (request_id) message.command = request_id.command;
 
 		const is_pingpong = message.update && (message.update.type =='ping')
-		const do_log = DEBUG.MESSAGE_OUT && (!is_pingpong || (is_pingpong && SETTINGS.LOG_PINGPONG));
+		const do_log = DEBUG.MESSAGE_OUT && (!is_pingpong || (is_pingpong && SETTINGS.PING.LOG));
 		if (do_log) color_log(
 			COLORS.SESSION,
 			'WebSocketClient-send:',
@@ -108,9 +108,22 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 				type    : 'result',
 				tag     : request_id.tag || null,
 				request : request_id.request,
-				success : status,
 				command : request_id.command,
+				success : status,
 				result  : result,
+			},
+		});
+
+	}; // respond
+
+
+	this.update = function (update) {
+		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
+		self.send({
+			update: {
+				time    : time,
+				type    : 'update',
+				...update,
 			},
 		});
 
@@ -182,7 +195,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.sendPing = function () {
-		if (!SETTINGS.KICK_NO_PONG) return;
+		if (!SETTINGS.PING.KICK) return;
 
 		self.send({
 			update: {
@@ -195,9 +208,9 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.receivePong = function () {
-		if (!SETTINGS.KICK_NO_PONG) return;
+		if (!SETTINGS.PING.KICK) return;
 
-		set_timeout( 'ping', self.sendPing, SETTINGS.TIMEOUT.PING_INTERVAL );
+		set_timeout( 'ping', self.sendPing, SETTINGS.PING.INTERVAL );
 
 	}; // receivePong
 

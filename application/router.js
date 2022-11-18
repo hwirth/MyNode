@@ -255,16 +255,18 @@ module.exports.Router = function (persistent, callback) {
 		const debug_message = {
 			response: {
 				time      : Date.now(),
-				type      : 'reject',
+				type      : 'rejected',
 				tag       : request_id.tag,
 				request   : request_id.request,
 			},
 		};
 		if (handled_commands .length) debug_message.response.handled = handled_commands;
 		if (true || rejected_commands.length) {
-			debug_message.response.rejected = rejected_commands;/*.reduce( (prev, next)=>{
-				return {...prev, [rejected_commands]: false};
-			}, {})*/;
+			debug_message.response = {
+				...debug_message.response,
+				success  : debug_message.success,
+				rejected : rejected_commands,
+			}
 		}
 
 		if (SETTINGS.REPORT_HANDLED || rejected_commands.length) {
@@ -349,6 +351,7 @@ module.exports.Router = function (persistent, callback) {
 					'getRules',
 					'getUpTime',
 					'getProtocols',
+					'getAllClients',
 					'getAllPersistentData',
 					'getProtocolDescription',
 					'triggerExit',

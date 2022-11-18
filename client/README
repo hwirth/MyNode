@@ -184,6 +184,7 @@ this.request.news = async function (client, request, response) {
 	response.toGroup({...});
 }
 
+[ ] mcp: service start/stop/status/reload/reset(wipe)
 [ ] Respect SETTINGS.MESSAGE_TIMESTAMPS everywhere
 [ ] Toggles.toggle -->  Change URL accordingly ("Update your bookmark to save settings")
 [ ] Increase color contrast on hover
@@ -274,6 +275,12 @@ this.request.news = async function (client, request, response) {
 -------
 --paginate
 git commit --amend
+vim .gitignore ; git rm --cached <files>
+git rm --cached `git ls-files -i -c --exclude-from=.gitignore`
+
+git rm -r --cached .
+git add .
+git commit -m "Drop files from .gitignore"
 
 (04:31:00 AM) EdFletcher: hmw[at]: along the same lines, take a look at interactive rebase. it's a very powerful tool
 for reworking commits which encourages you to make many small commits (as you can always rework them later). so in your

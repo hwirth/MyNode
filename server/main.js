@@ -98,7 +98,7 @@ const Main = function () {
 		const request_nr  = ++message_id;
 		const message     = JSON.parse(String( json_string )); //...? Why String
 		const is_pingpong = message.session && message.session.pong;
-		const do_log      = (!is_pingpong || (is_pingpong && SETTINGS.LOG_PINGPONG));
+		const do_log      = (!is_pingpong || (is_pingpong && SETTINGS.PING.LOG));
 
 		if (do_log) log_header(
 			COLORS.TRAFFIC,

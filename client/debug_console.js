@@ -25,6 +25,24 @@ export const DebugConsole = function (callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// DEBUG
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	if (DEBUG.WINDOW_APP) window.CEP = this;
+
+	this.reloadCSS = function  () {
+		console.log( 'Reloading CSS' );
+		let link = document.querySelector( 'link[rel=stylesheet]' );
+		link.parentNode.removeChild( link );
+		link = document.createElement( 'link' );
+		link.rel  = 'stylesheet';
+		link.href = 'spielwiese.css?' + Date.now();
+		link.type = 'text/css';
+		document.querySelector('head').appendChild( link );
+
+	}; // reloadCSS
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -65,12 +83,8 @@ export const DebugConsole = function (callback) {
 		<textarea autocomplete="off"></textarea>
 	</main>
 	<header class="toolbar">
-		<nav class="tasks">
-			<button class="cep enabled" title="Client End Point">CEP</button>
-		</nav>
-		<nav>
-			<span class="time"></span>
-		</nav>
+		<nav class="tasks"><button class="cep enabled" title="Client End Point">CEP</button></nav>
+		<nav><span class="time"></span></nav>
 		<nav class="filter">
 			<button>Filter</button>
 			<div class="items"></div>
@@ -81,28 +95,22 @@ export const DebugConsole = function (callback) {
 		</nav>
 	</header>
 	<footer class="toolbar">
-		<nav>
-			<span class="connection warning">OFFLINE</span>
-		</nav>
-		<nav>
-			<span class="status">Ready.</span>
-		</nav>
+		<nav><span class="connection warning">OFFLINE</span></nav>
+		<nav><span class="status"></span></nav>
 		<nav class="send">
 			<button class="submit" title="Execute command/send chat text">Enter</button>
-			<div class="items">
+			<form class="items">
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
 				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
 				<input type="password" name="password" placeholder="Password" autocomplete="password">
 				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
-			</div>
+			</form>
 		</nav>
 		<nav class="chat">
 			<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat</button>
 			<div class="items"></div>
 		</nav>
-		<nav>
-			<button class="close" title="Minimize terminal">Exit</button>
-		</nav>
+		<nav><button class="close" title="Minimize terminal">Exit</button></nav>
 	</footer>
 </div>
 	`); // HTML_TERMINAL
@@ -207,7 +215,9 @@ export const DebugConsole = function (callback) {
 			html         : document.querySelector( 'html' ),
 			terminal     : container,
 			shell        : container.querySelector( '.shell'           ),
+			buttonCEP    : container.querySelector( 'button.cep'       ),
 			connection   : container.querySelector( '.connection'      ),
+			status       : container.querySelector( '.status'          ),
 			time         : container.querySelector( '.time'            ),
 			send         : container.querySelector( '.send .items'     ),
 			chat         : container.querySelector( '.chat .items'     ),
@@ -226,20 +236,7 @@ export const DebugConsole = function (callback) {
 			enter        : container.querySelector( '.submit' ),
 			close        : container.querySelector( '.close'  ),//...! => exit
 			// Filter
-			debug        : container.querySelector( 'button.debug'     ),/*
-			string       : container.querySelector( 'button.string'    ),
-			cep          : container.querySelector( 'button.cep'       ),
-			notice       : container.querySelector( 'button.notice'    ),
-			update       : container.querySelector( 'button.update'    ),
-			broadcast    : container.querySelector( 'button.broadcast' ),
-			request      : container.querySelector( 'button.request'   ),
-			response     : container.querySelector( 'button.response'  ),*/
-			// Toggles
-			animate      : container.querySelector( 'button.animate'  ),
-			fancy        : container.querySelector( 'button.fancy'    ),
-			keyBeep      : container.querySelector( 'button.key_beep' ),
-			//...last         : container.querySelector( 'button.last'     ),
-			tts          : container.querySelector( 'button.tts'      ),
+			debug        : container.querySelector( 'button.debug'     ),
 		};
 
 	} // gather_dom_elements
@@ -388,6 +385,15 @@ export const DebugConsole = function (callback) {
 		self.elements.output.scrollBy(0, 99999);
 
 	} // scroll_down
+
+
+	function animate_ping (transmit = false) {
+		self.elements.connection.classList.add( transmit ? 'transmit' : 'ping' );
+		setTimeout( ()=>{
+			self.elements.connection.classList.remove( transmit ? 'transmit' : 'ping' );
+		}, SETTINGS.TIMEOUT.PING_CSS);
+
+	} // animate_ping
 
 
 	async function show_file (file_name, extract_body = false) {
@@ -933,8 +939,6 @@ setTimeout( ()=>{
 		if (commands_clicked && button_clicked) {
 			// Command menu button was clicked
 			event.preventDefault();
-			const previous_value = self.elements.input.value;
-console.log( event.target );
 			self.elements.input.value = parse_button_script( event.target.className );
 			self.elements.enter.click();
 
@@ -1046,7 +1050,9 @@ console.log( event.target );
 			if (nr_attempts == max_attempts) self.print( 'Aborting auto-connect', 'cep' );
 
 			if (callback.isConnected()) {
+				animate_ping( /*transmit*/true );
 				send_json( text );
+
 			} else {
 				await new Promise( (done)=>{
 					setTimeout( ()=>{
@@ -1244,7 +1250,40 @@ console.log( event.target );
 		self.elements.input.value = '';
 		scroll_down();
 
-	} // clearScreen
+	} // clearInput
+
+
+// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	const status_messages = [];
+	let status_timeout = null;
+
+	this.status = function (html) {
+		status_messages.push( html );
+		if (status_timeout === null) next();
+
+		function next () {
+			if (status_messages.length == 0) {
+				status_timeout = null;
+			} else {
+				self.elements.status.classList.add( 'fade_out' );
+
+				status_timeout = setTimeout( ()=>{
+					self.elements.status.classList.remove( 'fade_out' );
+					self.elements.status.innerHTML =
+					( status_messages.shift()
+					).replaceAll(
+						'<a href',
+						'<a target="_blank" href',
+					);
+
+					setTimeout( next, SETTINGS.TIMEOUT.STATUS_SHOW );
+
+				}, SETTINGS.TIMEOUT.STATUS_FADE );
+			}
+		}
+
+	}; // status
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1252,7 +1291,7 @@ console.log( event.target );
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onSocketOpen = function () {
-		self.elements.connection.classList = 'connection success';
+		self.elements.connection.classList = 'connection connected';
 		self.elements.connection.innerText = 'Connected';
 		self.elements.title = SETTINGS.WEBSOCKET.URL;
 
@@ -1262,7 +1301,7 @@ console.log( event.target );
 
 
 	this.onSocketClose = function () {
-		self.elements.connection.classList = 'connection warning';
+		self.elements.connection.classList = 'connection';
 		self.elements.connection.innerText = 'Offline';
 		self.elements.title = '';
 
@@ -1285,6 +1324,8 @@ console.log( event.target );
 // RECEIVE ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onReceive = function (message) {
+		if (!message.update || !message.update.ping) animate_ping( /*transmit*/true );
+
 		// See  WebSocketClient.send()
 		try   { message = JSON.parse( event.data ); }
 		catch { /* Assume string */ }
@@ -1294,7 +1335,35 @@ console.log( event.target );
 			switch (category) {
 				case 'broadcast': {
 					if (message.broadcast.type == 'rss') {
+						Object.values(message.broadcast.items).forEach( (entry, index)=>{
+							self.status(
+								'<a href="'
+								+ entry.link
+								+ '">'
+								+ entry.title
+								+ '</a>'
+							);
+						});
 					}
+					break;
+				}
+				case 'response': {
+					const response = message.response;
+					switch (response.command) {
+						case 'session.login': {
+							if (response.result != 'Already logged in') {
+								self.elements.connection.classList.add( 'attached' );
+								self.elements.connection.innerText = 'Attached';
+							}
+							break;
+						}
+						case 'session.logout': {
+							self.elements.connection.classList.remove( 'attached' );
+							self.elements.connection.innerText = 'Connected';
+							break;
+						}
+					}
+					break;
 				}
 			}
 
@@ -1305,28 +1374,32 @@ console.log( event.target );
 				case 'ping': {
 					if (!DEBUG.HIDE_MESSAGES.PING) print_message();
 					callback.send( {session:{ pong: message.update.pong }} );
-
-					self.elements.connection.classList.add( 'ping' );
-					setTimeout( ()=>{
-						self.elements.connection.classList.remove( 'ping' );
-					}, SETTINGS.TIMEOUT.CONNECTION_PING);
-					break;
+					animate_ping();
+					return;
 				}
 				case 'chat': {
 					if (!DEBUG.HIDE_MESSAGES.CHAT) print_message();
 					const sender = message.update.nickName || message.update.userName;
-					self.print( {[sender]: message.update.message}, 'chat' );
-					break;
+					self.print( {[sender]: message.update.chat}, 'chat' );
+					return;
 				}
 				case 'html': {
 					print_message();
-					self.print({ html:message.update.message });
+					self.print({ html: message.update.html });
+					return;
+				}
+				case 'reload': {
+					const href = document.querySelector( '[rel=stylesheet]' ).href;
+					if (message.update.reload == 'spielwiese.css') {
+						self.reloadCSS();
+						print_message();
+						return;
+					}
 					break;
 				}
-				default: {
-					self.print( message, 'error' );
-				}
 			}
+
+			self.print( message, 'error' );
 		}
 
 		function print_message () {
@@ -1441,6 +1514,10 @@ console.groupEnd();
 		self.elements.close.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
 
 
+		// BUTTON: "CEP"
+		self.elements.buttonCEP.addEventListener( 'click', ()=>self.reloadCSS() );
+
+
 		// LOGIN FORM
 		self.elements.login   = container.querySelector( 'button.login' );
 		self.elements.asRoot  = container.querySelector( 'button.root'  );
@@ -1502,6 +1579,8 @@ console.groupEnd();
 					document.querySelector( 'form [name=nickname]' ).focus();
 				}, 100);
 			}
+
+			self.status( 'Ready.' );
 		}
 
 		init_prompt();

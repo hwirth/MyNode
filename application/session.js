@@ -475,42 +475,44 @@ if (!client.login) throw new Error( 'NO CLIENT' );
 	this.reset = function () {
 		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'SessionHandler.reset' );
 
-		const data = {
-			accounts: {
-				'root': {
-					password: '12345',
-					groups: [
-						'admin',
-						'dev',
-					],
-					maxIdleTime: null,
-				},
-				'guest': {
-					password: null,
-					maxIdleTime: 5*60*1000,
-				},
-				'user': {
-					password: 'pass2',
-					maxIdleTime: 5*60*1000,
-				},
-				'idler': {
-					password: 'pass3',
-				},
-			}, // accounts
-			clients: {
-			}, // clients
-		};
+		if (Object.keys( persistent ).length == 0) {
+			const data = {
+				accounts: {
+					'root': {
+						password: '12345',
+						groups: [
+							'admin',
+							'dev',
+						],
+						maxIdleTime: null,
+					},
+					'guest': {
+						password: null,
+						maxIdleTime: 5*60*1000,
+					},
+					'user': {
+						password: 'pass2',
+						maxIdleTime: 5*60*1000,
+					},
+					'idler': {
+						password: 'pass3',
+					},
+				}, // accounts
+				clients: {
+				}, // clients
+			};
 
-		Object.keys( data ).forEach( (key)=>{
-			persistent[key] = data[key];
-		});
+			Object.keys( data ).forEach( (key)=>{
+				persistent[key] = data[key];
+			});
+		}
 
 	}; // reset
 
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.init' );
-		if (Object.keys( persistent ).length == 0) self.reset();
+		self.reset();
 		return Promise.resolve();
 
 	}; // init

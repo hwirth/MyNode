@@ -229,8 +229,11 @@ module.exports = function AccessControl (persistent, callback) {
 
 	this.reset = function () {
 		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'Access.reset' );
-		persistent.configuration = null;
-		persistent.rules = {};
+
+		if (Object.keys( persistent ).length == 0) {
+			persistent.configuration = null;
+			persistent.rules = {};
+		}
 
 		self.loadConfiguration( PROTOCOL_DESCRIPTION );
 
@@ -238,8 +241,8 @@ module.exports = function AccessControl (persistent, callback) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init' );
-		if (Object.keys( persistent ).length == 0) self.reset();
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init:' );
+		self.reset();
 		return Promise.resolve();
 
 	}; // init

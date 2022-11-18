@@ -254,13 +254,13 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 	animation: TOGGLE 0.5s linear 1;
 }
 @keyframes TOGGLE {
-	   0% { background-color:var(--terminal-button-bg); }
-	  11% { background-color:#ff0; }
-	  22% { background-color:var(--terminal-button-bg); }
-	  33% { background-color:#ff0; }
-	  44% { background-color:var(--terminal-button-bg); }
-	  55% { background-color:#ff0; }
-	  66% { background-color:var(--terminal-button-bg); }
+	 0% { background-color:var(--terminal-button-bg); }
+	11% { background-color:#ff0; }
+	22% { background-color:var(--terminal-button-bg); }
+	33% { background-color:#ff0; }
+	44% { background-color:var(--terminal-button-bg); }
+	55% { background-color:#ff0; }
+	66% { background-color:var(--terminal-button-bg); }
 }
 
 .terminal button.login,
@@ -279,7 +279,6 @@ X.terminal button.token,
 	display:inline-flex; flex-wrap:wrap;
 	border-radius:5px;
 	background:#fff3; color:#fff;
-	Xbox-shadow:inset 0 0 0 1px #fff5;
 	box-shadow:
 		inset 0 0 0 1px #fff5,
 		inset 0 0 5px 0 #000
@@ -341,14 +340,47 @@ X.terminal:not(.connected) .chat .items,
 /* Other UI */
 .terminal button.cep,/* { background:#fff4; } */
 .terminal .connection { border:solid 1px #fff4; border-width:0 1px 0 0; border-radius:5px; background:#fff2; }
-.terminal .connection.success { font-weight:bold; color:#080; transition:color 0.2s linear; }
-.terminal .connection.ping { color:#0a0; }
-.terminal.animate .connection.ping {
-	background:radial-gradient(circle, #0f0 0, #0f00 10px);
-	background-position:-100% 50%;
-	background-size:20px 20px;
-	background-repeat:no-repeat;
+.terminal .connection  { font-weight:bold; color:#ca0; transition:color 0.2s linear; }
+.terminal .connection.connected { color:#6afc; }
+.terminal .connection.attached { color:#6af; }
+.terminal .connection.ping { color:#0a0; background:#8f82; }
+.terminal.fancy nav .connection::before {
+	content:''; display:none;
 }
+.terminal.fancy .connection.transmit::before,
+.terminal.fancy .connection.ping::before {
+	display:block;
+	position:absolute; bottom:100%; left:14px; z-index:-1;
+	width:12px; height:0;
+	background:linear-gradient(to right, #0ff0, #0ff2 40%, #ffff 41%, #ffff 59%, #0ff2 60%, #0ff0 100%);
+	height:calc(100vh - 2 * (1.2rem + 2px + 10px));
+	animation:PING 0.4s linear;
+	opacity:0;
+}
+@keyframes PING {
+	  0% { opacity:0; }
+	  1% { opacity:1; }
+	  9% { opacity:1; }
+	 10% { opacity:0; }
+	 20% { opacity:0; }
+	 21% { opacity:1; }
+	 29% { opacity:1; }
+	 30% { opacity:0; }
+	 40% { opacity:0; }
+	 41% { opacity:1; }
+	 49% { opacity:1; }
+	 50% { opacity:0; }
+	 60% { opacity:0; }
+	 61% { opacity:1; }
+	 69% { opacity:1; }
+	 70% { opacity:0; }
+	 80% { opacity:0; }
+	 81% { opacity:1; }
+	 89% { opacity:1; }
+	 90% { opacity:0; }
+	100% { opacity:0; }
+}
+
 .terminal .time {
 	Xfont-variant-numeric: normal;
 	Xfont-variant-numeric: ordinal;
@@ -361,9 +393,16 @@ X.terminal:not(.connected) .chat .items,
 	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
 }
+
+.terminal .status a { text-decoration:none; }
+.terminal .status a:hover { color:#acf; text-decoration:underline; }
 .terminal nav span.status {
 	padding-left:10px;
-	padding-right:10px;
+	transition:opacity 0.25s linear;
+	opacity:1;
+}
+.terminal nav span.status.fade_out {
+	opacity:0;
 }
 
 
@@ -537,18 +576,6 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	 100% { opacity:1.0; }
 	 */
 }
-
-/* Ping */
-X.terminal.animate .connection.ping {
-	animation: PING 0.5s linear 1;
-}
-@keyframes PING {
-	  0% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
-	 50% { background-position: 100% 50%; Xcolor:#0a0; X:var(--terminal-ping-color   ); }
-	100% { background-position:-100% 50%; Xcolor:#080; X:var(--terminal-success-color); }
-}
-
-
 
 /* MCP */
 X:not(.init) .animate.enabled.terminal::before {
