@@ -78,56 +78,70 @@ module.exports = function MasterControl (persistent, callback) {
 	this.request.status = function (client, request_id, parameters) {
 		let response = null;
 
-		if (parameters.persistent || (parameters.persistent === null)) {
-			if (client.login) {
-				if (client.inGroup( 'admin', 'dev' )) {
-					response = [
-						STATUS.SUCCESS,
-						request_id,
-						callback.getAllPersistentData(),
-					];
-				} else {
-					response = [
-						STATUS.SUCCESS,
-						request_id,
-						REASONS.INSUFFICIENT_PERMS,
-					];
-				}
-			}
+		if (!client.login) {
+			color_log( COLORS.ERROR, '<mcp.status.persistent>', client );
+			response = [ STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS ];
 
-		} else if (Object.keys(parameters).length == 0) {
+		} else if (parameters.persistent || (parameters.persistent === null)) {
+			color_log( COLORS.COMMAND, '<mcp.status.persistent>', client );
 			if (client.inGroup( 'admin', 'dev' )) {
-				const memory_usage = process.memoryUsage();
-				const memory_info = Object.entries(memory_usage).reduce( (previous, [key, value]) => {
-					const formatted = Math.floor(value / 1024**2 * 100) / 100 + ' MiB';
-					return { ...previous, [key]: formatted }
-				}, {});
-
 				response = [
 					STATUS.SUCCESS,
 					request_id,
-					{
-						upTime   : get_uptime( /*formatted*/true ),
-						memory   : memory_info,
-						settings: SETTINGS,
-						debug: DEBUG,
-						access   : {
-							rules: callback.getProtocolDescription().split('\n'),
-						},
-					},
+					callback.getAllPersistentData(),
 				];
-
 			} else {
-				response = [ STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS ];
+				response = [
+					STATUS.SUCCESS,
+					request_id,
+					REASONS.INSUFFICIENT_PERMS,
+				];
 			}
 
+		} else if (Object.keys(parameters).length > 0) {
+			color_log( COLORS.COMMAND, '<mcp.status.persistent>', client );
+
+			let uptime, memory, settings, debug, access;
+
+			const memory_usage = process.memoryUsage();
+			const memory_info = Object.entries(memory_usage).reduce( (previous, [key, value]) => {
+				const formatted = Math.floor(value / 1024**2 * 100) / 100 + ' MiB';
+				return { ...previous, [key]: formatted }
+			}, {});
+
+			//...if (typeof parameters == 'string') {
+			//...} else {
+				const has = (key)=>(
+					(key == 'all') || (Object.keys( parameters ).indexOf(key) >= 0)
+				);
+				if (has('persistent')) add_persistent = persistent;
+				if (has('uptime'    )) add_uptime     = get_uptime( /*formatted*/true );
+				if (has('memory'    )) add_memory     = memory_info
+				if (has('settings'  )) add_uptime     = SETTINGS;
+				if (has('debug'     )) add_debug      = DEBUG;
+				if (has('access'    )) add_access     = {
+					rules: callback.getProtocolDescription().split('\n'),
+				};
+			//...}
+
+			response = [
+				STATUS.SUCCESS,
+				request_id,
+				{
+					upTime   : add_uptime,
+					memory   : add_memory,
+					settings : add_settings,
+					debug    : add_debug,
+					access   : add_access,
+				},
+			];
 
 		} else {
 			const command = Object.keys( parameters )[0];
 			response = [ STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} ];
 		}
 
-		client.respond( response );
+		client.respond( ...response );
 
 	}; // status
 

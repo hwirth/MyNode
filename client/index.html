@@ -35,12 +35,18 @@
 <script src="main.js"     type="module"></script>
 <script class="noscript">
 	function show_status (text) { document.querySelector( 'header.noscript p').innerHTML = text; }
+	function watchdog () {
+		show_status( 'Oops...?<br>Please stand by<br>Can\'t take long...' );
+		setTimeout( ()=>location.reload(), 3000 );
+	}
+	addEventListener( 'error', watchdog );
 </script><style class="noscript">
-	* { margin:0; padding:0; box-sizing:border-box; }
-	.init body { width:100%; height:100%; background:#000; color:#fc0; }
+	* { margin:0; padding:0; box-sizing:border-box; line-height:1.4; }
+	.init body { width:100%; height:100%; background:#000; color:#fff; }
 	.init body > :not(.noscript) { display:none; }
 	.init header { width:100%; height:100%; text-align:center;
 		display:flex; flex-direction:column; align-items:center; justify-content:center; }
+	.init h2 { color:#fc0 };
 	.noscript small { text-transform:uppercase; font-size:0.72em; }
 	.noscript p { margin-top:2em; }
 	@media (prefers-color-scheme: dark) { body.init {background:#000; color:#fff;} }

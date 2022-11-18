@@ -1405,18 +1405,31 @@ setTimeout( ()=>{
 			const category = Object.keys( message )[0];
 			switch (category) {
 				case 'broadcast': {
-					if (message.broadcast.type == 'rss') {
-						Object.values(message.broadcast.items).forEach( (entry, index)=>{
+					switch (message.broadcast.type) {
+						case 'rss': {
+							Object.values( message.broadcast.items )
+							.forEach( (entry, index)=>{
+								self.status(
+									'<a href="'
+									+ entry.link
+									+ '">'
+									+ message.broadcast.feed
+									+ ': '
+									+ entry.title
+									+ '</a>'
+								);
+							});
+							break;
+						}
+						case 'error': {
 							self.status(
-								'<a href="'
-								+ entry.link
-								+ '">'
-								+ message.broadcast.feed
-								+ ': '
-								+ entry.title
-								+ '</a>'
+								'<span class="error">Error</span>: '
+								+ message.broadcast.reason
+								,
+								/*clear*/true,
 							);
-						});
+							break;
+						}
 					}
 					break;
 				}

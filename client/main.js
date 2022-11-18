@@ -194,6 +194,9 @@ const Application = function () {
 		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
 		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
 
+		removeEventListener( 'error', reboot );
+		removeEventListener( 'unhandledrejection', reboot );
+
 	}; // init
 
 
