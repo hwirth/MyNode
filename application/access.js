@@ -244,7 +244,7 @@ module.exports = function AccessControl (persistent, callback) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init:' );
+		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init' );
 		self.reset();
 		return Promise.resolve();
 

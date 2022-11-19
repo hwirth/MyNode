@@ -65,6 +65,7 @@
 
 
 body.dark_mode {}
+/*@media (prefers-color-scheme: dark) { body.init {background:#000; color:#fff;} }
 
 
 /* FONTS */
@@ -269,9 +270,8 @@ body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-le
 .terminal button.enter   { background:var(--button-enter-bg  ); color:var(--button-enter-color  ); }
 .terminal button.close   { background:var(--button-close-bg  ); color:var(--button-close-color  ); }
 .terminal button.enabled { background:var(--button-enabled-bg); color:var(--button-enabled-color); }
-.terminal button.blink {
-	animation: TOGGLE 0.5s linear 1;
-}
+.terminal button.blink.success { color:var(--terminal-success-color); }
+.terminal button.blink { animation: TOGGLE 0.5s linear 1; }
 @keyframes TOGGLE {
 	 0% { filter:brightness(2) contrast(1); }
 	11% { filter:brightness(1) contrast(2); }
@@ -361,9 +361,11 @@ X.terminal:not(.connected) .chat .items,
 
 /* Other UI */
 .terminal button.cep,
-.terminal .connection { border:solid 1px #fff4; border-width:0 1px 0 0; background:#fff2; }
+.terminal .connection { border:solid 1px #fff5; border-width:0 1px 0 0; background:#fff2; }
 .terminal.connected button.cep { background:#08f4; Xcolor:#6af; }
 .terminal .connection  { font-weight:bold; color:#ca0; transition:color 0.2s linear; }
+.terminal.connected .cep,
+.terminal.connected .connection	{ border-color:#08f8; }
 .terminal.connected .connection { color:#6afc; background:#08f4; }
 .terminal .connection.authenticated { color:#6af; color:#fff; }
 .terminal .toolbar button.transmit,
@@ -431,28 +433,33 @@ X.terminal:not(.connected) .chat .items,
 }
 .terminal.fancy.connected::after { filter:hue-rotate(0deg); }
 
-.terminal.fancy.animate output::before {
+.terminal.fancy.bit output::before {
+	transform:translate(-50%,-50%) scale(1);
+	transition:transform 0.3s linear;
+}
+.terminal.fancy output::before {
 	--b:0.85;
 	content:'';
-	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.00001);
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);   /************************************************* BIT **/
 	filter:hue-rotate(180deg) brightness(var(--b));
+	transition:transform 0.3s linear;
 }
 .terminal.fancy > * { z-index:3; }
 .terminal.fancy.connected   output::before { filter:hue-rotate(  0deg) brightness(var(--b)); }
-.terminal.fancy.animate.yes output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
-.terminal.fancy.animate.no  output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
-.terminal.fancy.animate.yes output::after,
-.terminal.fancy.animate.no  output::after {
+.terminal.fancy.bit.yes output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
+.terminal.fancy.bit.no  output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
+.terminal.fancy.bit.yes output::after,
+.terminal.fancy.bit.no  output::after {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:-1;
 	width:200%; height:200%;
 	border-radius:100%;
 	background:#0000;
 }
-.terminal.fancy.animate.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 7%, #0000 10%); }
-.terminal.fancy.animate.no  output::after { background:radial-gradient(circle at center, #f003, #8002 7%, #0000 10%); }
+.terminal.fancy.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 7%, #0000 10%); }
+.terminal.fancy.no  output::after { background:radial-gradient(circle at center, #f003, #8002 7%, #0000 10%); }
 
 /* OUTPUT */
 .terminal output {
@@ -467,18 +474,18 @@ X.terminal:not(.connected) .chat .items,
 .terminal pre { position:relative; padding-bottom:0.5em; white-space:pre-wrap; }
 .terminal .separators pre { Xborder:solid 1px #fff4; Xborder-width:0 0 1px; margin:5px 0; }
 .terminal output pre:hover { Xbackground:#fff4; color:#fff; cursor:pointer; }
-.terminal :not(.debug).compact pre.expand:hover { background:unset; cursor:pointer; }
 .terminal :not(.compact).overflow pre.unexpand,
+.terminal .compact.overflow.last pre:last-child,
 .terminal .compact.overflow pre { height:1em; line-height:1em; overflow-y:hidden; }
 .terminal .compact.separators pre:hover { Xborder-width:1px 0; Xmargin-top:-1px; }
-.terminal output.compact.last pre.unexpand:last-child,
+.terminal output.compact pre.unexpand:last-child,
 .terminal :not(.compact) pre.unexpand,
 .terminal .compact pre { white-space:normal; padding-top:0px; padding-bottom:0px; }
 
 /* Last */
 .terminal output[class]:not(.compact) pre.unexpand { margin-bottom:0.5em; }
-.terminal output.compact.last pre:last-child,/*//...*/
-.terminal .compact pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
+.terminal:not(.debug) output.compact.last pre:last-child,/*//...*/
+.terminal output.compact pre.expand { white-space:pre-wrap; height:unset; overflow-y:unset; }
 
 /* Marker */
 Xhr { width:calc(100% - 35px); height:1px; color:#09f8; }
@@ -490,7 +497,7 @@ Xhr { width:calc(100% - 35px); height:1px; color:#09f8; }
 }
 hr,
 .terminal pre.mark::after {
-	transform:translate(-35px, 6px);
+	transform:translate(-35.5px, 6px);
 	height:1.2em;
 	outline:none;
 	border:solid 1px #09f8; border-width:1px 0 0;

@@ -189,15 +189,20 @@ const Application = function () {
 			self.terminal.history.add( self.terminal.requestToText(request) );
 		});
 
-		if (SETTINGS.CONNECT_ON_START) connect_to_websocket();
+		if (SETTINGS.CONNECT_ON_START) {
+			show_status( 'Connecting' );
+			connect_to_websocket();
+		}
 
 		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
 		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
 
+		return Promise.resolve();
+
 	}; // init
 
 
-	return self.init().then( ()=>self );   // const app = await new Application()
+	return self.init().catch( watchdog ).then( ()=>self );   // const app = await new Application()
 
 }; // Application
 
@@ -220,21 +225,17 @@ addEventListener( 'load', async ()=>{
 
 	function delay (ms) { return new Promise( done => setTimeout(done, ms) ); }
 
-	//await delay(500);
-	show_status( 'Connecting' );
-	//await delay(1500);
+	try {
+		await new Application();
 
-	//try {
-		await new Application().catch( e => console.log(e) );
-	//} catch (error) {
-	//	reboot(error);
-	//}
+		document.querySelectorAll( '.noscript' ).forEach( (element)=>{
+			//...element.parentNode.removeChild( element );
+		});
+		document.querySelector( 'html' ).classList.remove('init')
 
-	document.querySelectorAll( '.noscript' ).forEach( (element)=>{
-		element.parentNode.removeChild( element );
-	});
-
-	document.querySelector( 'html' ).classList.remove( 'init' );
+	} catch (error) {
+		watchdog( error );
+	}
 });
 
 

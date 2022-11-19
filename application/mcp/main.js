@@ -113,9 +113,9 @@ module.exports = function MasterControl (persistent, callback) {
 
 			//...if (typeof parameters == 'string') {
 			//...} else {
-				const has = (key)=>(
-					(key == 'all') || (Object.keys( parameters ).indexOf(key) >= 0)
-				);
+				function has (key) {
+					return (key == 'all') || (Object.keys( parameters ).indexOf(key) >= 0);
+				}
 				if (has('persistent')) add_persistent = persistent;
 				if (has('uptime'    )) add_uptime     = get_uptime( /*formatted*/true );
 				if (has('memory'    )) add_memory     = memory_info

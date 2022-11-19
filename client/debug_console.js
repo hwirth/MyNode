@@ -31,7 +31,7 @@ export const DebugConsole = function (callback) {
 	if (DEBUG.WINDOW_APP) window.CEP = this;
 
 	this.reloadCSS = function  () {
-		self.status( 'Styles reloaded', /*clear*/true );
+		self.status( 'Styles reloaded.', /*clear*/true );
 		const head = document.querySelector('head');
 		const remove_link = head.querySelector( '[rel=stylesheet]' );
 		const new_link = document.createElement( 'link' );
@@ -85,14 +85,14 @@ export const DebugConsole = function (callback) {
 		<textarea autocomplete="off"></textarea>
 	</main>
 	<header class="toolbar">
-		<nav class="tasks"><button class="cep enabled" title="Remote Site">MyNonde</button></nav>
+		<nav class="tasks"><button class="cep enabled" title="Remote Site">MyNode</button></nav>
 		<nav><span class="time"></span></nav>
 		<nav class="filter">
-			<button>Filter</button>
+			<button title="Hide messages in chat mode">Filter</button>
 			<div class="items"></div>
 		</nav>
 		<nav class="toggles">
-			<button>Toggle</button>
+			<button title="Turn features on or off">Toggle</button>
 			<div class="items"></div>
 		</nav>
 	</header>
@@ -139,6 +139,11 @@ export const DebugConsole = function (callback) {
 		key       : 'a',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.animate.toggle(); },
+	},{
+		event     : 'keydown',
+		key       : 'b',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggles.bit.toggle(); },
 	},{
 		event     : 'keydown',
 		key       : 'c',
@@ -272,6 +277,7 @@ export const DebugConsole = function (callback) {
 { name:'last'       , preset:T.LAST       , target:output   , menu:'toggles' , shortcut:'Y',  caption:'Show Last'  },
 { name:'keyBeep'    , preset:T.KEY_BEEP   , target:terminal , menu:'toggles' , shortcut:'K',  caption:'Key Beep'   },
 { name:'animate'    , preset:T.ANIMATE    , target:terminal , menu:'toggles' , shortcut:'A',  caption:'Animations' },
+{ name:'bit'        , preset:T.BIT        , target:terminal , menu:'toggles' , shortcut:'B',  caption:'Bit'        },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'      },
 { name:'tts'        , preset:T.TTS        , target:terminal , menu:'toggles' , shortcut:'M',  caption:'Speech'     },
 
@@ -323,10 +329,16 @@ export const DebugConsole = function (callback) {
 				}
 
 				self.bit.say( toggle.enabled );//..., /*delay*/0, (toggle.name == 'tts') );
-				self.elements.btnToggles.classList.add( 'blink', toggle.enabled ? 'success' : 'error' );
+
+				const blink_button
+				= (toggle.name == 'debug'
+				? self.elements.debug
+				: self.elements.btnToggles)
+				;
+				blink_button.classList.add( 'blink', toggle.enabled ? 'success' : 'error' );
 				setTimeout( ()=>{
-					self.elements.btnToggles.classList.remove( 'blink', 'success', 'error' );
-				}, 500 );
+					blink_button.classList.remove( 'blink', 'success', 'error' );
+				}, 350 );
 			}
 
 			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
@@ -876,6 +888,7 @@ setTimeout( ()=>{
 		const input = self.elements.input;
 		const cursor_pos1 = (input.value.length == 0) || (input.selectionStart == 0);
 		const cursor_end  = (input.value.length == 0) || (input.selectionStart == input.value.length);
+		const in_input    = event.target === input;
 
 		KEYBOARD_SHORTCUTS.forEach( (shortcut)=>{
 			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
@@ -897,6 +910,7 @@ setTimeout( ()=>{
 				alt        : modifiers.indexOf( 'alt'        ) >= 0,
 				cursorPos1 : modifiers.indexOf( 'cursorPos1' ) >= 0,
 				cursorEnd  : modifiers.indexOf( 'cursorEnd'  ) >= 0,
+				inInput    : modifiers.indexOf( 'inInput'    ) >= 0,
 			};
 
 			const ignore_pos1end
@@ -945,6 +959,8 @@ setTimeout( ()=>{
 
 
 	function on_script_button_click (event) {
+		if (!event.target.dataset.command) return;
+
 		event.preventDefault();
 		self.elements.input.value = parse_button_script( event.target.className );
 
@@ -962,7 +978,7 @@ setTimeout( ()=>{
 		else if (event.target === self.elements.shell ) focus_prompt( +1 )
 		;
 
-		if (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
+		if      (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
 		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
 		else if (event.target === self.elements.asGuest) fill( 'guest' , '' )
 		;
@@ -986,10 +1002,11 @@ setTimeout( ()=>{
 			if (clicked_element === last_element) {
 				// Don't .compact, instead toggle "uncollapse last message"
 				self.toggles.last.toggle();
-			} else {
+			}
+
 				event.target.classList.toggle( 'expand' );     // Force it to expand
 				event.target.classList.toggle( 'unexpand' );   //...Keep track of user-clicked expands
-			}
+
 			return;
 		}
 
@@ -997,15 +1014,13 @@ setTimeout( ()=>{
 		const ctrl = event.ctrlKey;
 		const alt = event.altKey;
 
-		const connected        = true;//...callback.isConnected();
-		const commands_clicked = event.target.closest('.terminal .send' )
-			|| event.target.closest( '.terminal .chat');
-		const button_clicked   = event.target.tagName == 'BUTTON';
+		const connected = true;//...callback.isConnected();
+		const command   = event.target.dataset.command;
 
-		if (commands_clicked && button_clicked) {
+		if (command) {
 			// Command menu button was clicked
 			event.preventDefault();
-			self.elements.input.value = parse_button_script( event.target.className );
+			self.elements.input.value = parse_button_script( command );
 			self.elements.enter.click();
 
 		} else {
@@ -1337,6 +1352,8 @@ setTimeout( ()=>{
 		self.elements.connection.innerText = 'Offline';
 		self.elements.title = '';
 
+		self.elements.buttonCEP.innerText = 'MyNode';
+
 		self.elements.terminal.classList.remove( 'connected' );
 
 	}; // onSocketClose
@@ -1347,6 +1364,8 @@ setTimeout( ()=>{
 		self.elements.connection.classList = 'connection error';
 		self.elements.connection.innerText = 'Error';
 		self.elements.title = '';
+
+		self.elements.buttonCEP.innerText = 'MyNode';
 
 		self.elements.terminal.classList.remove( 'connected' );
 
@@ -1397,7 +1416,7 @@ setTimeout( ()=>{
 							return;
 						}
 					}
-					self.status( 'The file ' + message.update.file + ' was updated.' );
+					self.status( 'The file ' + message.update.file + ' has been updated.' );
 					return print_message();
 					break;
 				}
@@ -1439,7 +1458,7 @@ setTimeout( ()=>{
 							Object.keys( message.broadcast.reload )
 							.forEach( (file_name)=>{
 								self.status(
-									'The file ' + file_name + ' was updated.',
+									'The file ' + file_name + ' has been updated.',
 								);
 							});
 						}
@@ -1555,9 +1574,10 @@ console.groupEnd();
 		// MAIN MENU Create macro buttons
 		BUTTON_SCRIPTS.forEach( (script)=>{
 			const new_button = document.createElement( 'button' );
-			new_button.className = script.name;
-			new_button.innerText = script.name.charAt(0).toUpperCase() + script.name.slice(1);
-			new_button.title     = 'Double click to execute immediately';
+			new_button.dataset.command = script.name;
+			new_button.className       = script.name;
+			new_button.innerText       = script.name.charAt(0).toUpperCase() + script.name.slice(1);
+			new_button.title           = 'Double click to execute immediately';
 			new_button.addEventListener( 'click', on_script_button_click );
 
 			self.elements[script.menu].appendChild( new_button );
@@ -1669,17 +1689,11 @@ console.groupEnd();
 
 		init_prompt();
 
-		if (!true) setTimeout( ()=>{   //...
-			self.elements.nickName.focus();
-			console.log( 'login' );
-		}, 200 );
-
 		return Promise.resolve();
 
 	}; // init
 
-
-	self.init().then( ()=>self );   // const console = await new DebugConsole()
+	self.init().catch( watchdog ).then( ()=>self );   // const console = await new DebugConsole()
 
 }; // DebugConsole
 
