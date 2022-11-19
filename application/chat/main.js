@@ -31,8 +31,6 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 	meta( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
 	this.request.nick = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<chat.nick>', client );
-
 		if (client.login) {
 			//... Check nick validity/availability
 			if (!parameters) {
@@ -60,6 +58,7 @@ module.exports = function ChatServer (persistent, callback, meta) {
 			color_log( COLORS.COMMAND, '<chat.nick>', client );
 
 		} else {
+			color_log( COLORS.COMMAND, '<chat.nick>', client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 

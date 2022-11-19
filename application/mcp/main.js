@@ -359,14 +359,11 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 		self.fsWatcher = fs.watch( SETTINGS.BASE_DIR + 'client', (event, filename)=>{
 			if (filename && (filename.charAt(0) != '.')) {
-				const all_clients = callback.getAllClients();
-
-				Object.keys( all_clients )
-				.forEach( (key)=>{
-					all_clients[key].update({
-						type : 'reload',
-						file : filename,
-					});
+				callback.broadcast({
+					type   : 'reload/client',
+					reload : {
+						[filename] : {},
+					},
 				});
 			} else {
 				//console.log( 'filename not provided' );

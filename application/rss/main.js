@@ -82,6 +82,14 @@ module.exports = function ChatServer (persistent, callback) {
 	}; // poll_next_server
 
 
+	function poll_all_enabled () {
+		persistent.feeds.forEach( (feed)=>{
+			if (feed.enabled) poll( feed );
+		});
+
+	} // poll_all_enabled
+
+
 	function start_interval () {
 		if (self.rssInterval) stop_interval();
 		self.rssInterval = setInterval( poll_next_server, persistent.interval );
@@ -97,14 +105,6 @@ module.exports = function ChatServer (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.request.reset = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.reset>', client );
-		self.reset( /*force*/true );
-		client.respond( STATUS.SUCCESS, request_id, 'RSS cache reset' );
-
-	}; // request.clear
-
 
 	function get_status () {
 		return {
@@ -134,7 +134,7 @@ module.exports = function ChatServer (persistent, callback) {
 		if (parameters == 'all') {
 			persistent.feeds.forEach( (feed)=>{
 				feed.enabled = !feed.enabled;
-				poll( feed );
+				//...poll( feed );
 			});
 			request_id.command += ':all';   //...?
 		} else {
@@ -144,7 +144,7 @@ module.exports = function ChatServer (persistent, callback) {
 				return;
 			}
 			feed.enabled = !feed.enabled;
-			poll( feed );
+			//...poll( feed );
 		}
 
 		client.respond( STATUS.SUCCESS, request_id, get_status() );
@@ -207,12 +207,22 @@ module.exports = function ChatServer (persistent, callback) {
 			if (feed.enabled) {
 				poll( feed );
 				return feed.name;
+			} else {
+				return null;
 			}
 		}).filter( entry => (entry != null) );
 
 		client.respond( STATUS.SUCCESS, request_id, polled );
 
 	}; // request.show
+
+
+	this.request.reset = async function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<rss.reset>', client );
+		self.reset( /*force*/true );
+		client.respond( STATUS.SUCCESS, request_id, 'RSS cache reset' );
+
+	}; // request.reset
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -251,7 +261,6 @@ module.exports = function ChatServer (persistent, callback) {
 
 			persistent.feeds.forEach( (feed)=>{
 				feed.nrItems = null;
-				poll( feed );
 			});
 		}
 
@@ -261,6 +270,7 @@ module.exports = function ChatServer (persistent, callback) {
 	this.init = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'RSSServer.init' );
 		self.reset();
+		poll_all_enabled();
 		start_interval();
 		return Promise.resolve();
 

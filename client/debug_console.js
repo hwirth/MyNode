@@ -31,15 +31,26 @@ export const DebugConsole = function (callback) {
 	if (DEBUG.WINDOW_APP) window.CEP = this;
 
 	this.reloadCSS = function  () {
-		self.status( 'Styles reloaded.', /*clear*/true );
-		const head = document.querySelector('head');
+		const head        = document.querySelector('head');
 		const remove_link = head.querySelector( '[rel=stylesheet]' );
-		const new_link = document.createElement( 'link' );
+		const new_link    = document.createElement( 'link' );
+
 		new_link.rel  = 'stylesheet';
 		new_link.href = 'spielwiese.css?' + Date.now();
 		new_link.type = 'text/css';
+
 		head.appendChild( new_link );
-		setTimeout( ()=>remove_link.parentNode.removeChild(remove_link), 1000 );
+
+		new_link.addEventListener( 'load', ()=>{
+			self.status( 'Styles reloaded.', /*clear*/true );
+			remove_link.parentNode.removeChild( remove_link );
+		});
+
+	/*
+		setTimeout( ()=>{
+			remove_link.parentNode.removeChild( remove_link );
+		}, 1000);
+	*/
 
 	}; // reloadCSS
 
@@ -1403,23 +1414,6 @@ setTimeout( ()=>{
 					self.print({ html: message.update.html });
 					return print_message();
 				}
-				case 'reload': {
-					switch (message.update.file) {
-						case 'spielwiese.css': {
-							self.reloadCSS();
-							return print_message();
-						}
-						//...case 'debug_console.js':  // fall through
-						//...case 'main.js':
-						case 'index.html': {
-							location.reload();
-							return;
-						}
-					}
-					self.status( 'The file ' + message.update.file + ' has been updated.' );
-					return print_message();
-					break;
-				}
 			}
 
 			return self.print( message, 'update error' );
@@ -1428,7 +1422,8 @@ setTimeout( ()=>{
 			const category = Object.keys( message )[0];
 			switch (category) {
 				case 'broadcast': {
-					switch (message.broadcast.type) {
+					const type = message.broadcast.type.split( '/' );
+					switch (type[0]) {
 						case 'rss': {
 							Object.values( message.broadcast.items )
 							.forEach( (entry, index)=>{
@@ -1457,10 +1452,28 @@ setTimeout( ()=>{
 						case 'reload': {
 							Object.keys( message.broadcast.reload )
 							.forEach( (file_name)=>{
+								if (type[1] == 'client') {
+									switch (file_name) {
+										case 'spielwiese.css': {
+											self.reloadCSS();
+											return print_message();
+										}
+										case 'debug_console.js' :  // fall through
+										case 'main.js'          :  // fall through
+										case 'index.html'       : {
+											location.reload();
+											return;
+										}
+									}
+								}
+
 								self.status(
 									'The file ' + file_name + ' has been updated.',
 								);
 							});
+
+							return print_message();
+							break;
 						}
 					}
 					break;

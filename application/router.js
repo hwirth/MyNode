@@ -235,6 +235,15 @@ module.exports.Router = function (persistent, callback) {
 			return next;
 		})*/;
 
+		if (typeof message == 'string') {
+			color_log(
+				COLORS.WARNING,
+				'Not JSON:',
+				'String "' + message + '", ignoring',
+			);
+			return;
+		}
+
 		const tags                = ([protocol_name]) => protocol_name != 'tag';
 		const addressed_protocols = Object.entries( message );
 		const requests_processed  = addressed_protocols.filter( tags ).map( handler_calls );

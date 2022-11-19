@@ -130,7 +130,7 @@ export const WebSocketClient = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_before_unload () {
-		self.send({ text: 'Goodbye' });
+		self.send( 'HUP' );
 
 	} // on_before_unload
 

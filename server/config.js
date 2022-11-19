@@ -13,11 +13,9 @@ const DEV_SERVER = true || (os.hostname() == 'labor');
 const PROGRAM_NAME    = 'MyNode';
 const PROGRAM_VERSION = 'v0.0.6p';
 
+// Dict of parsed values, used for exporting in this file via SETTINGS[], etc.
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
-const config_file = {};   // Dict of parsed values, used for exporting in this file via SETTINGS[], etc.
-
-
-parse_config_file();
+const config_file = parse_config_file();
 
 function parse_config_file () {
 		// Read file and remove comments
@@ -25,12 +23,15 @@ function parse_config_file () {
 		const lines = fs.readFileSync( CONGIGURATION_FILE, 'utf8' ).split( '\n' ).filter( empty_lines );
 
 		// Extract variable names and store values in dict
+		const configuration = {}
 		lines.forEach( (line)=>{
 			const words = line.replace( /\t/g, ' ' ).split( ' ' );
 			const variable = words[0];
 			words.shift();
-			config_file[variable] = words.join( ' ' ).trim();
+			configuration[variable] = words.join( ' ' ).trim();
 		})
+
+		return configuration;
 
 } // parse_config_file
 
