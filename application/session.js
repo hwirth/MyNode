@@ -65,6 +65,24 @@ module.exports = function SessionHandler (persistent, callback) {
 	}; // getClientByName
 
 
+	this.getWho = function () {
+		const clients = {};
+		Object.keys( persistent.clients ).forEach( (address)=>{
+			const login = persistent.clients[address].login;
+			if (login) {
+				clients[address] = {
+					userName: login.userName,
+					nickName: login.nickName || null,
+				};
+			} else {
+				clients[address] = address;
+			}
+		});
+		return clients;
+
+	}; // getWho
+
+
 	this.broadcast = async function (message) {
 		function get_formatted_time () {
 			return Intl.DateTimeFormat( 'en', {
@@ -97,7 +115,9 @@ if (message.broadcast) console.trace();
 
 		const clients = callback.getAllClients();
 		Object.keys( clients ).forEach( (address)=>{
-			clients[address].send( bulletin );
+			const client = clients[address];
+			const to_everyone = (message.type.split('/')[0] == 'reload');
+			if (client.login || to_everyone) client.send( bulletin );
 		});
 
 	}; // broadcast
@@ -117,15 +137,16 @@ if (message.broadcast) console.trace();
 			);
 			return;
 		}
+		persistent.clients[client_address] = await new WebSocketClient( socket, client_address, {
+			getAllCLients : callback.getAllClients,
+			broadcast     : self.broadcast,
+		});
+
 
 		self.broadcast({
 			type    : 'session/connect',
 			address : client_address,
-		});
-
-		persistent.clients[client_address] = await new WebSocketClient( socket, client_address, {
-			getAllCLients : callback.getAllClients,
-			broadcast     : self.broadcast,
+			who     : self.getWho(),
 		});
 
 	}; // onConnect
@@ -147,17 +168,19 @@ if (message.broadcast) console.trace();
 		await client.exit();
 		delete persistent.clients[client_address];
 
-		if (client.login) {
+		if (true || client.login) {
 			self.broadcast({
 				type     : 'session/disconnect',
 				address  : client_address,
 				userName : client.login.userName,
 				nickName : client.login.nickName,
+				who      : self.getWho(),
 			});
 		} else {
 			self.broadcast({
 				type    : 'session/disconnect',
 				address : client_address,
+				who     : self.getWho(),
 			});
 		}
 
@@ -269,10 +292,11 @@ if (message.broadcast) console.trace();
 				type     : 'session/login',
 				address  : client.address,
 				userName : client.login.userName,
+				who      : self.getWho(),
 			});
 
 			color_log( COLORS.COMMAND, '<session.login>', client );
-			client.respond( STATUS.SUCCESS, request_id, client );
+			client.respond( STATUS.SUCCESS, request_id, {...client, who:self.getWho(client)} );
 ;
 			client.send({ notice: user_record.banner || STRINGS.LOGIN_BANNER });
 
@@ -308,14 +332,17 @@ if (message.broadcast) console.trace();
 			color_log( COLORS.COMMAND, '<session.logout>', client );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 
+			const user_name = client.login.userMame;
+			const nick_name = client.login.nciMame;
+			client.login = false;
+
 			callback.broadcast({
 				type     : 'session/logout',
 				address  : client.address,
-				userName : client.login.userName,
-				nickName : client.login.nickName,
+				userName : user_name,
+				nickName : nick_name,
+				who      : self.getWho(),
 			});
-
-			client.login = false;
 
 		} else {
 			log_warning( 'logout', REASONS.NOT_LOGGED_IN, client );
@@ -326,26 +353,8 @@ if (message.broadcast) console.trace();
 
 
 	this.request.who = async function (client, request_id, parameters) {
-
-		//... session who {multiclients, idles, ...}
-		//... session who {filter, sort, sort:{reverse:{}} }
-//...color_log( COLORS.ERROR, 'TEST ERROR.' );
-//...throw new Error('TEST ERROR');
-
-		if (client.login) {
-			const clients = {};
-			Object.keys( persistent.clients ).forEach( (address)=>{
-				const login = persistent.clients[address].login;
-				if (login) {
-					clients[address] = {
-						userName: login.userName,
-						nickName: login.nickName || null,
-					};
-				} else {
-					clients[address] = null;
-				}
-			});
-
+		const clients = self.getWho();
+		if (clients) {
 			color_log( COLORS.COMMAND, '<session.who>', client );
 			client.respond( STATUS.SUCCESS, request_id, clients );
 		} else {

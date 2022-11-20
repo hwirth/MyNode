@@ -4,13 +4,13 @@
 body {
 	background:#000; color:#fff;
 	width:100%; height:100%;
-	overflow-x:hidden; overflow-y:scroll;
+	overflow-x:hidden; overflow-y:auto;
 }
 
 body.has_target > * { display:none; }
 body.has_target > :target { display:block; }
 
-.included body { background:transparent; }
+.included body { background:#000a; }
 .included article { color:#fff; background:#fff3; }
 .included :is(header, footer) { display:none; }
 .included h2,

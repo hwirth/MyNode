@@ -113,7 +113,7 @@ export const WebSocketClient = function (parameters = {}) {
 					.replaceAll( '}', '' )
 					.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
 				);
-				console.log( message );
+				console.log( JSON.stringify(message, null, '\t') );
 				console.groupEnd();
 			}
 
@@ -167,7 +167,7 @@ export const WebSocketClient = function (parameters = {}) {
 				.replaceAll( '}', '' )
 				.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
 			);
-			console.log( request );
+			console.log( JSON.stringify(request, null, '\t') );
 			console.groupEnd();
 		}
 

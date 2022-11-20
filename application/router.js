@@ -331,6 +331,7 @@ module.exports.Router = function (persistent, callback) {
 			verifyToken            : (...params)=>{ return self.protocols.mcp.verifyToken(...params); },
 			getRules               : ()=>{ return self.protocols.access.rules; },
 			getProtocols           : ()=>self.protocols,
+			getWho                 : (...params)=>{ return self.protocols.session.getWho(...params); },
 			getAllClients          : ()=>{ return persistent.session.clients; },
 			getAllPersistentData   : ()=>{ return persistent; },
 			getProtocolDescription : (show_line_numbers)=>{
@@ -370,6 +371,7 @@ module.exports.Router = function (persistent, callback) {
 				template: ChatServer,
 				callbacks : [
 					'broadcast',
+					'getWho',
 					'getAllClients',
 				],
 			},

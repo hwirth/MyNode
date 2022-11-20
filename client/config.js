@@ -7,7 +7,7 @@
 
 export const DEBUG = {
 	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
-	WEBSOCKET       : false,
+	WEBSOCKET       : !false,
 	KEYBOARD_EVENTS : false,
 
 	HIDE_MESSAGES: {

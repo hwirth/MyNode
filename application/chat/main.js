@@ -38,8 +38,9 @@ module.exports = function ChatServer (persistent, callback, meta) {
 				return;
 			}
 
+			const user_name     = client.login.userName;
+			const old_nick      = client.login.nickName || client.login.userName || client.address;
 			const new_nick      = parameters;
-			const old_nick      = client.login.nickName;
 			const t0            = Date.now();
 			const all_clients   = callback.getAllClients();
 			const authenticated = client_address => all_clients[client_address].login;
@@ -49,12 +50,17 @@ module.exports = function ChatServer (persistent, callback, meta) {
 			callback.broadcast({
 				address  : client.address,
 				type     : 'chat/nick',
-				userName : client.login.userName,
+				userName : user_name,
+				nickName : new_nick,
+				oldNick  : old_nick,
+				who      : callback.getWho(),
+			});
+
+			client.respond( STATUS.SUCCESS, request_id, {
+				userName : user_name,
 				nickName : new_nick,
 				oldNick  : old_nick,
 			});
-
-			client.respond( STATUS.SUCCESS, request_id, new_nick );
 			color_log( COLORS.COMMAND, '<chat.nick>', client );
 
 		} else {

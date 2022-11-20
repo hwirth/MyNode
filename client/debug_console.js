@@ -91,6 +91,7 @@ export const DebugConsole = function (callback) {
 { menu:'chat' , name:'clear'      , script: '/clear' },
 { menu:'chat' , name:'help'       , script: '/help' },
 { menu:'chat' , name:'manual'     , script: '/manual' },
+{ menu:'chat' , name:'diary'      , script: '/diary' },
 	];
 
 	const SHORTHAND_COMMANDS = {
@@ -107,6 +108,7 @@ export const DebugConsole = function (callback) {
 	<header class="toolbar">
 		<nav><button class="node" title="Remote Site">MyNode</button></nav>
 		<nav class="list who"></nav>
+		<nav class="list toggle_state"><span></span></nav>
 		<nav class="filter">
 			<button title="Hide messages in chat mode">Filter</button>
 			<div class="items"></div>
@@ -118,8 +120,10 @@ export const DebugConsole = function (callback) {
 	</header>
 	<footer class="toolbar">
 		<nav><button class="connection warning">OFFLINE</button></nav>
-		<nav><span class="status"></span></nav>
-		<nav><span class="time"></span></nav>
+		<nav>
+			<span class="time"></span>
+			<span class="status"></span>
+		</nav>
 		<nav class="send">
 			<button class="enter" title="Execute command/send chat text">Enter</button>
 			<form class="items">
@@ -130,7 +134,7 @@ export const DebugConsole = function (callback) {
 			</form>
 		</nav>
 		<nav class="chat">
-			<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Debug</button>
+			<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat</button>
 			<div class="items"></div>
 		</nav>
 		<nav><button class="close" title="Minimize terminal">Exit</button></nav>
@@ -253,33 +257,35 @@ export const DebugConsole = function (callback) {
 		return {
 			html         : document.querySelector( 'html' ),
 			terminal     : container,
-			shell        : container.querySelector( '.shell'           ),
+			shell        : container.querySelector( '.shell'             ),
 			// Main
-			output       : container.querySelector( 'output'           ),
-			input        : container.querySelector( 'textarea'         ),
+			output       : container.querySelector( 'output'             ),
+			input        : container.querySelector( 'textarea'           ),
 			// Header
-			node         : container.querySelector( 'button.node'      ),
-			who          : container.querySelector( '.list.who'        ),
-			filter       : container.querySelector( '.filter .items'   ),
-			toggles      : container.querySelector( '.toggles .items'  ),
-			btnToggles   : container.querySelector( '.toggles button'  ),
+			node         : container.querySelector( 'button.node'        ),
+			who          : container.querySelector( '.list.who'          ),
+			filter       : container.querySelector( '.filter .items'     ),
+			toggleState  : container.querySelector( '.toggle_state span' ),
+			btnFilter    : container.querySelector( '.filter button'     ),
+			toggles      : container.querySelector( '.toggles .items'    ),
+			btnToggles   : container.querySelector( '.toggles button'    ),
 			// Footer
-			connection   : container.querySelector( '.connection'      ),
-			windows      : container.querySelector( '.list.windows'    ),
-			status       : container.querySelector( '.status'          ),
-			time         : container.querySelector( '.time'            ),
-			send         : container.querySelector( '.send .items'     ),
-			chat         : container.querySelector( '.chat .items'     ),
+			connection   : container.querySelector( '.connection'        ),
+			windows      : container.querySelector( '.list.windows'      ),
+			status       : container.querySelector( '.status'            ),
+			time         : container.querySelector( '.time'              ),
+			send         : container.querySelector( '.send .items'       ),
+			chat         : container.querySelector( '.chat .items'       ),
 			// Login form
-			userName     : container.querySelector( '[name=username]'  ),
-			nickName     : container.querySelector( '[name=nickname]'  ),
-			passWord     : container.querySelector( '[name=password]'  ),
-			factor2      : container.querySelector( '[name=factor2]'   ),
+			userName     : container.querySelector( '[name=username]'    ),
+			nickName     : container.querySelector( '[name=nickname]'    ),
+			passWord     : container.querySelector( '[name=password]'    ),
+			factor2      : container.querySelector( '[name=factor2]'     ),
 			// Additional menu buttons are addeded to .elements later under "Login form"
-			enter        : container.querySelector( '.enter'           ),
-			close        : container.querySelector( '.close'           ),//...! => exit
+			enter        : container.querySelector( '.enter'             ),
+			close        : container.querySelector( '.close'             ),//...! => exit
 			// Filter
-			btnDebug     : container.querySelector( 'button.debug'     ),
+			debug        : container.querySelector( 'button.debug'       ),
 		};
 
 	} // gather_dom_elements
@@ -297,9 +303,9 @@ export const DebugConsole = function (callback) {
 		const T = PRESETS.TOGGLE;
 		const F = PRESETS.FILTER;
 
-		return [                                                    // shortcut: Sync with KbdSC
+		const definition = [   //...! Sync with keyboard shortcuts
 { name:'terminal'   , preset:T.TERMINAL   , target:terminal , menu:null      , shortcut:'T',  caption:null          },
-{ name:'btnDebug'   , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:'Chat'        },
+{ name:'debug'      , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:null          },
 { name:'cep'        , preset:F.CEP        , target:output   , menu:'filter'  , shortcut:null, caption:'CEP'         },
 { name:'string'     , preset:F.STRING     , target:output   , menu:'filter'  , shortcut:null, caption:'String'      },
 { name:'notice'     , preset:F.NOTICE     , target:output   , menu:'filter'  , shortcut:null, caption:'Notice'      },
@@ -317,8 +323,15 @@ export const DebugConsole = function (callback) {
 { name:'bit'        , preset:T.BIT        , target:terminal , menu:'toggles' , shortcut:'B',  caption:'Bit'         },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'       },
 { name:'tts'        , preset:T.TTS        , target:terminal , menu:'toggles' , shortcut:'M',  caption:'Speech'      },
+		]; // definition
 
-		].map( (toggle)=>{
+		return definition.map( to_toggles ).reduce( to_dict, /*initialValue*/{} );
+
+		function to_dict (prev, next) {
+			return { ...prev, [next.name]: next };
+		}
+
+		function to_toggles (toggle) {
 			const target = toggle.target;
 			const menu   = self.elements[toggle.menu];
 			let element  = self.elements[toggle.name];
@@ -353,17 +366,31 @@ export const DebugConsole = function (callback) {
 				toggle  : (state)=>{ flip( state ); },
 			};
 
-			delete toggle.target;
-			delete toggle.menu;
-			delete toggle.shortcut;
+			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
+				element.addEventListener( 'click', ()=>{
+					flip();
+					focus_prompt();
+				});
+			}
+
+			update_dom();
+
+			return toggle;
+
 
 			function update_dom () {
 				const is_terminal = (toggle.name == 'terminal');
 				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
 				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
+
+				setTimeout( update_toggle_state );
+
 				scroll_down();
 				if (is_terminal && toggle.enabled) focus_prompt();
-			}
+
+console.log( toggle.name, toggle.enabled );
+			} // update_dom
+
 
 			function flip (new_state = null) {
 				//...console.log( 'flip:', toggle, typeof new_state );
@@ -376,32 +403,37 @@ export const DebugConsole = function (callback) {
 
 				self.bit.say( toggle.enabled );//..., /*delay*/0, (toggle.name == 'tts') );
 
-				const blink_button
-				= (toggle.name == 'debug'
-				? self.elements.btnDebug
-				: self.elements.btnToggles)
-				;
+				let blink_button = self.elements.btnToggles;
+				if (toggle.name == 'debug')  blink_button = self.elements.debug;
+				if (toggle.menu == 'filter') blink_button = self.elements.btnFilter;
+
 				blink_button.classList.add( 'blink', toggle.enabled ? 'success' : 'error' );
 				setTimeout( ()=>{
 					blink_button.classList.remove( 'blink', 'success', 'error' );
 				}, 350 );
-			}
+			} // flip
 
-			if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
-				element.addEventListener( 'click', ()=>{
-					flip();
-					focus_prompt();
-				});
-			}
+		} // to_toggles
 
-			update_dom();
 
-			return toggle;
+		function update_toggle_state () {
+			const has_shortcut = toggle => toggle.shortcut !== null;
+			const to_character = toggle => (
+				toggle.enabled
+				? '<b>' + toggle.shortcut.toLowerCase() + '</b>'
+				: toggle.shortcut.toLowerCase()
+			);
 
-		}).reduce( (prev, next)=>{
-			return {...prev, [next.name]: next};
+			self.elements.toggleState.innerHTML = (
+				Object.values( self.toggles )
+				.sort( (a, b) => a.shortcut > b.shortcut ? +1 : -1 )
+				.filter( has_shortcut )   // Only those with a keyboard shortcut
+				.map( to_character )   // Uppercase for enabled toggles
+				.join('')
+			);
 
-		}, /*initialValue*/{} );
+		} // update_toggle_state
+
 
 	} // create_toggles
 
@@ -409,6 +441,12 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function print_version () {
+		self.print( 'CEP-' + CEP_VERSION, 'cep' );
+
+	} // print_version
+
 
 	function focus_prompt (position = 0) {
 		const pos1  = -1;
@@ -475,6 +513,7 @@ export const DebugConsole = function (callback) {
 
 		switch (file_extension) {
 			case 'html': {
+				self.toggles.debug.disable();
 				const initial_scroll_toggle = self.toggles.scroll.enabled;
 				const iframe = document.createElement( 'iframe' );
 				iframe.className = 'cep htmlfile expand';
@@ -1142,8 +1181,6 @@ setTimeout( ()=>{
 		function perform_local (command) {
 			if (command.charAt(0) != '/') return false;
 
-			function show_version() { self.print( 'CEP-' + CEP_VERSION, 'cep' ); }
-
 			self.print( command, 'request' );
 
 			const token     = command.split(' ')[0].slice(1);
@@ -1159,7 +1196,7 @@ setTimeout( ()=>{
 				self.elements.title = '';
 				callback.disconnect();
 				break;
-			case 'version' :  show_version();      break;
+			case 'version' :  print_version();     break;
 			case 'clear'   :  self.clearScreen();  break;
 			case 'help'    :  show_file( 'help.txt'       , parameter );  break;
 			case 'issue'   :  show_file( 'issue.txt'      , parameter );  break;
@@ -1360,7 +1397,11 @@ setTimeout( ()=>{
 	let status_timeout = null;
 
 	this.status = function (html, clear = false) {
-		if (clear) return self.status( html );
+		if (clear) {
+			status_messages = [];
+			clearTimeout( status_timeout );
+			return self.status( html );
+		}
 
 		if (html === null) {
 			clearTimeout( status_timeout );
@@ -1381,10 +1422,14 @@ setTimeout( ()=>{
 			if (status_messages.length == 0) {
 				status_timeout = null;
 				setTimeout( ()=>{
-					if (status_timeout === null) self.status( null );
+					if (status_timeout === null) {
+						self.status( null );
+						self.elements.time.classList.remove( 'fade_out' );
+					}
 				}, 1000)
 			} else {
 				self.elements.status.classList.add( 'fade_out' );
+				self.elements.time  .classList.add( 'fade_out' );
 
 				status_timeout = setTimeout( ()=>{
 					self.elements.status.classList.remove( 'fade_out' );
@@ -1461,44 +1506,28 @@ setTimeout( ()=>{
 			self.print( message, class_name );
 		}
 
-		const who = {
-			add: function (response_who) {
-				const list  = self.elements.who;
-				Object.keys( response_who ).forEach( (address)=>{
-					const login = response_who[address];
-					const button = document.createElement( 'button' );
-					button.innerText = login.nickName || login.userName || address;
-					if (button.innerText == self.elements.connection.innerText) {
-						button.classList.add( 'self' );
-					}
-					list.appendChild( button );
-				});
-			},
-			remove: function (list) {
-				const elements = self.elements.who.querySelectorAll( 'button' );
-				Array.from( elements ).forEach( (button)=>{
-					list.forEach( (remove_entry)=>{
-						if (button.innerText == remove_entry) {
-							button.parentElement.removeChild( button );
-						}
-					});
-				});
-			},
-			replace: function (replace_this, with_that) {
-				const elements = self.elements.who.querySelectorAll( 'button' );
-				const found = false;
-				Array.from( elements ).forEach( (button)=>{
-					if (replace_this.indexOf(button.innerText) >= 0) {
-						button.parentNode.removeChild( button );
-					}
-				});
-				if (!found) {
-					const button = document.createElement( 'button' );
-					button.innerText = with_that;
-					self.elements.who.appendChild( button );
+		function update_who_list (who) {
+			const list  = self.elements.who;
+			list.innerHTML = '';
+			if (who === null) return;
+console.log( who );
+			const span = document.createElement( 'span' );
+			Object.keys( who ).forEach( (address)=>{
+				const user_record = who[address];
+
+				const button = document.createElement( 'button' );
+				button.innerText
+				= (typeof user_record == 'string')
+				? user_record
+				: user_record.nickName || user_record.userName
+				;
+				if (button.innerText == self.elements.connection.innerText) {
+					button.classList.add( 'self' );
 				}
-			},
-		};
+				span.appendChild( button );
+			});
+			list.appendChild( span );
+		}
 
 		// See  WebSocketClient.send()
 		try   { message = JSON.parse( event.data ); }
@@ -1517,6 +1546,7 @@ case 'update': {
 		}
 		case 'server/name': {
 			self.elements.node.innerText = message.update.name;
+			update_who_list( null ); //{dummy:'Logged out'} );
 			return print_message();
 		}
 		case 'chat/say': {
@@ -1588,25 +1618,12 @@ case 'broadcast': {
 			return print_message();
 			break;
 		}
-		case 'session/connect': {
-			const address = message.broadcast.address;
-			who.add({ [address]: address });
-			break;
-		}
-		case 'session/login': {
-			const bc = message.broadcast;
-			who.replace( [bc.address], bc.userName );//...? bc.nickName || bc.userName
-			break;
-		}
-		case 'chat/nick': {
-			const bc = message.broadcast;
-			who.replace( [bc.address, bc.userName], bc.nickName );
-			break;
-		}
-		case 'session/logout'     : break;// fall through
+		case 'chat/nick'          : // fall through
+		case 'session/connect'    : // fall through
+		case 'session/login'      : // fall through
+		case 'session/logout'     : // fall through
 		case 'session/disconnect' : {
-			const bc = message.broadcast;
-			who.remove( [bc.address, bc.userName, bc.nickName] );
+			update_who_list( message.broadcast.who );
 			break;
 		}
 	}
@@ -1625,21 +1642,24 @@ case 'response': {
 				self.elements.connection.innerText
 				= result.login.nickName || result.login.userName;
 			}
+			if (response.success) update_who_list( result.who );
 			break;
 		}
 		case 'session.logout': {
 			self.elements.connection.classList.remove( 'authenticated' );
 			self.elements.connection.innerText = 'Connected';
+			if (response.success) update_who_list( null ); //{dummy:'Logged out'} );
 			break;
 		}
 		case 'session.who': {
-			self.elements.who.innerHTML = '<button class="enabled">Public</button>';
-			if (response.success) who.add( result );
+			if (response.success) update_who_list( result );
 			break;
 		}
 		case 'chat.nick': {
 			if (response.success) {
-				self.elements.connection.innerText = result;
+				const parts = self.elements.connection.innerText.split(':');
+				const new_name = result.userName + ':' + result.nickName;
+				self.elements.connection.innerText = new_name;
 			}
 			break;
 		}
@@ -1781,6 +1801,10 @@ console.groupEnd();
 		start_clock();
 
 
+		//const bit = self.elements.
+
+
+
 		// PROMPT
 		self.elements.input.addEventListener( 'keyup'  , adjust_textarea );
 		self.elements.input.addEventListener( 'input'  , on_input_change );
@@ -1803,8 +1827,8 @@ console.groupEnd();
 			const characters = toggle => toggle.key
 			const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
-			CEP_VERSION += '^' + shortcuts;   // For .help
-
+			CEP_VERSION += '^' + shortcuts.split('').sort().join('');   // For .help
+			print_version();
 			if (!GET.has('login')) show_file( 'issue.txt' );
 
 			if (GET.has('username')) self.elements.userName.value = GET.get('username');
@@ -1827,7 +1851,6 @@ console.groupEnd();
 			if (!self.audioContext || (self.audioContext.state == 'suspended')) {
 				self.status( 'User gesture required to activate audio.' );
 			}
-			self.status( 'Ready.' );
 		}
 
 		init_prompt();
