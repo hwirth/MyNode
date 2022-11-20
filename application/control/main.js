@@ -5,7 +5,8 @@
 
 "use strict";
 
-const fs = require( 'fs' );
+const fs   = require( 'fs' );
+const exec = require( 'child_process' ).exec;
 
 const { SETTINGS          } = require( '../../server/config.js' );
 const { DEBUG, COLORS     } = require( '../../server/debug.js' );
@@ -14,7 +15,7 @@ const { color_log, dump   } = require( '../../server/debug.js' );
 const { RESPONSE, REASONS, STATUS, STRINGS } = require( '../constants.js' );
 
 
-module.exports = function MasterControl (persistent, callback) {
+module.exports = function ServerControl (persistent, callback) {
 	const self = this;
 
 	this.request = {};
@@ -57,6 +58,84 @@ module.exports = function MasterControl (persistent, callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HELPERS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	if (!persistent.serverStartTime) persistent.serverStartTime = Date.now() - process.uptime();
+
+	function get_uptime (formatted = false) {
+		const milliseconds = process.uptime() * 1000;
+		//...const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
+
+		if (formatted) {
+			let seconds = Math.floor( milliseconds / 1000 );
+			let minutes = Math.floor( seconds      / 60   );   seconds -= 60 * minutes;
+			let hours   = Math.floor( minutes      / 60   );   minutes -= 60 * hours;
+			let days    = Math.floor( hours        / 24   );   hours   -= 24 * days;
+			let weeks   = Math.floor( days         / 7    );   days    -=  7 * weeks;
+			let years   = Math.floor( weeks        / 52   );   weeks   -= 52 * years;  //...
+			let millis  = Math.floor( milliseconds % 1000 );
+
+			function leading (value, digits) {
+				const string = String( value );
+				const zeros  = '0'.repeat( digits - string.length );
+				return zeros + string;
+			}
+
+			return (
+				  (years   ? years      + 'y' : '')
+				+ (weeks   ? weeks      + 'w' : '')
+				+ (days    ? days       + 'd:' : '')
+				+ leading( hours  , 2 ) + 'h'
+				+ leading( minutes, 2 ) + 'm'
+				+ leading( seconds, 2 ) + '.'
+				+ leading( millis , 3 ) + 's'
+			);
+
+		} else {
+			return milliseconds;
+		}
+
+	} // get_uptime
+
+
+	function get_memory_info () {
+		const memory_usage = process.memoryUsage();
+		return Object.entries( memory_usage ).reduce( (previous, [key, value]) => {
+			const formatted = Math.floor(value / 1024**2 * 100) / 100 + ' MiB';
+			return { ...previous, [key]: formatted }
+		}, {});
+
+	} // get_memory_info
+
+
+	async function get_source_info () {
+		const entries = await new Promise( (resolve, reject)=>{
+			const command = SETTINGS.BASE_DIR + 'functions.sh';
+			console.log( COLORS.ERROR, 'EXEC', command );
+			exec( command, (error, stdout, stderr)=>{
+				if (error !== null) {
+					reject( error );
+				} else {
+					resolve( stdout.trim().replace( /\t/g, ' ' ).split('\n') );
+				}
+			});
+		})
+
+		const result = {};
+		entries.forEach( (entry)=>{
+			const key = entry.split( ':', 1 )[0];
+			if (!result[key]) result[key] = [];
+
+			const rest = entry.slice( key.length + 1 );
+			result[key].push( rest );
+		});
+		return result;
+
+	} // get_source_info
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -77,7 +156,7 @@ module.exports = function MasterControl (persistent, callback) {
 	}; // token
 
 
-	this.request.status = function (client, request_id, parameters) {
+	this.request.status = async function (client, request_id, parameters) {
 		let response = null;
 
 		if (!client.login) {
@@ -103,29 +182,21 @@ module.exports = function MasterControl (persistent, callback) {
 		} else if (Object.keys(parameters).length > 0) {
 			color_log( COLORS.COMMAND, '<mcp.status.persistent>', client );
 
-			let add_uptime, add_memory, add_settings, add_debug, add_access;
+			let add_uptime, add_memory, add_settings, add_debug, add_source, add_access;
 
-			const memory_usage = process.memoryUsage();
-			const memory_info = Object.entries(memory_usage).reduce( (previous, [key, value]) => {
-				const formatted = Math.floor(value / 1024**2 * 100) / 100 + ' MiB';
-				return { ...previous, [key]: formatted }
-			}, {});
-
-			//...if (typeof parameters == 'string') {
-			//...} else {
-				function has (key) {
-					return (key == 'all') || (Object.keys( parameters ).indexOf(key) >= 0);
-				}
-				if (has('persistent')) add_persistent = persistent;
-				if (has('uptime'    )) add_uptime     = get_uptime( /*formatted*/true );
-				if (has('memory'    )) add_memory     = memory_info
-				if (has('settings'  )) add_uptime     = SETTINGS;
-				if (has('debug'     )) add_debug      = DEBUG;
-				if (has('access'    )) add_access     = {
-					rules : callback.getProtocolDescription().split('\n'),
-					meta  : callback.getAllPersistentData().access.descriptionState,
-				};
-			//...}
+			function has (key) {
+				return (key == 'all') || (Object.keys( parameters ).indexOf(key) >= 0);
+			}
+			if (has('persistent')) add_persistent = persistent;
+			if (has('uptime'    )) add_uptime     = get_uptime( /*formatted*/true );
+			if (has('memory'    )) add_memory     = get_memory_info();
+			if (has('settings'  )) add_settings   = SETTINGS;
+			if (has('debug'     )) add_debug      = DEBUG;
+			if (has('source'    )) add_source     = await get_source_info();
+			if (has('access'    )) add_access     = {
+				rules : callback.getProtocolDescription().split('\n'),
+				meta  : callback.getAllPersistentData().access.descriptionState,
+			};
 
 			response = [
 				STATUS.SUCCESS,
@@ -135,13 +206,21 @@ module.exports = function MasterControl (persistent, callback) {
 					memory   : add_memory,
 					settings : add_settings,
 					debug    : add_debug,
+					source   : add_source,
 					access   : add_access,
 				},
 			];
 
 		} else {
-			const command = Object.keys( parameters )[0];
-			response = [ STATUS.FAILURE, request_id, {['Command ' + command]: REASONS.INVALID_REQUEST} ];
+			response = [
+				STATUS.SUCCESS,
+				request_id,
+				{
+					upTime   : get_uptime( /*formatted*/true ),
+					memory   : get_memory_info(),
+					source   : await get_source_info(),
+				},
+			];
 		}
 
 		client.respond( ...response );
@@ -269,48 +348,6 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 		await fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
 	} // crashAsync
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// INTERFACE
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	if (!persistent.serverStartTime) persistent.serverStartTime = Date.now() - process.uptime();
-
-	function get_uptime (formatted = false) {
-		const milliseconds = process.uptime() * 1000;
-		//...const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
-
-		if (formatted) {
-			let seconds = Math.floor( milliseconds / 1000 );
-			let minutes = Math.floor( seconds      / 60   );   seconds -= 60 * minutes;
-			let hours   = Math.floor( minutes      / 60   );   minutes -= 60 * hours;
-			let days    = Math.floor( hours        / 24   );   hours   -= 24 * days;
-			let weeks   = Math.floor( days         / 7    );   days    -=  7 * weeks;
-			let years   = Math.floor( weeks        / 52   );   weeks   -= 52 * years;  //...
-			let millis  = Math.floor( milliseconds % 1000 );
-
-			function leading (value, digits) {
-				const string = String( value );
-				const zeros  = '0'.repeat( digits - string.length );
-				return zeros + string;
-			}
-
-			return (
-				  (years   ? years      + 'y' : '')
-				+ (weeks   ? weeks      + 'w' : '')
-				+ (days    ? days       + 'd:' : '')
-				+ leading( hours  , 2 ) + 'h'
-				+ leading( minutes, 2 ) + 'm'
-				+ leading( seconds, 2 ) + '.'
-				+ leading( millis , 3 ) + 's'
-			);
-
-		} else {
-			return milliseconds;
-		}
-
-	} // get_uptime
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

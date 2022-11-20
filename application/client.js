@@ -199,7 +199,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 		self.send({
 			update: {
-				type: 'ping',
+				type: 'session/ping',
 				pong: ++self.pingNr,
 			}
 		});

@@ -320,7 +320,7 @@ module.exports.Router = function (persistent, callback) {
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
 		const SessionHandler = require( './session.js' );
 		const AccessControl  = require( './access.js' );
-		const MasterControl  = require( './mcp/main.js' );
+		const ServerControl  = require( './control/main.js' );
 		const ChatServer     = require( './chat/main.js' );
 		const RSSServer      = require( './rss/main.js' );
 
@@ -351,9 +351,9 @@ module.exports.Router = function (persistent, callback) {
 			access: {
 				template: AccessControl,
 			},
-			//...mcp    : { template: MasterControl, callbacks: Object.keys(registered_callbacks) },
-			mcp: {
-				template: MasterControl,
+			//...server: { template: ServerControl, callbacks: Object.keys(registered_callbacks) },
+			server: {
+				template: ServerControl,
 				callbacks : [
 					'broadcast',
 					'reset',

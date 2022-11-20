@@ -48,7 +48,7 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 			callback.broadcast({
 				address  : client.address,
-				type     : 'nickName',
+				type     : 'chat/nick',
 				userName : client.login.userName,
 				nickName : new_nick,
 				oldNick  : old_nick,
@@ -77,7 +77,7 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 			Object.keys( all_clients ).filter( authenticated ).forEach( (recipient)=>{
 				all_clients[recipient].update({
-					type     : 'chat',
+					type     : 'chat/say',
 					time     : t0,
 					userName : client.login.userName,
 					nickName : client.login.nickName,
@@ -108,7 +108,7 @@ module.exports = function ChatServer (persistent, callback, meta) {
 			.filter( authenticated )
 			.forEach( (key)=>{
 				all_clients[key].update({
-					type     : 'html',
+					type     : 'chat/html',
 					time     : t0,
 					userName : client.login.userName,
 					nickName : client.login.nickName,

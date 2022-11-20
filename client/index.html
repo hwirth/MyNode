@@ -37,16 +37,17 @@
 	addEventListener( 'error', watchdog );
 	function show_status (text) { document.querySelector('header.noscript p').innerHTML = text; }
 	function show_boot_error (error) {
+		console.log( error );
 		document.querySelector('html').classList.add('init');
 		setTimeout( ()=>{
-			document.querySelector('html').classList.add('error');
+			document.querySelector('html').classList.add('init', 'error');
 			show_status(`
 				<img src='/images/rtfm.png'> <div>I broke it</div>
 				<div>Error: ${error.message}</div> <h3>Please stand by</h3> while I fix it
 		`)}, 1000);
 	}
 	function watchdog (error) {
-		setTimeout( ()=>location.reload(), 7000 );
+		setTimeout( ()=>location.reload(), 3000 );
 		show_boot_error( error );
 	}
 </script><style class="noscript">

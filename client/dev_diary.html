@@ -1,4 +1,4 @@
-<!DOCTYPE html><html id="top" lang="en" class="Xincluded"><head><meta charset="UTF-8">
+<!DOCTYPE html><html id="top" lang="en"><head><meta charset="UTF-8">
 <title>myNode Developer's Diary</title>
 <link rel="help"          href="README">
 <meta name="author"       content="hmw">
@@ -10,13 +10,14 @@
 <meta name="robots"       content="noindex,nofollow">
 <meta name="viewport"     content="width=device-width, initial-scale=1">
 <!-- meta name="color-scheme" content="dark light" -->
-<style>
+<link rel="stylesheet"    href="/include.css">
+<script src="/include.js"></script><style>
 	* { margin:0; padding:0; }
-	body { color:#000; background:#ded; font-family:sans-serif; tab-size:4; }
+	body { display:flex; flex-direction:column; gap:1em; color:#000; background:#ded; font-family:sans-serif; tab-size:4; }
 	pre, code { font-family:monospace,monospace; font-size:0.9em; }
 	article {
 		position:relative; background:#fff2; background:#fff; color:#000;
-		max-width:54em; margin:1em auto; padding:0 1em;
+		max-width:54em; margin:0 auto; padding:0 1em;
 		border:solid 1px #0004; border-radius:5px;
 	}
 	body > :first-child { margin-top:0; }
@@ -33,34 +34,11 @@
 	li { margin-left:1em; }
 	ul + ul { margin-top:-1em; }
 	[title] { cursor:help; }
-	.included body { color:#fff; background:transparent; }
-	.included article { color:#fff; background:#fff3; }
-	.included :is(header, footer) { display:none; }
-	.included h2,
-	.included article { border-color:#fff4; }
-	.included h2 time { color:#fffa; }
-	.hidden { display:none; }
-</style><script>
-	console.log( 'reload' );
-	addEventListener( 'dblclick', ()=>location.reload() );
-	if (get('included')) addEventListener( 'load', ()=>{
-		document.querySelector( 'html' ).classList.add( 'included' );
-		document.querySelectorAll( 'article' ).forEach( (article, index)=>{
-			article.classList.toggle( 'hidden', index > 0 );
-		});
-	});
-	function get (search) {
-		if ((location.href.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
-		return search.split(' ').reduce( (prev, term)=>{
-			return prev || (location.href.indexOf( term ) >= 0);
-		}, false);
-
-	}
-</script></head><body>
+</style></head><body>
 
 <header><h1>myNode Developer's Diary</h1></header>
 
-<article>
+<article id="id5">
 	<h2>RSS and Clickable Links<time>Wed, 13<sup>h</sup>01<br>Nov 16, 2022</time></h2>
 	<p>
 		A few tweaks here and there, not all errors caught, because it is impossible without wrapping the
@@ -70,7 +48,7 @@
 		token highlighting. Instead now links are clickable.
 </article>
 
-<article>
+<article id="id4">
 	<h2>Line Height Woes Continue<time>Tue, 16<sup>h</sup>30<br>Nov 15, 2022</time></h2>
 	<p>
 		I keep fighting vertical text alignment since that mysterious Firefox update close to a year ago.
@@ -86,7 +64,7 @@
 		Firefox.
 </article>
 
-<article>
+<article id="id3">
 	<h2>Error Handling<time>Mon, 12<sup>h</sup>20<br>Nov 14, 2022</time></h2>
 	<p>
 		Error handling with Javascript is quite unreliable, when you got random code that might contain any kind
@@ -141,7 +119,7 @@ for (let name in test_functions) {
 	</code></pre>
 </article>
 
-<article>
+<article id="id2">
 	<h2>What Is myNode?<time>Mon, 10<sup>h</sup>42<br>Nov 14, 2022</time></h2>
 	<ul title="Implemented in my current prototype">
 		<li>Another project that spiraled out of scope; I just wanted a websocket for my CSS poker table.
@@ -174,7 +152,7 @@ for (let name in test_functions) {
 	</ul>
 </article>
 
-<article>
+<article id="id1">
 	<h2>Started a WebSocket Project<time>Sat, 20<sup>h</sup>58<br>Oct 27, 2022</time></h2>
 	<p>
 		After quite a while has passed since I wrote a voice chat prototype with node.js,

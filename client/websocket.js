@@ -103,7 +103,7 @@ export const WebSocketClient = function (parameters = {}) {
 			// Hide ping/pong log messages
 			const is_pingpong = message.update && message.update.pong;
 			const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
-			if (do_log) {
+			if (DEBUG.WEBSOCKET && do_log) {
 				console.groupCollapsed(
 					'%c🡇 WebSocketClient received%c:',
 					'color:#48f', 'color:unset',
@@ -157,7 +157,7 @@ export const WebSocketClient = function (parameters = {}) {
 		// Hide ping/pong log messages
 		const is_pingpong = request.session && request.session.pong;
 		const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
-		if (do_log) {
+		if (DEBUG.WEBSOCKET && do_log) {
 			console.groupCollapsed(
 				'%c🡅 WebSocketClient sending%c:',
 				'color:#480', 'color:unset',

@@ -119,7 +119,7 @@ if (message.broadcast) console.trace();
 		}
 
 		self.broadcast({
-			type    : 'connect',
+			type    : 'session/connect',
 			address : client_address,
 		});
 
@@ -149,14 +149,14 @@ if (message.broadcast) console.trace();
 
 		if (client.login) {
 			self.broadcast({
-				type     : 'disconnect',
+				type     : 'session/disconnect',
 				address  : client_address,
 				userName : client.login.userName,
 				nickName : client.login.nickName,
 			});
 		} else {
 			self.broadcast({
-				type    : 'disconnect',
+				type    : 'session/disconnect',
 				address : client_address,
 			});
 		}
@@ -266,7 +266,7 @@ if (message.broadcast) console.trace();
 			client.setIdleTime( user_record.maxIdleTime );
 
 			callback.broadcast({
-				type     : 'login',
+				type     : 'session/login',
 				address  : client.address,
 				userName : client.login.userName,
 			});
@@ -309,7 +309,7 @@ if (message.broadcast) console.trace();
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
 
 			callback.broadcast({
-				type     : 'logout',
+				type     : 'session/logout',
 				address  : client.address,
 				userName : client.login.userName,
 				nickName : client.login.nickName,

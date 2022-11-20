@@ -7,7 +7,7 @@
 
 export const DEBUG = {
 	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
-	WEBSOCKET       : !false,
+	WEBSOCKET       : false,
 	KEYBOARD_EVENTS : false,
 
 	HIDE_MESSAGES: {
@@ -76,6 +76,7 @@ export const PRESETS = {
 
 	TOGGLE: {
 		TERMINAL   : get( 'terminal' ),
+		SCROLL     : !get( 'scroll' ),
 		COMPACT    : get( 'compact' ),
 		SEPARATORS : get( 'separators' ),
 		OVERFLOW   : get( 'overflow' ),

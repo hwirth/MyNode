@@ -230,7 +230,7 @@ const Main = function () {
 				socket.send(
 					JSON.stringify({
 						update: {
-							type: 'servername',
+							type: 'server/name',
 							name: SETTINGS.SERVER_NAME,
 						},
 					}),
