@@ -7,3 +7,8 @@ Guest Login:
 3. Click "Chat" to hide the debug messages
 
 Enter /help for more information.
+
+NEW:
+NEW: Bookmark format:
+NEW: /?username=root&password=12345&nickname=&lt;NICKNAME>&toggle=terminal-login
+NEW:

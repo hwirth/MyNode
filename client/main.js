@@ -155,24 +155,6 @@ const Application = function () {
 		self.youTubePlayer = null;
 
 		document.body.innerHTML += (`
-<header class="meta">
-	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-</header>
-<form tabindex="0">
-	<label><span>Username</span>
-		<input tabindex="1" name="username" placeholder="Username" type="text"     autocomplete="username">
-	</label><label><span>Nickname</span>
-		<input tabindex="2" name="nickname" placeholder="Nickname" type="text"     autocomplete="nickname" autofocus>
-	</label><label><span>Password</span>
-		<input tabindex="3" name="password" placeholder="Password" type="password" autocomplete="password">
-	</label><label><span>Username</span>
-		<input tabindex="4" name="factor2"  placeholder="Factor 2" type="password" autocomplete="one-time-code">
-	</label><label><span></span>
-		<input name="login" type="submit" value="Log in">
-	</label>
-	<input type="hidden" name="terminal">
-</form>
 		`);
 
 		self.webSocketClient = null;

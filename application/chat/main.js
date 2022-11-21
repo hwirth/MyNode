@@ -131,6 +131,37 @@ module.exports = function ChatServer (persistent, callback, meta) {
 	}; // request.html
 
 
+	meta( 'mod,admin,dev,owner: {chat:{remote:string}}' );
+	this.request.remote = function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<chat.remote>', client	);
+
+		if (client.login) {
+			const message       = parameters;
+			const t0            = Date.now();
+			const all_clients   = callback.getAllClients();
+			const authenticated = client_address => all_clients[client_address].login;
+
+			Object.keys( all_clients )
+			.filter( authenticated )
+			.forEach( (key)=>{
+				all_clients[key].update({
+					type     : 'chat/remote',
+					time     : t0,
+					userName : client.login.userName,
+					nickName : client.login.nickName,
+					remote   : message,
+				});
+			});
+
+			client.respond( STATUS.SUCCESS, request_id );
+
+		} else {
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+		}
+
+	}; // request.html
+
+
 // NEWS //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 /*
 	this.onPollRSS = async function () {

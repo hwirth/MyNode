@@ -107,14 +107,14 @@ export const DebugConsole = function (callback) {
 	</main><!-- main needs to be before header in the DOM for position:absolute in dropdowns to work -->
 	<header class="toolbar">
 		<nav><button class="node" title="Remote Site">MyNode</button></nav>
-		<nav class="list who"></nav>
-		<nav class="list toggle_state"><span></span></nav>
+		<nav class="list who" title="List of connected users"></nav>
+		<nav class="list toggle_state" title="Toggle states shown as Alt+Key shortcuts"><span></span></nav>
 		<nav class="filter">
-			<button title="Hide messages in chat mode">Filter</button>
+			<button class="enabled" title="Hide messages in chat mode">Filter</button>
 			<div class="items"></div>
 		</nav>
 		<nav class="toggles">
-			<button title="Turn features on or off">Toggle</button>
+			<button class="enabled" title="Turn features on or off">Toggle</button>
 			<div class="items"></div>
 		</nav>
 	</header>
@@ -383,12 +383,10 @@ export const DebugConsole = function (callback) {
 				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
 				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
 
-				setTimeout( update_toggle_state );
-
 				scroll_down();
 				if (is_terminal && toggle.enabled) focus_prompt();
+				setTimeout( update_toggle_state );
 
-console.log( toggle.name, toggle.enabled );
 			} // update_dom
 
 
@@ -428,6 +426,7 @@ console.log( toggle.name, toggle.enabled );
 				Object.values( self.toggles )
 				.sort( (a, b) => a.shortcut > b.shortcut ? +1 : -1 )
 				.filter( has_shortcut )   // Only those with a keyboard shortcut
+				.sort( (a, b)=>(a.shortcut > b.shortcut) ? +1 : -1 )
 				.map( to_character )   // Uppercase for enabled toggles
 				.join('')
 			);
@@ -1077,6 +1076,10 @@ setTimeout( ()=>{
 			self.elements.output.scrollTop = event.target.offsetTop - 15;
 		}
 
+		if (event.target.closest('.toggle_state')) {
+			self.elements.btnToggles.focus();
+		}
+
 		const closest_pre = event.target.closest( 'pre' );
 		if (event.ctrlKey && closest_pre) {
 			closest_pre.parentNode.removeChild( closest_pre );
@@ -1510,8 +1513,9 @@ setTimeout( ()=>{
 			const list  = self.elements.who;
 			list.innerHTML = '';
 			if (who === null) return;
-console.log( who );
+
 			const span = document.createElement( 'span' );
+			span.innerHTML = '';
 			Object.keys( who ).forEach( (address)=>{
 				const user_record = who[address];
 
@@ -1521,7 +1525,9 @@ console.log( who );
 				? user_record
 				: user_record.nickName || user_record.userName
 				;
-				if (button.innerText == self.elements.connection.innerText) {
+
+				const current_nick = self.elements.connection.innerText.split(':')[1];
+				if (button.innerText == current_nick) {
 					button.classList.add( 'self' );
 				}
 				span.appendChild( button );
@@ -1638,7 +1644,7 @@ case 'response': {
 	switch (response.command) {
 		case 'session.login': {
 			if (response.result != 'Already logged in') {
-				self.elements.connection.classList.add( 'authenticated' );
+				self.elements.terminal.classList.add( 'authenticated' );
 				self.elements.connection.innerText
 				= result.login.nickName || result.login.userName;
 			}
@@ -1646,7 +1652,7 @@ case 'response': {
 			break;
 		}
 		case 'session.logout': {
-			self.elements.connection.classList.remove( 'authenticated' );
+			self.elements.terminal.classList.remove( 'authenticated' );
 			self.elements.connection.innerText = 'Connected';
 			if (response.success) update_who_list( null ); //{dummy:'Logged out'} );
 			break;

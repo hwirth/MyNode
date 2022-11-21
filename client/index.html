@@ -64,6 +64,101 @@
 	.noscript p { margin-top:2em; }
 	.noscript img { display:block; margin:0 auto; }
 	.noscript div + div { color:#f00; margin:1em 0 0.5em; }
+</style><style>
+	* { margin:0; padding:0; box-sizing:border-box; font-family:terminal; }
+
+	a { color:#fc0; }
+	a:visited { color:#f80; }
+	a:active { color:#ff0; }
+	a:focus { color:#ff0; }
+	a:hover { color:#fd8; }
+
+	html, body { width:100%; height:100%; font-family:terminal; }
+	:not(.init) body {
+		background-color:#000;
+		background-image:url(/images/bg_grid.jpg);   /************************************************ GRID **/
+		Xbackground-size:calc(100% / 3) calc(100% / 3);
+		Xbackground-size:cover;
+		background-size:100% 100%;
+	}
+	html:not(.init) body > header,
+	html:not(.init)::after {
+		content:'WHAT IS\AMY NODE'; white-space:pre;
+		position:absolute; bottom:20px; left:30px; transform:translate(-50%,-50%);
+		outline:solid 1px #fff6;
+		border-radius:3px;
+		padding:2px 5px;
+		font-size:0.7em; line-height:1.1em; text-align:center;
+		background:#0007; color:#fc0;
+		pointer-events:none;
+	}
+	:not(.init) body::after {
+		content:'';
+		position:absolute; top:0; left:0; z-index:-1;
+		height:100%; width:100%;
+		background-color:#2220;
+		background-image:url(/images/beam.png);   /*************************************************** BEAM **/
+		background-position:6px center;
+		background-repeat:no-repeat;
+		background-size:calc(96px / 2) 100%;
+		filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
+	}
+
+	:focus { outline:none; }
+
+	h1 { font-size:1.35em; }
+	h2 { font-size:1.1em; }
+
+	html:not(.init) body > header {
+		content:unset;
+		position:absolute; bottom:60px; z-index:9;
+		width:5em; Xheight:3em;
+		white-space:normal; text-transform:uppercase;
+		pointer-events:auto;
+	}
+
+	body { overflow:hidden; }
+	body > header a { text-decoration:none; }
+	body > header a:hover { text-decoration:underline; }
+
+	body > form {
+		position:absolute; top:47%; left:50%; transform:translate(-50%,-50%);
+		display:flex; flex-direction:column; gap:5px; justify-content:center; align-items:center;
+		border-radius:100%;
+		padding:100px 200px;
+		background:#0004; color:#fffa;
+		background:radial-gradient(
+			circle at center,
+			#000f,
+			#000f 35%,
+			#08f3 41%,
+			#f006 45%,
+			#f003 50%,
+			#fc00 100%
+		);
+		box-shadow:
+			0 0 0 3px #f004,
+			inset 0 0 20vmin 20vmin #000a,
+			0 0 250px 1px #28cc
+		;
+		opacity:0;
+		transition:all 1s ease-in-out;
+	}
+	body > form:hover,/* { opacity:0.7; padding:20vmin 40vmin; }*/
+	body > form:focus-within { opacity:1; padding:80vmin 80vmin; }
+	body > form input {
+		width:12em; height:2em; line-height:2em;
+		border:solid 1px #fff8; border-radius:5px;
+		background:#0004; color:#fc0;
+		text-align:center;
+	}
+	body > form input:hover { background:#0408; color:#fffe; }
+	body > form input:focus { background:#0408; color:#fff; text-align:left; padding-left:5px; }
+	body > form input::placeholder { font-family:terminal; font-size:1em; color:#fff; }
+	body > form input:hover::placeholder { color:#0f0c; }
+	body > form input:focus::placeholder { color:#fff; text-align:center; }
+	body > form input[type=submit] { color:#0f08; font-weight:bold; text-align:center; }
+	body > form input[type=submit]:active { background:#0f04; color:#0f0; padding-left:0; }
 </style></head><body>
 	<header class="noscript">
 		<h1>
@@ -73,4 +168,24 @@
 		<p>Please enable JavaScript</p>
 	</header>
 	<script class="noscript"> show_status('Loading'); </script>
+
+	<header class="meta">
+		<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
+		<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
+	</header>
+	<form tabindex="0">
+		<label><span>Username</span>
+			<input tabindex="1" name="username" placeholder="Username" type="text"     autocomplete="username" value="guest">
+		</label><label><span>Nickname</span>
+			<input tabindex="2" name="nickname" placeholder="Nickname" type="text"     autocomplete="nickname" autofocus>
+		</label><label><span>Password</span>
+			<input tabindex="3" name="password" placeholder="Password" type="password" autocomplete="password">
+		</label><label><span>Username</span>
+			<input tabindex="4" name="factor2"  placeholder="Factor 2" type="password" autocomplete="one-time-code">
+		</label><label><span></span>
+			<input type="submit" value="Log in">
+		</label>
+		<input type="hidden" name="toggle" value="terminal-login">
+	</form>
+
 </body></html>
