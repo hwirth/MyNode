@@ -24,7 +24,7 @@
 	--terminal-padding : 10px;
 
 	--toolbar-height     : 30px;
-	--toolbar-outline    : solid 0px #fff0;
+	--toolbar-outline    : solid 1px #fff3;
 	--toolbar-background : #445a;
 
 	--menu-offset        : 0px;
@@ -247,7 +247,7 @@ body.dark_mode {}
 .terminal .toolbar {
 	position:relative;
 	display:flex; gap:var(--menu-gap);
-	height:var(--toolbar-height);
+	Xheight:var(--toolbar-height);
 	outline:var(--toolbar-outline);
 	border-radius:5px;
 	background:var(--toolbar-background); color:#fff;
@@ -271,14 +271,6 @@ body.dark_mode {}
 .terminal .toolbar nav > .items { display:none; }
 .terminal:not(.connected) .send .items,
 .terminal:not(.connected) .main_menu .items,
-/*
-.terminal .toolbar nav:hover > nav:focus .items,
-.terminal .toolbar nav:focus > nav:focus .items,
-.terminal .toolbar nav:focus-within > nav:focus .items,
-.terminal .toolbar nav:hover > .items,
-.terminal .toolbar nav:focus > .items,
-.terminal .toolbar nav:focus-within > .items {
-*/
 .terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {
 	--r:var(--menu-border-radius);
 	display:flex; gap:var(--menu-gap); flex-wrap:wrap; align-items:center; justify-content:center;
@@ -292,20 +284,11 @@ body.dark_mode {}
 		      0 2px 0 0 #0004
 	;
 }
-.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items {
-	box-shadow:inset 0 0 0 1px #fff0;
-}
+.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inset 0 0 0 1px #fff0; }
+.terminal .toolbar > nav:first-child .items { left:0; right:unset; }
+.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items { color:#80fc; padding-bottom:0; }
+.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close { color:var(--button-color); }
 
-.terminal .toolbar > nav:first-child .items {
-	left:0; right:unset;
-}
-.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items {
-	color:#80fc;
-	padding-bottom:0;
-}
-.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close {
-	color:var(--button-color);
-}
 /* Sub Menus */
 .terminal .toolbar > nav form nav {
 	padding:5px; margin:-5px;
@@ -391,19 +374,12 @@ X.terminal textarea:focus { caret-color:#f0f; }
 		inset  1px  1px 0px 1px #fff2
 	;
 	padding:var(--button-padding);
-	line-height:var(--toolbar-height);
 }
 .terminal input:hover,
 .terminal button:focus,
 .terminal button:hover {
 	border:var(--focus-border); filter:brightness(1.5);
 }
-
-.terminal nav button.bit,
-.terminal nav button.debug:not(.enabled),
-.terminal button.enter   { background:var(--button-enter-bg  ); color:var(--button-enter-color  ); }
-.terminal button.close   { background:var(--button-close-bg  ); color:var(--button-close-color  ); }
-.terminal button.enabled { background:var(--button-enabled-bg); color:var(--button-enabled-color); }
 
 .terminal button.blink.success { color:var(--success-color); }
 .terminal button.blink { animation: TOGGLE 0.5s linear 1; }
@@ -421,13 +397,18 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal button.clear,
 .terminal button.help,
 .terminal button.bit,
-.terminal button.who,
+X.terminal button.who,
 .terminal button.login,
 .terminal button.logout,
 .terminal button.connect,
 .terminal button.disconnect {
 	background:var(--button-special-bg);
 }
+.terminal button.debug:not(.enabled),
+.terminal button.enter   { background:var(--button-enter-bg  ); color:var(--button-enter-color  ); }
+.terminal button.close   { background:var(--button-close-bg  ); color:var(--button-close-color  ); }
+
+.terminal .toolbar button.enabled { background:var(--button-enabled-bg); color:var(--button-enabled-color); }
 
 .terminal .toolbar button.transmit,
 .terminal .toolbar button.ping { background:var(--transmit-bg); }
@@ -465,10 +446,12 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 /* Who */
-X.terminal .list.who span::before {
+.terminal .list.who::before {
 	content:'⟷';
-	color:#0afa;
+	color:#023;
 	font-weight:bold;
+	padding-right:3px;
+	filter:drop-shadow(0 0 2px #cef);
 }
 
 /* Room */
@@ -479,21 +462,21 @@ X.terminal .list.who span::before {
 .terminal .list b { color:#bdf; font-weight:normal; }
 
 /* Connection */
-.terminal .node           > button,
-.terminal .connection     > button,
+.terminal .node       > button,
+.terminal .connection > button,
 .terminal .connection.warning {
 	border:solid 1px var(--offline-color);
 	background:var(--offline-bg); color:var(--offline-color);
 	transition:color 0.2s linear;
 }
-.terminal.connected .node           > button,
-.terminal.connected .connection     > button,
+.terminal.connected .node       > button,
+.terminal.connected .connection > button,
 .terminal.connected .connection.warning {
 	border:solid 1px var(--online-color);
 	background:var(--online-bg); color:var(--online-color);
 }
-.terminal.authenticated .connection     > button,
-.terminal.authenticated .node           > button,
+.terminal.authenticated .node       > button,
+.terminal.authenticated .connection > button,
 .terminal.authenticated .connection button.warning {
 	color:var(--authenticated-color);
 }
@@ -553,8 +536,6 @@ X.terminal .list.who span::before {
 .terminal pre.chat      { color:var(--chat-color);      }
 .terminal pre.error     { color:var(--error-color);     }
 
-.terminal .shell:not(.debug) pre:is(.chat,.string) { background:#adf4; }
-
 .terminal pre { display:block; }
 .terminal .debug .cep       pre.cep,
 .terminal .debug .string    pre.string,
@@ -564,6 +545,19 @@ X.terminal .list.who span::before {
 .terminal .debug .request   pre.request,
 .terminal .debug .response  pre.response { display:none; }
 
+/* Striped background */
+.terminal .shell:not(.debug) pre:is(.chat,.string):hover {
+	--b0:#223c;
+	--b1:#234c;
+	background-image: -webkit-linear-gradient(var(--b0) 50%, var(--b1) 50%);
+	background-image:    -moz-linear-gradient(var(--b0) 50%, var(--b1) 50%);
+	background-image:     -ms-linear-gradient(var(--b0) 50%, var(--b1) 50%);
+	background-image:      -o-linear-gradient(var(--b0) 50%, var(--b1) 50%);
+	background-image:         linear-gradient(var(--b0) 50%, var(--b1) 50%);
+	background-position: 0 0;
+	background-repeat: repeat;
+	background-size: 1rem 2rem;
+}
 
 /* EXPAND */
 .terminal pre { position:relative; z-index:10; white-space:pre-wrap; }
@@ -651,7 +645,9 @@ X.terminal .list.who span::before {
 	background-size:calc(96px / 2) var(--terminal-height);
 	filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
 }
-.terminal.fancy.connected::after { filter:hue-rotate(0deg); }
+.terminal.fancy.connected::after {
+	filter:hue-rotate(0deg) brightness(1) contrast(1);
+}
 
 .terminal.fancy.connected .cep > button,
 .terminal.fancy.connected .node > button {
@@ -660,7 +656,6 @@ X.terminal .list.who span::before {
 
 .terminal.fancy.bit output::before {
 	transform:translate(-50%,-50%) scale(1);
-	transition:transform 0.3s linear;
 }
 .terminal.fancy output::before {
 	--b:0.85;
@@ -672,11 +667,12 @@ X.terminal .list.who span::before {
 	transition:transform 0.3s linear;
 }
 .terminal.fancy > * { z-index:3; }
-.terminal.fancy.connected  output::before { filter:hue-rotate(  0deg) brightness(var(--b)); }
-.terminal.fancy.bit.yes output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
-.terminal.fancy.bit.no  output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
-.terminal.fancy.bit.yes output::after,
-.terminal.fancy.bit.no  output::after {
+.terminal.fancy.connected  output::before { filter:hue-rotate(  0deg) brightness(var(--b));        }
+.terminal.fancy.bit.yes    output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
+.terminal.fancy.bit.no     output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
+
+.terminal.fancy.bit.yes    output::after,
+.terminal.fancy.bit.no     output::after {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:-1;
 	width:200%; height:200%;

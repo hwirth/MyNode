@@ -36,7 +36,7 @@ export const DebugConsole = function (callback) {
 	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
 
 	const BUTTON_SCRIPTS = [
-// self.elements[menu]
+// self.elements[menu]  (auth, main, node)
 { menu:'auth' , name:'login',   script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
 { menu:'auth' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
 { menu:'auth' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
@@ -52,10 +52,10 @@ export const DebugConsole = function (callback) {
 { menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
 { menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
 { menu:'main' , name:'token'      , script:'server\n\ttoken' },
+{ menu:'main' , name:'clear'      , script:'/clear' },
 { menu:'main' , name:'who'        , script:'session\n\twho' },
-{ menu:'node' , name:'clear'      , script:'/clear' },
-{ menu:'node' , name:'help'       , script:'/help' },
-{ menu:'node' , name:'manual'     , script:'/manual' },
+{ menu:'main' , name:'manual'     , script:'/manual' },
+{ menu:'main' , name:'help'       , script:'/help' },
 	];
 
 	const SHORTHAND_COMMANDS = {
@@ -74,7 +74,6 @@ export const DebugConsole = function (callback) {
 	<header class="toolbar">
 		<nav class="node">
 			<button title="MyNode Server">MyNode</button>
-			<div class="items"></div>
 		</nav>
 		<nav class="list who" title="List of connected users"></nav>
 		<nav class="room" title="Chat text gets sent to this channel"><span>Public Room <q>Spielwiese</q></span></nav>
@@ -108,7 +107,7 @@ export const DebugConsole = function (callback) {
 					<div class="items"></div>
 				</nav>
 				<nav class="main">
-					<button class="token">Token</button>
+					<button class="help">Help</button>
 					<div class="items"></div>
 				</nav>
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
@@ -271,6 +270,7 @@ export const DebugConsole = function (callback) {
 			btnFilter    : container.querySelector( '.filter button'     ),
 			toggles      : container.querySelector( '.toggles .items'    ),
 			btnToggles   : container.querySelector( '.toggles button'    ),
+			help         : container.querySelector( 'button.help'        ),
 			token        : container.querySelector( 'button.token'       ),
 			// Footer
 			connection   : container.querySelector( '.connection'        ),
@@ -349,6 +349,7 @@ export const DebugConsole = function (callback) {
 			if (!element && menu) {
 				element = document.createElement( 'button' );
 				element.innerText = toggle.caption || toggle.name;
+				element.className = toggle.name;
 				if (toggle.shortcut) {
 					element.title = 'Shortcut: Alt+' + toggle.shortcut;
 				} else {

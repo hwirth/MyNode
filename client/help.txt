@@ -49,4 +49,4 @@ With "toggles" as a comma separated list, bookmark:
  /?username=&lt<i>user</i>>&password=&lt<i>pass</i>>&nickname=&lt;<i>nick</i>>&login[=&lt;<i>toggles</i>>]>
 
 Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
->README</a> for even more details.
+>README</a> for more details.
