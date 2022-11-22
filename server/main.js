@@ -96,7 +96,46 @@ const Main = function () {
 
 	this.onMessage = async function (socket, client_address, json_string) {
 		const request_nr  = ++message_id;
-		const message     = JSON.parse(String( json_string )); //...? Why String
+
+	if (!true && typeof json_string != 'string') {
+		log_header(
+			COLORS.WARNING,
+			'GOT BUFFER '
+			+ request_nr
+			+ ' ]--[ '
+			+ COLORS.STRONG
+			+ client_address
+			+ COLORS.WARNING
+			,
+			EXTRA_HEADER_DASHES,
+		);
+
+		return socket.close();
+	}
+
+function parse_json(message) {//...
+	let result = message;
+	try   { result = JSON.parse( message ); }
+	catch { /* Assume string */
+	log_header(
+			COLORS.WARNING,
+			'GOT BUFFER '
+			+ request_nr
+			+ ' ]--[ '
+			+ COLORS.STRONG
+			+ client_address
+			+ COLORS.WARNING
+			,
+			EXTRA_HEADER_DASHES,
+		);
+
+		socket.close();
+	}
+
+	return result;
+}
+
+		const message     = parse_json( json_string );
 		const is_pingpong = message.session && message.session.pong;
 		const do_log      = (!is_pingpong || (is_pingpong && SETTINGS.PING.LOG));
 

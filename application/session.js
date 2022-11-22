@@ -232,6 +232,8 @@ if (message.broadcast) console.trace();
 			log_warning( 'login', REASONS.BAD_USERNAME, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			return;
+		} else {
+			parameters.username = parameters.username.toLowerCase();
 		}
 
 		if (!parameters.password && (parameters.username != 'guest')) {
@@ -245,9 +247,7 @@ if (message.broadcast) console.trace();
 			log_warning( 'login', REASONS.INVALID_USERNAME, client );
 			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
 			return;
-
 		}
-
 
 		const password_correct
 		=  (user_record.password === String(parameters.password))
@@ -255,7 +255,6 @@ if (message.broadcast) console.trace();
 		;
 
 		if (password_correct) {
-
 // client.js /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 			// Make new client object
@@ -283,7 +282,7 @@ if (message.broadcast) console.trace();
 			);
 
 			if (client.login.userName == 'guest') {
-				client.login.userName += ++self.guestNr;
+				client.login.userName = 'Guest' + (++self.guestNr);
 			}
 
 			client.setIdleTime( user_record.maxIdleTime );
@@ -297,8 +296,27 @@ if (message.broadcast) console.trace();
 
 			color_log( COLORS.COMMAND, '<session.login>', client );
 			client.respond( STATUS.SUCCESS, request_id, {...client, who:self.getWho(client)} );
-;
-			client.send({ notice: user_record.banner || STRINGS.LOGIN_BANNER });
+
+			send_cookie();
+			async function send_cookie () {
+				const exec = require( 'child_process' ).exec;
+				const command = '/usr/games/fortune';//SETTINGS.BASE_DIR + 'functions.sh';
+				console.log( COLORS.ERROR + 'EXEC' + COLORS.RESET + ':', command );
+
+				const fortune_cookie = await new Promise( (resolve, reject)=>{
+					exec( command, (error, stdout, stderr)=>{
+						if (error !== null) {
+							reject( error );
+						} else {
+							resolve( stdout.trim().replace( /\t/g, ' ' ).split('\n') );
+						}
+					});
+				})
+
+				console.log( 'COOKIE:', fortune_cookie );
+				const banner = fortune_cookie[0];
+				client.send({ notice: { fortune: '"' + banner + '"' }} );
+			}
 
 // /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		} else {
@@ -393,6 +411,9 @@ if (message.broadcast) console.trace();
 		}
 if (!client.login) throw new Error( 'NO CLIENT' );
 		//... cant kick multiple
+
+		if (parameters.username) parameters.username = parameters.username.toLowerCase();
+
 		let target_client = null;
 		if (parameters.address) {
 			target_client = persistent.clients[parameters.address];

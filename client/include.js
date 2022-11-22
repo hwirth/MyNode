@@ -6,7 +6,8 @@
 init();
 
 function GET (search) {
-	if ((location.href.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
+	const decoded_uri = decodeURIComponent( location.href );
+	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
 	return search.split(' ').reduce( (prev, term)=>{
 		return prev || (location.href.indexOf( term ) >= 0);
 	}, false);

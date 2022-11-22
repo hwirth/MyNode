@@ -1,54 +1,52 @@
 MyNode CHAT and DEBUG CONSOLE
 =============================
-Sends single lines as  chat.say  requests, otherwise
-turns TAB formatted multiline text into JSON objects.
+Debug mode shows all websocket messages going in or out.
+Single lines input by the user are sent as  chat.say  requests, otherwise
+TAB formatted multiline text is sent as JSON objects.
 
-Chat and Debug Mode
--------------------
-While in chat mode, all non-chat messages are hidden.
-Click the "Chat" button or press Alt+D to switch the mode.
-While in debug mode, the toggles in the Chat menu let you
-select, which types of messages to show.
+You can enter tab-indented pseudo-JSON, in order to send arbitrary
+requests to the server. In essence, you type a JSON object without the
+curly braces and quotation marks.
 
-Multiline Requests (mJSON)
---------------------------
-You can enter tab-indented pseudo-JSON, in order to send
-arbitrary requests to the server. In essence, you type a
-JSON object without the curly braces and quotation marks.
-
-You type:                 Resulting JSON:
-
-session                   {
-    login                     "session":{
-        username: Mr. Me          "login":{
-        password: secRet              "username":"Mr. Me",
-chat                                  "password":"secRet"
-    nick: me                      }
-                              },
-                              "chat":{
-                                  "nick":"me"
-                              }
-                          }
-
-You MUST USE the TAB KEY for indenting.
-
-Short Requests (sJSON)
-----------------------
-As long as all parameters don't contain dots (".") or
-semicolons, you can use the shortened single-line format.
-The example from above in sJSON:
-
-.session.login.username:Mr Me,password:secRet...chat.nick:me
-
-Where a dot stands for indentation/nesting, a double dot
-unindents, triple dots unindent 2 times and so on.
+You type tabJSON:         Resulting JSON:
+ session                   {
+     login                     "session":{
+         username: Me              "login":{
+         password: secRet              "username":"Me",
+ chat                                  "password":"secRet"
+     nick: Hey                     }
+                               },
+                               "chat":{
+TAB key is mandatory               "nick":"Hey"
+for indenting!                 }
+                           }
+shJSON:
+ .session.login.username:Me,password:secRet...chat.nick:Hey
+A dot indents (nests), a double dot unindents, triple dots unindent 2
+times, etc. Entries on the same level are separated with a comma.
 
 Keyboard
---------
-Enter            Sends text/request
-Shift+Enter      Inserts line break (pseudo-JSON)
-Ctrl+Home        Clears input
-Ctrl+Shift+Home  Clears screen
+	Enter            Sends text/request, adds marker
+	Shift+Enter      Inserts line break (tabJSON)
+	Ctrl+Home        Clears input
+	Ctrl+Shift+Home  Clears screen
+
+Toggles
+	terminal     Open the terminal         Alt+T
+	debug        Chat mode off             Alt+D
+	scroll       Lock auto-scrolling       Alt+R
+	compact      Collapse all messages     Alt+C
+	separators   Separate messages         Alt+S
+	overflow     Messages singe line       Alt+V
+	last         Uncollapse last message   Alt+Y
+	fancy        Playful theme             Alt+F
+	animate      Animations                Alt+A   Slow PC?
+	bit          Answers yes/no            Alt+B
+	keyBeep      Buttons and kbd. sound    Alt+K
+	tts          SAM speech synthesizer    Alt+M
+
+With "toggles" as a comma separated list, bookmark:
+ /?username=&lt<i>user</i>>&password=&lt<i>pass</i>>&nickname=&lt;<i>nick</i>>&login[=&lt;<i>toggles</i>>]>
 
 Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
 >README</a> for even more details.

@@ -94,20 +94,14 @@ module.exports.Router = function (persistent, callback) {
 		function send_error (error, catch_mode = '') {
 			color_log( COLORS.ERROR, 'ERROR Router.onMessage-send_error:', error );
 
-			Object.keys( persistent.session.clients ).forEach( (address)=>{
-				const client = persistent.session.clients[address];
-				const new_message = {
-					//...?settings  address  : client_address,
-					type     : 'error',
-					tag      : request_id.tag,
-					request  : request_id.request || null,
-					success  : false,
-					reason   : REASONS.APPLICATION_ERROR,
-				};
-
-				if (client.inGroup('admin', 'dev')) new_message.error = format_error( error );
-
-				callback.broadcast( new_message );
+			callback.broadcast({
+				//...?settings  address  : client_address,
+				type     : 'error/router/' + catch_mode,
+				tag      : request_id.tag,
+				request  : request_id.request || null,
+				success  : false,
+				reason   : REASONS.APPLICATION_ERROR,
+				error    : format_error( error ),
 			});
 		}
 

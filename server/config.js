@@ -55,6 +55,7 @@ const SETTINGS = {
 `
 //... Workaround for Geany bug: `
 	) + ' '.repeat(37 - server_name.length) + server_name,
+//...SERVER_BANNER: 'MyNode Spielwiese',
 
 	DEV_SERVER  : DEV_SERVER,
 	INSTALL_GEH : true,   // Global error and unhandled rejection handler

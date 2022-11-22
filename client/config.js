@@ -34,7 +34,7 @@ export const SETTINGS = {
 	TIMEOUT: {
 		PING_CSS         : 100,
 		RECONNECT        : 200,   //1000 ms
-		STATUS_FADE      : 1000,
+		STATUS_FADE      : 250,
 		STATUS_SHOW      : 6000,
 		BEEP_IGNORE      : 100,
 		BIT_ANSWER_COLOR : 200,
@@ -56,10 +56,13 @@ export const SETTINGS = {
 };
 
 function get (search) {
-	if ((location.href.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
-	return search.split(' ').reduce( (prev, term)=>{
-		return prev || (location.href.indexOf( term ) >= 0);
+	const decoded_uri = decodeURIComponent( location.href );
+	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
+	const result = search.split(' ').reduce( (prev, term)=>{
+		return prev || (decoded_uri.indexOf( term ) >= 0);
 	}, false);
+
+	return result;
 
 }
 export const PRESETS = {
@@ -77,9 +80,9 @@ export const PRESETS = {
 	TOGGLE: {
 		TERMINAL   : get( 'terminal' ),
 		SCROLL     : !get( 'scroll' ),
-		COMPACT    : get( 'compact' ),
-		SEPARATORS : get( 'separators' ),
-		OVERFLOW   : get( 'overflow' ),
+		COMPACT    : !get( 'compact' ),
+		SEPARATORS : !get( 'separators' ),
+		OVERFLOW   : !get( 'overflow' ),
 		ANIMATE    : !get( 'animate' ),
 		BIT        : !get( 'bit' ),
 		FANCY      : !get( 'fancy' ),

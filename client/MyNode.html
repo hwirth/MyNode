@@ -60,7 +60,7 @@ console.log( location.href );
 		--color5: #fff2;
 	}
 
-	body { width:100%; height:100%; padding:1em; text-align:center; }
+	html { width:100%; height:100%; padding:1em; text-align:center; }
 
 	.diagram {
 		display:inline-flex;
@@ -94,8 +94,8 @@ console.log( location.href );
 		padding:1em;
 		background:var(--color3);
 	}
-	.diagram h2 { margin:0 0 1rem; }
-	.diagram h3 { margin:0 0 1rem; }
+	.diagram h2 { margin:0; }
+	.diagram :is(h3,h4,h5,h6) { margin:0 0 1rem; }
 	.diagram ul {
 		list-style-type:none;
 		display:inline-flex;
@@ -114,21 +114,20 @@ console.log( location.href );
 
 </style></head><body>
 
-	<div class="diagram">
-		<h1>MyNode</h1>
-
+	<nav class="diagram">
+		<h2>MyNode</h2>
 		<div class="layer">
-			<h2>Server</h2>
+			<h3>Server</h3>
 			<ul>
 				<li>WebSocket
-				<li><b>Reloader</b>
 				<li>Configuration
 				<li>Debug
+				<li><b>Reloader</b>
 			</ul>
 		</div>
 
 		<div class="layer">
-			<h2>Reloader</h2>
+			<h3>Reloader</h3>
 			<ul>
 				<li>Configuration
 				<li>Protocol Interface
@@ -138,10 +137,10 @@ console.log( location.href );
 		</div>
 
 		<div class="layer">
-			<h2>Router</h2>
+			<h3>Router</h3>
 			<div class="group">
 				<div>
-					<h3>Core Protocols</h3>
+					<h4>Core Protocols</h4>
 					<ul>
 						<li>Session
 						<li>Access
@@ -149,14 +148,32 @@ console.log( location.href );
 					</ul>
 				</div>
 				<div>
-					<h3>Applications</h3>
+					<h4>Applications</h4>
 					<ul>
 						<li>Chat
-						<li>RSS
+						<li>Lobby
+						<li>Game
 					</ul>
 				<div>
 			</div>
 		</div>
-	</div>
+	</nav>
+
+	<article id="MyNode"></article>
+	<article id="Server"></article>
+	<article id="WebSocket"></article>
+	<article id="Reloader"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
+	<article id="MyNode"></article>
 
 </body></html>

@@ -200,7 +200,7 @@ console.log( 'color_log: HEADING' );//...
 		} else {
 	*/
 			console.log(
-				uptime + date + colors + colored_heading,
+				COLORS.RESET + uptime + date + colors + colored_heading,
 				...text,
 				COLORS.RESET,
 			);
@@ -237,12 +237,12 @@ console.log( 'color_log: HEADING' );//...
 				const size = fs.statSync( file_name ).size;
 
 				if (size > SETTINGS.LOG.MAX_FILE_SIZE) {
-					const truncated_log
-					= fs
-					.readFileSync( file_name )
-					.toString()
-					.substr( SETTINGS.LOG.MAX_FILE_SIZE / 2 )
-					;
+					const truncated_log = (
+						fs
+						.readFileSync( file_name )
+						.toString()
+						.substr( SETTINGS.LOG.MAX_FILE_SIZE / 2 )
+					);
 
 					fs.writeFileSync(
 						file_name,
