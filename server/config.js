@@ -97,8 +97,8 @@ const SETTINGS = {
 
 	TIMEOUT: {
 		SOCKET_CLOSE  : 300,
-		LOGIN         : 5*1000,
-		IDLE          : 5*1000,
+		LOGIN         : 6*1000,
+		IDLE          : 1*60*1000,
 	},
 
 }; // SETTINGS

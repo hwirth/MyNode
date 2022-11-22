@@ -46,12 +46,12 @@ export const DebugConsole = function (callback) {
 { menu:'auth' , name:'root'       , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
 { menu:'main' , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
 { menu:'main' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'main' , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 { menu:'main' , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
 { menu:'main' , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
 { menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
 { menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
 { menu:'main' , name:'token'      , script:'server\n\ttoken' },
-{ menu:'main' , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 { menu:'main' , name:'who'        , script:'session\n\twho' },
 { menu:'node' , name:'clear'      , script:'/clear' },
 { menu:'node' , name:'help'       , script:'/help' },
@@ -65,23 +65,21 @@ export const DebugConsole = function (callback) {
 
 	const HTML_TERMINAL = (`
 <div class="terminal">
+
 	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
 		<output class="last"></output>
 		<textarea autocomplete="off"></textarea>
 	</main><!-- main needs to be before header in the DOM for position:absolute in dropdowns to work -->
+
 	<header class="toolbar">
 		<nav class="node">
 			<button title="MyNode Server">MyNode</button>
 			<div class="items"></div>
 		</nav>
 		<nav class="list who" title="List of connected users"></nav>
-		<nav class="room" title="Chat text gets sent to this channel"><span>Room <q>Spielwiese</q></span></nav>
-		<nav class="list toggle_state" title="Toggle states, shown as Alt+Key shortcuts"><span></span></nav>
-		<nav class="main">
-			<button class="clear">Clear</button>
-			<div class="items"></div>
-		</nav>
+		<nav class="room" title="Chat text gets sent to this channel"><span>Public Room <q>Spielwiese</q></span></nav>
 	</header>
+
 	<footer class="toolbar">
 		<nav class="connection">
 			<button title="Connection state, or your user/nick name">OFFLINE</button>
@@ -91,20 +89,28 @@ export const DebugConsole = function (callback) {
 			<span class="time"></span>
 			<span class="extra"></span>
 		</nav>
-		<nav class="toggles">
-			<button class="enabled">Toggle</button>
-			<div class="items">
-				<button class="close" title="Minimize terminal. Shortcut: Alt+T">Terminal</button>
-				<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat Mode</button>
-			</div>
-		</nav>
-		<nav class="filter">
-			<button class="enabled">Filter</button>
-			<div class="items"></div>
+		<nav class="list toggle_state" title="Toggle states, shown as Alt+Key shortcuts"><span></span></nav>
+		<nav title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
+			<button class="clear" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">Clear</button>
 		</nav>
 		<nav class="auth">
 			<button class="enter" title="Execute command/send chat text. Keyboard: Enter">Enter</button>
 			<form class="items">
+				<nav class="toggles">
+					<button class="enabled">Toggle</button>
+					<div class="items">
+						<button class="close" title="Minimize terminal. Shortcut: Alt+T">Terminal</button>
+						<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat Mode</button>
+					</div>
+				</nav>
+				<nav class="filter">
+					<button class="enabled">Filter</button>
+					<div class="items"></div>
+				</nav>
+				<nav class="main">
+					<button class="token">Token</button>
+					<div class="items"></div>
+				</nav>
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
 				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
 				<input type="password" name="password" placeholder="Password" autocomplete="password">
@@ -265,6 +271,7 @@ export const DebugConsole = function (callback) {
 			btnFilter    : container.querySelector( '.filter button'     ),
 			toggles      : container.querySelector( '.toggles .items'    ),
 			btnToggles   : container.querySelector( '.toggles button'    ),
+			token        : container.querySelector( 'button.token'       ),
 			// Footer
 			connection   : container.querySelector( '.connection'        ),
 			windows      : container.querySelector( '.list.windows'      ),
@@ -885,7 +892,8 @@ setTimeout( ()=>{
 		}
 
 		if (event.target.closest('.toggle_state')) {
-			self.elements.btnToggles.focus();
+			self.elements.enter.focus();
+			setTimeout( ()=>self.elements.btnToggles.focus() );
 		}
 
 		const closest_pre = event.target.closest( 'pre' );
@@ -1884,7 +1892,7 @@ console.groupEnd();
 			new_button.dataset.command = script.name;
 			new_button.className       = script.name;
 			new_button.innerText       = script.name.charAt(0).toUpperCase() + script.name.slice(1);
-			new_button.title           = 'Double click to execute immediately';
+			new_button.title           = new_button.title || 'Double click to execute immediately';
 			new_button.addEventListener( 'click', on_script_button_click );
 
 			if (!existing) self.elements[script.menu].appendChild( new_button );
@@ -1957,7 +1965,7 @@ console.groupEnd();
 			}
 		});
 
-		function init_prompt () {
+		async function init_prompt () {
 			self.setFont();
 
 			// Find shortcuts and add list of keys to CEP_VERSION
@@ -1967,7 +1975,8 @@ console.groupEnd();
 
 			CEP_VERSION += '^' + shortcuts.split('').sort().join('');   // For .help
 			print_version();
-			if (!GET.has('login')) show_file( 'issue.txt' );
+			//...if (!GET.has('login')) await show_file( 'issue.txt' );
+			await show_file( 'issue.txt' );
 
 			if (GET.has('username')) self.elements.userName.value = GET.get('username');
 			if (GET.has('nickname')) self.elements.nickName.value = GET.get('nickname');

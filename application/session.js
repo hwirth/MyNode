@@ -518,11 +518,11 @@ if (!client.login) throw new Error( 'NO CLIENT' );
 					},
 					'guest': {
 						password: null,
-						maxIdleTime: 5*60*1000,
+						maxIdleTime: SETTINGS.TIMEOUT.IDLE,
 					},
 					'user': {
 						password: 'pass2',
-						maxIdleTime: 5*60*1000,
+						maxIdleTime: SETTINGS.TIMEOUT.IDLE,
 					},
 					'idler': {
 						password: 'pass3',

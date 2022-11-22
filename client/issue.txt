@@ -1,5 +1,4 @@
 MyNode Chat and Debug Console
-A fancy websocket JSON-message debugger
 
 Guest Login:
 1. Choose a *NICK*name in the "Enter" menu

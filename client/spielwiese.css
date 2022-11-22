@@ -63,7 +63,7 @@
 	--input-padding-x    : calc(var(--toolbar-height) / 3.5);
 	--input-padding-y    : 0px;
 
-	--button-color          : fe0;
+	--button-color          : #fed;
 	--button-bg             : #08f1;
 	--button-padding        : 0 10px;
 
@@ -71,7 +71,7 @@
 	--button-enabled-bg     : #88ff0018;
 	--button-special-bg     : #ff000018;
 
-	--button-enter-color    : var(--button-special-color);
+	--button-enter-color    : var(--button-color);X:var(--button-special-color);
 	--button-enter-bg       : var(--button-special-bg);
 	--button-close-color    : var(--button-special-color);
 	--button-close-bg       : var(--button-special-bg);
@@ -267,16 +267,21 @@ body.dark_mode {}
 .terminal .toggles .items button { flex-basis:6em; }
 .terminal .auth    .items { width:var(--menu-enter-width); }
 
-.terminal nav { display:inline-flex; align-items:start; justify-content:center; }
-
-.terminal .toolbar nav .items { display:none; }
+.terminal .toolbar nav { display:flex; justify-content:center; }
+.terminal .toolbar nav > .items { display:none; }
 .terminal:not(.connected) .send .items,
 .terminal:not(.connected) .main_menu .items,
-.terminal .toolbar nav:hover .items,
-.terminal .toolbar nav:focus .items,
-.terminal .toolbar nav:focus-within .items {
+/*
+.terminal .toolbar nav:hover > nav:focus .items,
+.terminal .toolbar nav:focus > nav:focus .items,
+.terminal .toolbar nav:focus-within > nav:focus .items,
+.terminal .toolbar nav:hover > .items,
+.terminal .toolbar nav:focus > .items,
+.terminal .toolbar nav:focus-within > .items {
+*/
+.terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {
 	--r:var(--menu-border-radius);
-	display:inline-flex; gap:var(--menu-gap); flex-wrap:wrap; align-items:center; justify-content:center;
+	display:flex; gap:var(--menu-gap); flex-wrap:wrap; align-items:center; justify-content:center;
 	position:absolute; top:calc(100% + var(--menu-offset)); right:0; z-index:999;
 	box-sizing:content-box;
 	border-radius:0 0 var(--r) var(--r);
@@ -287,14 +292,32 @@ body.dark_mode {}
 		      0 2px 0 0 #0004
 	;
 }
-.terminal .toolbar nav:hover .items,
-.terminal .toolbar nav:focus .items,
-.terminal .toolbar nav:focus-within .items {
+.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items {
 	box-shadow:inset 0 0 0 1px #fff0;
 }
+
 .terminal .toolbar > nav:first-child .items {
 	left:0; right:unset;
 }
+.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items {
+	color:#80fc;
+	padding-bottom:0;
+}
+.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close {
+	color:var(--button-color);
+}
+/* Sub Menus */
+.terminal .toolbar > nav form nav {
+	padding:5px; margin:-5px;
+}
+.terminal .toolbar nav form nav > button  { width:100%; } /* 3 buttons, each fill their "cell"?? somehow with this */
+.terminal .toolbar nav form nav > .commands + .items button { Xflex-basis:6rem; ; min-width:5em; }
+.terminal .toolbar > nav:first-child form nav,
+.terminal .toolbar > nav:first-child .items {
+	left:0; right:unset;
+}
+
+
 
 /* OUTPUT */
 .terminal output {
@@ -330,7 +353,6 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	border-radius:var(--v) var(--v) 0 0;
 }
 
-X.terminal .toolbar *,
 .terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre, a, b) {
 	text-shadow:
 		1px  0 #0004,
@@ -450,7 +472,7 @@ X.terminal .list.who span::before {
 }
 
 /* Room */
-.terminal .room { flex-grow:1; align-items:center; }
+.terminal header.toolbar > nav.room { flex-grow:1; align-items:center; justify-content:end; padding-right:10px; }
 
 /* Toggle state */
 .terminal .list.toggle_state { padding:0 5px; color:#bdfa; cursor:pointer; }

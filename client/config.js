@@ -87,7 +87,7 @@ export const PRESETS = {
 		BIT        : !get( 'bit' ),
 		FANCY      : !get( 'fancy' ),
 		KEY_BEEP   : get( 'keybeep' ),
-		LAST       : !get( 'last' ),
+		LAST       : get( 'last' ),
 		TTS        : !get( 'tts' ),
 	},
 

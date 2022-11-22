@@ -314,7 +314,7 @@ module.exports.Router = function (persistent, callback) {
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
 		const SessionHandler = require( './session.js' );
 		const AccessControl  = require( './access.js' );
-		const ServerControl  = require( './control/main.js' );
+		const ServerControl  = require( './server/main.js' );
 		const ChatServer     = require( './chat/main.js' );
 		const RSSServer      = require( './rss/main.js' );
 
