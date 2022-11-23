@@ -58,6 +58,7 @@ console.log( location.href );
 		--color3: #bd92;
 		--color4: #dec2;
 		--color5: #fff2;
+		--diagram-padding:1em 0.5em;
 	}
 
 	html { width:100%; height:100%; padding:1em; text-align:center; }
@@ -66,7 +67,7 @@ console.log( location.href );
 		display:inline-flex;
 		flex-direction:column;
 		border:solid 1px #000;
-		padding:1em 1em;
+		padding:0.25em;
 		background:var(--color0);
 		color:#dfb;
 	}
@@ -77,38 +78,38 @@ console.log( location.href );
 	.diagram * { border-radius:0.25em; }
 	.diagram > .layer {
 		border:solid 1px #000;
-		margin:1em 0 0;
-		padding:1em;
+		margin:var(--diagram-padding) 0 0;
+		padding:var(--diagram-padding);
 		background:var(--color1);
 		text-align:center;
 	}
 	.diagram .layer .group {
 		display:inline-flex;
-		gap:1em;
+		gap:var(--diagram-padding);
 		border:solid 1px #000;
-		padding:1em;
+		padding:var(--diagram-padding);
 		background:var(--color2);
 	}
 	.diagram .layer .group > div {
 		border:solid 1px #000;
-		padding:1em;
+		padding:var(--diagram-padding);
 		background:var(--color3);
 	}
 	.diagram h2 { margin:0; }
-	.diagram :is(h3,h4,h5,h6) { margin:0 0 1rem; }
+	.diagram :is(h3,h4,h5,h6) { margin:0 0 var(--diagram-padding); }
 	.diagram ul {
 		list-style-type:none;
 		display:inline-flex;
-		gap:1em;
+		gap:var(--diagram-padding);
 		border:solid 1px #000;
-		padding:1em;
+		padding:var(--diagram-padding);
 		background:var(--color4);
 	}
 	.diagram li {
 		flex-grow:1;
 		min-width:7em;
 		border:solid 1px #000;
-		padding:1em;
+		padding:var(--diagram-padding);
 		background:var(--color5);
 	}
 

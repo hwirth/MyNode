@@ -265,7 +265,7 @@ if (message.broadcast) console.trace();
 			const new_subscriptions = ['broadcast'];
 			if (user_record.subscriptions) subs.push( ...user_record.subscriptions );
 
-			client.login = {
+			const login = client.login = {
 				userName      : parameters.username,
 				groups        : new_groups,
 				subscriptions : new_subscriptions,
@@ -281,8 +281,8 @@ if (message.broadcast) console.trace();
 				/*login_request*/true,
 			);
 
-			if (client.login.userName == 'guest') {
-				client.login.userName = 'Guest' + (++self.guestNr);
+			if (login.userName == 'guest') {
+				login.userName = 'Guest' + (++self.guestNr);
 			}
 
 			client.setIdleTime( user_record.maxIdleTime );
@@ -290,7 +290,7 @@ if (message.broadcast) console.trace();
 			callback.broadcast({
 				type     : 'session/login',
 				address  : client.address,
-				userName : client.login.userName,
+				userName : login.userName,
 				who      : self.getWho(),
 			});
 
@@ -315,7 +315,13 @@ if (message.broadcast) console.trace();
 
 				console.log( 'COOKIE:', fortune_cookie );
 				const banner = fortune_cookie[0];
-				client.send({ notice: { fortune: '"' + banner + '"' }} );
+				client.send({
+					notice: {
+						login       : login.nickName || login.userName || client.address,
+						maxIdleTime : client.maxIdleTime,
+						fortune     : '"' + banner + '"',
+					},
+				});
 			}
 
 // /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/

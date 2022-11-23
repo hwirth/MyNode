@@ -35,9 +35,10 @@
 <script src="main.js"     type="module"></script>
 <script class="noscript">
 	addEventListener( 'error', watchdog );
+	addEventListener( 'unhandledrejection', watchdog );
 	function show_status (text) { document.querySelector('header.noscript p').innerHTML = text; }
 	function show_boot_error (error) {
-		console.log( error );
+		console.log( 'Error:', error );
 		document.querySelector('html').classList.add('init');
 		setTimeout( ()=>{
 			document.querySelector('html').classList.add('init', 'error');
@@ -71,19 +72,19 @@
 <script class="login_page">
 	addEventListener( 'load', ()=>{
 		const types = element => ['submit', 'hidden'].indexOf(element.type) < 0;
-		console.log(
-			[...document.querySelectorAll('body > form input')]
-			.filter( types )
-			.forEach( input =>{
-				input.addEventListener( 'input'  , on_input_change );
-				input.addEventListener( 'change' , on_input_change );
-			}),
-		);
+		[...document.querySelectorAll('body > form input')]
+		.filter( types )
+		.forEach( input =>{
+console.log( 'in', input );
+			input.addEventListener( 'input'  , on_input_change, {passive:false} );
+			input.addEventListener( 'change' , on_input_change, {passive:false} );
+		});
 	});
 
 	function on_input_change (event) {
-		const account = document.querySelector( '[name=username]' ).value;
-		document.title = account;
+		const account = document.querySelector( '[name=username]' ).value || 'guest';
+		const form = document.querySelector( 'body > form' );
+		form.classList.toggle( 'guest', (account.toLowerCase() == 'guest') );
 	}
 </script>
 <style class="login_page">
@@ -185,7 +186,7 @@
 		content:"with debug presets"; color:var(--login-color); pointer-events:none;
 	}
 
-	.no_guest { display:none; }
+	.guest .no_guest { display:none; }
 
 </style></head><body>
 
@@ -202,7 +203,7 @@
 		<a href="//spielwiese.central-dogma.at:443/" title="Recommended: Load this page via Apache">Apache</a>
 		<a href="//spielwiese.central-dogma.at:1337/" title="For Developers: Load this page directly from MyNode">Node</a>
 	</header>
-	<form tabindex="0" accept-charset="utf-8">
+	<form tabindex="0" accept-charset="utf-8" class="guest">
 		<img src="/images/spielwiese_transparent.png" alt="Site icon">
 		<h2>spielwiese</h2>
 		<label>
@@ -223,7 +224,7 @@
 		</label>
 		<label class="no_guest" title="Token (for admins)">
 			<span>Second Factor</span>
-			<input tabindex="0" type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
+			<input tabindex="0" type="password" name="factor2" placeholder="Factor 2" autocomplete="one-time-code">
 		</label>
 		<input type="hidden" name="toggle" value="terminal">
 	</form>

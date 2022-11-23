@@ -13,6 +13,8 @@ import { SETTINGS, GET  } from './config.js';
 import { PRESETS, DEBUG } from './config.js';
 import { History        } from './history.js';
 
+let CEP_VERSION = 'v0.4.0α';   // Keyboard shortcuts will be appended in  self.init()
+
 
 export const DebugConsole = function (callback) {
 	const self = this;
@@ -29,8 +31,6 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	let CEP_VERSION = 'v0.3.1α';   // Keyboard shortcuts will be appended in  self.init()
 
 	const EXTRA_LINES = 0;   // When adjusting textarea size (rows), make it bigger
 	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
@@ -66,7 +66,7 @@ export const DebugConsole = function (callback) {
 	const HTML_TERMINAL = (`
 <div class="terminal">
 
-	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
+	<main class="chat shell stripes"><!-- //...? Must be first in DOM to allow popup menus in header -->
 		<output class="last"></output>
 		<textarea autocomplete="off"></textarea>
 	</main><!-- main needs to be before header in the DOM for position:absolute in dropdowns to work -->
@@ -94,6 +94,10 @@ export const DebugConsole = function (callback) {
 		<nav class="auth">
 			<button class="enter" title="Execute command/send chat text. Keyboard: Enter">Enter</button>
 			<form class="items">
+				<nav class="main">
+					<button class="help">Help</button>
+					<div class="items"></div>
+				</nav>
 				<nav class="toggles">
 					<button class="enabled">Toggle</button>
 					<div class="items">
@@ -103,10 +107,6 @@ export const DebugConsole = function (callback) {
 				</nav>
 				<nav class="filter">
 					<button class="enabled">Filter</button>
-					<div class="items"></div>
-				</nav>
-				<nav class="main">
-					<button class="help">Help</button>
 					<div class="items"></div>
 				</nav>
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
@@ -1319,8 +1319,8 @@ setTimeout( ()=>{
 // OUTPUT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function print_version () {
-		self.print( 'CEP-' + CEP_VERSION, 'cep' );
+	function print_version (additional_text) {
+		self.print( 'CEP-' + CEP_VERSION + additional_text, 'cep' );
 
 	} // print_version
 
@@ -1355,7 +1355,8 @@ setTimeout( ()=>{
 		switch (file_extension) {
 			case 'html': {
 				self.toggles.debug.disable();
-				const initial_scroll_toggle = self.toggles.scroll.enabled;
+				self.toggles.compact.disable();
+
 				const iframe     = document.createElement( 'iframe' );
 				iframe.src       = file_name + '?included' + (id_selector ? '#'+id_selector : '');
 				iframe.className = 'cep htmlfile expand';
@@ -1366,16 +1367,17 @@ setTimeout( ()=>{
 					iframe.style.height = (
 						iframe.contentWindow.document.documentElement.scrollHeight + 'px'
 					);
+					self.toggles.scroll.enable();
 					scroll_down();
-					self.toggles.scroll.disable();
+					setTimeout( ()=>self.toggles.scroll.disable(), 500 );
 				});
 				const last_print = self.elements.output.querySelector( ':scope > :last-child' );
 				iframe.addEventListener( 'click', (event)=>{
 					self.elements.output.scrollTop = last_print.offsetTop - 15;
 				});
-				self.toggles.scroll.toggle( initial_scroll_toggle );
 				last_print.innerHTML += '\n';
 				last_print.appendChild( iframe );
+
 				break;
 			}
 			case 'txt': // fall through
@@ -1465,6 +1467,7 @@ setTimeout( ()=>{
 		let print_message = null;
 		if (message.html) {
 			print_message = message.html.replaceAll( '<a href', '<a target="_blank" href' );
+			print_message = message.html.replaceAll( '\n', '<br>\n' );
 			class_name = 'html';
 
 		} else {
@@ -1478,7 +1481,7 @@ setTimeout( ()=>{
 		// Create DOM element
 		const new_element = document.createElement( 'pre' );
 		if (class_name) new_element.className = class_name;
-		new_element.innerHTML = print_message;
+		new_element.innerHTML = print_message.trim();
 		self.elements.output.appendChild( new_element );
 
 		['response', 'broadcast'].forEach( (category)=>{
@@ -1782,7 +1785,7 @@ case 'response': {
 
 	switch (response.command) {
 		case 'session.login': {
-			if (response.result != 'Already logged in') {
+			if (response.success) {
 				self.elements.terminal.classList.add( 'authenticated' );
 				self.elements.btnCEP.innerText
 				= result.login.nickName || result.login.userName;
@@ -1833,9 +1836,11 @@ case 'response': {
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
 
-		document.body.innerHTML += HTML_TERMINAL.trim();
+		const parser       = new DOMParser();
+		const new_document = await parser.parseFromString( HTML_TERMINAL, 'text/html' );
+		const container    = new_document.querySelector( '.terminal' );
+		document.body.appendChild( container );
 
-		const container = document.querySelector( '.terminal' );
 		self.elements = gather_dom_elements( container );
 
 console.groupCollapsed( 'DebugConsole.elements{}' );
@@ -1864,7 +1869,6 @@ console.groupEnd();
 			form.addEventListener( 'submit', event => event.preventDefault() );
 		});
 
-
 		// Resume audio context after page load
 		function activate_audio () {
 			self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
@@ -1892,7 +1896,7 @@ console.groupEnd();
 			new_button.dataset.command = script.name;
 			new_button.className       = script.name;
 			new_button.innerText       = script.name.charAt(0).toUpperCase() + script.name.slice(1);
-			new_button.title           = new_button.title || 'Double click to execute immediately';
+			new_button.title           = new_button.title || 'Click shows command, double click executes';
 			new_button.addEventListener( 'click', on_script_button_click );
 
 			if (!existing) self.elements[script.menu].appendChild( new_button );
@@ -1936,7 +1940,7 @@ console.groupEnd();
 		self.elements.asUser  = container.querySelector( 'button.user'  );
 		self.elements.asGuest = container.querySelector( 'button.guest' );
 
-		self.elements.terminal.querySelectorAll( '.node input' ).forEach( (input)=>{
+		self.elements.terminal.querySelectorAll( 'input' ).forEach( (input)=>{
 			input.addEventListener( 'input'  , ()=>self.elements.login.click() );
 			input.addEventListener( 'change' , ()=>self.elements.login.click() );
 		});
@@ -1973,9 +1977,8 @@ console.groupEnd();
 			const characters = toggle => toggle.key
 			const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
-			CEP_VERSION += '^' + shortcuts.split('').sort().join('');   // For .help
-			print_version();
-			//...if (!GET.has('login')) await show_file( 'issue.txt' );
+			CEP_VERSION += '^[' + shortcuts.split('').sort().join('') + '] ';
+			print_version('');
 			await show_file( 'issue.txt' );
 
 			if (GET.has('username')) self.elements.userName.value = GET.get('username');

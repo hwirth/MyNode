@@ -36,7 +36,7 @@ while [ 1 ] ; do
 		echo -e "#####################\e[0;37m"
 		echo
 		nr_crashes=0
-		sleep 1
+		#sleep 1
 
 		;;
 	*)

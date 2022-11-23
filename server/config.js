@@ -52,10 +52,9 @@ const SETTINGS = {
 | |  | | |_| | |\\  | (_) | (_| |  __/
 |_|  |_|\\__, |_| \\_|\\___/ \\__,_|\\___|
         |___/
-`
-//... Workaround for Geany bug: `
-	) + ' '.repeat(37 - server_name.length) + server_name,
-//...SERVER_BANNER: 'MyNode Spielwiese',
+` //... Workaround for Geany bug: `
+
+	) + ' '.repeat(37 - server_name.length) + server_name + '.',
 
 	DEV_SERVER  : DEV_SERVER,
 	INSTALL_GEH : true,   // Global error and unhandled rejection handler
@@ -98,7 +97,7 @@ const SETTINGS = {
 	TIMEOUT: {
 		SOCKET_CLOSE  : 300,
 		LOGIN         : 6*1000,
-		IDLE          : 1*60*1000,
+		IDLE          : null,//60*60*1000,
 	},
 
 }; // SETTINGS

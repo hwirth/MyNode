@@ -8,11 +8,11 @@
 const fs   = require( 'fs' );
 const exec = require( 'child_process' ).exec;
 
-const { SETTINGS          } = require( '../../server/config.js' );
-const { DEBUG, COLORS     } = require( '../../server/debug.js' );
-const { color_log, dump   } = require( '../../server/debug.js' );
+const { SETTINGS          } = require( '../server/config.js' );
+const { DEBUG, COLORS     } = require( '../server/debug.js' );
+const { color_log, dump   } = require( '../server/debug.js' );
 
-const { RESPONSE, REASONS, STATUS, STRINGS } = require( '../constants.js' );
+const { RESPONSE, REASONS, STATUS, STRINGS } = require( './constants.js' );
 
 
 module.exports = function ServerControl (persistent, callback) {

@@ -17,18 +17,6 @@ const Application = function () {
 	this.terminal;
 	this.youTubePlayer;
 
-	const boot_sequence = false && [
-		{
-			session: {
-				login: {
-					username : 'root',
-					password : '12345',
-				},
-			},
-		},
-
-	]; // boot_sequence
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
@@ -106,10 +94,6 @@ const Application = function () {
 		self.terminal.print( 'Connected to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
 		self.terminal.onSocketOpen();
 
-		if (boot_sequence) boot_sequence.forEach( (request)=>{
-			socket.send( request );
-		});
-
 	} // on_websocket_open
 
 
@@ -153,10 +137,6 @@ const Application = function () {
 		console.log( 'Application.init' );
 
 		self.youTubePlayer = null;
-
-		document.body.innerHTML += (`
-		`);
-
 		self.webSocketClient = null;
 
 		self.terminal = await new DebugConsole({
@@ -165,10 +145,6 @@ const Application = function () {
 			connect            : connect_to_websocket,
 			disconnect         : disconnect_from_websocket,
 			send               : on_console_send,
-		});
-
-		if (boot_sequence) boot_sequence.forEach( (request)=>{
-			self.terminal.history.add( self.terminal.requestToText(request) );
 		});
 
 		if (SETTINGS.CONNECT_ON_START) {
@@ -216,6 +192,7 @@ addEventListener( 'load', async ()=>{
 		document.querySelector( 'html' ).classList.remove('init')
 
 	} catch (error) {
+		console.log( 'main.js.onLoad: error:', error );
 		watchdog( error );
 	}
 });

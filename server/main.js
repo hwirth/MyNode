@@ -263,14 +263,15 @@ function parse_json(message) {//...
 			self.wsServer.handleUpgrade( request, socket, head, (socket)=>{
 				self.wsServer.emit( 'connection', socket, request );
 				socket.send( //JSON.stringify({ [
-					'Welcome on ' + SETTINGS.SERVER_BANNER + '.'
+					'Welcome on ' + SETTINGS.SERVER_BANNER
 				//: {},] })
 				);
 				socket.send(
 					JSON.stringify({
 						update: {
-							type: 'server/name',
-							name: SETTINGS.SERVER_NAME,
+							type   : 'server/name',
+							name   : SETTINGS.SERVER_NAME,
+							banner : SETTINGS.SERVER_BANNER,
 						},
 					}),
 				);

@@ -85,9 +85,9 @@ export const PRESETS = {
 		OVERFLOW   : !get( 'overflow' ),
 		ANIMATE    : !get( 'animate' ),
 		BIT        : !get( 'bit' ),
-		FANCY      : !get( 'fancy' ),
+		FANCY      : get( 'fancy' ),
 		KEY_BEEP   : get( 'keybeep' ),
-		LAST       : get( 'last' ),
+		LAST       : !get( 'last' ),
 		TTS        : !get( 'tts' ),
 	},
 

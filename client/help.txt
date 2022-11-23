@@ -1,26 +1,27 @@
 MyNode CHAT and DEBUG CONSOLE
 =============================
-Debug mode shows all websocket messages going in or out.
 Single lines input by the user are sent as  chat.say  requests, otherwise
 TAB formatted multiline text is sent as JSON objects.
+Debug mode shows all websocket messages going in or out.
 
 You can enter tab-indented pseudo-JSON, in order to send arbitrary
 requests to the server. In essence, you type a JSON object without the
 curly braces and quotation marks.
 
-You type tabJSON:         Resulting JSON:
- session                   {
-     login                     "session":{
-         username: Me              "login":{
-         password: secRet              "username":"Me",
- chat                                  "password":"secRet"
-     nick: Hey                     }
-                               },
-                               "chat":{
-TAB key is mandatory               "nick":"Hey"
-for indenting!                 }
-                           }
-shJSON:
+tabJSON, You enter:         Resulting JSON:
+  session                     {
+      login                       "session":{
+          username: Me                "login":{
+          password: secRet                "username":"Me",
+  chat                                    "password":"secRet"
+      nick: Hey                       }
+                                  },
+                                  "chat":{
+                                      "nick":"Hey"
+Indenting with TAB                }
+character mandatory           }
+
+shortJSON, you enter:
  .session.login.username:Me,password:secRet...chat.nick:Hey
 A dot indents (nests), a double dot unindents, triple dots unindent 2
 times, etc. Entries on the same level are separated with a comma.

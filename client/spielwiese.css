@@ -5,6 +5,21 @@
 	color-scheme:light dark; /* both supported */
 }
 
+.fancy.terminal {
+	--terminal-margin    : 10px;
+	--output-margin      : 1rem 0 0;
+	--toolbar-background : #444455f0;
+	--toolbar-outline    : solid 1px #fff3;
+	--menu-gap           : 5px;
+	--top-menu-radius    : 0 0 var(--input-radius) var(--input-radius);
+	--bottom-menu-radius : var(--input-radius) var(--input-radius) 0 0;
+	--input-radius       : 1rem;
+	--input-padding-x    : 0.8rem;
+
+	--top-menu-radius    : var(--input-radius);
+	--bottom-menu-radius : var(--input-radius);
+}
+
 .terminal {
 	--tab-size       : 4;
 	--input-tab-size : 8; X:var(--tab-size);
@@ -20,12 +35,19 @@
 	--focus-border : solid 1px #0f8;
 	--focus-bg     : #fff4;
 
-	--terminal-height  : calc(100vh - 2 * (var(--terminal-padding) + var(--toolbar-height)));
-	--terminal-padding : 10px;
+	--terminal-bg        : #000;
+	--stripes-color0     : #131412;
+	--stripes-color1     : var(--terminal-bg);
+	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) + var(--toolbar-height)));
+	--terminal-margin    : 0;
+	--terminal-padding   : 0;X:var(--menu-gap);
+	--output-margin      : 0;X:var(--menu-gap);
+	--output-padding-top : var(--menu-gap);
+	--output-padding-x   : var(--menu-gap);
 
 	--toolbar-height     : 30px;
-	--toolbar-outline    : solid 1px #fff3;
-	--toolbar-background : #445a;
+	--toolbar-background : #333;
+	--toolbar-outline    : none;
 
 	--menu-offset        : 0px;
 	--menu-gap           : 5px;
@@ -59,7 +81,7 @@
 	--input-bg           : #000f;
 	--input-border       : solid 1px #000;
 	--input-border-width : 1px;
-	--input-radius       : 3px;
+	--input-radius       : 0;
 	--input-padding-x    : calc(var(--toolbar-height) / 3.5);
 	--input-padding-y    : 0px;
 
@@ -79,6 +101,7 @@
 	--main_menu-color : #fff;
 	--chat-color      : #8df;
 	--cep-color       : #cc0;
+--cep-color: #abc;
 	--mcp-color       : #f00;
 
 	--warning-color   : #fc0;
@@ -217,16 +240,17 @@ body.dark_mode {}
 
 
 /* Required for the bit to fade into the distance on terminal toggle */
-X.terminal { opacity:0; transition:all 0.5s linear; display:grid !important; }
-X.terminal.enabled { opacity:1; }
+NotInUse.terminal { opacity:0; transition:all 0.5s linear; display:grid !important; }
+NotInUse.terminal.enabled { opacity:1; }
 
 /* TERMINAL */
 .terminal.enabled { display:grid; }
 .terminal {
 	position:absolute; top:0; left:0; z-index:999; transform:unset;
 	display:none; grid-template-rows:min-content auto min-content; grid-template-areas:"r0" "r1" "r2";
+	grid-gap:var(--terminal-padding);
 	width:100%; height:100%; Xoverflow:hidden;
-	padding:var(--terminal-padding); font-size:var(--font-size); background:#000;
+	padding:var(--terminal-margin); font-size:var(--font-size); background:var(--terminal-bg);
 	--scrollbar-thumb-color:#08f4; --scrollbar-track-color:#0660;
 	scrollbar-color:var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
@@ -236,7 +260,7 @@ X.terminal.enabled { opacity:1; }
 .terminal header { grid-area:r0; position:relative; }
 .terminal main   { grid-area:r1; position:relative; width:100%; max-height:100%; overflow:hidden; }
 .terminal footer { grid-area:r2; }
-.terminal .shell { display:grid; grid-template-areas:"m0" "m1"; grid-template-rows:auto 1fr; padding:0 5px; }
+.terminal .shell { display:grid; grid-template-areas:"m0" "m1"; grid-template-rows:auto 1fr; }
 .terminal .shell output   { grid-area:m0; }
 .terminal .shell textarea { grid-area:m1; }
 .terminal ::selection {
@@ -249,17 +273,19 @@ X.terminal.enabled { opacity:1; }
 }
 
 /* TOOLBARS */
+.terminal.fancy .toolbar {
+	box-shadow:
+		inset 0 0 0 1px #fff2,
+		inset 0 0 5px 0 #000
+	;
+}
 .terminal .toolbar {
 	position:relative;
 	display:flex; gap:var(--menu-gap);
 	Xheight:var(--toolbar-height);
 	outline:var(--toolbar-outline);
-	border-radius:5px;
+	border-radius:var(--input-radius);
 	background:var(--toolbar-background); color:#fff;
-	Xbox-shadow:
-		inset 0 0 0 1px #fff2,
-		inset 0 0 5px 0 #000
-	;
 	box-shadow:var(--menu-box-shadow);
 }
 
@@ -277,17 +303,21 @@ X.terminal.enabled { opacity:1; }
 .terminal:not(.connected) .send .items,
 .terminal:not(.connected) .main_menu .items,
 .terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {
-	--r:var(--menu-border-radius);
+	--r:var(--input-radius);
 	display:flex; gap:var(--menu-gap); flex-wrap:wrap; align-items:center; justify-content:center;
 	position:absolute; top:calc(100% + var(--menu-offset)); right:0; z-index:999;
 	box-sizing:content-box;
-	border-radius:0 0 var(--r) var(--r);
+	border-radius:var(--top-menu-radius);
 	padding:var(--menu-gap);
 	background:var(--toolbar-background);
 	box-shadow:
 		inset 0 1px 0 0 #fff2,
 		      0 2px 0 0 #0004
 	;
+}
+.terminal footer.toolbar > nav:is(:hover,:focus,:focus-within) .items {
+	top:unset; bottom:calc(100% + var(--menu-offset));
+	border-radius:var(--bottom-menu-radius);
 }
 .terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inset 0 0 0 1px #fff0; }
 .terminal .toolbar > nav:first-child .items { left:0; right:unset; }
@@ -296,20 +326,45 @@ X.terminal.enabled { opacity:1; }
 
 /* Sub Menus */
 .terminal .toolbar > nav form nav {
-	padding:5px; margin:-5px;
+	--g:var(--menu-gap);
+	padding:var(--g); margin:calc(-1 * var(--g));
 }
+.terminal .toolbar nav form nav:hover  { z-index:199; }
 .terminal .toolbar nav form nav > button  { width:100%; } /* 3 buttons, each fill their "cell"?? somehow with this */
 .terminal .toolbar nav form nav > .commands + .items button { Xflex-basis:6rem; ; min-width:5em; }
+
 .terminal .toolbar > nav:first-child form nav,
 .terminal .toolbar > nav:first-child .items {
 	left:0; right:unset;
 }
 
+/* Submenu main buttons */
+.terminal .toolbar > nav .items > * { flex-grow:1; min-width:3em; }
 
+
+
+/* Striped background */
+X.terminal:not(.fancy) .shell.stripes,
+.terminal:not(.fancy) .shell.stripes output {
+	--b0:var(--stripes-color0);
+	--b1:var(--stripes-color1);
+	background-image:linear-gradient( var(--b0), var(--b0) 50%, var(--b1) 51%, var(--b1) 100% );
+	background-position:0 var(--output-padding-top);
+	background-repeat:repeat;
+	background-size:var(--font-size) 2rem;
+	background-attachment:local;
+}
+.terminal:not(.fancy) .chat {
+	Xbackground-position: 0 var(--menu-gap);
+}
 
 /* OUTPUT */
+.terminal.fancy output {
+	margin:var(--output-margin);
+}
 .terminal output {
-	margin-top:1em;
+	margin:var(--output-margin);
+	padding:var(--output-padding-top) var(--output-padding-x) 0;
 	color:var(--text-color);
 	white-space:pre-wrap;
 	overflow-y:scroll;
@@ -320,6 +375,7 @@ X.terminal.enabled { opacity:1; }
 .terminal textarea {
 	width:100%; border:none;
 	background:transparent; color:var(--main_menu-color);
+	margin:0 var(--output-padding-x);
 	resize:none;
 	caret-shape:block;
 	Xcaret-shape:bar;
@@ -333,14 +389,6 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.local ::first-letter { color:#fff; }
 
 /* BUTTONS */
-.terminal .toolbar > nav .items > * { flex-grow:1; min-width:3em; }
-.terminal footer.toolbar > nav:hover .items,
-.terminal footer.toolbar > nav:focus .items,
-.terminal footer.toolbar > nav:focus-within .items {
-	top:unset; bottom:calc(100% + var(--menu-offset));
-	border-radius:var(--v) var(--v) 0 0;
-}
-
 .terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre, a, b) {
 	text-shadow:
 		1px  0 #0004,
@@ -370,7 +418,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal button {
 	height:var(--toolbar-height);
 	border:var(--input-border);
-	border-radius:5px;
+	border-radius:var(--input-radius);
 	background: var(--button-bg);
 	color:var(--button-color);
 	white-space:nowrap;
@@ -451,7 +499,7 @@ X.terminal button.who,
 }
 
 /* Who */
-.terminal .list.who::before {
+.terminal.fancy .list.who::before {
 	content:'⟷';
 	color:#023;
 	font-weight:bold;
@@ -460,24 +508,22 @@ X.terminal button.who,
 }
 
 /* Room */
-.terminal header.toolbar > nav.room { flex-grow:1; align-items:center; justify-content:end; padding-right:10px; }
+.terminal header.toolbar > nav.room { flex-grow:1; align-items:center; justify-content:end; padding-right:1rem; }
 
 /* Toggle state */
-.terminal .list.toggle_state { padding:0 5px; color:#bdfa; cursor:pointer; }
+.terminal .list.toggle_state { padding:0 var(--menu-gap); color:#bdfa; cursor:pointer; }
 .terminal .list b { color:#bdf; font-weight:normal; }
 
 /* Connection */
 .terminal .node       > button,
 .terminal .connection > button,
 .terminal .connection.warning {
-	border:solid 1px var(--offline-color);
 	background:var(--offline-bg); color:var(--offline-color);
 	transition:color 0.2s linear;
 }
 .terminal.connected .node       > button,
 .terminal.connected .connection > button,
 .terminal.connected .connection.warning {
-	border:solid 1px var(--online-color);
 	background:var(--online-bg); color:var(--online-color);
 }
 .terminal.authenticated .node       > button,
@@ -485,16 +531,31 @@ X.terminal button.who,
 .terminal.authenticated .connection button.warning {
 	color:var(--authenticated-color);
 }
+.terminal.fancy.connected .connection > button,
+.terminal.fancy.connected .node > button {
+	box-shadow:0 0 10px 0 var(--online-color);
+}
+.terminal.fancy.connected .node       > button,
+.terminal.fancy.connected .connection > button,
+.terminal.fancy.connected .connection.warning {
+	border:solid 1px var(--online-color);
+}
 
 /*Status */
 .terminal .status {
 	flex-grow:1;
-	position:relative; padding-left:5px; cursor:pointer; align-self:center;
-	Xheight:1rem; overflow:hidden; Xtext-overflow:ellipsis; Xwhite-space:nowrap;
+	position:relative; padding-left:var(--menu-gap); cursor:pointer; align-self:center;
+	Xheight:1rem; overflow:hidden; text-overflow:ellipsis; Xwhite-space:nowrap;
+}
+X.terminal .status > span > a,
+X.terminal .status > span,
+X.terminal .status * {
+	font-family:serif; Xfont-size:var(--font-size); Xheight:var(--font-size);
 }
 .terminal .status .extra {
 	Xposition:absolute;
 	Xline-height:1rem;
+	z-index:1;
 }
 .terminal .status a { text-decoration:none; }
 .terminal .status a:hover { color:#acf; text-decoration:underline; }
@@ -519,7 +580,6 @@ X.terminal button.who,
 .terminal .time.fade_out {
 	opacity:0;
 }
-
 
 /* OUTPUT TEXT */
 
@@ -550,23 +610,10 @@ X.terminal button.who,
 .terminal .debug .request   pre.request,
 .terminal .debug .response  pre.response { display:none; }
 
-/* Striped background */
-.terminal .shell:not(.debug) pre:is(.chat,.string):hover {
-	--b0:#223c;
-	--b1:#234c;
-	background-image: -webkit-linear-gradient(var(--b0) 50%, var(--b1) 50%);
-	background-image:    -moz-linear-gradient(var(--b0) 50%, var(--b1) 50%);
-	background-image:     -ms-linear-gradient(var(--b0) 50%, var(--b1) 50%);
-	background-image:      -o-linear-gradient(var(--b0) 50%, var(--b1) 50%);
-	background-image:         linear-gradient(var(--b0) 50%, var(--b1) 50%);
-	background-position: 0 0;
-	background-repeat: repeat;
-	background-size: 1rem 2rem;
-}
 
 /* EXPAND */
 .terminal pre { position:relative; z-index:10; white-space:pre-wrap; }
-.terminal .separators pre { Xborder:solid 1px #fff4; Xborder-width:0 0 1px; margin:0 0 5px; }
+.terminal .separators pre { Xborder:solid 1px #fff4; Xborder-width:0 0 1px; margin:0 0 1rem; }
 .terminal output pre:hover { color:#fed; cursor:pointer; }
 
 .terminal :not(.compact).overflow pre.unexpand,
@@ -582,7 +629,7 @@ X.terminal button.who,
 }
 
 /* LAST */
-.terminal output[class]:not(.compact) pre.unexpand { margin-bottom:0.5em; }
+.terminal output[class]:not(.compact) pre.unexpand { margin-bottom:1em; }
 
 .terminal:not(.debug) output.compact.last pre:last-child,/*//...*/
 .terminal output.compact pre.expand {
@@ -653,11 +700,6 @@ X.terminal button.who,
 	filter:hue-rotate(0deg) brightness(1) contrast(1);
 }
 
-.terminal.fancy.connected .connection > button,
-.terminal.fancy.connected .node > button {
-	Xbox-shadow:0 0 10px 0 var(--online-color);
-}
-
 .terminal.enabled.fancy.bit output::before {
 	transform:translate(-50%,-50%) scale(1);
 }
@@ -681,7 +723,7 @@ X.terminal button.who,
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:-1;
 	width:200%; height:200%;
 	border-radius:100%;
-	background:#0000;
+	background:transparent;
 }
 .terminal.fancy.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 7%, #0000 10%); }
 .terminal.fancy.no  output::after { background:radial-gradient(circle at center, #f003, #8002 7%, #0000 10%); }
@@ -693,7 +735,7 @@ X.terminal button.who,
 /* Beam DOTS */
 .terminal.fancy pre::before {
 	content:'';
-	position:absolute; left:calc(var(--terminal-padding) - 5px); top:1px;
+	position:absolute; left:calc(var(--terminal-margin) - 5px); top:1px;
 	width:20px; height:12px;
 	outline:solid 1px #fff2; border-radius:100%;
 	background:radial-gradient(ellipse at center, #fffc, #fff8 1px, #fff1 5px, #fff0 6px);
