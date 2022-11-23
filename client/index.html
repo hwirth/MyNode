@@ -82,7 +82,8 @@
 	});
 
 	function on_input_change (event) {
-
+		const account = document.querySelector( '[name=username]' ).value;
+		document.title = account;
 	}
 </script>
 <style class="login_page">
@@ -138,13 +139,14 @@
 		position:absolute; top:50.7%; left:50%; transform:translate(-50%,-50%);
 		display:flex; flex-direction:column; gap:5px; justify-content:center; align-items:center;
 		width:13rem; box-sizing:content-box;
+		filter:hue-rotate(45deg) contrast(0.8);
 	}
 	body > form h2 { color:#fc0; }
 	body > form img { filter:drop-shadow(0 -15px 15px #ffa); }
 	body > form label { font-size:0; width:100%; }
-	body > form label > * { font-size:1; }
+	body > form label > * > * { font-size:1rem; }
 	body > form :is(input,button) {
-		width:100%; height:2em; Xline-height:2em;
+		width:100%; height:2em;
 		border:none;
 		background:#0006; color:#fff;
 		text-align:center;
@@ -158,7 +160,9 @@
 	--login-bg    : #8e6100;
 }
 	body > form :is(input,button)[type=submit][value="Enter Chat"] { text-transform:uppercase; }
-	body > form :is(input,button)[type=submit] { color:var(--login-color); background:var(--login-bg); text-align:center; }
+	body > form :is(input,button)[type=submit] {
+		color:var(--login-color); background:var(--login-bg); text-align:center;
+	}
 	body > form :is(input,button)[type=submit]:is(:hover,:focus,:active) {
 		color:#fff; filter:brightness(1.2);
 	}
@@ -166,11 +170,22 @@
 		color:#fff; filter:brightness(1.1);
 	}
 
-	body > form button.debug { display:none; height:1.4em; filter:brightness(0.75); }
-	body > form label:is(:hover,:focus,:active) button.debug { display:block; }
+	body > form label:nth-of-type(2) { padding-top:2px; }
+	body > form button.debug {
+		height:1.4em;
+		filter:brightness(0.65);
+		opacity:0;
+		transition:all 0.25s ease-in-out;
+	}
+	body > form label:is(:hover,:focus,:active) button.debug {
+		Xdisplay:block; opacity:1;
+		transition:all 0.25s ease-in-out;
+	}
 	body > form button.debug::after {
 		content:"with debug presets"; color:var(--login-color); pointer-events:none;
 	}
+
+	.no_guest { display:none; }
 
 </style></head><body>
 
@@ -191,8 +206,8 @@
 		<img src="/images/spielwiese_transparent.png" alt="Site icon">
 		<h2>spielwiese</h2>
 		<label>
-			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to MyNode">
-			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Connect and configure the client for work"></button>
+			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to the MyNode Chat">
+			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Useful for developers"></button>
 		</label>
 		<label title='Account name. When "Guest", choose a nick name'>
 			<span>Username</span>
@@ -202,11 +217,11 @@
 			<span>Nickname</span>
 			<input tabindex="0" type="text" name="nickname" placeholder="Nickname" autocomplete="nickname" autofocus>
 		</label>
-		<label title="Password (for registered accounts)">
+		<label class="no_guest" title="Password (for registered accounts)">
 			<span>Password</span>
 			<input tabindex="0" type="password" name="password" placeholder="Password" autocomplete="password">
 		</label>
-		<label title="Token (for admins)">
+		<label class="no_guest" title="Token (for admins)">
 			<span>Second Factor</span>
 			<input tabindex="0" type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
 		</label>

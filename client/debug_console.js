@@ -82,7 +82,6 @@ export const DebugConsole = function (callback) {
 	<footer class="toolbar">
 		<nav class="connection">
 			<button title="Connection state, or your user/nick name">OFFLINE</button>
-			<div class="items"></div>
 		</nav>
 		<nav class="status">
 			<span class="time"></span>

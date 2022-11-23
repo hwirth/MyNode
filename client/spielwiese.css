@@ -215,6 +215,11 @@ body.dark_mode {}
 
 /* MAIN LAYOUT */
 
+
+/* Required for the bit to fade into the distance on terminal toggle */
+X.terminal { opacity:0; transition:all 0.5s linear; display:grid !important; }
+X.terminal.enabled { opacity:1; }
+
 /* TERMINAL */
 .terminal.enabled { display:grid; }
 .terminal {
@@ -616,7 +621,6 @@ X.terminal button.who,
 	padding:1px;
 	Xpadding:var(--p) 6px;
 	Xbackground:#000a;   /* Turns command dark */
-	scroll:auto;
 }
 
 
@@ -649,12 +653,12 @@ X.terminal button.who,
 	filter:hue-rotate(0deg) brightness(1) contrast(1);
 }
 
-.terminal.fancy.connected .cep > button,
+.terminal.fancy.connected .connection > button,
 .terminal.fancy.connected .node > button {
-	box-shadow:0 0 10px 0 var(--online-color);
+	Xbox-shadow:0 0 10px 0 var(--online-color);
 }
 
-.terminal.fancy.bit output::before {
+.terminal.enabled.fancy.bit output::before {
 	transform:translate(-50%,-50%) scale(1);
 }
 .terminal.fancy output::before {
@@ -737,7 +741,7 @@ X.terminal button.who,
 /* ANIMATIONS */
 
 /* Online Status */
-.terminal.animate.fancy.connected .cep > button,
+.terminal.animate.fancy.connected .connection > button,
 .terminal.animate.fancy.connected .node > button {
 	animation: CONNECTION 2s ease-in-out infinite alternate;
 }
