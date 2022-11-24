@@ -5,6 +5,9 @@
 
 "use strict";
 
+import { get } from './helpers.js';
+
+
 export const DEBUG = {
 	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
 	WEBSOCKET       : !false,
@@ -15,8 +18,6 @@ export const DEBUG = {
 		CHAT : false,
 	},
 };
-
-export const GET = new URLSearchParams( location.search.slice(1) );
 
 export const SETTINGS = {
 	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
@@ -55,16 +56,6 @@ export const SETTINGS = {
 	},
 };
 
-function get (search) {
-	const decoded_uri = decodeURIComponent( location.href );
-	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
-	const result = search.split(' ').reduce( (prev, term)=>{
-		return prev || (decoded_uri.indexOf( term ) >= 0);
-	}, false);
-
-	return result;
-
-}
 export const PRESETS = {
 	FILTER: {
 		CHAT      : !get( 'debug' ),   //... -> ALL, Currently: when true, only chat visible
@@ -81,7 +72,8 @@ export const PRESETS = {
 		TERMINAL   : get( 'terminal' ),
 		SCROLL     : !get( 'scroll' ),
 		COMPACT    : !get( 'compact' ),
-		SEPARATORS : !get( 'separators' ),
+		SEPARATORS : get( 'separators' ),
+		STRIPES    : get( 'stripes' ),
 		OVERFLOW   : !get( 'overflow' ),
 		ANIMATE    : !get( 'animate' ),
 		BIT        : !get( 'bit' ),

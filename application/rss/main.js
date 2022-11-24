@@ -160,9 +160,9 @@ module.exports = function ChatServer (persistent, callback) {
 		}
 
 		if (isNumeric( parameters )) {
-			persistent.interval = parameters*1000;
+			persistent.interval = parameters;
 			start_interval();
-			client.respond( STATUS.SUCCESS, request_id );
+			client.respond( STATUS.SUCCESS, request_id, {interval: parameters} );
 			return;
 		}
 

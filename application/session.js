@@ -295,7 +295,7 @@ if (message.broadcast) console.trace();
 			});
 
 			color_log( COLORS.COMMAND, '<session.login>', client );
-			client.respond( STATUS.SUCCESS, request_id, {...client, who:self.getWho(client)} );
+			client.respond( STATUS.SUCCESS, request_id, client );
 
 			send_cookie();
 			async function send_cookie () {

@@ -7,24 +7,115 @@
 
 .fancy.terminal {
 	--terminal-margin    : 10px;
-	--output-margin      : 1rem 0 0;
-	--toolbar-background : #444455f0;
+	--output-margin-top  : 1rem;
+	--output-margin-x    : 0;
+	--toolbar-gap        : 3px;
+	--toolbar-bg         : #444455e0;
 	--toolbar-outline    : solid 1px #fff3;
 	--menu-gap           : 5px;
 	--top-menu-radius    : 0 0 var(--input-radius) var(--input-radius);
 	--bottom-menu-radius : var(--input-radius) var(--input-radius) 0 0;
+	--toggle_state-gap   : 0.5rem;
+	--user-radius        : 0px;
+	--input-border       : solid 1px #000;
 	--input-radius       : 1rem;
 	--input-padding-x    : 0.8rem;
+	--button-bg          : #08f1;
+	--button-enabled-bg  : #88ff0018;
+	--button-special-bg  : #ff000018;
+	--button-enter-bg    : var(--button-special-bg);
+	--button-close-bg    : var(--button-special-bg);
 
 	--top-menu-radius    : var(--input-radius);
 	--bottom-menu-radius : var(--input-radius);
+}
+
+@media (prefers-color-scheme: light) {
+	html.light,
+	:not(.fancy).terminal {
+		--a-color   : #058;
+		--a-visited : #648;
+		--a-active  : #08f;
+		--a-focus   : #08f;
+		--a-hover   : #08c;
+
+		--terminal-bg : #fffe;
+		--toolbar-bg  : #8888;
+
+		--input-color : #f00;
+		--input-bg    : #fff;
+
+		--stripes-color0 : #eaf0e8;
+		--stripes-color1 : var(--terminal-bg);
+
+		--offline-color       : #860;
+		--offline-bg          : #850;
+		--online-color        : #0af;
+		--online-color-0      : #03b;
+		--online-color-f      : #0af;
+		--online-bg           : #06a;
+		--authenticated-color : #fff;
+
+		--transmit-color : #4af;
+		--transmit-bg    : #5cf;
+
+		--button-color : #eee;
+		--button-bg    : #666;
+
+		--button-enabled-color : #fc0;
+		--button-enabled-bg    : #482;
+		--button-special-bg    : #565;
+
+		--button-enter-color : var(--button-special-color);
+		--button-enter-bg    : var(--button-special-bg);
+		--button-close-color : var(--button-special-color);
+		--button-close-bg    : var(--button-special-bg);
+
+		--output-margin-y    : 0;
+		--output-margin-x    : 0.25em;
+
+		--caret-color    : #f00;
+
+		--toggle-state-off : #36a;
+		--toggle-state-on  : #48f;
+
+		--chat-color : #478;
+		--cep-color  : #555;
+		--mcp-color  : #f00;
+
+		--warning-color : #c80;
+		--error-color   : #e20;
+		--success-color : #0a0;
+
+		--code-color    : #fcb;
+		--success-color : #060;
+		--warning-color : #fc0;
+		--error-color   : #f00;
+		--true-color    : var(--true-color);
+		--false-color   : var(--error-color);
+		--null-color    : #28a;
+
+		--hover-color     : #000;
+		--debug-color     : #568;
+		--text-color      : #210;
+		--request-color   : #a60;
+		--response-color  : #348;
+		--string-color    : #162;
+		--notice-color    : #568;
+		--broadcast-color : #86c;
+		--update-color    : #040;
+
+		--separator-color  : #a60;
+		--separator-border : dashed 1px var(--separator-color);
+	}
+	:not(.fancy).terminal output pre { Xfilter:invert(100%) saturate(1.5) brightness(0.6); }
 }
 
 .terminal {
 	--tab-size       : 4;
 	--input-tab-size : 8; X:var(--tab-size);
 
-	--line-height : 1;
+	--line-height : 1.2rem;
 
 	--a-color   : #0af;
 	--a-visited : #b8f;
@@ -35,35 +126,85 @@
 	--focus-border : solid 1px #0f8;
 	--focus-bg     : #fff4;
 
-	--terminal-bg        : #000;
-	--stripes-color0     : #131412;
-	--stripes-color1     : var(--terminal-bg);
 	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) + var(--toolbar-height)));
+	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) ));
 	--terminal-margin    : 0;
 	--terminal-padding   : 0;X:var(--menu-gap);
-	--output-margin      : 0;X:var(--menu-gap);
-	--output-padding-top : var(--menu-gap);
-	--output-padding-x   : var(--menu-gap);
+	--terminal-bg        : #000c;
 
-	--toolbar-height     : 30px;
-	--toolbar-background : #333;
+	--toolbar-bg : #333;
+	--toolbar-height     : 2rem;
+	--toolbar-gap        : 2px;
 	--toolbar-outline    : none;
 
 	--menu-offset        : 0px;
-	--menu-gap           : 5px;
+	--menu-gap           : 2px;
 	--menu-border-radius : 5px;
+	--menu-enter-width : 21em;
+
+	--user-radius      : 3px;
 
 	--items-gap      : 2px;
 	--item-min-width : 8em;
 
-	--menu-enter-width : 18em;
+	--output-margin-x    : var(--menu-gap);
+	--output-padding-top : var(--menu-gap);
+	--output-padding-x   : var(--menu-gap);
+	--stripes-color0     : #131412;
+	--stripes-color1     : var(--terminal-bg);
+
+	--input-color        : #fc0;
+	--input-bg           : #000f;
+	--input-border       : solid 1px transparent;
+	--input-border-width : 1px;
+	--input-radius       : 0;
+	--input-padding-x    : calc(var(--toolbar-height) / 3.5);
+	--input-padding-y    : 0px;
+
+	--button-color          : #fed;
+	--button-bg             : #08f2;
+	--button-padding        : 5px 10px;
+
+	--button-enabled-color  : #af4;
+	--button-enabled-bg     : #88ff0040;
+	--button-special-bg     : var(--button-bg);X:#402838;
+
+	--button-enter-color    : var(--button-special-color);
+	--button-enter-bg       : var(--button-special-bg);
+	--button-close-color    : var(--button-special-color);
+	--button-close-bg       : var(--button-special-bg);
+
+	--textarea-color : var(--text-color);
+	--caret-color    : #ff0;
+
+	--toggle_state-gap : 1rem;
+	--toggle-state-off : #78a;
+	--toggle-state-on  : #bdf;
+
+	--chat-color      : #8df;
+	--cep-color       : #abc;
+	--mcp-color       : #f00;
+
+	--warning-color   : #fc0;
+	--error-color     : #e20;
+	--success-color   : #0f0;
+
+	--hover-color     : #fff;
+	--debug-color     : #acf;
+	--text-color      : #fed;
+	--request-color   : #ca0;
+	--response-color  : #78f;
+	--string-color    : #5c6;
+	--notice-color    : #acf;
+	--broadcast-color : #86f;
+	--update-color    : #090;
 
 	--offline-color       : #fc08;
 	--offline-bg          : #fa02;
 	--online-color        : #0af;
 	--online-color-0      : #0afc;
 	--online-color-f      : #0aff;
-	--online-bg           : #08f2;
+	--online-bg           : #08f6;
 	--authenticated-color : #fff;
 	--authenticated-bg    : var(--online-bg);
 
@@ -77,92 +218,25 @@
 	--self-content : var(--one-person);
 	--self-color   : #fff;
 
-	--input-color        : #fc0;
-	--input-bg           : #000f;
-	--input-border       : solid 1px #000;
-	--input-border-width : 1px;
-	--input-radius       : 0;
-	--input-padding-x    : calc(var(--toolbar-height) / 3.5);
-	--input-padding-y    : 0px;
-
-	--button-color          : #fed;
-	--button-bg             : #08f1;
-	--button-padding        : 0 10px;
-
-	--button-enabled-color  : #af4;
-	--button-enabled-bg     : #88ff0018;
-	--button-special-bg     : #ff000018;
-
-	--button-enter-color    : var(--button-color);X:var(--button-special-color);
-	--button-enter-bg       : var(--button-special-bg);
-	--button-close-color    : var(--button-special-color);
-	--button-close-bg       : var(--button-special-bg);
-
-	--main_menu-color : #fff;
-	--chat-color      : #8df;
-	--cep-color       : #cc0;
---cep-color: #abc;
-	--mcp-color       : #f00;
-
-	--warning-color   : #fc0;
-	--error-color     : #e20;
-	--success-color   : #0f0;
-
-	--debug-color     : #acf;
-	--text-color      : #0fe;
-	--request-color   : #ca0;
-	--response-color  : #78f;
-	--string-color    : #5c6;
-	--notice-color    : #acf;
-	--broadcast-color : #86f;
-	--update-color    : #090;
-
 	--separator-color    : #a60;
 	--separator-border   : dashed 1px var(--separator-color);
-	--toggle-state-color : #f0f;
-	--toggle-state-bg    : #f0f4;
 
-
-
-	--font-family : var(--font1);
-	--font-size   : 17px;
-
-	--font0 : WhiteRabbit;
+	/* See DebugConsole.setFont() */
+	--font-family : var(--font0);
+	--font-size   : 1rem;
+	--font4 : WhiteRabbit;
+	--font0 : ModeSeven;
 	--font1 : Terminus;
-	--font2 : ModeSeven;
-	--font3 : DIGIT;
-	/*
-	--font4 : Digit-V4WI;
-	--font5 : CenturyGothic;
-	--font6 : SETIPERU;
-	--font7 : fa-brands-400;
-	--font8 : fa-regular-400;
-	--font9 : fa-solid-900;
-	* */
+	--font2 : DIGIT;
+	--font3 : monospace;
 
-
-	/* NON-FANCY */
-/*
-	toolbar-bg: #2D2D39
-*/
+	--string-font-family: WhiteRabbit;  /*//...*/
 }
-
 .terminal.font0 { --font-family : var(--font0); }
 .terminal.font1 { --font-family : var(--font1); }
 .terminal.font2 { --font-family : var(--font2); }
 .terminal.font3 { --font-family : var(--font3); }
 .terminal.font4 { --font-family : var(--font4); }
-.terminal.font5 { --font-family : var(--font5); }
-.terminal.font6 { --font-family : var(--font6); }
-.terminal.font7 { --font-family : var(--font7); }
-.terminal.font8 { --font-family : var(--font8); }
-.terminal.font9 { --font-family : var(--font9); }
-
-body.dark_mode {}
-/*@media (prefers-color-scheme: dark) { body.init {background:#000; color:#fff;} }
-
-
-/* FONTS */
 
 @font-face {
 	font-family: 'Terminus';
@@ -186,58 +260,15 @@ body.dark_mode {}
 	font-style: normal;
 }
 @font-face {
-	font-family: 'CenturyGothic';
-	src: url('/fonts/CenturyGothic.woff')  format('woff');
-	src: url('/fonts/CenturyGothic.woff') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-}
-@font-face {
 	font-family: 'DIGIT';
 	src: url('/fonts/DIGIT.woff')  format('woff');
 	src: url('/fonts/DIGIT.woff2') format('woff2');
 	font-weight: normal;
 	font-style: normal;
 }
-@font-face {
-	font-family: 'Digit-V4WI';
-	src: url('/fonts/Digit-V4WI.woff')  format('woff');
-	src: url('/fonts/Digit-V4WI.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'fa-brands-400';
-	src: url('/fonts/fa-brands-400.woff')  format('woff');
-	src: url('/fonts/fa-brands-400.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'fa-regular-400';
-	src: url('/fonts/fa-regular-400.woff')  format('woff');
-	src: url('/fonts/fa-regular-400.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'fa-solid-900';
-	src: url('/fonts/fa-solid-900.woff')  format('woff');
-	src: url('/fonts/fa-solid-900.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-}
-@font-face {
-	font-family: 'SETIPERU';
-	src: url('/fonts/SETIPERU.woff')  format('woff');
-	src: url('/fonts/SETIPERU.woff2') format('woff2');
-	font-weight: normal;
-	font-style: normal;
-}
 
 
 /* MAIN LAYOUT */
-
 
 /* Required for the bit to fade into the distance on terminal toggle */
 NotInUse.terminal { opacity:0; transition:all 0.5s linear; display:grid !important; }
@@ -267,8 +298,8 @@ NotInUse.terminal.enabled { opacity:1; }
 	color:#fff;
 	background:#06c8;
 }
-.terminal :is(h2, input, button, span, code, ::before, ::after, .toolbar, textarea, pre, a, b) {
-	font-family:var(--font-family); font-size:var(--font-size); line-height:1rem;
+.terminal * {
+	font-family:var(--font-family); font-size:var(--font-size); line-height:var(--line-height);
 	tab-size:var(--tab-size);
 }
 
@@ -285,102 +316,106 @@ NotInUse.terminal.enabled { opacity:1; }
 	Xheight:var(--toolbar-height);
 	outline:var(--toolbar-outline);
 	border-radius:var(--input-radius);
-	background:var(--toolbar-background); color:#fff;
+	background:var(--toolbar-bg); color:#fff;
 	box-shadow:var(--menu-box-shadow);
 }
 
 /* MENU */
-.terminal .node    .items { width:8em;  }
-.terminal .main    .items { width:12em; }
-.terminal .clear   .items { width:6em; }
-.terminal .toggles .items { width:14em; }
-.terminal .filter  .items { width:14em; }
-.terminal .toggles .items button { flex-basis:6em; }
-.terminal .auth    .items { width:var(--menu-enter-width); }
+.terminal .items { --sub-offset-x:0px; }
+.terminal .node       .items { width:8em; } /* Top left, showing Node name */
+.terminal .clear      .items { width:6em; } /* Clear button menu */
+.terminal .connection .items { width:17em; }
+.terminal .auth       .items { width:var(--menu-enter-width); }
+X.terminal .main       .items { X:width:calc(var(--menu-enter-width) - 2em); --sub-offset-x:2em; }
+.terminal .main       .items { width:calc(--menu-enter-width); }
+.terminal .toggles    .items { width:calc(var(--menu-enter-width) - 4em); --sub-offset-x:2em; }
+.terminal .filter     .items { width:17em; }
+.terminal .toggles    .items button { flex-basis:40%; }
 
-.terminal .toolbar nav { display:flex; justify-content:center; }
+.terminal .toolbar nav {
+	display:flex; Xjustify-content:center; flex-wrap:wrap-reverse; gap:var(--toolbar-gap);
+}
+.terminal footer.toolbar nav { flex-wrap:wrap; }
 .terminal .toolbar nav > .items { display:none; }
+
 .terminal:not(.connected) .send .items,
 .terminal:not(.connected) .main_menu .items,
+/*//... what else not to show?*/
+
 .terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {
 	--r:var(--input-radius);
-	display:flex; gap:var(--menu-gap); flex-wrap:wrap; align-items:center; justify-content:center;
-	position:absolute; top:calc(100% + var(--menu-offset)); right:0; z-index:999;
+	display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+	gap:var(--menu-gap);
+	position:absolute; top:100%;X:calc(100% + var(--menu-offset)); right:var(--sub-offset-x); z-index:999;
 	box-sizing:content-box;
 	border-radius:var(--top-menu-radius);
 	padding:var(--menu-gap);
-	background:var(--toolbar-background);
+	background:var(--toolbar-bg);
+}
+.fancy.terminal {
 	box-shadow:
 		inset 0 1px 0 0 #fff2,
 		      0 2px 0 0 #0004
 	;
 }
-.terminal footer.toolbar > nav:is(:hover,:focus,:focus-within) .items {
-	top:unset; bottom:calc(100% + var(--menu-offset));
-	border-radius:var(--bottom-menu-radius);
-}
-.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inset 0 0 0 1px #fff0; }
-.terminal .toolbar > nav:first-child .items { left:0; right:unset; }
-.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items { color:#80fc; padding-bottom:0; }
-.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close { color:var(--button-color); }
-
-/* Sub Menus */
-.terminal .toolbar > nav form nav {
-	--g:var(--menu-gap);
-	padding:var(--g); margin:calc(-1 * var(--g));
-}
-.terminal .toolbar nav form nav:hover  { z-index:199; }
-.terminal .toolbar nav form nav > button  { width:100%; } /* 3 buttons, each fill their "cell"?? somehow with this */
-.terminal .toolbar nav form nav > .commands + .items button { Xflex-basis:6rem; ; min-width:5em; }
-
 .terminal .toolbar > nav:first-child form nav,
 .terminal .toolbar > nav:first-child .items {
 	left:0; right:unset;
 }
+X.terminal .toolbar > nav:first-child .items { left:var(--sub-offset-x); right:unset; }
 
-/* Submenu main buttons */
+.terminal footer.toolbar > nav:is(:hover,:focus,:focus-within) .items {
+	top:unset; bottom:100%; X:calc(100% + var(--menu-offset));
+	border-radius:var(--bottom-menu-radius);
+}
+.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inset 0 0 0 1px #fff0; }
+.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items { color:#80fc; padding-bottom:0; }
+.terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close { color:var(--button-color); }
+
+/* SUB MENU */
 .terminal .toolbar > nav .items > * { flex-grow:1; min-width:3em; }
-
-
-
-/* Striped background */
-X.terminal:not(.fancy) .shell.stripes,
-.terminal:not(.fancy) .shell.stripes output {
-	--b0:var(--stripes-color0);
-	--b1:var(--stripes-color1);
-	background-image:linear-gradient( var(--b0), var(--b0) 50%, var(--b1) 51%, var(--b1) 100% );
-	background-position:0 var(--output-padding-top);
-	background-repeat:repeat;
-	background-size:var(--font-size) 2rem;
-	background-attachment:local;
+.terminal .toolbar > nav nav {
+	--g:var(--menu-gap);
+	padding:var(--g); margin:calc(-1 * var(--g));
 }
-.terminal:not(.fancy) .chat {
-	Xbackground-position: 0 var(--menu-gap);
-}
+.terminal .toolbar nav nav:hover  { z-index:199; }
+.terminal .toolbar nav nav > button  { width:100%; } /* 3 buttons, each fill their "cell"?? somehow with this */
+X.terminal .toolbar nav nav > .commands + .items button { Xflex-basis:6rem; ; min-width:5em; }
 
 /* OUTPUT */
-.terminal.fancy output {
-	margin:var(--output-margin);
-}
 .terminal output {
-	margin:var(--output-margin);
+	margin:var(--output-margin-top) var(--output-margin-x) 0;
 	padding:var(--output-padding-top) var(--output-padding-x) 0;
 	color:var(--text-color);
 	white-space:pre-wrap;
 	overflow-y:scroll;
 	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 }
+.terminal.fancy output {
+	margin:1em 0;
+}
+/* Striped background */
+.terminal:not(.fancy) output.stripes {
+	--s:calc(2 * var(--line-height));
+	--b0:var(--stripes-color0);
+	--b1:var(--stripes-color1);
+	background-image:linear-gradient( var(--b0), var(--b0) 50%, var(--b1) 51%, var(--b1) 100% );
+	background-position:0 var(--output-padding-top);
+	background-repeat:repeat;
+	background-size:var(--s) var(--s);
+	background-attachment:local;
+}
 
-/* INPUT */
+/* INPUTS */
 .terminal textarea {
 	width:100%; border:none;
-	background:transparent; color:var(--main_menu-color);
-	margin:0 var(--output-padding-x);
+	background:transparent; color:var(--textarea-color);
+	margin:calc(var(--output-padding-x) + var(--output-margin-x));
 	resize:none;
 	caret-shape:block;
 	Xcaret-shape:bar;
 	Xcaret-shape:unserscore;
-	caret-color: #ff0;
+	caret-color:var(--caret-color);
 }
 X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.request { color:var(--request-color); }
@@ -389,7 +424,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.local ::first-letter { color:#fff; }
 
 /* BUTTONS */
-.terminal.fancy :is(button, span, code, ::before, ::after, textarea, output pre, a, b) {
+.terminal.fancy :is(input, button, span, code, ::before, ::after, textarea, output pre, a, b) {
 	text-shadow:
 		1px  0 #0004,
 		-1px 0 #0004,
@@ -401,32 +436,34 @@ X.terminal textarea:focus { caret-color:#f0f; }
 		0 2px  #0008,
 		0 -2px #0008
 	;
-	line-height:1rem;
 }
 
 /* FORM INPUT */
 .terminal input {
-	height:var(--toolbar-height);
-	border:var(--input-border); border-radius:var(--input-radius);
-	padding:var(--input-padding-y) var(--input-padding-x);
-	background:var(--input-bg); color:var(--input-color);
+	height        : var(--toolbar-height);
+	border        : var(--input-border  );
+	border-radius : var(--input-radius  );
+	padding       : var(--input-padding-y) var(--input-padding-x);
+	background    : var(--input-bg      );
+	color         : var(--input-color   );
 }
 .terminal input:focus {
 	outline:none;
 	border:var(--focus-border);
 }
 .terminal button {
-	height:var(--toolbar-height);
-	border:var(--input-border);
-	border-radius:var(--input-radius);
-	background: var(--button-bg);
-	color:var(--button-color);
+	border        : var(--input-border  );
+	border-radius : var(--input-radius  );
+	padding       : var(--button-padding);
+	background    : var(--button-bg     );
+	color         : var(--button-color  );
 	white-space:nowrap;
+}
+.fancy.terminal button {
 	box-shadow:
 		inset -0px -0px 0px 1px #0006,
 		inset  1px  1px 0px 1px #fff2
 	;
-	padding:var(--button-padding);
 }
 .terminal input:hover,
 .terminal button:focus,
@@ -435,7 +472,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 }
 
 .terminal button.blink.success { color:var(--success-color); }
-.terminal button.blink { animation: TOGGLE 0.5s linear 1; }
+.terminal button.blink { animation: TOGGLE 0.2s linear 1; }
 @keyframes TOGGLE {
 	 0% { filter:brightness(2) contrast(1); }
 	11% { filter:brightness(1) contrast(2); }
@@ -446,11 +483,12 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	66% { filter:brightness(2) contrast(1); }
 }
 
+/* SPECIAL COLOR */
 .terminal button.ssnStat,
 .terminal button.clear,
 .terminal button.help,
 .terminal button.bit,
-X.terminal button.who,
+.terminal button.token,
 .terminal button.login,
 .terminal button.logout,
 .terminal button.connect,
@@ -480,6 +518,8 @@ X.terminal button.who,
 
 /* TOOLBAR GADGETS */
 
+.terminal .toolbar > nav:not(.who) > button { height: 100%; }
+
 /* LIST */
 .terminal .list { display:flex; align-items:center; }
 .terminal .list button:last-child { margin-right:0; }
@@ -489,7 +529,7 @@ X.terminal button.who,
 .terminal .list button.self::before {
 	content:var(--self-content);
 	font-size:0.8em;
-	padding-right:5px;
+	padding-right:0.35em;
 	text-shadow:
 		1px  0 #fff8,
 		-1px 0 #fff8,
@@ -499,20 +539,20 @@ X.terminal button.who,
 }
 
 /* Who */
-.terminal.fancy .list.who::before {
+Xs.terminal.fancy .list.who::before {
 	content:'⟷';
 	color:#023;
 	font-weight:bold;
-	padding-right:3px;
 	filter:drop-shadow(0 0 2px #cef);
 }
-
-/* Room */
-.terminal header.toolbar > nav.room { flex-grow:1; align-items:center; justify-content:end; padding-right:1rem; }
+.terminal .toolbar .who { flex-direction:row-reverse; flex-grow:1; }
+.fancy.terminal .toolbar .who button { border-radius:var(--user-radius); }
+.fancy.terminal .toolbar .who button.room { border-radius:0 var(--input-radius) var(--input-radius) 0; }
+.fancy.terminal .toolbar .who button:last-child { border-radius:var(--input-radius) 0 0 var(--input-radius); }
 
 /* Toggle state */
-.terminal .list.toggle_state { padding:0 var(--menu-gap); color:#bdfa; cursor:pointer; }
-.terminal .list b { color:#bdf; font-weight:normal; }
+.terminal .list.toggle_state { padding:0 var(--toggle_state-gap); color:var(--toggle-state-off); cursor:pointer; }
+.terminal .list b { color:var(--toggle-state-on); font-weight:normal; }
 
 /* Connection */
 .terminal .node       > button,
@@ -545,20 +585,15 @@ X.terminal button.who,
 .terminal .status {
 	flex-grow:1;
 	position:relative; padding-left:var(--menu-gap); cursor:pointer; align-self:center;
-	Xheight:1rem; overflow:hidden; text-overflow:ellipsis; Xwhite-space:nowrap;
+	overflow:hidden; text-overflow:ellipsis; Xwhite-space:nowrap;
 }
 X.terminal .status > span > a,
 X.terminal .status > span,
-X.terminal .status * {
-	font-family:serif; Xfont-size:var(--font-size); Xheight:var(--font-size);
-}
-.terminal .status .extra {
-	Xposition:absolute;
-	Xline-height:1rem;
-	z-index:1;
-}
+X.terminal .status * { font-family:serif; }
+.terminal .status .extra { z-index:1; }
+
 .terminal .status a { text-decoration:none; }
-.terminal .status a:hover { color:#acf; text-decoration:underline; }
+.terminal .status a:hover { color:var(--a-hover); text-decoration:underline; }
 
 /* Time */
 .terminal .time { transition:opacity 0.25s linear; opacity:1; }
@@ -566,9 +601,9 @@ X.terminal .status * {
 .terminal .time {
 	Xfont-variant-numeric: normal;
 	Xfont-variant-numeric: ordinal;
-	font-variant-numeric: slashed-zero;
+	Xfont-variant-numeric: slashed-zero;
 	Xfont-variant-numeric: lining-nums; /* <numeric-figure-values> */
-	font-variant-numeric: oldstyle-nums; /* <numeric-figure-values> */
+	Xfont-variant-numeric: oldstyle-nums; /* <numeric-figure-values> */
 	Xfont-variant-numeric: proportional-nums; /* <numeric-spacing-values> */
 	Xfont-variant-numeric: tabular-nums; /* <numeric-spacing-values> */
 	Xfont-variant-numeric: diagonal-fractions; /* <numeric-fraction-values> */
@@ -592,7 +627,7 @@ X.terminal .status * {
 /* PRE */
 .terminal pre.cep       { color:var(--cep-color);       }
 .terminal pre.debug     { color:var(--debug-color);     }
-.terminal pre.string    { color:var(--string-color);    }
+.terminal pre.string    { color:var(--string-color);    font-family:var(--string-font-family); }
 .terminal pre.notice    { color:var(--notice-color);    }
 .terminal pre.broadcast { color:var(--broadcast-color); }
 .terminal pre.update    { color:var(--update-color);    }
@@ -612,14 +647,15 @@ X.terminal .status * {
 
 
 /* EXPAND */
-.terminal pre { position:relative; z-index:10; white-space:pre-wrap; }
-.terminal .separators pre { Xborder:solid 1px #fff4; Xborder-width:0 0 1px; margin:0 0 1rem; }
-.terminal output pre:hover { color:#fed; cursor:pointer; }
+.terminal pre { position:relative; z-index:10; Xwhite-space:pre-wrap; }
+.terminal .separators pre { margin:0 0 var(--line-height); }
+.terminal.fancy .separators pre { margin:0 0 calc(0.25 * var(--line-height)); }
+.terminal output pre:hover { color:var(--hover-color); cursor:pointer; }
 
-.terminal :not(.compact).overflow pre.unexpand,
 .terminal .compact.overflow.last pre:last-child,
+.terminal :not(.compact).overflow pre.unexpand,
 .terminal .compact.overflow pre {
-	height:1rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+	height:var(--line-height); overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
 }
 
 .terminal output.compact pre.unexpand:last-child,
@@ -629,7 +665,7 @@ X.terminal .status * {
 }
 
 /* LAST */
-.terminal output[class]:not(.compact) pre.unexpand { margin-bottom:1em; }
+.terminal output[class]:not(.compact) pre.unexpand { margin-bottom:var(--line-height); }
 
 .terminal:not(.debug) output.compact.last pre:last-child,/*//...*/
 .terminal output.compact pre.expand {
@@ -644,7 +680,7 @@ X.terminal .status * {
 	display:block; position:relative; overflow:hidden;
 	transform:translate(-35.5px, 7px);
 	width:calc(100% + 35px);
-	height:1.2em;
+	height:var(--line-height);
 	transform:translate(-35.5px, 7px);
 	margin-right:-50px;
 	outline:none;
@@ -715,7 +751,7 @@ X.terminal .status * {
 .terminal.fancy > * { z-index:3; }
 .terminal.fancy.connected  output::before { filter:hue-rotate(  0deg) brightness(var(--b));        }
 .terminal.fancy.bit.yes    output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
-.terminal.fancy.bit.no     output::before { filter:hue-rotate(140deg) brightness(0.9) contrast(3); }
+.terminal.fancy.bit.no     output::before { filter:hue-rotate(140deg) brightness(0.8) contrast(3); }
 
 .terminal.fancy.bit.yes    output::after,
 .terminal.fancy.bit.no     output::after {
@@ -725,8 +761,6 @@ X.terminal .status * {
 	border-radius:100%;
 	background:transparent;
 }
-.terminal.fancy.yes output::after { background:radial-gradient(circle at center, #0f02, #0801 7%, #0000 10%); }
-.terminal.fancy.no  output::after { background:radial-gradient(circle at center, #f003, #8002 7%, #0000 10%); }
 
 
 /* FANCY PRE */
@@ -760,13 +794,13 @@ X.terminal .status * {
 .terminal.fancy .debug pre.chat::before { color:#0af; }
 .terminal.fancy pre.chat.unexpand::before { background:#fff6; }
 
-.terminal code      { color:#fcb; }
-.terminal .success  { color:#080; }
-.terminal .warning  { color:#fc0; }
-.terminal .error    { color:#f00; }
-.terminal .true     { color:#6e3; }
-.terminal .false    { color:#f31; }
-.terminal .null     { color:#4ef; }/*
+.terminal code      { color:var(--code-color   ); }
+.terminal .success  { color:var(--success-color); }
+.terminal .warning  { color:var(--warning-color); }
+.terminal .error    { color:var(--error-color  ); }
+.terminal .true     { color:var(--true-color   ); }
+.terminal .false    { color:var(--false-color  ); }
+.terminal .null     { color:var(--null-color   ); }/*
 .terminal code.period   { color:#ccc; }
 .terminal code.colon    { color:#ccc; }
 .terminal code.semi     { color:#ccc; }
@@ -791,7 +825,6 @@ X.terminal .status * {
 	  0% { filter:brightness( 1.0 ); box-shadow:0 0 15px 0 var(--online-color-0); }
 	100% { filter:brightness( 1.1 ); box-shadow:0 0 15px 0 var(--online-color-f); }
 }
-
 
 /* Beams */
 :not(.init).animate body::after,

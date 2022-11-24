@@ -68,6 +68,15 @@
 	.noscript p { margin-top:2em; }
 	.noscript img { display:block; margin:0 auto; filter:drop-shadow(0 -15px 15px #ffa); }
 	.noscript div + div { color:#f84; margin:1em 0 0.5em; }
+	@media (prefers-color-scheme: Xlight) {
+		html.light.init body,
+		html.light.init,
+		html.init body,
+		html.init {
+			background:#fff; color:#000;
+		}
+		header.noscript h2 { color:#b90; }
+	}
 </style>
 <script class="login_page">
 	addEventListener( 'load', ()=>{
@@ -75,66 +84,54 @@
 		[...document.querySelectorAll('body > form input')]
 		.filter( types )
 		.forEach( input =>{
-console.log( 'in', input );
 			input.addEventListener( 'input'  , on_input_change, {passive:false} );
 			input.addEventListener( 'change' , on_input_change, {passive:false} );
 		});
+		on_input_change();
 	});
-
 	function on_input_change (event) {
-		const account = document.querySelector( '[name=username]' ).value || 'guest';
-		const form = document.querySelector( 'body > form' );
-		form.classList.toggle( 'guest', (account.toLowerCase() == 'guest') );
+		const element = document.querySelector( '[name=username]' );
+		const value   = element.value
+		const form    = document.querySelector( 'body > form' );
+		form.classList.toggle( 'guest', (element.value.toLowerCase() == 'guest') );
+		if (!value.trim()) setTimeout( ()=>element.select() );
 	}
 </script>
 <style class="login_page">
+body > form {
+	--input-color       : #fed;
+	--hover-color       : #fff;
+	--input-bg          : #444;
+	--focus-color       : #fff;
+	--focus-bg          : #8f02;
+	--login-color       : #fc0;
+	--login-bg          : #8e6100;
+	--placeholder-color : #fc0;
+	--title-color       : #fc0;
+}
+@media (prefers-color-scheme:light) {
+	html.light,
+	body > form {
+		--input-color       : #210;
+		--hover-color       : #000;
+		--input-bg          : #ccc;
+		--focus-color       : #000;
+		--focus-bg          : #eee;
+		--login-color       : #fec;
+		--login-hover-color : #fff;
+		--login-bg          : #8e6100;
+		--placeholder-color : #000;
+		--title-color       : #840;
+	}
+}
 	* { margin:0; padding:0; box-sizing:border-box; Xfont-family:font0, monospace, sans-serif; }
-	html, body { width:100%; height:100%; font-family:sans-serif; background:#444; color:#fff; }
+	html, body { width:100%; height:100%; font-family:sans-serif; Xbackground:#000; Xcolor:#fff; }
 	body { overflow:hidden; }
 
-	a { color:#fc0; }
-	a:visited { color:#f80; }
-	a:active { color:#ff0; }
-	a:focus { color:#ff0; }
-	a:hover { color:#fd8; }
 	:focus { outline:none; }
 
 	body > header { display:none; }
 	.fancy body > header:not(.noscript) { display:block; }
-
-	:not(.init).fancy body {
-		background-color:#000;
-		background-image:url(/images/bg_grid.jpg);
-		Xbackground-size:calc(100% / 3) calc(100% / 3);
-		Xbackground-size:cover;
-		background-size:100% 100%;
-	}
-	:not(.init).fancy body::after {
-		content:'';
-		position:absolute; top:0; left:0; z-index:1;
-		height:100%; width:100%;
-		background-color:#2220;
-		background-image:url(/images/beam.png);
-		background-position:6px center;
-		background-repeat:no-repeat;
-		background-size:calc(96px / 2) 100%;
-		filter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
-		pointer-events:none;
-	}
-	html:not(.init).fancy body > header {
-		content:''; white-space:pre; text-transform:none;
-		position:absolute; bottom:60px; left:30px; transform:translate(-50%,-50%); z-index:2;
-		white-space:normal; text-transform:uppercase;
-		width:5em;
-		outline:solid 1px #fc06;
-		border-radius:3px;
-		padding:2px 5px;
-		font-size:0.7em; line-height:1.1em; text-align:center;
-		background:#0007; color:#fc0;
-	}
-
-	body > header a { text-decoration:none; }
-	body > header a:hover { text-decoration:underline; }
 
 	body > form {
 		position:absolute; top:50.7%; left:50%; transform:translate(-50%,-50%);
@@ -142,44 +139,53 @@ console.log( 'in', input );
 		width:13rem; box-sizing:content-box;
 		filter:hue-rotate(45deg) contrast(0.8);
 	}
-	body > form h2 { color:#fc0; }
-	body > form img { filter:drop-shadow(0 -15px 15px #ffa); }
-	body > form label { font-size:0; width:100%; }
-	body > form label > * > * { font-size:1rem; }
+	body > form h2 { color:var(--title-color); filter:drop-shadow(0 0 10px #8f4); }
+	body > form img {
+		filter:
+			drop-shadow(0   0px  1px #000)
+			drop-shadow(0 -15px 15px #6f6)
+		;
+	}
+
 	body > form :is(input,button) {
 		width:100%; height:2em;
 		border:none;
-		background:#0006; color:#fff;
+		background:var(--input-bg); color:var(--input-color);
 		text-align:center;
 	}
-	body > form input:hover        { background:#000c; color:#fffe; }
-	body > form input:focus        { background:#000f; color:#fff; text-align:left; padding-left:5px; }
-	body > form input::placeholder { font-size:1em; color:#fc0; }
+	body > form label { font-size:0; width:100%; }
+	body > form label > * > * { font-size:1rem; }
 
-:root {
-	--login-color : #fc0;
-	--login-bg    : #8e6100;
-}
-	body > form :is(input,button)[type=submit][value="Enter Chat"] { text-transform:uppercase; }
+	body > form input:hover {
+		background:var(--input-bg); color:var(--hover-color);
+	}
+	body > form input:focus {
+		background:var(--focus-bg); color:var(--focus-color);
+		text-align:left; padding-left:5px;
+	}
+	body > form input::placeholder {
+		font-size:1em; color:var(--placeholder-color);
+	}
+	body > form :is(input,button)[type=submit][value="Enter Chat"] {
+		text-transform:uppercase;
+	}
 	body > form :is(input,button)[type=submit] {
 		color:var(--login-color); background:var(--login-bg); text-align:center;
 	}
 	body > form :is(input,button)[type=submit]:is(:hover,:focus,:active) {
-		color:#fff; filter:brightness(1.2);
+		color:var(--login-hover-color); filter:brightness(1.2);
 	}
+
 	body > form :is(input,button).debug:is(:hover,:focus,:active) {
 		color:#fff; filter:brightness(1.1);
 	}
-
-	body > form label:nth-of-type(2) { padding-top:2px; }
+	body > form label:is(:hover,:focus,:active) button.debug {
+		opacity:1; transition:all 0.25s ease-in-out;
+	}
 	body > form button.debug {
 		height:1.4em;
 		filter:brightness(0.65);
 		opacity:0;
-		transition:all 0.25s ease-in-out;
-	}
-	body > form label:is(:hover,:focus,:active) button.debug {
-		Xdisplay:block; opacity:1;
 		transition:all 0.25s ease-in-out;
 	}
 	body > form button.debug::after {
@@ -206,10 +212,6 @@ console.log( 'in', input );
 	<form tabindex="0" accept-charset="utf-8" class="guest">
 		<img src="/images/spielwiese_transparent.png" alt="Site icon">
 		<h2>spielwiese</h2>
-		<label>
-			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to the MyNode Chat">
-			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Useful for developers"></button>
-		</label>
 		<label title='Account name. When "Guest", choose a nick name'>
 			<span>Username</span>
 			<input tabindex="0" type="text" name="username" placeholder="Username" autocomplete="username" value="Guest">
@@ -227,6 +229,10 @@ console.log( 'in', input );
 			<input tabindex="0" type="password" name="factor2" placeholder="Factor 2" autocomplete="one-time-code">
 		</label>
 		<input type="hidden" name="toggle" value="terminal">
+		<label>
+			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to the MyNode Chat">
+			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Useful for developers"></button>
+		</label>
 	</form>
 
 </body></html>

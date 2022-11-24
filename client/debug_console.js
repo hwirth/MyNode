@@ -9,8 +9,9 @@
 // I think a bundler would change that, but this is from the /dist folder!? I also added a volume option to it.
 import * as DUMMY_SamJs from './samjs.js';
 
-import { SETTINGS, GET  } from './config.js';
+import { SETTINGS       } from './config.js';
 import { PRESETS, DEBUG } from './config.js';
+import { GET            } from './helpers.js';
 import { History        } from './history.js';
 
 let CEP_VERSION = 'v0.4.0α';   // Keyboard shortcuts will be appended in  self.init()
@@ -37,6 +38,8 @@ export const DebugConsole = function (callback) {
 
 	const BUTTON_SCRIPTS = [
 // self.elements[menu]  (auth, main, node)
+// Set special color: spielwiese.css:/* SPECIAL COLOR */
+// Order of entries affects positioning in menus. Some menus come with pre-placed buttons (TERMINAL_HTML)
 { menu:'auth' , name:'login',   script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
 { menu:'auth' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
 { menu:'auth' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
@@ -44,17 +47,18 @@ export const DebugConsole = function (callback) {
 { menu:'auth' , name:'disconnect' , script:'/disconnect' },
 { menu:'auth' , name:'user'       , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
 { menu:'auth' , name:'root'       , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
-{ menu:'main' , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'main' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
 { menu:'main' , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 { menu:'main' , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
 { menu:'main' , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
-{ menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
-{ menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
-{ menu:'main' , name:'token'      , script:'server\n\ttoken' },
-{ menu:'main' , name:'clear'      , script:'/clear' },
 { menu:'main' , name:'who'        , script:'session\n\twho' },
 { menu:'main' , name:'manual'     , script:'/manual' },
+{ menu:'main' , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'main' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'main' , name:'token'      , script:'server\n\ttoken' },
+{ menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
+{ menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
+{ menu:'main' , name:'clear'      , script:'/clear' },
+
 { menu:'main' , name:'help'       , script:'/help' },
 	];
 
@@ -66,8 +70,8 @@ export const DebugConsole = function (callback) {
 	const HTML_TERMINAL = (`
 <div class="terminal">
 
-	<main class="chat shell stripes"><!-- //...? Must be first in DOM to allow popup menus in header -->
-		<output class="last"></output>
+	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
+		<output></output>
 		<textarea autocomplete="off"></textarea>
 	</main><!-- main needs to be before header in the DOM for position:absolute in dropdowns to work -->
 
@@ -76,16 +80,36 @@ export const DebugConsole = function (callback) {
 			<button title="MyNode Server">MyNode</button>
 		</nav>
 		<nav class="list who" title="List of connected users"></nav>
-		<nav class="room" title="Chat text gets sent to this channel"><span>Public Room <q>Spielwiese</q></span></nav>
+		<!-- nav class="room" title="Chat text gets sent to this channel"><span>Public Room <q>Spielwiese</q></span></nav -->
 	</header>
 
 	<footer class="toolbar">
 		<nav class="connection">
 			<button title="Connection state, or your user/nick name">OFFLINE</button>
+			<div class="items">
+				<nav class="toggles">
+					<button class="enabled">Toggle</button>
+					<div class="items">
+						<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat Mode</button>
+					</div>
+				</nav>
+				<nav class="filter">
+					<button class="enabled">Filter</button>
+					<div class="items"></div>
+				</nav>
+			</div>
 		</nav>
 		<nav class="status">
 			<span class="time"></span>
 			<span class="extra"></span>
+			<!-- span>
+Single lines input by the user are sent as  chat.say  requests, otherwise
+TAB formatted multiline text is sent as JSON objects.
+Debug mode shows all websocket messages going in or out.
+You can enter tab-indented pseudo-JSON, in order to send arbitrary
+requests to the server. In essence, you type a JSON object without the
+curly braces and quotation marks.
+			</span -->
 		</nav>
 		<nav class="list toggle_state" title="Toggle states, shown as Alt+Key shortcuts"><span></span></nav>
 		<nav title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
@@ -96,18 +120,9 @@ export const DebugConsole = function (callback) {
 			<form class="items">
 				<nav class="main">
 					<button class="help">Help</button>
-					<div class="items"></div>
-				</nav>
-				<nav class="toggles">
-					<button class="enabled">Toggle</button>
 					<div class="items">
-						<button class="close" title="Minimize terminal. Shortcut: Alt+T">Terminal</button>
-						<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat Mode</button>
+					<button class="close" title="Minimize terminal. Shortcut: Alt+T">Exit</button>
 					</div>
-				</nav>
-				<nav class="filter">
-					<button class="enabled">Filter</button>
-					<div class="items"></div>
 				</nav>
 				<input type="text"     name="username" placeholder="Username" autocomplete="username">
 				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
@@ -140,13 +155,10 @@ export const DebugConsole = function (callback) {
 	// KEYBOARD SHORTCUTS
 	// Atm. only Alt+Key works with toggles
 	//  create_toggles()  adds more entries
-	const KEYBOARD_SHORTCUTS = [{
-		event     : 'keydown',
-		key       : 'l',
-		modifiers : ['alt'],
-		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
-	},{
-/**/
+	const KEYBOARD_SHORTCUTS = [
+
+	// Generating buttons
+	{
 		event     : 'keydown',
 		key       : 'a',
 		modifiers : ['alt'],
@@ -168,6 +180,11 @@ export const DebugConsole = function (callback) {
 		action    : ()=>{ self.toggles.debug.toggle(); },
 	},{
 		event     : 'keydown',
+		key       : 'e',
+		modifiers : ['alt'],
+		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
+	},{
+		event     : 'keydown',
 		key       : 'f',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.fancy.toggle(); },
@@ -183,6 +200,11 @@ export const DebugConsole = function (callback) {
 		action    : ()=>{ self.toggles.tts.toggle(); },
 	},{
 		event     : 'keydown',
+		key       : 'q',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggles.terminal.toggle(); },
+	},{
+		event     : 'keydown',
 		key       : 'r',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.scroll.toggle(); },
@@ -193,21 +215,23 @@ export const DebugConsole = function (callback) {
 		action    : ()=>{ self.toggles.separators.toggle(); },
 	},{
 		event     : 'keydown',
-		key       : 't',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.terminal.toggle(); },
-	},{
-		event     : 'keydown',
 		key       : 'v',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.overflow.toggle(); },
 	},{
 		event     : 'keydown',
+		key       : 'x',
+		modifiers : ['alt'],
+		action    : ()=>{ self.toggles.stripes.toggle(); },
+	},{
+		event     : 'keydown',
 		key       : 'y',
 		modifiers : ['alt'],
 		action    : ()=>{ self.toggles.last.toggle(); },
-	},{
-/**/
+	},
+
+// Manual
+	{
 		event     : 'keydown',
 		key       : '+',
 		modifiers : ['alt'],
@@ -311,7 +335,7 @@ export const DebugConsole = function (callback) {
 		const F = PRESETS.FILTER;
 
 		const definition = [   //...! Sync with keyboard shortcuts
-{ name:'terminal'   , preset:T.TERMINAL   , target:terminal , menu:null      , shortcut:'T',  caption:null         },
+{ name:'terminal'   , preset:T.TERMINAL   , target:terminal , menu:null      , shortcut:'Q',  caption:null         },
 { name:'debug'      , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:null         },
 { name:'cep'        , preset:F.CEP        , target:output   , menu:'filter'  , shortcut:null, caption:'CEP'        },
 { name:'string'     , preset:F.STRING     , target:output   , menu:'filter'  , shortcut:null, caption:'String'     },
@@ -324,6 +348,7 @@ export const DebugConsole = function (callback) {
 { name:'compact'    , preset:T.COMPACT    , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compact'    },
 { name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'V',  caption:'Overflow'   },
 { name:'separators' , preset:T.SEPARATORS , target:output   , menu:'toggles' , shortcut:'S',  caption:'Separators' },
+{ name:'stripes'    , preset:T.STRIPES    , target:output   , menu:'toggles' , shortcut:'X',  caption:'Stripes'    },
 { name:'scroll'     , preset:T.SCROLL     , target:output   , menu:'toggles' , shortcut:'R',  caption:'AutoScroll' },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'      },
 { name:'animate'    , preset:T.ANIMATE    , target:terminal , menu:'toggles' , shortcut:'A',  caption:'Animations' },
@@ -413,9 +438,12 @@ export const DebugConsole = function (callback) {
 				if (toggle.name == 'debug')  blink_button = self.elements.debug;
 				if (toggle.menu == 'filter') blink_button = self.elements.btnFilter;
 
+				const cep_button = self.elements.btnCEP;
 				blink_button.classList.add( 'blink', toggle.enabled ? 'success' : 'error' );
+				cep_button  .classList.add( 'blink', toggle.enabled ? 'success' : 'error' );
 				setTimeout( ()=>{
 					blink_button.classList.remove( 'blink', 'success', 'error' );
+					cep_button  .classList.remove( 'blink', 'success', 'error' );
 				}, 350 );
 			} // flip
 
@@ -606,6 +634,16 @@ setTimeout( ()=>{
 // CLOCK
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+/*
+	const status_entries = [{
+		element : (()=>{
+			const span = document.createElement( 'span' ),
+			span.innerText = 'Ready.';
+			return span;
+		})(),
+		ttl     : null,
+	}];
+*/
 	const start_time = new Date();
 
 	function start_clock () {
@@ -1320,7 +1358,7 @@ setTimeout( ()=>{
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function print_version (additional_text) {
-		self.print( 'CEP-' + CEP_VERSION + additional_text, 'cep' );
+		self.print( 'CEP/Shell-' + CEP_VERSION + additional_text, 'cep' );
 
 	} // print_version
 
@@ -1359,7 +1397,7 @@ setTimeout( ()=>{
 
 				const iframe     = document.createElement( 'iframe' );
 				iframe.src       = file_name + '?included' + (id_selector ? '#'+id_selector : '');
-				iframe.className = 'cep htmlfile expand';
+				iframe.className = 'Xcep htmlfile expand';
 				iframe.setAttribute( 'tabindex'    , '0' );
 				iframe.setAttribute( 'frameborder' , '0' );
 				iframe.setAttribute( 'scrolling'   , 'yes' );
@@ -1384,7 +1422,7 @@ setTimeout( ()=>{
 			default: {
 				self.print(
 					file_contents.split( '//EOF' )[0].trim(),
-					'cep textfile expand',
+					'Xcep textfile expand',
 				);
 				scroll_down();
 			}
@@ -1650,27 +1688,44 @@ setTimeout( ()=>{
 		} // print_message
 
 
-		function update_who_list (who, full_name = '') {
+		function update_who_list (who) {
 			const list  = self.elements.whoList;
 			list.innerHTML = '';
 			if (who === null) return;
 
+for(let i = 0; i < 1; ++i) {
+	const button = document.createElement( 'button' );
+	button.className = 'enabled room';
+	button.innerText = 'Public Room';
+	list.appendChild( button );
+}
+
+			const full_name = self.elements.connection.innerText;
 			Object.keys( who ).forEach( (address)=>{
 				const user_record = who[address];
 
 				const button = document.createElement( 'button' );
-				button.innerText
-				= (typeof user_record == 'string')
-				? user_record
-				: user_record.nickName || user_record.userName
-				;
+				const text = (
+					(typeof user_record == 'string')
+					? user_record
+					: user_record.nickName || user_record.userName
 
-				const current_nick = full_name;
-				if (button.innerText == current_nick) {
+				).trim();
+
+				button.innerText = text;
+
+				if (full_name.indexOf(button.innerText) >= 0) {
 					button.classList.add( 'self' );
 				}
 				list.appendChild( button );
 			});
+
+for(let i = 0; i < 10; ++i) {
+	const button = document.createElement( 'button' );
+	button.className = '';
+	button.innerText = 'test/user';
+	list.appendChild( button );
+}
 
 		} // update_who_list
 
@@ -1790,7 +1845,6 @@ case 'response': {
 				self.elements.btnCEP.innerText
 				= result.login.nickName || result.login.userName;
 			}
-			if (response.success) update_who_list( result.who, result.login.userName );
 			break;
 		}
 		case 'session.logout': {

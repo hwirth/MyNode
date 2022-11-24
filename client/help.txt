@@ -31,6 +31,8 @@ Keyboard
 	Shift+Enter      Inserts line break (tabJSON)
 	Ctrl+Home        Clears input
 	Ctrl+Shift+Home  Clears screen
+	Alt+[.|,]        Change font
+	Alt+[+|-]        Change font size
 
 Toggles
 	terminal     Open the terminal         Alt+T
@@ -41,12 +43,13 @@ Toggles
 	overflow     Messages singe line       Alt+V
 	last         Uncollapse last message   Alt+Y
 	fancy        Playful theme             Alt+F
-	animate      Animations                Alt+A   Slow PC?
+	animate      Animations                Alt+A   Slow Computer
 	bit          Answers yes/no            Alt+B
 	keyBeep      Buttons and kbd. sound    Alt+K
 	tts          SAM speech synthesizer    Alt+M
 
-With "toggles" as a comma separated list, bookmark:
+
+With "toggles" as comma separated list, bookmark:
  /?username=&lt<i>user</i>>&password=&lt<i>pass</i>>&nickname=&lt;<i>nick</i>>&login[=&lt;<i>toggles</i>>]>
 
 Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
