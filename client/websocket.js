@@ -102,7 +102,7 @@ export const WebSocketClient = function (parameters = {}) {
 
 			// Hide ping/pong log messages
 			const is_pingpong = message.update && message.update.pong;
-			const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
+			const do_log = (!SETTINGS.HIDE_MESSAGES.PING || (SETTINGS.HIDE_MESSAGES.PING && !is_pingpong));
 			if (DEBUG.WEBSOCKET && do_log) {
 				const key = Object.keys( message )[0];
 				console.groupCollapsed(
@@ -168,7 +168,7 @@ export const WebSocketClient = function (parameters = {}) {
 	this.send = function (request) {
 		// Hide ping/pong log messages
 		const is_pingpong = request.session && request.session.pong;
-		const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
+		const do_log = (!SETTINGS.HIDE_MESSAGES.PING || (SETTINGS.HIDE_MESSAGES.PING && !is_pingpong));
 		if (DEBUG.WEBSOCKET && do_log) {
 			console.groupCollapsed(
 				'%c🡅 WebSocketClient sending%c:',
@@ -185,8 +185,8 @@ export const WebSocketClient = function (parameters = {}) {
 
 		// See app-on_websocket_message
 		const hide_message
-		=  (DEBUG.HIDE_MESSAGES.PING && request.session && request.session.pong)
-		|| (DEBUG.HIDE_MESSAGES.CHAT && request.chat && request.chat.say)
+		=  (SETTINGS.HIDE_MESSAGES.PING && request.session && request.session.pong)
+		|| (SETTINGS.HIDE_MESSAGES.CHAT && request.chat && request.chat.say)
 		;
 
 		if (!hide_message) {

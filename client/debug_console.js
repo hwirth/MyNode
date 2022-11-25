@@ -168,6 +168,7 @@ curly braces and quotation marks.
 },{ event:'keydown', key:'k', modifiers:['alt'], action:()=>{ self.toggles.keyBeep.toggle();    },
 },{ event:'keydown', key:'l', modifiers:['alt'], action:()=>{ self.toggles.light.toggle();      },
 },{ event:'keydown', key:'m', modifiers:['alt'], action:()=>{ self.toggles.tts.toggle();        },
+},{ event:'keydown', key:'w', modifiers:['alt'], action:()=>{ self.toggles.ping.toggle();       },
 },{ event:'keydown', key:'q', modifiers:['alt'], action:()=>{ self.toggles.terminal.toggle();   },
 },{ event:'keydown', key:'r', modifiers:['alt'], action:()=>{ self.toggles.scroll.toggle();     },
 },{ event:'keydown', key:'s', modifiers:['alt'], action:()=>{ self.toggles.separators.toggle(); },
@@ -317,17 +318,24 @@ curly braces and quotation marks.
 				});
 			}
 
-			update_dom();
+			update_dom();  // Set UI states depending on preset
 
 			return toggle;
 
 
 			function update_dom () {
+				// Toggle
 				const is_terminal = (toggle.name == 'terminal');
 				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
 				const set_enable = ['terminal', 'node'].indexOf(toggle.name) >= 0;
 				target.classList.toggle( set_enable ? 'enabled' : toggle.name, toggle.enabled );
 
+				// Custom
+setTimeout( ()=>{
+				// Tell websocket.js, if it should log messages to the dev console
+				//SETTINGS.HIDE_MESSAGES.PING = toggle.enabled;
+					SETTINGS.HIDE_MESSAGES.PING = self.toggles.ping.enabled;
+});  //...? Argh. Why?
 				if (toggle.name == 'light') {
 					const prefers_light_scheme
 					= window.matchMedia( '(prefers-color-scheme:light)' ).matches
@@ -345,10 +353,16 @@ curly braces and quotation marks.
 
 
 			function flip (new_state = null) {
+				// Toggle
 				//...console.log( 'flip:', toggle, typeof new_state );
 				const just_toggle = (new_state === null) || (typeof new_state == 'event');
 				toggle.enabled = just_toggle ? !toggle.enabled : new_state;
+
 				update_dom();
+
+				// Custom
+				//...SETTINGS.HIDE_MESSAGES.PING = toggle.enabled;
+
 				 if (toggle.name == 'terminal') {
 					self.elements.html.classList.toggle( 'animate', !toggle.enabled );
 				}
@@ -366,12 +380,12 @@ curly braces and quotation marks.
 					blink_button.classList.remove( 'blink', 'success', 'error' );
 					cep_button  .classList.remove( 'blink', 'success', 'error' );
 				}, 350 );
-
-				DEBUG.HIDE_MESSAGES.PING = !toggle.enabled;
 			} // flip
 
 		} // to_toggles
 
+
+		// UI element, list of chars
 		function update_toggle_state () {
 			const has_shortcut = toggle => toggle.shortcut !== null;
 			const to_character = toggle => (
@@ -392,7 +406,7 @@ curly braces and quotation marks.
 		} // update_toggle_state
 
 	} // create_toggles
-
+setInterval( ()=>{ document.title = SETTINGS.HIDE_MESSAGES.PING }, 100 );
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // AUDIO
@@ -1675,7 +1689,7 @@ for(let i = 0; i < 0; ++i) {
 case 'update': {
 	switch (message.update.type) {
 		case 'session/ping': {
-			if (!DEBUG.HIDE_MESSAGES.PING) print_message();
+			if (!SETTINGS.HIDE_MESSAGES.PING) print_message();
 			callback.send( {session:{ pong: message.update.pong }} );
 			animate_ping();
 			return;
@@ -1686,7 +1700,7 @@ case 'update': {
 			return print_message();
 		}
 		case 'chat/say': {
-			if (!DEBUG.HIDE_MESSAGES.CHAT) print_message();
+			if (!SETTINGS.HIDE_MESSAGES.CHAT) print_message();
 			const sender = message.update.nickName || message.update.userName;
 			self.print( {[sender]: message.update.chat}, 'chat' );
 			return;

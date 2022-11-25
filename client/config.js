@@ -12,11 +12,6 @@ export const DEBUG = {
 	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
 	WEBSOCKET       : !false,
 	KEYBOARD_EVENTS : false,
-
-	HIDE_MESSAGES: {
-		PING : true,
-		CHAT : false,
-	},
 };
 
 export const SETTINGS = {
@@ -25,7 +20,6 @@ export const SETTINGS = {
 	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS : true,
 	KEY_BEEP         : true,   // Turn off entirely, see PRESETS
-	HIDE_PINGPONG    : true,   // Don't log ping/pong messages to the dev console
 	MAIN_VOLUME      : 1.0,    //0..1
 	SAM_ALWAYS_NEW   : !true,   // Reinstantiate SAM on every call, enabling MAIN_VOLUME
 
@@ -44,24 +38,16 @@ export const SETTINGS = {
 		BIT_ANSWER_SOUND : 270,
 	},
 
-	YOUTUBE: {
-		VOLUME    : 3,
-		AUTO_PLAY : !false,
-		VIDEO_IDS : [
-			"lzQ3IS1Xq2s",
-			"KLLVXw335u4",
-			"3be40pMfSas",
-			"Mckcmh-OU5M",
-			"lzXucw7xcE8",
-			"3be40pMfSas",
-		],
+	HIDE_MESSAGES: {
+		PING : true,    // Being set, when the toggle is instantiated (See  PRESETS[] )
+		CHAT : false,
 	},
 };
 
 export const PRESETS = {
 	FILTER: {
 		CHAT      : !get( 'debug' ),   //... -> ALL, Currently: when true, only chat visible
-		PING      : false,
+		PING      : true,
 		CEP       : false,
 		STRING    : false,
 		NOTICE    : false,
