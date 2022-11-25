@@ -152,8 +152,9 @@ const Application = function () {
 			connect_to_websocket();
 		}
 
-		//...const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
-		//...document.body.classList.toggle( 'dark_mode', prefers_dark_scheme.matches );
+		//const prefers_dark_scheme = window.matchMedia( '(prefers-color-scheme:dark)' );
+		//document.documentElement.classList.toggle( 'light' , !prefers_dark_scheme.matches );
+		//document.documentElement.classList.toggle( 'dark'  ,  prefers_dark_scheme.matches );
 
 		return Promise.resolve();
 

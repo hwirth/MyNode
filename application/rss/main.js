@@ -251,7 +251,7 @@ module.exports = function ChatServer (persistent, callback) {
 { enabled:false, name:'BBC Technology'            , url:'http://feeds.bbci.co.uk/news/technology/rss.xml' },
 				],
 				next     : 0,
-				interval : 10*60*1000,
+				interval : 1*60*1000,
 				items    : {},
 			};
 

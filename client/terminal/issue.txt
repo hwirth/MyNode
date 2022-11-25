@@ -1,4 +1,4 @@
 Guest Login
-1. Choose a nick(!)name in the "Enter" menu
+1. Choose a nick(!)name in the "MyNode" menu
 2. Double click "Login"
 Enter /help for more information

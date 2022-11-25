@@ -20,6 +20,8 @@ export const DEBUG = {
 };
 
 export const SETTINGS = {
+	CSS_FILE_NAME : '/spielwiese.css',
+
 	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS : true,
 	KEY_BEEP         : true,   // Turn off entirely, see PRESETS
@@ -59,6 +61,7 @@ export const SETTINGS = {
 export const PRESETS = {
 	FILTER: {
 		CHAT      : !get( 'debug' ),   //... -> ALL, Currently: when true, only chat visible
+		PING      : false,
 		CEP       : false,
 		STRING    : false,
 		NOTICE    : false,
@@ -70,6 +73,7 @@ export const PRESETS = {
 
 	TOGGLE: {
 		TERMINAL   : get( 'terminal' ),
+		ALL_USERS  : !get( 'terminal' ),
 		SCROLL     : !get( 'scroll' ),
 		COMPACT    : !get( 'compact' ),
 		SEPARATORS : get( 'separators' ),

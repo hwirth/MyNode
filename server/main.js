@@ -283,13 +283,17 @@ function parse_json(message) {//...
 
 		new_http_server.on( 'request', (request, response)=>{
 
-			function return_http_error (response, code) {
+			function return_http_error (response, code, url) {
 				color_log( COLORS.ERROR, 'http:', 'Client address:', request.socket.remoteAddress );
 				color_log( COLORS.ERROR, 'http:', 'Requested URL:', request.url );
 				color_log( COLORS.ERROR, 'http:', 'Headers:', request.headers );
 
 				response.statusCode = code;
-				response.end( '<h1>' + code + '</h1><p>' + http.STATUS_CODES[code] );
+				response.end(
+					  '<h1>'  + code + '</h1>'
+					+ '<h2>'  + http.STATUS_CODES[code] + '</h2>'
+					+ '<pre>' + file_name + '</pre>'
+				);
 
 			} // return_http_error
 
@@ -317,7 +321,7 @@ function parse_json(message) {//...
 
 			if (request_url_clean != request_url_tainted) {
 				color_log( COLORS.ERROR, 'http:', 'Invalid URL: ' + request_url_tainted );
-				return_http_error( response, 404 );
+				return_http_error( response, 404, request_url_tainted );
 				return;
 			}
 
@@ -331,21 +335,21 @@ function parse_json(message) {//...
 
 			if (!fs.existsSync( file_name )) {
 				color_log( COLORS.ERROR, 'http:', 'File not found: ' + file_name );
-				return_http_error( response, 404 );
+				return_http_error( response, 404, file_name );
 				return;
 			}
 
 			fs.stat( file_name, (error)=>{
 				if (error !== null) {
 					color_log( COLORS.ERROR, 'http:', error.code );
-					return_http_error( response, 404 );
+					return_http_error( response, 404, file_name );
 					return;
 				}
 			});
 
 			if (!fs.statSync( file_name ).isFile()) {
 				color_log( COLORS.ERROR, 'http:', 'Not a file ' + file_name );
-				return_http_error( response, 404 );
+				return_http_error( response, 404, file_name );
 				return;
 			}
 

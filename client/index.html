@@ -28,7 +28,6 @@
 
 <link rel="help"          href="README">
 <link rel="shortcut icon" href="/favicon.ico">
-<link rel="stylesheet"    href="spielwiese.css" type="text/css">
 <meta name="robots"       content="noindex,nofollow">
 <meta name="viewport"     content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
@@ -43,8 +42,12 @@
 		setTimeout( ()=>{
 			document.querySelector('html').classList.add('init', 'error');
 			show_status(`
-				<img src='/images/rtfm_transparent.png'> <div>I broke it</div>
-				<div>Error: ${error.message}</div> <h3>Please stand by</h3> while I fix it
+				<div>I broke it</div>
+				<img src='/images/rtfm_transparent.png'>
+				<div>Error: ${error.message}</div>
+				<h3>Please stand by</h3>
+				<div>Let it reload</div>
+				<div>I'll fix it</div>
 		`)}, 1000);
 	}
 	function watchdog (error) {
@@ -65,10 +68,12 @@
 	html.error header :is(h1,h2),
 	html:not(.init) .noscript { display:none; }
 	.noscript h1 small { text-transform:uppercase; font-size:0.72em; }
+	.noscript h3 { margin:0 0 0.25rem; }
 	.noscript p { margin-top:2em; }
-	.noscript img { display:block; margin:0 auto; filter:drop-shadow(0 -15px 15px #ffa); }
-	.noscript div + div { color:#f84; margin:1em 0 0.5em; }
-	@media (prefers-color-scheme: Xlight) {
+	.noscript h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
+	.noscript img { display:block; margin:0 auto; }
+	.noscript div + div { margin-top:2em; }
+	@media (prefers-color-scheme:light) {
 		html.light.init body,
 		html.light.init,
 		html.init body,
@@ -76,6 +81,10 @@
 			background:#fff; color:#000;
 		}
 		header.noscript h2 { color:#b90; }
+		.noscript h1 img { filter:drop-shadow(0 -15px 15px #ffa); }
+		.init h2 { color:#a30; }
+		.init h3 { color:#c75; font-size:2em; }
+		.init p img { filter:brightness(0.1) saturate(0); }
 	}
 </style>
 <script class="login_page">
@@ -144,6 +153,7 @@ body > form {
 		filter:
 			drop-shadow(0   0px  1px #000)
 			drop-shadow(0 -15px 15px #6f6)
+			drop-shadow(0 -15px 15px #ffa)
 		;
 	}
 

@@ -33,39 +33,8 @@ export const DebugConsole = function (callback) {
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const EXTRA_LINES = 0;   // When adjusting textarea size (rows), make it bigger
+	const EXTRA_LINES = 1;   // When adjusting textarea size (rows), make it bigger
 	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
-
-	const BUTTON_SCRIPTS = [
-// self.elements[menu]  (auth, main, node)
-// Set special color: spielwiese.css:/* SPECIAL COLOR */
-// Order of entries affects positioning in menus. Some menus come with pre-placed buttons (TERMINAL_HTML)
-{ menu:'auth' , name:'login',   script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
-{ menu:'auth' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
-{ menu:'auth' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
-{ menu:'auth' , name:'logout'     , script:'session\n\tlogout' },
-{ menu:'auth' , name:'disconnect' , script:'/disconnect' },
-{ menu:'auth' , name:'user'       , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
-{ menu:'auth' , name:'root'       , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
-{ menu:'main' , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
-{ menu:'main' , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
-{ menu:'main' , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
-{ menu:'main' , name:'who'        , script:'session\n\twho' },
-{ menu:'main' , name:'manual'     , script:'/manual' },
-{ menu:'main' , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'main' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'main' , name:'token'      , script:'server\n\ttoken' },
-{ menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
-{ menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
-{ menu:'main' , name:'clear'      , script:'/clear' },
-
-{ menu:'main' , name:'help'       , script:'/help' },
-	];
-
-	const SHORTHAND_COMMANDS = {
-		'nick'  : 'chat\n\tnick:*',
-		'who'   : 'session\n\twho',
-	};
 
 	const HTML_TERMINAL = (`
 <div class="terminal">
@@ -76,26 +45,31 @@ export const DebugConsole = function (callback) {
 	</main><!-- main needs to be before header in the DOM for position:absolute in dropdowns to work -->
 
 	<header class="toolbar">
-		<nav class="node">
+		<nav class="node auth">
 			<button title="MyNode Server">MyNode</button>
+			<form class="items">
+				<input type="text"     name="username" placeholder="Username" autocomplete="username">
+				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
+				<input type="password" name="password" placeholder="Password" autocomplete="password">
+				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
+			</form>
 		</nav>
 		<nav class="list who" title="List of connected users"></nav>
-		<!-- nav class="room" title="Chat text gets sent to this channel"><span>Public Room <q>Spielwiese</q></span></nav -->
 	</header>
 
 	<footer class="toolbar">
 		<nav class="connection">
 			<button title="Connection state, or your user/nick name">OFFLINE</button>
 			<div class="items">
+				<nav class="filter">
+					<button class="enabled">Filter</button>
+					<div class="items"></div>
+				</nav>
 				<nav class="toggles">
 					<button class="enabled">Toggle</button>
 					<div class="items">
 						<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat Mode</button>
 					</div>
-				</nav>
-				<nav class="filter">
-					<button class="enabled">Filter</button>
-					<div class="items"></div>
 				</nav>
 			</div>
 		</nav>
@@ -115,209 +89,141 @@ curly braces and quotation marks.
 		<nav title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
 			<button class="clear" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">Clear</button>
 		</nav>
-		<nav class="auth">
+		<nav class="main" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
 			<button class="enter" title="Execute command/send chat text. Keyboard: Enter">Enter</button>
-			<form class="items">
-				<nav class="main">
-					<button class="help">Help</button>
-					<div class="items">
-					<button class="close" title="Minimize terminal. Shortcut: Alt+T">Exit</button>
-					</div>
-				</nav>
-				<input type="text"     name="username" placeholder="Username" autocomplete="username">
-				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
-				<input type="password" name="password" placeholder="Password" autocomplete="password">
-				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
-			</form>
+			<div class="items">
+				<button class="help">Help</button>
+				<button class="close" title="Minimize terminal. Shortcut: Alt+T">Exit</button>
+			</div>
 		</nav>
 	</footer>
 </div>
 	`); // HTML_TERMINAL
 
-	const HTML_YOUTUBE = (`
-<footer class="main_menu">
-	<a href="//spielwiese.central-dogma.at:443/" title="Load this page via Apache">Apache</a>
-	<a href="//spielwiese.central-dogma.at:1337/" title="Load this page directly from Node">Node</a>
-</footer>
-<iframe
-	style="position:absolute; top:0; left:0; z-index:1000; width:100px; height:70px; overflow:hidden;"
-	width="560" height="315"
-	src="https://www.youtube.com/embed/gXBuEcue9tE"
-	title="YouTube video player"
-	frameborder="0"
-	allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-	allowfullscreen
-	autoplay="true"
-></iframe>
-	`); // HTML_YOUTUBE
+
+	const ELEMENT_SELECTORS = {
+		html        : 'html',
+		terminal    : true,  // Points to the container itself
+		shell       : '.shell',
+		output      : 'output',
+		input       : 'textarea',
+	// Header
+		allUsers    : 'header',
+	// Gadgets
+		connection  : '.connection',
+		whoList     : 'nav.who',
+		status      : '.status .extra',
+		time        : '.time',
+	// Items
+		node        : '.node .items',
+		auth        : '.auth .items',
+		main        : '.main .items',
+		filter      : '.filter .items',
+		toggleState : '.toggle_state span',
+		toggles     : '.toggles .items',
+	// Buttons
+		btnCEP      : '.connection button',
+		btnNode     : 'nav.node button',
+		who         : 'button.who',
+		btnFilter   : '.filter button',
+		btnToggles  : '.toggles button',
+		help        : 'button.help',
+		token       : 'button.token',
+		clear       : 'button.clear',
+		debug       : 'button.debug',
+		enter       : 'button.enter',
+		close       : 'button.close',            //...! => exit
+	// Login form
+		userName    : '[name=username]',
+ 		nickName    : '[name=nickname]',
+		passWord    : '[name=password]',
+		factor2     : '[name=factor2]',
+
+	}; // ELEMENT_SELECTORS
 
 
 	// KEYBOARD SHORTCUTS
 	// Atm. only Alt+Key works with toggles
 	//  create_toggles()  adds more entries
 	const KEYBOARD_SHORTCUTS = [
-
-	// Generating buttons
-	{
-		event     : 'keydown',
-		key       : 'a',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.animate.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'b',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.bit.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'c',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.compact.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'd',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.debug.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'e',
-		modifiers : ['alt'],
-		action    : ()=>{ self.elements.login.click(); self.elements.enter.click(); },
-	},{
-		event     : 'keydown',
-		key       : 'f',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.fancy.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'k',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.keyBeep.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'm',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.tts.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'q',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.terminal.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'r',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.scroll.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 's',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.separators.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'v',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.overflow.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'x',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.stripes.toggle(); },
-	},{
-		event     : 'keydown',
-		key       : 'y',
-		modifiers : ['alt'],
-		action    : ()=>{ self.toggles.last.toggle(); },
+// Buttons already in HTML_TERMINAL
+  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.changeFontSize(+1); },
+},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.changeFontSize(-1); },
+},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.nextFont(+1)        },
+},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.nextFont(-1)        },
+},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.history.back();     },
+},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.history.forward();  },
+},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.clearInput();       },
+},{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.clearScreen();      },
+},
+// Auto-generating buttons:
+{   event:'keydown', key:'a', modifiers:['alt'], action:()=>{ self.toggles.animate.toggle(); },
+},{ event:'keydown', key:'b', modifiers:['alt'], action:()=>{ self.toggles.bit.toggle();     },
+},{ event:'keydown', key:'c', modifiers:['alt'], action:()=>{ self.toggles.compact.toggle(); },
+},{ event:'keydown', key:'d', modifiers:['alt'], action:()=>{ self.toggles.debug.toggle();   },
+},{ event:'keydown', key:'e', modifiers:['alt'], action:()=>{
+		['login', 'enter'].forEach( button => self.elements[button].click() );
 	},
+},{ event:'keydown', key:'f', modifiers:['alt'], action:()=>{ self.toggles.fancy.toggle();      },
+},{ event:'keydown', key:'k', modifiers:['alt'], action:()=>{ self.toggles.keyBeep.toggle();    },
+},{ event:'keydown', key:'l', modifiers:['alt'], action:()=>{ self.toggles.light.toggle();      },
+},{ event:'keydown', key:'m', modifiers:['alt'], action:()=>{ self.toggles.tts.toggle();        },
+},{ event:'keydown', key:'q', modifiers:['alt'], action:()=>{ self.toggles.terminal.toggle();   },
+},{ event:'keydown', key:'r', modifiers:['alt'], action:()=>{ self.toggles.scroll.toggle();     },
+},{ event:'keydown', key:'s', modifiers:['alt'], action:()=>{ self.toggles.separators.toggle(); },
+},{ event:'keydown', key:'u', modifiers:['alt'], action:()=>{ self.toggles.node.toggle();       },
+},{ event:'keydown', key:'v', modifiers:['alt'], action:()=>{ self.toggles.overflow.toggle();   },
+},{ event:'keydown', key:'x', modifiers:['alt'], action:()=>{ self.toggles.stripes.toggle();    },
+},{ event:'keydown', key:'y', modifiers:['alt'], action:()=>{ self.toggles.last.toggle();       },
+},
+	];
 
-// Manual
-	{
-		event     : 'keydown',
-		key       : '+',
-		modifiers : ['alt'],
-		action    : ()=>{ self.changeFontSize(+1); },
-	},{
-		event     : 'keydown',
-		key       : '-',
-		modifiers : ['alt'],
-		action    : ()=>{ self.changeFontSize(-1); },
-	},{
-		event     : 'keydown',
-		key       : '.',
-		modifiers : ['alt'],
-		action    : ()=>{ self.nextFont(+1) },
-	},{
-		event     : 'keydown',
-		key       : ',',
-		modifiers : ['alt'],
-		action    : ()=>{ self.nextFont(-1) },
-	},{
-		event     : 'keydown',
-		key       : 'ArrowUp',
-		modifiers : ['cursorPos1'],
-		action    : ()=>{ self.history.back(); },
-	},{
-		event     : 'keydown',
-		key       : 'ArrowDown',
-		modifiers : ['cursorEnd'],
-		action    : ()=>{ self.history.forward(); },
-	},{
-		event     : 'keydown',
-		key       : 'Home',
-		modifiers : ['ctrl'],
-		action    : ()=>{ self.clearInput(); },
-	},{
-		event     : 'keydown',
-		key       : 'Home',
-		modifiers : ['shift', 'ctrl'],
-		action    : ()=>{ self.clearScreen(); },
-	}];
+
+	const BUTTON_SCRIPTS = [
+// self.elements[menu]  (auth, main, node)
+// Set special color: spielwiese.css:/* SPECIAL COLOR */
+// Order of entries affects positioning in menus. Some menus come with pre-placed buttons (TERMINAL_HTML)
+{ menu:'auth' , name:'login',   script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
+{ menu:'auth' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
+{ menu:'auth' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
+{ menu:'auth' , name:'logout'     , script:'session\n\tlogout' },
+{ menu:'auth' , name:'disconnect' , script:'/disconnect' },
+{ menu:'auth' , name:'user'       , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
+{ menu:'auth' , name:'root'       , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
+{ menu:'main' , name:'manual'     , script:'/manual' },
+{ menu:'main' , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
+{ menu:'main' , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
+{ menu:'main' , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
+{ menu:'main' , name:'who'        , script:'session\n\twho' },
+{ menu:'main' , name:'token'      , script:'server\n\ttoken' },
+{ menu:'main' , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'main' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
+{ menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
+{ menu:'main' , name:'clear'      , script:'/clear' },
+
+{ menu:'main' , name:'help'       , script:'/help' },
+	]; // BUTTON_SCRIPTS
+
+
+	const SHORTHAND_COMMANDS = {
+		'nick'  : 'chat\n\tnick:*',
+		'who'   : 'session\n\twho',
+	};
 
 
 	function gather_dom_elements (container) {
-		return {
-			html         : document.querySelector( 'html' ),
-			terminal     : container,
-			connection   : container.querySelector( '.connection'        ),
-			btnCEP       : container.querySelector( '.connection button' ),
-			shell        : container.querySelector( '.shell'             ),
-			// Main
-			output       : container.querySelector( 'output'             ),
-			input        : container.querySelector( 'textarea'           ),
-			// Header
-			btnNode      : container.querySelector( 'nav.node button'    ),
-			who          : container.querySelector( 'button.who'         ),
-			whoList      : container.querySelector( 'nav.who'            ),
-			filter       : container.querySelector( '.filter .items'     ),
-			toggleState  : container.querySelector( '.toggle_state span' ),
-			btnFilter    : container.querySelector( '.filter button'     ),
-			toggles      : container.querySelector( '.toggles .items'    ),
-			btnToggles   : container.querySelector( '.toggles button'    ),
-			help         : container.querySelector( 'button.help'        ),
-			token        : container.querySelector( 'button.token'       ),
-			// Footer
-			connection   : container.querySelector( '.connection'        ),
-			windows      : container.querySelector( '.list.windows'      ),
-			status       : container.querySelector( '.status .extra'     ),
-			time         : container.querySelector( '.time'              ),
-			chat         : container.querySelector( '.chat .items'       ),
-			// Menus
-			node         : container.querySelector( '.node .items'       ),
-			auth         : container.querySelector( '.auth .items'       ),
-			main         : container.querySelector( '.main .items'       ),
-			// Clear
-			clear        : container.querySelector( 'button.clear'       ),
-			// Login form
-			userName     : container.querySelector( '[name=username]'    ),
-			nickName     : container.querySelector( '[name=nickname]'    ),
-			passWord     : container.querySelector( '[name=password]'    ),
-			factor2      : container.querySelector( '[name=factor2]'     ),
-			// Additional menu buttons are addeded to .elements later under "Login form"
-			enter        : container.querySelector( '.enter'             ),
-			close        : container.querySelector( '.close'             ),//...! => exit
-			// Filter
-			debug        : container.querySelector( 'button.debug'       ),
-		};
+		// Additional menu buttons are addeded to some .items, when toggles are created
+		// This function must be called after that, so  .querySelector()  can find them.
+		return Object.entries( ELEMENT_SELECTORS ).map( ([key, value])=>{
+			switch (key) {
+				case 'html'     : return [key, document.documentElement];
+				case 'terminal' : return [key, container];
+				default         : return [key, container.querySelector( value ) ];
+			}
+		}).reduce( (prev, next)=>{
+			return { ...prev, [next[0]]: next[1] };
+		}, {});
 
 	} // gather_dom_elements
 
@@ -327,9 +233,11 @@ curly braces and quotation marks.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function create_toggles() {
+		const html     = document.documentElement;
 		const terminal = self.elements.terminal;
 		const output   = self.elements.output;
 		const shell    = self.elements.shell;
+		const node     = self.elements.allUsers;
 
 		const T = PRESETS.TOGGLE;
 		const F = PRESETS.FILTER;
@@ -337,6 +245,7 @@ curly braces and quotation marks.
 		const definition = [   //...! Sync with keyboard shortcuts
 { name:'terminal'   , preset:T.TERMINAL   , target:terminal , menu:null      , shortcut:'Q',  caption:null         },
 { name:'debug'      , preset:F.CHAT       , target:shell    , menu:null      , shortcut:'D',  caption:null         },
+{ name:'ping'       , preset:F.PING       , target:terminal , menu:'filter'  , shortcut:'P',  caption:'Ping'       },
 { name:'cep'        , preset:F.CEP        , target:output   , menu:'filter'  , shortcut:null, caption:'CEP'        },
 { name:'string'     , preset:F.STRING     , target:output   , menu:'filter'  , shortcut:null, caption:'String'     },
 { name:'notice'     , preset:F.NOTICE     , target:output   , menu:'filter'  , shortcut:null, caption:'Notice'     },
@@ -344,12 +253,14 @@ curly braces and quotation marks.
 { name:'update'     , preset:F.UPDATE     , target:output   , menu:'filter'  , shortcut:null, caption:'Update'     },
 { name:'request'    , preset:F.REQUEST    , target:output   , menu:'filter'  , shortcut:null, caption:'Request'    },
 { name:'response'   , preset:F.RESPONSE   , target:output   , menu:'filter'  , shortcut:null, caption:'Response'   },
+{ name:'node'       , preset:T.ALL_USERS  , target:node     , menu:'toggles' , shortcut:'U',  caption:'All Users'  },
 { name:'last'       , preset:T.LAST       , target:output   , menu:'toggles' , shortcut:'Y',  caption:'Show Last'  },
 { name:'compact'    , preset:T.COMPACT    , target:output   , menu:'toggles' , shortcut:'C',  caption:'Compact'    },
 { name:'overflow'   , preset:T.OVERFLOW   , target:output   , menu:'toggles' , shortcut:'V',  caption:'Overflow'   },
 { name:'separators' , preset:T.SEPARATORS , target:output   , menu:'toggles' , shortcut:'S',  caption:'Separators' },
 { name:'stripes'    , preset:T.STRIPES    , target:output   , menu:'toggles' , shortcut:'X',  caption:'Stripes'    },
 { name:'scroll'     , preset:T.SCROLL     , target:output   , menu:'toggles' , shortcut:'R',  caption:'AutoScroll' },
+{ name:'light'      , preset:T.LIGHT      , target:html     , menu:'toggles' , shortcut:'L',  caption:'Light Mode' },
 { name:'fancy'      , preset:T.FANCY      , target:terminal , menu:'toggles' , shortcut:'F',  caption:'Fancy'      },
 { name:'animate'    , preset:T.ANIMATE    , target:terminal , menu:'toggles' , shortcut:'A',  caption:'Animations' },
 { name:'keyBeep'    , preset:T.KEY_BEEP   , target:terminal , menu:'toggles' , shortcut:'K',  caption:'Key Beep'   },
@@ -414,7 +325,17 @@ curly braces and quotation marks.
 			function update_dom () {
 				const is_terminal = (toggle.name == 'terminal');
 				if (!is_terminal && element) element.classList.toggle( 'enabled', toggle.enabled );
-				target.classList.toggle( is_terminal ? 'enabled' : toggle.name, toggle.enabled );
+				const set_enable = ['terminal', 'node'].indexOf(toggle.name) >= 0;
+				target.classList.toggle( set_enable ? 'enabled' : toggle.name, toggle.enabled );
+
+				if (toggle.name == 'light') {
+					const prefers_light_scheme
+					= window.matchMedia( '(prefers-color-scheme:light)' ).matches
+					^ toggle.enabled
+					;
+					self.elements.html.classList.toggle( 'light', prefers_light_scheme );
+					self.elements.html.classList.toggle( 'dark', !prefers_light_scheme );
+				}
 
 				scroll_down();
 				if (is_terminal && toggle.enabled) focus_prompt();
@@ -445,6 +366,8 @@ curly braces and quotation marks.
 					blink_button.classList.remove( 'blink', 'success', 'error' );
 					cep_button  .classList.remove( 'blink', 'success', 'error' );
 				}, 350 );
+
+				DEBUG.HIDE_MESSAGES.PING = !toggle.enabled;
 			} // flip
 
 		} // to_toggles
@@ -697,11 +620,9 @@ setTimeout( ()=>{
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function animate_ping (transmit = false) {
-		self.elements.btnNode   .classList.add( transmit ? 'transmit' : 'ping' );
-		self.elements.connection.classList.add( transmit ? 'transmit' : 'ping' );
+		self.elements.terminal.classList.add( transmit ? 'transmit' : 'ping' );
 		setTimeout( ()=>{
-			self.elements.btnNode   .classList.remove( transmit ? 'transmit' : 'ping' );
-			self.elements.connection.classList.remove( transmit ? 'transmit' : 'ping' );
+			self.elements.terminal.classList.remove( transmit ? 'transmit' : 'ping' );
 		}, SETTINGS.TIMEOUT.PING_CSS);
 
 	} // animate_ping
@@ -1276,15 +1197,12 @@ setTimeout( ()=>{
 				}
 				case 'version' :  print_version();     break;
 				case 'clear'   :  self.clearScreen();  break;
-				case 'help'    :  show_file( 'help.txt'       , parameter );  break;
-				case 'issue'   :  show_file( 'issue.txt'      , parameter );  break;
-				case 'readme'  :  show_file( 'README'         , parameter );  break;
-				case 'manual'  :  show_file( 'MyNode.html'    , parameter );  break;
-				case 'diary'   :  show_file( 'dev_diary.html' , parameter );  break;
-				case 'music': {
-					document.body.innerHTML += HTML_YOUTUBE;
-					break;
-				}
+				case 'help'    :  show_file( 'terminal/help.txt'  , parameter );  break;
+				case 'issue'   :  show_file( 'terminal/issue.txt' , parameter );  break;
+				case 'readme'  :  show_file( 'README'             , parameter );  break;
+				case 'todo'    :  show_file( 'TODO'               , parameter );  break;
+				case 'manual'  :  show_file( 'MyNode.html'        , parameter );  break;
+				case 'diary'   :  show_file( 'dev_diary.html'     , parameter );  break;
 				case 'string' : {
 					self.print( 'string: <q>' + parameter + '</q>', 'string' );
 					callback.send( parameter );
@@ -1295,9 +1213,6 @@ setTimeout( ()=>{
 					self.elements.btnCEP.innerText = 'Error';
 					self.elements.title = 'Unknown command in perform_local()';
 					self.print( 'Unrecognized command', 'cep' );
-					throw new Error(
-						'DebugConsole-on_enter_click-perform_local: Unrecognized command'
-					);
 				}
 			}
 
@@ -1389,7 +1304,6 @@ setTimeout( ()=>{
 		});
 
 		const file_extension = file_name.split('.').pop();
-
 		switch (file_extension) {
 			case 'html': {
 				self.toggles.debug.disable();
@@ -1420,10 +1334,27 @@ setTimeout( ()=>{
 			}
 			case 'txt': // fall through
 			default: {
-				self.print(
-					file_contents.split( '//EOF' )[0].trim(),
-					'Xcep textfile expand',
+				const html_parsed = (
+					file_contents
+					.split( '//EOF', 1 )[0]
+					.replaceAll( '<', '&lt;'  )
+					.replaceAll( '&', '&amp;' )
 				);
+				const pages = html_parsed.split( '\n#' );
+
+				if (!id_selector) {
+					return self.print( html_parsed, 'Xcep textfile expand' );
+				}
+
+				const with_tag = page => page.slice( 0, id_selector.length ) == id_selector;
+				const found_page = pages.find( with_tag ).slice( id_selector.length )
+
+				if (found_page) {
+					self.print( found_page, 'Xcep textfile expand' );
+				} else {
+					self.print( 'Unknown help topic: ' + id_selector, 'cep error' );
+				}
+
 				scroll_down();
 			}
 		}
@@ -1688,42 +1619,44 @@ setTimeout( ()=>{
 		} // print_message
 
 
-		function update_who_list (who) {
+		function update_who_list (users_online, full_name = null) {
 			const list  = self.elements.whoList;
-			list.innerHTML = '';
-			if (who === null) return;
+			if (users_online !== true) list.innerHTML = '';
+			if (users_online === null) return;
 
-for(let i = 0; i < 1; ++i) {
+			if (!full_name) full_name = self.elements.btnCEP.innerText;
+
+if (self.elements.whoList.querySelectorAll( 'button' ).length == 0) for(let i = 0; i < 1; ++i) {
 	const button = document.createElement( 'button' );
 	button.className = 'enabled room';
 	button.innerText = 'Public Room';
 	list.appendChild( button );
 }
+			if (users_online !== true) {
+				Object.keys( users_online ).forEach( (address)=>{
+					const user_record = users_online[address];
+					const button      = document.createElement( 'button' );
+					const text = (
+						(typeof user_record == 'string')
+						? user_record
+						: user_record.nickName || user_record.userName
 
-			const full_name = self.elements.connection.innerText;
-			Object.keys( who ).forEach( (address)=>{
-				const user_record = who[address];
+					).trim();
+					button.innerText = text;
+					list.appendChild( button );
+				});
+			}
 
-				const button = document.createElement( 'button' );
-				const text = (
-					(typeof user_record == 'string')
-					? user_record
-					: user_record.nickName || user_record.userName
-
-				).trim();
-
-				button.innerText = text;
-
-				if (full_name.indexOf(button.innerText) >= 0) {
-					button.classList.add( 'self' );
-				}
-				list.appendChild( button );
+			self.elements.whoList.querySelectorAll( 'button' ).forEach( (button)=>{
+				const is_self = (full_name.indexOf(button.innerText) >= 0);
+				button.classList.toggle( 'self', is_self );
 			});
 
-for(let i = 0; i < 10; ++i) {
+
+for(let i = 0; i < 0; ++i) {
 	const button = document.createElement( 'button' );
 	button.className = '';
-	button.innerText = 'test/user';
+	button.innerText = 'dummyuser';
 	list.appendChild( button );
 }
 
@@ -1844,6 +1777,7 @@ case 'response': {
 				self.elements.terminal.classList.add( 'authenticated' );
 				self.elements.btnCEP.innerText
 				= result.login.nickName || result.login.userName;
+				update_who_list( true );
 			}
 			break;
 		}
@@ -1862,6 +1796,7 @@ case 'response': {
 				const parts = self.elements.btnCEP.innerText.split(':');
 				const new_name = result.userName + ':' + result.nickName;
 				self.elements.btnCEP.innerText = new_name;
+				update_who_list( true );
 			}
 			break;
 		}
@@ -1889,6 +1824,20 @@ case 'response': {
 
 	this.init = async function () {
 		console.log( 'DebugConsole.init' );
+
+		inset_stylesheet_to_head();
+		function inset_stylesheet_to_head () {
+			const selector = 'link[href="' + SETTINGS.CSS_FILE_NAME + '"]';
+			const old_link = document.querySelector( selector );
+			if (old_link) old_link.parentNode.removeChild( old_link );
+			// <link rel="stylesheet"    href="/spielwiese.css" type="text/css">
+			const link = document.createElement( 'link' );
+			link.rel  = 'stylesheet';
+			link.href = 'spielwiese.css';
+			link.type = 'text/css';
+			document.querySelector( 'head' ).appendChild( link );
+
+		} // inset_stylesheet_to_head
 
 		const parser       = new DOMParser();
 		const new_document = await parser.parseFromString( HTML_TERMINAL, 'text/html' );
@@ -2033,7 +1982,7 @@ console.groupEnd();
 
 			CEP_VERSION += '^[' + shortcuts.split('').sort().join('') + '] ';
 			print_version('');
-			await show_file( 'issue.txt' );
+			await show_file( '/terminal/issue.txt' );
 
 			if (GET.has('username')) self.elements.userName.value = GET.get('username');
 			if (GET.has('nickname')) self.elements.nickName.value = GET.get('nickname');

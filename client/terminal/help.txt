@@ -1,9 +1,20 @@
 MyNode CHAT and DEBUG CONSOLE
-=============================
-Single lines input by the user are sent as  chat.say  requests, otherwise
-TAB formatted multiline text is sent as JSON objects.
+Single lines input by the user are sent as  chat.say  requests,
+otherwise TAB formatted multiline text is sent as JSON objects.
 Debug mode shows all websocket messages going in or out.
 
+/help &lt;topic>
+Topics:
+	tabJSON
+	shortJSON
+	keyboard
+	toggles
+
+Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
+>README</a> for more details.
+
+#tabJSON
+ENTER TAB FORMATTED tabJSON
 You can enter tab-indented pseudo-JSON, in order to send arbitrary
 requests to the server. In essence, you type a JSON object without the
 curly braces and quotation marks.
@@ -21,11 +32,27 @@ tabJSON, You enter:         Resulting JSON:
 Indenting with TAB                }
 character mandatory           }
 
-shortJSON, you enter:
- .session.login.username:Me,password:secRet...chat.nick:Hey
+#shortJSON
+ENTER SINGLE LINE shortJSON
 A dot indents (nests), a double dot unindents, triple dots unindent 2
 times, etc. Entries on the same level are separated with a comma.
 
+ .session.login.username:Me,password:secRet...chat.nick:Hey
+
+results in:
+      {
+	  "session":{
+	      "login":{
+		  "username":"Me",
+		  "password":"secRet"
+	      }
+	  },
+	  "chat":{
+	      "nick":"Hey"
+	  }
+      }
+
+#keyboard
 Keyboard
 	Enter            Sends text/request, adds marker
 	Shift+Enter      Inserts line break (tabJSON)
@@ -34,6 +61,7 @@ Keyboard
 	Alt+[.|,]        Change font
 	Alt+[+|-]        Change font size
 
+#toggles
 Toggles
 	terminal     Open the terminal         Alt+T
 	debug        Chat mode off             Alt+D
@@ -48,9 +76,5 @@ Toggles
 	keyBeep      Buttons and kbd. sound    Alt+K
 	tts          SAM speech synthesizer    Alt+M
 
-
 With "toggles" as comma separated list, bookmark:
  /?username=&lt<i>user</i>>&password=&lt<i>pass</i>>&nickname=&lt;<i>nick</i>>&login[=&lt;<i>toggles</i>>]>
-
-Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
->README</a> for more details.

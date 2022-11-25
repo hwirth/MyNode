@@ -104,14 +104,26 @@ export const WebSocketClient = function (parameters = {}) {
 			const is_pingpong = message.update && message.update.pong;
 			const do_log = (!SETTINGS.HIDE_PINGPONG || (SETTINGS.HIDE_PINGPONG && !is_pingpong));
 			if (DEBUG.WEBSOCKET && do_log) {
+				const key = Object.keys( message )[0];
 				console.groupCollapsed(
 					'%c🡇 WebSocketClient received%c:',
 					'color:#48f', 'color:unset',
+					key + ':',
+					Object.keys( message[key] ).join(' '),
+				/*
+					message[key].type,
+					message[key].command,
+					message[key].success,
+				*/
+				/*//...
 					JSON.stringify( message )
 					.replaceAll( '"', '' )
 					.replaceAll( '{', '' )
 					.replaceAll( '}', '' )
-					.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
+					.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE)
+					split( ':', 1 )[0]
+					,
+				*/
 				);
 				console.log( JSON.stringify(message, null, '\t') );
 				console.groupEnd();

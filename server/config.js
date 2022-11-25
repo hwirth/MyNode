@@ -69,7 +69,7 @@ const SETTINGS = {
 	PING: {
 		LOG      : !true,      // true: Might flood your log output
 		KICK     : true,       // false: Allow clients to ignore ping updates
-		INTERVAL : 6*1000,
+		INTERVAL : 2*1000,
 	},
 
 	LOG_PINGPONG         : false,
