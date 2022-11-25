@@ -1,4 +1,4 @@
-// debug_console.js
+// terminal/main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -9,9 +9,9 @@
 // I think a bundler would change that, but this is from the /dist folder!? I also added a volume option to it.
 import * as DUMMY_SamJs from './samjs.js';
 
-import { SETTINGS       } from './config.js';
-import { PRESETS, DEBUG } from './config.js';
-import { GET            } from './helpers.js';
+import { SETTINGS       } from '../config.js';
+import { PRESETS, DEBUG } from '../config.js';
+import { GET            } from '../helpers.js';
 import { History        } from './history.js';
 
 let CEP_VERSION = 'v0.4.0α';   // Keyboard shortcuts will be appended in  self.init()
@@ -1751,7 +1751,7 @@ case 'broadcast': {
 							self.reloadCSS();
 							return print_message();
 						}
-						case 'debug_console.js' :  // fall through
+						case 'terminal/main.js' :  // fall through
 						case 'main.js'          :  // fall through
 						case 'index.html'       : {
 							location.reload();

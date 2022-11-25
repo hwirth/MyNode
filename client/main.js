@@ -7,7 +7,7 @@
 
 import { SETTINGS, DEBUG } from './config.js';
 import { WebSocketClient } from './websocket.js';
-import { DebugConsole    } from './debug_console.js';
+import { DebugConsole    } from './terminal/main.js';
 
 
 const Application = function () {

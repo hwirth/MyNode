@@ -15,7 +15,6 @@ html.light :not(.fancy).terminal {
 
 	--terminal-bg : #fff;
 	--toolbar-bg  : #ccc;
-
 	--toolbar-color : #042;
 
 	--input-color : #f00;
@@ -23,14 +22,6 @@ html.light :not(.fancy).terminal {
 
 	--stripes-color0 : #0001;
 	--stripes-color1 : var(--terminal-bg);
-
-	--offline-color       : #860;
-	--offline-bg          : #850;
-	--online-color        : #0af;
-	--online-color-0      : #03b;
-	--online-color-f      : #0af;
-	--online-bg           : #06a;
-	--authenticated-color : #fff;
 
 	--button-color : #eee;
 	--button-bg    : #888;
@@ -75,9 +66,91 @@ html.light :not(.fancy).terminal {
 	--broadcast-color : #86c;
 	--update-color    : #040;
 
+	--offline-color       : #860;
+	--offline-bg          : #850;
+	--online-color        : #0af;
+	--online-color-0      : #03b;
+	--online-color-f      : #0af;
+	--online-bg           : #06a;
+	--authenticated-color : #fff;
+
 	--separator-color  : #a60;
 	--separator-border : dashed 1px var(--separator-color);
 }
+
+/* DARK MODE */
+.terminal {
+	--a-color   : #0af;
+	--a-visited : #b8f;
+	--a-active  : #0ff;
+	--a-focus   : #fff;
+	--a-hover   : #0ff;
+
+	--toolbar-bg         : #333;
+	--toolbar-height     : 2rem;
+	--toolbar-gap        : 2px;
+
+	--input-color        : #fc0;
+	--input-bg           : #000f;
+
+	--stripes-color0     : #8882;
+	--stripes-color1     : var(--terminal-bg);
+
+	--button-color          : #fed;
+	--button-bg             : #08f2;
+
+	--button-enabled-color  : #af4;
+	--button-enabled-bg     : #88ff0040;
+	--button-special-bg     : var(--button-bg);X:#402838;
+
+	--button-enter-color    : var(--button-special-color);
+	--button-enter-bg       : var(--button-special-bg);
+	--button-close-color    : var(--button-special-color);
+	--button-close-bg       : var(--button-special-bg);
+
+	--caret-color    : #ff0;
+
+	--toggle-state-off : #78a;
+	--toggle-state-on  : #bdf;
+
+	--chat-color      : #8df;
+	--cep-color       : #abc;
+	--mcp-color       : #f00;
+
+	--warning-color   : #fc0;
+	--error-color     : #e20;
+	--success-color   : #0f0;
+
+	--code-color    : #fcb;
+	--success-color : #0a0;
+	--warning-color : #c00;
+	--error-color   : #c00;
+	--true-color    : var(--success-color);
+	--false-color   : var(--error-color);
+	--null-color    : #0cc;
+
+	--hover-color     : #fff;
+	--debug-color     : #acf;
+	--text-color      : #fed;
+	--request-color   : #ca0;
+	--response-color  : #78f;
+	--string-color    : #5c6;
+	--notice-color    : #acf;
+	--broadcast-color : #86f;
+	--update-color    : #090;
+
+	--offline-color       : #fc08;
+	--offline-bg          : #fa02;
+	--online-color        : #0af;
+	--online-color-0      : #0afc;
+	--online-color-f      : #0aff;
+	--online-bg           : #08f6;
+	--authenticated-color : #fff;
+
+	--separator-color    : #a60;
+	--separator-border   : dashed 1px var(--separator-color);
+}
+
 
 .fancy.terminal {
 	--terminal-margin    : 10px;
@@ -108,31 +181,23 @@ html.light :not(.fancy).terminal {
 	--bottom-menu-radius : var(--input-radius);
 }
 
+/* BASE SETTINGS */
 .terminal {
 	--tab-size       : 4;
 	--input-tab-size : 8; X:var(--tab-size);
 
 	--line-height : 1.2rem;
 
-	--a-color   : #0af;
-	--a-visited : #b8f;
-	--a-active  : #0ff;
-	--a-focus   : #fff;
-	--a-hover   : #0ff;
-
 	--focus-border : solid 1px #0f8;
 	--focus-bg     : #fff4;
+
+	--toolbar-outline    : none;
 
 	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) + var(--toolbar-height)));
 	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) ));
 	--terminal-margin    : 0;
 	--terminal-padding   : 0;X:var(--menu-gap);
 	--terminal-bg        : #000;
-
-	--toolbar-bg         : #333;
-	--toolbar-height     : 2rem;
-	--toolbar-gap        : 2px;
-	--toolbar-outline    : none;
 
 	--menu-offset        : 0px;
 	--menu-gap           : 2px;
@@ -148,63 +213,16 @@ html.light :not(.fancy).terminal {
 	--output-margin-x   : 0px;
 	--output-padding-x  : 0.25em;
 
-	--stripes-color0     : #8882;
-	--stripes-color1     : var(--terminal-bg);
-
-	--input-color        : #fc0;
-	--input-bg           : #000f;
 	--input-border       : solid 1px transparent;
 	--input-border-width : 1px;
 	--input-radius       : 0;
 	--input-padding-x    : calc(var(--toolbar-height) / 3.5);
 	--input-padding-y    : 0px;
 
-	--button-color          : #fed;
-	--button-bg             : #08f2;
 	--button-padding        : 5px 10px;
 
-	--button-enabled-color  : #af4;
-	--button-enabled-bg     : #88ff0040;
-	--button-special-bg     : var(--button-bg);X:#402838;
-
-	--button-enter-color    : var(--button-special-color);
-	--button-enter-bg       : var(--button-special-bg);
-	--button-close-color    : var(--button-special-color);
-	--button-close-bg       : var(--button-special-bg);
-
 	--textarea-color : var(--text-color);
-	--caret-color    : #ff0;
-
 	--toggle_state-gap : 1rem;
-	--toggle-state-off : #78a;
-	--toggle-state-on  : #bdf;
-
-	--chat-color      : #8df;
-	--cep-color       : #abc;
-	--mcp-color       : #f00;
-
-	--warning-color   : #fc0;
-	--error-color     : #e20;
-	--success-color   : #0f0;
-
-	--hover-color     : #fff;
-	--debug-color     : #acf;
-	--text-color      : #fed;
-	--request-color   : #ca0;
-	--response-color  : #78f;
-	--string-color    : #5c6;
-	--notice-color    : #acf;
-	--broadcast-color : #86f;
-	--update-color    : #090;
-
-	--offline-color       : #fc08;
-	--offline-bg          : #fa02;
-	--online-color        : #0af;
-	--online-color-0      : #0afc;
-	--online-color-f      : #0aff;
-	--online-bg           : #08f6;
-	--authenticated-color : #fff;
-	--authenticated-bg    : var(--online-bg);
 
 	--transmit-bg : #48a;
 
@@ -214,9 +232,6 @@ html.light :not(.fancy).terminal {
 
 	--self-content : var(--one-person);
 	--self-color   : #fff;
-
-	--separator-color    : #a60;
-	--separator-border   : dashed 1px var(--separator-color);
 
 /* FONTS */
 	/* See DebugConsole.setFont() */
@@ -338,7 +353,7 @@ NotInUse.terminal.enabled { opacity:1; }
 .terminal .main       .items { width:var(--menu-enter-width); }
 X.terminal .main      .items { width:calc(var(--menu-enter-width) - 2em); --sub-offset-x:2em; }
 .terminal .toggles    .items { width:calc(var(--menu-enter-width) - 4em); --sub-offset-x:2em; }
-.terminal .filter     .items { width:17em; }
+.terminal .filter     .items { width:calc(var(--menu-enter-width) - 4em); --sub-offset-x:2em; }
 .terminal .toggles    .items button { flex-basis:40%; }
 
 /* TOOLBAR */
@@ -370,7 +385,7 @@ X.terminal footer.toolbar nav { flex-wrap:wrap; }
 .terminal .toolbar nav > .items { display:none; }
 .terminal:not(.connected) .send .items,
 .terminal:not(.connected) .main_menu .items, /*//...? What else not to show? */
-.terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {
+.terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {/*//...Replace :is() with only :focus, when done */
 	display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
 	gap:var(--menu-gap);
 	position:absolute; top:100%;X:calc(100% + var(--menu-offset)); right:var(--sub-offset-x); z-index:999;
@@ -394,7 +409,7 @@ X.terminal .toolbar > nav:first-child .items { left:var(--sub-offset-x); right:u
 .terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close { color:var(--button-color); }
 
 /* SUB MENU */
-.terminal .toolbar > nav .items > * { flex-grow:1; min-width:3em; }
+.terminal .toolbar > nav .items > * { flex-grow:1; min-width:6em; }
 .terminal .toolbar > nav nav {
 	--g:var(--menu-gap);
 	padding:var(--g); margin:calc(-1 * var(--g));
