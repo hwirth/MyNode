@@ -314,9 +314,9 @@ module.exports.Router = function (persistent, callback) {
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
 		const SessionHandler = require( './session.js' );
 		const AccessControl  = require( './access.js' );
-		const ServerControl  = require( './server.js' );
-		const ChatServer     = require( './chat/main.js' );
-		const RSSServer      = require( './rss/main.js' );
+		const ServerControl  = require( './control.js' );
+		const ChatServer     = require( './chat/chat.js' );
+		const RSSServer      = require( './rss/rss.js' );
 
 		const registered_callbacks = {
 			broadcast              : (...params)=>{ return self.protocols.session.broadcast(...params); },

@@ -1,4 +1,4 @@
-// mcp: main.js
+// control.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -18,7 +18,7 @@ const { RESPONSE, REASONS, STATUS, STRINGS } = require( './constants.js' );
 module.exports = function ServerControl (persistent, callback) {
 	const self = this;
 
-	this.request = {};
+	this.fsWatchers;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -413,7 +413,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.exit' );
-		self.fsWatcher.close();
+		Object.keys( fsWatchers ).forEach( key => self.watchers[key].close() );
 		return Promise.resolve();
 
 	}; // exit
@@ -432,18 +432,21 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
 		self.reset();
 
-		self.fsWatcher = fs.watch( SETTINGS.BASE_DIR + 'client', (event, filename)=>{
-			if (filename && (filename.charAt(0) != '.')) {
-				callback.broadcast({
-					type   : 'reload/client',
-					reload : {
-						[filename] : {},
-					},
-				});
-			} else {
-				//console.log( 'filename not provided' );
-			}
+		self.fsWatchers = [];
+		SETTINGS.BROADCAST_FILE_CHANGE_FOLDERS.forEach( (dir)=>{
+			const path = SETTINGS.BASE_DIR + dir;
+			self.fsWatchers[dir] = fs.watch( path, (event, filename)=>{
+				if (filename && (filename.charAt(0) != '.')) {
+					callback.broadcast({
+						type   : 'reload/client',
+						reload : {
+							[dir + '/' + filename] : {},
+						},
+					});
+				}
+			});
 		});
+
 		return Promise.resolve();
 
 	}; // init

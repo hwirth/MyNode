@@ -1,13 +1,13 @@
-// client: main.js
+// client/main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
 
-import { SETTINGS, DEBUG } from './config.js';
-import { WebSocketClient } from './websocket.js';
-import { DebugConsole    } from './terminal/main.js';
+import { SETTINGS, DEBUG } from './cep/config.js';
+import { WebSocketClient } from './cep/websocket.js';
+import { DebugConsole    } from './terminal/terminal.js';
 
 
 const Application = function () {

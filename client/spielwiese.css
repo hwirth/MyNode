@@ -1,34 +1,34 @@
 /*** spielwiese.css ***/
 
 :root {
-	Xscroll-behavior: smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
-	color-scheme:light dark; /* both supported */
+	Xscroll-behavior:smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
+	color-scheme:light dark;   /* both supported */
 }
 
 /* LIGHT MODE */
 html.light :not(.fancy).terminal {
+	--focus-box-shadow : #fff4;
+	--focus-filter : saturate(1.25) brightness(1.2);
+
 	--a-color   : #058;
 	--a-visited : #648;
 	--a-active  : #08f;
 	--a-focus   : #08f;
 	--a-hover   : #08c;
 
-	--terminal-bg : #fff;
-	--toolbar-bg  : #ccc;
-	--toolbar-color : #042;
+	--terminal-bg   : #fff;
+	--toolbar-bg    : #ccc;
+	--toolbar-color : #666;
 
-	--input-color : #f00;
+	--input-color : #028;
 	--input-bg    : #fff;
 
-	--stripes-color0 : #0001;
-	--stripes-color1 : var(--terminal-bg);
-
-	--button-color : #eee;
-	--button-bg    : #888;
-
-	--button-enabled-color : #fc0;
-	--button-enabled-bg    : #482;
-	--button-special-bg    : #565;
+	--button-color         : #eee;
+	--button-bg            : #666;
+	--button-enabled-color : #cf8;
+	--button-enabled-bg    : #684;
+	--button-special-color : #fff;
+	--button-special-bg    : #678;
 
 	--button-enter-color : var(--button-special-color);
 	--button-enter-bg    : var(--button-special-bg);
@@ -36,6 +36,9 @@ html.light :not(.fancy).terminal {
 	--button-close-bg    : var(--button-special-bg);
 
 	--caret-color    : #f00;
+
+	--stripes-color0 : #0001;
+	--stripes-color1 : var(--terminal-bg);
 
 	--toggle-state-off : #36a;
 	--toggle-state-on  : #48f;
@@ -80,42 +83,48 @@ html.light :not(.fancy).terminal {
 
 /* DARK MODE */
 .terminal {
+	--focus-box-shadow : #0f8;
+	--focus-filter : saturate(2) brightness(2) contrast(1.5);
+
 	--a-color   : #0af;
 	--a-visited : #b8f;
 	--a-active  : #0ff;
 	--a-focus   : #fff;
 	--a-hover   : #0ff;
 
-	--toolbar-bg         : #333;
-	--toolbar-height     : 2rem;
-	--toolbar-gap        : 2px;
+	--terminal-bg    : #000;
 
-	--input-color        : #fc0;
-	--input-bg           : #000f;
+	--toolbar-bg     : #333;
+	--toolbar-height : 2rem;
+	--toolbar-color  : #999;
 
-	--stripes-color0     : #8882;
-	--stripes-color1     : var(--terminal-bg);
+	--input-color : #fc0;
+	--input-bg    : #000f;
 
 	--button-color          : #fed;
 	--button-bg             : #08f2;
-
 	--button-enabled-color  : #af4;
 	--button-enabled-bg     : #88ff0040;
 	--button-special-bg     : var(--button-bg);X:#402838;
+	--button-special-color : #fed;
+	--button-special-bg    : #645;
 
-	--button-enter-color    : var(--button-special-color);
-	--button-enter-bg       : var(--button-special-bg);
-	--button-close-color    : var(--button-special-color);
-	--button-close-bg       : var(--button-special-bg);
+	--button-enter-color : var(--button-special-color);
+	--button-enter-bg    : var(--button-special-bg);
+	--button-close-color : var(--button-special-color);
+	--button-close-bg    : var(--button-special-bg);
 
-	--caret-color    : #ff0;
+	--caret-color : #ff0;
+
+	--stripes-color0 : #8882;
+	--stripes-color1 : var(--terminal-bg);
 
 	--toggle-state-off : #78a;
 	--toggle-state-on  : #bdf;
 
-	--chat-color      : #8df;
-	--cep-color       : #abc;
-	--mcp-color       : #f00;
+	--chat-color : #8df;
+	--cep-color  : #abc;
+	--mcp-color  : #f00;
 
 	--warning-color   : #fc0;
 	--error-color     : #e20;
@@ -147,12 +156,15 @@ html.light :not(.fancy).terminal {
 	--online-bg           : #08f6;
 	--authenticated-color : #fff;
 
-	--separator-color    : #a60;
-	--separator-border   : dashed 1px var(--separator-color);
+	--separator-color  : #a60;
+	--separator-border : dashed 1px var(--separator-color);
 }
 
-
+/* SCIFI RPG */
 .fancy.terminal {
+	--focus-box-shadow : #0ff;
+
+	--terminal-bg        : unset;
 	--terminal-margin    : 10px;
 	--toolbar-color      : #fff;
 	--toolbar-gap        : 3px;
@@ -164,18 +176,18 @@ html.light :not(.fancy).terminal {
 	--toggle_state-gap   : 0.5rem;
 	--user-radius        : 0px;
 
-	--output-margin-top  : 1rem;
-	--output-margin-x    : 0px;
-	--output-padding-x   : var(--menu-gap);
+	--output-margin-top : 1rem;
+	--output-margin-x   : 0px;
+	--output-padding-x  : var(--menu-gap);
 
-	--input-border       : solid 1px #000;
-	--input-radius       : 1rem;
-	--input-padding-x    : 0.8rem;
-	--button-bg          : #08f1;
-	--button-enabled-bg  : #88ff0018;
-	--button-special-bg  : #ff000018;
-	--button-enter-bg    : var(--button-special-bg);
-	--button-close-bg    : var(--button-special-bg);
+	--input-border      : solid 1px #000;
+	--input-radius      : 1rem;
+	--input-padding-x   : 0.8rem;
+	--button-bg         : #08f1;
+	--button-enabled-bg : #88ff0018;
+	--button-special-bg : #ff000018;
+	--button-enter-bg   : var(--button-special-bg);
+	--button-close-bg   : var(--button-special-bg);
 
 	--top-menu-radius    : var(--input-radius);
 	--bottom-menu-radius : var(--input-radius);
@@ -183,28 +195,27 @@ html.light :not(.fancy).terminal {
 
 /* BASE SETTINGS */
 .terminal {
+	--size-tablet : 65rem;   /* @media min-witdth */
+
 	--tab-size       : 4;
 	--input-tab-size : 8; X:var(--tab-size);
 
 	--line-height : 1.2rem;
 
-	--focus-border : solid 1px #0f8;
-	--focus-bg     : #fff4;
+	--toolbar-outline : none;
 
-	--toolbar-outline    : none;
-
-	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) + var(--toolbar-height)));
-	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) ));
-	--terminal-margin    : 0;
-	--terminal-padding   : 0;X:var(--menu-gap);
-	--terminal-bg        : #000;
+	--terminal-height   : calc(100vh - 2 * (var(--terminal-margin) + var(--toolbar-height)));
+	--terminal-height   : calc(100vh - 2 * (var(--terminal-margin) ));
+	--terminal-margin   : 0;
+	--terminal-padding  : 10px; X:var(--menu-gap);
+	--toolbar-gap    : 2px;
 
 	--menu-offset        : 0px;
 	--menu-gap           : 2px;
 	--menu-border-radius : 5px;
-	--menu-enter-width : 21em;
+	--menu-enter-width   : 21em;
 
-	--user-radius      : 3px;
+	--user-radius : 3px;
 
 	--items-gap      : 2px;
 	--item-min-width : 8em;
@@ -226,7 +237,7 @@ html.light :not(.fancy).terminal {
 
 	--transmit-bg : #48a;
 
-	--speaker      : '🗣';
+	--speaker     : '🗣';
 	--one-person  : '👤';
 	--two-persons : '👥';
 
@@ -280,22 +291,20 @@ html.light :not(.fancy).terminal {
 }
 
 
-/* MAIN LAYOUT */
+/*** MAIN LAYOUT ***/
 
 /* Required for the bit to fade into the distance on terminal toggle */
 NotInUse.terminal { opacity:0; transition:all 0.5s linear; display:grid !important; }
 NotInUse.terminal.enabled { opacity:1; }
 
 /* TERMINAL */
-.terminal.enabled { display:grid; }
+.loading.enabled.terminal { display:none; }
+.enabled.terminal { display:grid; }
 .terminal {
 	display:none;
 	position:absolute; top:0; left:0; z-index:999; transform:unset;
-
 	grid-template-rows:min-content auto min-content;
 	grid-template-areas:"r0" "r1" "r2";
-
-	grid-gap:var(--terminal-padding);
 	width:100%; height:100%; Xoverflow:hidden;
 	padding:var(--terminal-margin); font-size:var(--font-size); background:var(--terminal-bg);
 	--scrollbar-thumb-color:#08f4; --scrollbar-track-color:#0660;
@@ -318,43 +327,75 @@ NotInUse.terminal.enabled { opacity:1; }
 	font-family:var(--font-family); font-size:var(--font-size); line-height:var(--line-height);
 	tab-size:var(--tab-size);
 }
-@media (min-width:65em) {
+@media (min-width:65rem) {
 	:not(.fancy).terminal {
 		grid-template-rows:1fr min-content;
 		grid-template-columns:min-content 1fr;
 		grid-template-areas:"r0 r1" "r2 r1";
 	}
-	:not(.fancy).terminal .toolbar {
-		flex-direction:column; flex-wrap:nowrap;
-	}
-	:not(.fancy).terminal .toolbar button {
-		flex-basis:100%;
-	}
-	:not(.fancy).terminal .list.who {
-		flex-grow:0; flex-wrap:wrap;
-	}
-	:not(.fancy).terminal footer.toolbar {
-		flex-wrap:wrap-reverse; flex-direction:row;
-	}
-	:not(.fancy).terminal footer.toolbar > nav {
-		flex-basis:calc(50% - var(--menu-gap)); flex-grow:1
-	}
+	:not(.fancy).terminal .toolbar                { flex-direction:column; flex-wrap:nowrap; }
+	:not(.fancy).terminal .list.who               { flex-grow:0; flex-wrap:wrap; }
+	:not(.fancy).terminal footer.toolbar          { flex-wrap:wrap-reverse; flex-direction:row; }
+	:not(.fancy).terminal footer.toolbar > nav    { flex-basis:calc(50% - var(--menu-gap)); flex-grow:1 }
+	:not(.fancy).terminal .toolbar > nav > button { flex-basis:100%; }
 	:not(.fancy).terminal nav.auth:is(:hover,:focus,:focue-within) form {
 		top:var(--toolbar-height); left:0;
 	}
 }
-
-/* MENU */
+@media (min-width:50rem) {}
+/* Menus */
 .terminal .items { --sub-offset-x:0px; }
 .terminal .node       .items { width:8em; } /* Top left, showing Node name */
 .terminal .clear      .items { width:6em; } /* Clear button menu */
 .terminal .connection .items { width:17em; }
 .terminal .auth       .items { width:var(--menu-enter-width); }
 .terminal .main       .items { width:var(--menu-enter-width); }
-X.terminal .main      .items { width:calc(var(--menu-enter-width) - 2em); --sub-offset-x:2em; }
 .terminal .toggles    .items { width:calc(var(--menu-enter-width) - 4em); --sub-offset-x:2em; }
 .terminal .filter     .items { width:calc(var(--menu-enter-width) - 4em); --sub-offset-x:2em; }
-.terminal .toggles    .items button { flex-basis:40%; }
+.terminal .toggles          .items button { flex-basis:40%; }
+.terminal .filter           .items button { flex-basis:6rem; ; min-width:5em; }
+.terminal .toolbar > nav:first-child .items { left:0; right:unset; }   /* Left/right */
+
+@media (min-width:65rem) {
+	:not(.fancy).terminal footer.toolbar > :nth-child(1) { order:1; }
+	:not(.fancy).terminal footer.toolbar > :nth-child(2) { order:5; }
+	:not(.fancy).terminal footer.toolbar > :nth-child(3) { order:4; }
+	:not(.fancy).terminal footer.toolbar > :nth-child(4) { order:3; }
+	:not(.fancy).terminal footer.toolbar > :nth-child(5) { order:2; }
+
+
+	:not(.fancy).terminal .toolbar > nav:last-child .items { left:0; right:unset; }   /* Left/right */
+
+	:not(.fancy).terminal nav.auth form.items { left:100%; top:0; }
+
+	:not(.fancy).terminal header { min-height:0; }
+
+	X:not(.fancy).terminal .main .items button { flex-basis:100%; }
+	:not(.fancy).terminal footer.toolbar > nav { position:unset; flex-basis:100%; }
+	:not(.fancy).terminal footer.toolbar > nav.main .items { left:100%; bottom:calc(-1 * var(--menu-gap)); }
+	:not(.fancy).terminal .main .items > button { flex-basis:40%; }
+
+	:not(.fancy).terminal footer.toolbar nav.connection { position:unset; display:flex; flex-direction:row; }
+	:not(.fancy).terminal footer.toolbar nav.connection > button { height:unset; }
+	:not(.fancy).terminal footer.toolbar nav.connection > .items {
+		display:flex; flex-wrap:nowrap; flex-direction:column; flex-basis:100%;
+		width:unset; position:unset; padding:0; margin:0; gap:var(--menu-gap);
+	}
+	:not(.fancy).terminal footer.toolbar nav.connection .items > * { width:100%; }
+	:not(.fancy).terminal footer.toolbar nav.connection > .items > nav {
+		display:flex; flex-direction:column;
+		padding:0; margin:0;
+	}
+	:not(.fancy).terminal footer.toolbar nav.connection > .items .items { left:100%; bottom:0; }
+
+	:not(.fancy).terminal footer.toolbar nav.status { justify-content:start; }
+	X:not(.fancy).terminal footer.toolbar nav.status :first-child { order:2; }
+	:not(.fancy).terminal .toolbar nav.status { flex-wrap:wrap; flex-grow:0; justify-content:end; }
+
+	:not(.fancy).terminal footer.toolbar nav.toggle_state { justify-content:center; }
+	:not(.fancy).terminal footer.toolbar nav.toggle_state :first-child { order:2; }
+	:not(.fancy).terminal .toolbar nav.toggle_state { flex-wrap:wrap; flex-grow:0; justify-content:end; }
+}
 
 /* TOOLBAR */
 .terminal .enabled.toolbar {
@@ -368,8 +409,8 @@ X.terminal .main      .items { width:calc(var(--menu-enter-width) - 2em); --sub-
 	;
 }
 .terminal .toolbar {
-	position:relative;
 	display:flex; gap:var(--menu-gap);
+	position:relative;
 	outline:var(--toolbar-outline);
 	border-radius:var(--input-radius);
 	background:var(--toolbar-bg);
@@ -377,46 +418,37 @@ X.terminal .main      .items { width:calc(var(--menu-enter-width) - 2em); --sub-
 	box-shadow:var(--menu-box-shadow);
 }
 
-/* Toolbar entry */
-X.terminal footer.toolbar nav { flex-wrap:wrap; }
+/* TOOLBAR ENTRY / MENU */
 .terminal .toolbar nav { display:flex; flex-wrap:wrap-reverse; gap:var(--toolbar-gap); }
 .terminal .toolbar > nav { position:relative; }
 
 .terminal .toolbar nav > .items { display:none; }
-.terminal:not(.connected) .send .items,
-.terminal:not(.connected) .main_menu .items, /*//...? What else not to show? */
+:not(.connected).terminal .send .items,   /*//...? What else not to show? */
 .terminal .toolbar nav:is(:hover,:focus,:focus-within) > .items {/*//...Replace :is() with only :focus, when done */
-	display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
-	gap:var(--menu-gap);
+	display:flex;
+	flex-wrap:wrap; align-items:center; justify-content:center; gap:var(--menu-gap);
 	position:absolute; top:100%;X:calc(100% + var(--menu-offset)); right:var(--sub-offset-x); z-index:999;
 	box-sizing:content-box;
 	border-radius:var(--top-menu-radius);
 	padding:var(--menu-gap);
 	background:var(--toolbar-bg);
 }
-.terminal .toolbar > nav:first-child form nav,
-.terminal .toolbar > nav:first-child .items {
-	left:0; right:unset;
-}
-X.terminal .toolbar > nav:first-child .items { left:var(--sub-offset-x); right:unset; }
-
 .terminal footer.toolbar > nav:is(:hover,:focus,:focus-within) .items {
 	top:unset; bottom:100%; X:calc(100% + var(--menu-offset));
 	border-radius:var(--bottom-menu-radius);
 }
-.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inset 0 0 0 1px #fff0; }
+X.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inset 0 0 0 1px #fff0; }
 .terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items { color:#80fc; padding-bottom:0; }
 .terminal .toolbar > nav:is(:hover,:focus,:focus-within) nav .items .close { color:var(--button-color); }
 
 /* SUB MENU */
-.terminal .toolbar > nav .items > * { flex-grow:1; min-width:6em; }
+.terminal .toolbar > nav .items > * { flex-grow:1; Xmin-width:6em; }
 .terminal .toolbar > nav nav {
 	--g:var(--menu-gap);
 	padding:var(--g); margin:calc(-1 * var(--g));
 }
 .terminal .toolbar nav nav:hover  { z-index:199; }
 .terminal .toolbar nav nav > button  { width:100%; } /* 3 buttons, each fill their "cell"?? somehow with this */
-X.terminal .toolbar nav nav > .commands + .items button { Xflex-basis:6rem; ; min-width:5em; }
 
 /* OUTPUT */
 .terminal output {
@@ -430,7 +462,7 @@ X.terminal .toolbar nav nav > .commands + .items button { Xflex-basis:6rem; ; mi
 .fancy.terminal output { margin:1em 0 0; }
 
 /* Striped background */
-.terminal:not(.fancy) output.stripes {
+:not(.fancy).terminal output.stripes {
 	--s:calc(2 * var(--line-height));
 	--b0:var(--stripes-color0);
 	--b1:var(--stripes-color1);
@@ -446,11 +478,11 @@ X.terminal .toolbar nav nav > .commands + .items button { Xflex-basis:6rem; ; mi
 	background-attachment:local;
 }
 
-/* INPUTS */
+/* PROMPT */
 .terminal textarea {
 	width:100%; border:none;
 	background:transparent; color:var(--textarea-color);
-	margin:calc(var(--output-padding-x) + var(--output-margin-x));
+	margin:0 calc(var(--output-padding-x) + var(--output-margin-x));
 	resize:none;
 	caret-shape:block;
 	Xcaret-shape:bar;
@@ -462,6 +494,9 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal textarea.cep     { color:var(--request-color); }
 .terminal textarea.local   { color:var(--request-color); }
 .terminal textarea.local ::first-letter { color:#fff; }
+
+
+/*** INPUTS ***/
 
 /* BUTTONS */
 .fancy.terminal :is(input, button, span, code, ::before, ::after, textarea, output pre, a, b) {
@@ -487,10 +522,6 @@ X.terminal textarea:focus { caret-color:#f0f; }
 	background    : var(--input-bg      );
 	color         : var(--input-color   );
 }
-.terminal input:focus {
-	outline:none;
-	border:var(--focus-border);
-}
 .terminal button {
 	border        : var(--input-border  );
 	border-radius : var(--input-radius  );
@@ -505,10 +536,9 @@ X.terminal textarea:focus { caret-color:#f0f; }
 		inset  1px  1px 0px 1px #fff2
 	;
 }
-.terminal input:hover,
-.terminal button:focus,
-.terminal button:hover {
-	border:var(--focus-border); filter:brightness(1.5);
+.terminal :is(input,button):is(:hover,:focus) {
+	filter:var(--focus-filter);
+	box-shadow:inset 0 0 0 1px var(--focus-box-shadow);
 }
 
 .terminal button.blink.success { color:var(--success-color); }
@@ -533,6 +563,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 .terminal button.logout,
 .terminal button.connect,
 .terminal button.disconnect {
+	color: var(--button-special-color);
 	background:var(--button-special-bg);
 }
 .terminal button.debug:not(.enabled),
@@ -593,13 +624,6 @@ X.fancy.terminal .list.who::before {
 	border-radius:var(--input-radius) 0 0 var(--input-radius); padding-left:1em;
 }
 
-/* Toggle state */
-@media (max-width: 50rem) {
-	.terminal .list.toggle_state { display:none; }
-}
-.terminal .list.toggle_state { padding:0 var(--toggle_state-gap); color:var(--toggle-state-off); cursor:pointer; }
-.terminal .list b { color:var(--toggle-state-on); font-weight:normal; }
-
 /* Connection */
 .terminal .node       > button,
 .terminal .connection > button,
@@ -635,15 +659,16 @@ X.fancy.terminal .list.who::before {
 }
 X.terminal .status > span > a,
 X.terminal .status > span,
-X.terminal .status * { font-family:serif; }
+.terminal .status * {
+	text-align:center;
+	Xfont-family:serif;
+}
 .terminal .status .extra { z-index:1; }
-
 .terminal .status a { text-decoration:none; }
 .terminal .status a:hover { color:var(--a-hover); text-decoration:underline; }
+:not(.fancy).terminal .status > span { padding:0.5em var(--menu-gap) 0; }
 
 /* Time */
-.terminal .time { transition:opacity 0.25s linear; opacity:1; }
-.terminal .time.fade_out { opacity:0; }
 .terminal .time {
 	Xfont-variant-numeric: normal;
 	Xfont-variant-numeric: ordinal;
@@ -655,14 +680,24 @@ X.terminal .status * { font-family:serif; }
 	Xfont-variant-numeric: diagonal-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
 	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
-	position:absolute;
-	opacity:1; transition:opacity 1s linear;
+	opacity:1;
+	transition:opacity 0.25s linear;
 }
-.terminal .time.fade_out {
-	opacity:0;
+.fancy.terminal .time { position:absolute; }
+.fancy.terminal .time.fade_out { opacity:0; }
+
+/* Toggle state */
+.terminal .list.toggle_state { padding:0 var(--toggle_state-gap); color:var(--toggle-state-off); cursor:pointer; }
+.terminal .list b { color:var(--toggle-state-on); font-weight:normal; }
+@media (min-width: 65rem) {
+	:not(.fancy).terminal .list.toggle_state { padding-bottom:0.25em; }
+}
+@media (max-width: 50rem) {
+	.terminal .list.toggle_state { display:none; }
 }
 
-/* OUTPUT TEXT */
+
+/*** OUTPUT PRE ***/
 
 .terminal a         { color:var(--a-color   ); text-decoration:underline; }
 .terminal a:visited { color:var(--a-visited ); }
@@ -753,7 +788,7 @@ X.fancy.terminal .separators pre { margin:0 0 calc(0.25 * var(--line-height)); }
 }
 
 
-/* FANCY TERMINAL */
+/*** FANCY TERMINAL ***/
 
 .fancy.terminal {
 	background:unset;
@@ -798,7 +833,6 @@ X.fancy.terminal .separators pre { margin:0 0 calc(0.25 * var(--line-height)); }
 .fancy.terminal.connected  output::before { filter:hue-rotate(  0deg) brightness(var(--b));        }
 .fancy.terminal.bit.yes    output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
 .fancy.terminal.bit.no     output::before { filter:hue-rotate(140deg) brightness(0.8) contrast(3); }
-
 .fancy.terminal.bit.yes    output::after,
 .fancy.terminal.bit.no     output::after {
 	content:'';
@@ -860,7 +894,7 @@ X.fancy.terminal .separators pre { margin:0 0 calc(0.25 * var(--line-height)); }
 */
 
 
-/* ANIMATIONS */
+/*** ANIMATIONS ***/
 
 /* Online Status */
 .animate.fancy.connected.terminal .connection > button,

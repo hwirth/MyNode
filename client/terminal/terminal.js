@@ -1,17 +1,18 @@
-// terminal/main.js
+// terminal.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
 
-// This is a node module or something. It installs itself under window.SamJs and cannot be imported normally
+// SamJS is a node module or something. It installs itself under window.SamJs and cannot be imported normally
 // I think a bundler would change that, but this is from the /dist folder!? I also added a volume option to it.
+
 import * as DUMMY_SamJs from './samjs.js';
 
-import { SETTINGS       } from '../config.js';
-import { PRESETS, DEBUG } from '../config.js';
-import { GET            } from '../helpers.js';
+import { SETTINGS       } from '../cep/config.js';
+import { PRESETS, DEBUG } from '../cep/config.js';
+import { GET            } from '../cep/helpers.js';
 import { History        } from './history.js';
 
 let CEP_VERSION = 'v0.4.0α';   // Keyboard shortcuts will be appended in  self.init()
@@ -37,7 +38,7 @@ export const DebugConsole = function (callback) {
 	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
 
 	const HTML_TERMINAL = (`
-<div class="terminal">
+<div class="terminal loading">
 
 	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
 		<output></output>
@@ -62,11 +63,11 @@ export const DebugConsole = function (callback) {
 			<button title="Connection state, or your user/nick name">OFFLINE</button>
 			<div class="items">
 				<nav class="filter">
-					<button class="enabled">Filter</button>
+					<button>Filter</button>
 					<div class="items"></div>
 				</nav>
 				<nav class="toggles">
-					<button class="enabled">Toggle</button>
+					<button>Toggle</button>
 					<div class="items">
 						<button class="debug" title="Toggle chat/debug mode. Shortcut: Alt+D">Chat Mode</button>
 					</div>
@@ -76,16 +77,8 @@ export const DebugConsole = function (callback) {
 		<nav class="status">
 			<span class="time"></span>
 			<span class="extra"></span>
-			<!-- span>
-Single lines input by the user are sent as  chat.say  requests, otherwise
-TAB formatted multiline text is sent as JSON objects.
-Debug mode shows all websocket messages going in or out.
-You can enter tab-indented pseudo-JSON, in order to send arbitrary
-requests to the server. In essence, you type a JSON object without the
-curly braces and quotation marks.
-			</span -->
 		</nav>
-		<nav class="list toggle_state" title="Toggle states, shown as Alt+Key shortcuts"><span></span></nav>
+		<nav class="list toggle_state" title="Toggle states, shown as Alt+Key shortcuts"></nav>
 		<nav title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
 			<button class="clear" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">Clear</button>
 		</nav>
@@ -119,7 +112,7 @@ curly braces and quotation marks.
 		auth        : '.auth .items',
 		main        : '.main .items',
 		filter      : '.filter .items',
-		toggleState : '.toggle_state span',
+		toggleState : '.toggle_state',
 		toggles     : '.toggles .items',
 	// Buttons
 		btnCEP      : '.connection button',
@@ -158,24 +151,24 @@ curly braces and quotation marks.
 },
 // Auto-generating buttons:
 {   event:'keydown', key:'a', modifiers:['alt'], action:()=>{ self.toggles.animate.toggle(); },
-},{ event:'keydown', key:'b', modifiers:['alt'], action:()=>{ self.toggles.bit.toggle();     },
+},{ event:'keydown', key:'b', modifiers:['alt'], action:()=>{ self.toggles.bit    .toggle(); },
 },{ event:'keydown', key:'c', modifiers:['alt'], action:()=>{ self.toggles.compact.toggle(); },
-},{ event:'keydown', key:'d', modifiers:['alt'], action:()=>{ self.toggles.debug.toggle();   },
+},{ event:'keydown', key:'d', modifiers:['alt'], action:()=>{ self.toggles.debug  .toggle(); },
 },{ event:'keydown', key:'e', modifiers:['alt'], action:()=>{
 		['login', 'enter'].forEach( button => self.elements[button].click() );
 	},
-},{ event:'keydown', key:'f', modifiers:['alt'], action:()=>{ self.toggles.fancy.toggle();      },
-},{ event:'keydown', key:'k', modifiers:['alt'], action:()=>{ self.toggles.keyBeep.toggle();    },
-},{ event:'keydown', key:'l', modifiers:['alt'], action:()=>{ self.toggles.light.toggle();      },
-},{ event:'keydown', key:'m', modifiers:['alt'], action:()=>{ self.toggles.tts.toggle();        },
-},{ event:'keydown', key:'w', modifiers:['alt'], action:()=>{ self.toggles.ping.toggle();       },
-},{ event:'keydown', key:'q', modifiers:['alt'], action:()=>{ self.toggles.terminal.toggle();   },
-},{ event:'keydown', key:'r', modifiers:['alt'], action:()=>{ self.toggles.scroll.toggle();     },
+},{ event:'keydown', key:'f', modifiers:['alt'], action:()=>{ self.toggles.fancy     .toggle(); },
+},{ event:'keydown', key:'k', modifiers:['alt'], action:()=>{ self.toggles.keyBeep   .toggle(); },
+},{ event:'keydown', key:'l', modifiers:['alt'], action:()=>{ self.toggles.light     .toggle(); },
+},{ event:'keydown', key:'m', modifiers:['alt'], action:()=>{ self.toggles.tts       .toggle(); },
+},{ event:'keydown', key:'w', modifiers:['alt'], action:()=>{ self.toggles.ping      .toggle(); },
+},{ event:'keydown', key:'q', modifiers:['alt'], action:()=>{ self.toggles.terminal  .toggle(); },
+},{ event:'keydown', key:'r', modifiers:['alt'], action:()=>{ self.toggles.scroll    .toggle(); },
 },{ event:'keydown', key:'s', modifiers:['alt'], action:()=>{ self.toggles.separators.toggle(); },
-},{ event:'keydown', key:'u', modifiers:['alt'], action:()=>{ self.toggles.node.toggle();       },
-},{ event:'keydown', key:'v', modifiers:['alt'], action:()=>{ self.toggles.overflow.toggle();   },
-},{ event:'keydown', key:'x', modifiers:['alt'], action:()=>{ self.toggles.stripes.toggle();    },
-},{ event:'keydown', key:'y', modifiers:['alt'], action:()=>{ self.toggles.last.toggle();       },
+},{ event:'keydown', key:'u', modifiers:['alt'], action:()=>{ self.toggles.node      .toggle(); },
+},{ event:'keydown', key:'v', modifiers:['alt'], action:()=>{ self.toggles.overflow  .toggle(); },
+},{ event:'keydown', key:'x', modifiers:['alt'], action:()=>{ self.toggles.stripes   .toggle(); },
+},{ event:'keydown', key:'y', modifiers:['alt'], action:()=>{ self.toggles.last      .toggle(); },
 },
 	];
 
@@ -201,8 +194,6 @@ curly braces and quotation marks.
 { menu:'main' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
 { menu:'main' , name:'vStat'      , script:'server\n\tstatus' },
 { menu:'main' , name:'nStat'      , script:'session\n\tstatus' },
-{ menu:'main' , name:'clear'      , script:'/clear' },
-
 { menu:'main' , name:'help'       , script:'/help' },
 	]; // BUTTON_SCRIPTS
 
@@ -211,22 +202,6 @@ curly braces and quotation marks.
 		'nick'  : 'chat\n\tnick:*',
 		'who'   : 'session\n\twho',
 	};
-
-
-	function gather_dom_elements (container) {
-		// Additional menu buttons are addeded to some .items, when toggles are created
-		// This function must be called after that, so  .querySelector()  can find them.
-		return Object.entries( ELEMENT_SELECTORS ).map( ([key, value])=>{
-			switch (key) {
-				case 'html'     : return [key, document.documentElement];
-				case 'terminal' : return [key, container];
-				default         : return [key, container.querySelector( value ) ];
-			}
-		}).reduce( (prev, next)=>{
-			return { ...prev, [next[0]]: next[1] };
-		}, {});
-
-	} // gather_dom_elements
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -388,25 +363,40 @@ setTimeout( ()=>{
 		// UI element, list of chars
 		function update_toggle_state () {
 			const has_shortcut = toggle => toggle.shortcut !== null;
-			const to_character = toggle => (
-				toggle.enabled
-				? '<b>' + toggle.shortcut.toLowerCase() + '</b>'
-				: toggle.shortcut.toLowerCase()
-			);
+			const shortcuts    = Object.values( self.toggles ).filter( has_shortcut );
 
-			self.elements.toggleState.innerHTML = (
-				Object.values( self.toggles )
-				.sort( (a, b) => a.shortcut > b.shortcut ? +1 : -1 )
-				.filter( has_shortcut )   // Only those with a keyboard shortcut
-				.sort( (a, b)=>(a.shortcut > b.shortcut) ? +1 : -1 )
-				.map( to_character )   // Uppercase for enabled toggles
-				.join('')
-			);
+			const nr_first    = Math.floor( Object.keys( shortcuts ).length / 2 );
+			const first_half  = (_, index) => index >= nr_first;
+			const second_half = (_, index) => index < nr_first;
+
+			self.elements.toggleState.innerHTML
+			= '<span>'
+			+  create_part( shortcuts, first_half )
+			+ '</span><span>'
+			+ create_part( shortcuts, second_half );
+			+ '</span>'
+			;
+
+			function create_part (toggles, half) {
+				const alphabetically = (a, b) => (a.shortcut > b.shortcut) ? +1 : -1;
+				const to_character   = (toggle, index) => (
+					toggle.enabled
+					? '<b>' + toggle.shortcut.toLowerCase() + '</b>'
+					: toggle.shortcut.toLowerCase()
+				);
+				return (
+					Object.values( shortcuts )
+					.filter( half )
+					.sort( alphabetically )
+					.map( to_character )   // Uppercase for enabled toggles
+					.join('')
+				);
+			}
 
 		} // update_toggle_state
 
 	} // create_toggles
-setInterval( ()=>{ document.title = SETTINGS.HIDE_MESSAGES.PING }, 100 );
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // AUDIO
@@ -568,79 +558,18 @@ setTimeout( ()=>{
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// CLOCK
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-/*
-	const status_entries = [{
-		element : (()=>{
-			const span = document.createElement( 'span' ),
-			span.innerText = 'Ready.';
-			return span;
-		})(),
-		ttl     : null,
-	}];
-*/
-	const start_time = new Date();
-
-	function start_clock () {
-		let recent_second = current_second();
-		update_clock();
-		long_wait();
-		return;
-
-		function current_second () {
-			return Math.floor( Date.now() / 1000 );
-		}
-
-		function long_wait () {
-			const remaining_ms = 1000 - Date.now() % 1000;
-			setTimeout( narrow_wait, remaining_ms - 50 );
-		}
-
-		function narrow_wait () {
-			if (current_second() == recent_second) {
-				setTimeout( narrow_wait );
-			} else {
-				update_clock();
-				//...recent_second = current_second();
-				//...long_wait();
-				setInterval( update_clock, 1000 );
-			}
-		}
-
-		function update_clock () {
-			self.elements.time.innerText = Intl.DateTimeFormat(
-				navigator.language, {
-					weekday : 'short',
-					year    : 'numeric',
-					month   : 'short',
-					day     : 'numeric',
-					hour    : '2-digit',
-					minute  : '2-digit',
-					second  : '2-digit',
-					//fractionalSecondDigits: '3',
-					timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
-					hour12  : false,
-				},
-			).format(new Date());
-		}
-
-	} // start_clock
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // DOM
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function animate_ping (transmit = false) {
+		if (!SETTINGS.ANIMATE_TRANSMISSION) return;
+
 		self.elements.terminal.classList.add( transmit ? 'transmit' : 'ping' );
 		setTimeout( ()=>{
 			self.elements.terminal.classList.remove( transmit ? 'transmit' : 'ping' );
 		}, SETTINGS.TIMEOUT.PING_CSS);
 
 	} // animate_ping
-
 
 /*
 		const cssvar_height
@@ -653,14 +582,6 @@ setTimeout( ()=>{
 		'WhiteRabbit',
 		'ModeSeven',
 		'Digit-V4Wl',
-/*
-		'CenturyGothic',
-		'DIGIT',
-		'fa-brands-400',
-		'fa-regular-400',
-		'fa-solid-900',
-		'SETIPERU',
-*/
 	];
 
 	this.setFont = function (font_index = 0) {
@@ -692,6 +613,7 @@ setTimeout( ()=>{
 		} else {
 			index = ((index + delta + nr_fonts) % nr_fonts);
 		}
+
 		const new_class = 'font' + index;
 
 		t.classList.add( new_class );
@@ -865,7 +787,7 @@ setTimeout( ()=>{
 		}
 
 		if (event.target.closest('.toggle_state')) {
-			self.elements.enter.focus();
+			self.elements.btnCEP.focus();
 			setTimeout( ()=>self.elements.btnToggles.focus() );
 		}
 
@@ -1351,13 +1273,13 @@ setTimeout( ()=>{
 				const html_parsed = (
 					file_contents
 					.split( '//EOF', 1 )[0]
-					.replaceAll( '<', '&lt;'  )
 					.replaceAll( '&', '&amp;' )
+					.replaceAll( '<', '&lt;'  )
 				);
 				const pages = html_parsed.split( '\n#' );
 
 				if (!id_selector) {
-					return self.print( html_parsed, 'Xcep textfile expand' );
+					return self.print( pages[0], 'Xcep textfile expand' );
 				}
 
 				const with_tag = page => page.slice( 0, id_selector.length ) == id_selector;
@@ -1503,12 +1425,74 @@ setTimeout( ()=>{
 	} // clearInput
 
 
-// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// STATUS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+/*
+	const status_entries = [{
+		element : (()=>{
+			const span = document.createElement( 'span' ),
+			span.innerText = 'Ready.';
+			return span;
+		})(),
+		ttl     : null,
+	}];
+*/
+	const start_time = new Date();
+
+	function start_clock () {
+		let recent_second = current_second();
+		update_clock();
+		long_wait();
+		return;
+
+		function current_second () {
+			return Math.floor( Date.now() / 1000 );
+		}
+
+		function long_wait () {
+			const remaining_ms = 1000 - Date.now() % 1000;
+			setTimeout( narrow_wait, remaining_ms - 50 );
+		}
+
+		function narrow_wait () {
+			if (current_second() == recent_second) {
+				setTimeout( narrow_wait );
+			} else {
+				update_clock();
+				//...recent_second = current_second();
+				//...long_wait();
+				setInterval( update_clock, 1000 );
+			}
+		}
+
+		function update_clock () {
+			self.elements.time.innerText = Intl.DateTimeFormat(
+				navigator.language, {
+					weekday : 'short',
+					year    : 'numeric',
+					month   : 'short',
+					day     : 'numeric',
+					hour    : '2-digit',
+					minute  : '2-digit',
+					second  : '2-digit',
+					//fractionalSecondDigits: '3',
+					timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
+					hour12  : false,
+				},
+			).format(new Date());
+		}
+
+	} // start_clock
+
 
 	let status_messages = [];
 	let status_timeout = null;
 
 	this.status = function (html = '', clear = false) {
+		console.log( 'Status: clear:', String(clear), html );
+
 		if (clear) {
 			status_messages = [];
 			clearTimeout( status_timeout );
@@ -1747,13 +1731,13 @@ case 'broadcast': {
 			.forEach( (file_name)=>{
 				if (message.broadcast.type == 'reload/client') {
 					switch (file_name) {
-						case 'spielwiese.css': {
+						case 'client/spielwiese.css': {
 							self.reloadCSS();
 							return print_message();
 						}
-						case 'terminal/main.js' :  // fall through
-						case 'main.js'          :  // fall through
-						case 'index.html'       : {
+						case 'client/terminal/terminal.js' :  // fall through
+						case 'client/main.js'              :  // fall through
+						case 'client/index.html': {
 							location.reload();
 							return;
 						}
@@ -1845,22 +1829,45 @@ case 'response': {
 			const old_link = document.querySelector( selector );
 			if (old_link) old_link.parentNode.removeChild( old_link );
 			// <link rel="stylesheet"    href="/spielwiese.css" type="text/css">
-			const link = document.createElement( 'link' );
-			link.rel  = 'stylesheet';
-			link.href = 'spielwiese.css';
-			link.type = 'text/css';
-			document.querySelector( 'head' ).appendChild( link );
+			const new_link = document.createElement( 'link' );
+			new_link.rel  = 'stylesheet';
+			new_link.href = 'spielwiese.css';
+			new_link.type = 'text/css';
+			document.querySelector( 'head' ).appendChild( new_link );
+
+			new_link.addEventListener( 'load', ()=>setTimeout(
+				()=>{
+					self.elements.terminal.classList.remove( 'loading' );
+					self.elements.terminal.classList.remove( 'ping' );
+				}
+			));
 
 		} // inset_stylesheet_to_head
 
+
+		// Add main element to body
 		const parser       = new DOMParser();
 		const new_document = await parser.parseFromString( HTML_TERMINAL, 'text/html' );
 		const container    = new_document.querySelector( '.terminal' );
 		document.body.appendChild( container );
 
 		self.elements = gather_dom_elements( container );
+		function gather_dom_elements (container) {
+			// Additional menu buttons are addeded to some .items, when toggles are created
+			// This function must be called before that, so  .querySelector()  can find them.
+			return Object.entries( ELEMENT_SELECTORS ).map( ([key, value])=>{
+				switch (key) {
+					case 'html'     : return [key, document.documentElement];
+					case 'terminal' : return [key, container];
+					default         : return [key, container.querySelector( value ) ];
+				}
+			}).reduce( (prev, next)=>{
+				return { ...prev, [next[0]]: next[1] };
+			}, {});
 
-console.groupCollapsed( 'DebugConsole.elements{}' );
+		} // gather_dom_elements
+
+console.groupCollapsed( 'DebugConsole.elements' );
 console.dir( self.elements );
 console.groupEnd();
 
@@ -1874,7 +1881,7 @@ console.groupEnd();
 		// Toggles
 		self.toggles = create_toggles();
 
-console.groupCollapsed( 'DebugConsole.toggles{}' );
+console.groupCollapsed( 'DebugConsole.toggles' );
 console.dir( self.toggles );
 console.groupEnd();
 console.groupCollapsed( 'KEYBOARD_SHORTCUTS' );
@@ -1887,16 +1894,20 @@ console.groupEnd();
 		});
 
 		// Resume audio context after page load
+		self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
+		if (self.audioContext.state == 'running') {
+			self.bit.say( 'yes' );
+		} else if (GET.has('tts')) {
+			addEventListener( 'keydown', activate_audio );
+			addEventListener( 'mouseup', activate_audio );
+		}
 		function activate_audio () {
-			self.audioContext = new(window.AudioContext || window.webkitAudioContext)();
-			if (self.audioContext.state == 'suspended') self.audioContext.resume();
+			self.audioContext.resume();
 			removeEventListener( 'keydown', activate_audio );
 			removeEventListener( 'mouseup', activate_audio );
 			self.status( 'Audio context resumed.', /*clear*/true );
+			if (GET.has('tts')) self.bit.say( 'yes' );
 		}
-		addEventListener( 'keydown', activate_audio );
-		addEventListener( 'mouseup', activate_audio );
-
 
 		// Keyboard
         	self.elements.input.addEventListener( 'keydown' , on_keydown );
@@ -1937,8 +1948,13 @@ console.groupEnd();
 		});
 
 
-		// Status bar
+		// STATUS BAR
 		self.elements.status.addEventListener( 'click', ()=>self.status( null ) );
+
+
+		// BUTTON: "Clear"
+		self.elements.clear.addEventListener( 'click'    , self.clearInput  );
+		self.elements.clear.addEventListener( 'dblclick' , self.clearScreen );
 
 
 		// BUTTON: "Enter"
@@ -2011,7 +2027,7 @@ console.groupEnd();
 				setTimeout( focus_prompt, 100 );
 			} else {
 				setTimeout( ()=>{
-					document.querySelector( 'form [name=nickname]' ).focus();
+					document.querySelector( 'form [name=nickname]' ).focus();//...? not effective
 				}, 100);
 			}
 

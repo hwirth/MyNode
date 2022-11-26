@@ -17,11 +17,12 @@ export const DEBUG = {
 export const SETTINGS = {
 	CSS_FILE_NAME : '/spielwiese.css',
 
-	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
-	AUTO_APPEND_TAGS : true,
-	KEY_BEEP         : true,   // Turn off entirely, see PRESETS
-	MAIN_VOLUME      : 1.0,    //0..1
-	SAM_ALWAYS_NEW   : !true,   // Reinstantiate SAM on every call, enabling MAIN_VOLUME
+	CONNECT_ON_START     : location.href.indexOf('connect') >= 0,
+	AUTO_APPEND_TAGS     : true,
+	KEY_BEEP             : true,   // Turn off entirely, see PRESETS
+	MAIN_VOLUME          : 1.0,    //0..1
+	SAM_ALWAYS_NEW       : !true,   // Reinstantiate SAM on every call, enabling MAIN_VOLUME
+	ANIMATE_TRANSMISSION : true,   // Blink buttons/beam, when websocket data are sent or received
 
 	WEBSOCKET: {
 		URL       : 'wss://spielwiese.central-dogma.at:1337',
@@ -65,12 +66,12 @@ export const PRESETS = {
 		SEPARATORS : get( 'separators' ),
 		STRIPES    : get( 'stripes' ),
 		OVERFLOW   : !get( 'overflow' ),
-		ANIMATE    : !get( 'animate' ),
+		ANIMATE    : get( 'animate' ),
 		BIT        : !get( 'bit' ),
 		FANCY      : get( 'fancy' ),
 		KEY_BEEP   : get( 'keybeep' ),
 		LAST       : !get( 'last' ),
-		TTS        : !get( 'tts' ),
+		TTS        : get( 'tts' ),
 	},
 
 	VOLUME: {

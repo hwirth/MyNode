@@ -1,21 +1,9 @@
-// server: main.js
+// server/main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
-
-const {
-	PROGRAM_NAME, PROGRAM_VERSION,
-	SETTINGS, EXIT_CODES,
-	MIME_TYPES, HTTPS_OPTIONS, WSS_OPTIONS, /*TURN_OPTIONS,*/
-
-} = require( './config.js' );
-const { STRINGS       } = require( '../application/constants.js' );
-const { DEBUG, COLORS } = require( '../server/debug.js' );
-const { color_log, dump, format_error } = require( '../server/debug.js' );
-
-const AppReloader = require( './reloader.js' );
 
 const os        = require( 'os' );
 const fs        = require( 'fs' );
@@ -23,6 +11,17 @@ const path      = require( 'path' );
 const http      = require( 'follow-redirects' ).http;
 const https     = require( 'https' );
 const WebSocket = require( 'ws' );
+
+const AppReloader = require( './reloader.js' );
+
+const { PROGRAM_NAME, PROGRAM_VERSION  } = require( './config.js' );
+const { SETTINGS, EXIT_CODES           } = require( './config.js' );
+const { MIME_TYPES, HTTPS_OPTIONS      } = require( './config.js' );
+const { WSS_OPTIONS, /*TURN_OPTIONS,*/ } = require( './config.js' );
+const { STRINGS                        } = require( '../application/constants.js' );
+const { DEBUG, COLORS                  } = require( '../server/debug.js' );
+const { color_log, dump, format_error  } = require( '../server/debug.js' );
+
 
 const EXIT_MESSAGE = STRINGS.END_OF_LINE;
 
@@ -286,7 +285,7 @@ function parse_json(message) {//...
 			function return_http_error (response, code, url) {
 				color_log( COLORS.ERROR, 'http:', 'Client address:', request.socket.remoteAddress );
 				color_log( COLORS.ERROR, 'http:', 'Requested URL:', request.url );
-				color_log( COLORS.ERROR, 'http:', 'Headers:', request.headers );
+				color_log( COLORS.ERROR, 'http:', 'Headers:', request.headers , '-'.repeat(77) );
 
 				response.statusCode = code;
 				response.end(

@@ -148,7 +148,7 @@ body > form {
 		width:13rem; box-sizing:content-box;
 		filter:hue-rotate(45deg) contrast(0.8);
 	}
-	body > form h2 { color:var(--title-color); filter:drop-shadow(0 0 10px #8f4); }
+	body > form h2 { color:var(--title-color); filter:drop-shadow(0 0 10px #8f4); margin-bottom:0.25rem; }
 	body > form img {
 		filter:
 			drop-shadow(0   0px  1px #000)
@@ -157,25 +157,37 @@ body > form {
 		;
 	}
 
-	body > form :is(input,button) {
+	.guest .no_guest { display:none; }
+	body > form label { width:100%; }
+
+	body > form input {
+		height:2em;
+		border:none;
+		background:var(--input-bg); color:var(--input-color);
+		text-align:center;
+	}
+	body > form button {
 		width:100%; height:2em;
 		border:none;
 		background:var(--input-bg); color:var(--input-color);
 		text-align:center;
 	}
-	body > form label { font-size:0; width:100%; }
-	body > form label > * > * { font-size:1rem; }
+	body > form input::placeholder { font-size:1em; color:var(--placeholder-color); }
 
-	body > form input:hover {
-		background:var(--input-bg); color:var(--hover-color);
-	}
+
+	body > form .hide_label :is(input,button) { width:100%; }
+	body > form .hide_label > span            { display:none; }
+
+	body > form input:hover { background:var(--input-bg); color:var(--hover-color); }
 	body > form input:focus {
 		background:var(--focus-bg); color:var(--focus-color);
 		text-align:left; padding-left:5px;
 	}
-	body > form input::placeholder {
-		font-size:1em; color:var(--placeholder-color);
-	}
+
+	body > form .option { display:flex; gap:0.5em; margin-left:2em; }
+	body > form .option > :nth-child(1) { order:2; }
+
+
 	body > form :is(input,button)[type=submit][value="Enter Chat"] {
 		text-transform:uppercase;
 	}
@@ -186,12 +198,6 @@ body > form {
 		color:var(--login-hover-color); filter:brightness(1.2);
 	}
 
-	body > form :is(input,button).debug:is(:hover,:focus,:active) {
-		color:#fff; filter:brightness(1.1);
-	}
-	body > form label:is(:hover,:focus,:active) button.debug {
-		opacity:1; transition:all 0.25s ease-in-out;
-	}
 	body > form button.debug {
 		height:1.4em;
 		filter:brightness(0.65);
@@ -201,8 +207,15 @@ body > form {
 	body > form button.debug::after {
 		content:"with debug presets"; color:var(--login-color); pointer-events:none;
 	}
+	body > form :is(input,button).debug:is(:hover,:focus,:active) {
+		color:#fff; filter:brightness(1.1);
+	}
+	body > form label:is(:hover,:focus,:active) button.debug {
+		opacity:1; transition:all 0.25s ease-in-out;
+	}
 
-	.guest .no_guest { display:none; }
+
+	.loading.terminal { display:none; }
 
 </style></head><body>
 
@@ -222,26 +235,41 @@ body > form {
 	<form tabindex="0" accept-charset="utf-8" class="guest">
 		<img src="/images/spielwiese_transparent.png" alt="Site icon">
 		<h2>spielwiese</h2>
-		<label title='Account name. When "Guest", choose a nick name'>
+		<label class="hide_label" title='Account name. When "Guest", choose a nick name'>
 			<span>Username</span>
 			<input tabindex="0" type="text" name="username" placeholder="Username" autocomplete="username" value="Guest">
 		</label>
-		<label title="Choose a name for the chat (recommended)">
+		<label class="hide_label" title="Choose a name for the chat (recommended)">
 			<span>Nickname</span>
 			<input tabindex="0" type="text" name="nickname" placeholder="Nickname" autocomplete="nickname" autofocus>
 		</label>
-		<label class="no_guest" title="Password (for registered accounts)">
+		<label class="hide_label no_guest" title="Password (for registered accounts)">
 			<span>Password</span>
 			<input tabindex="0" type="password" name="password" placeholder="Password" autocomplete="password">
 		</label>
-		<label class="no_guest" title="Token (for admins)">
+		<label class="hide_label no_guest" title="Token (for admins)">
 			<span>Second Factor</span>
 			<input tabindex="0" type="password" name="factor2" placeholder="Factor 2" autocomplete="one-time-code">
 		</label>
+
 		<input type="hidden" name="toggle" value="terminal">
-		<label>
+
+		<label class="hide_label">
 			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to the MyNode Chat">
 			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Useful for developers"></button>
+		</label>
+
+		<label class="option" title="Lightweight aminations">
+			<span>Animations</span>
+			<input tabindex="0" type="checkbox" name="animate">
+		</label>
+		<label class="option" title="Don't use with animations on slow computers">
+			<span>Fancy graphics</span>
+			<input tabindex="0" type="checkbox" name="fancy">
+		</label>
+		<label class="option" title="SAM - Software Automatic Mouth">
+			<span>Speech synthesizer</span>
+			<input tabindex="0" type="checkbox" name="tts">
 		</label>
 	</form>
 

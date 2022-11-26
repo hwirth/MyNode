@@ -72,8 +72,6 @@ const SETTINGS = {
 		INTERVAL : 2*1000,
 	},
 
-	LOG_PINGPONG         : false,
-	KICK_NO_PONG         : true,
 	ROUTER_ALWAYS_RELOAD : false,
 
 	LOG: {
@@ -82,6 +80,7 @@ const SETTINGS = {
 		TO_FILE       : (config_file.LOG_TO_FILE == 'true'),      // Whether color_log() outputs to file
 		MAX_FILE_SIZE : ((true) ? 1000*1000 : null),              // After write, file size will be adjusted
 		MAX_DEPTH     : ((DEV_SERVER) ? 9 : 3),                   // null or int, objects log detail
+		PING_PONG     : false,                                    // color_log  hides ping messages
 	},
 
 	SERVER: {
@@ -99,6 +98,8 @@ const SETTINGS = {
 		LOGIN         : 6*1000,
 		IDLE          : null,//60*60*1000,
 	},
+
+	BROADCAST_FILE_CHANGE_FOLDERS: ['client', 'client/cep', 'client/terminal'],
 
 }; // SETTINGS
 

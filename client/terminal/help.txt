@@ -3,15 +3,14 @@ Single lines input by the user are sent as  chat.say  requests,
 otherwise TAB formatted multiline text is sent as JSON objects.
 Debug mode shows all websocket messages going in or out.
 
-/help &lt;topic>
+/help <topic>
 Topics:
 	tabJSON
 	shortJSON
 	keyboard
 	toggles
 
-Check the <a href="README" taget="readme" onclick="window.open(this.href,'_blank');return false;"
->README</a> for more details.
+Check README for more details.
 
 #tabJSON
 ENTER TAB FORMATTED tabJSON
@@ -19,7 +18,7 @@ You can enter tab-indented pseudo-JSON, in order to send arbitrary
 requests to the server. In essence, you type a JSON object without the
 curly braces and quotation marks.
 
-tabJSON, You enter:         Resulting JSON:
+tabJSON, You enter:           Resulting JSON:
   session                     {
       login                       "session":{
           username: Me                "login":{
@@ -40,17 +39,17 @@ times, etc. Entries on the same level are separated with a comma.
  .session.login.username:Me,password:secRet...chat.nick:Hey
 
 results in:
-      {
-	  "session":{
-	      "login":{
-		  "username":"Me",
-		  "password":"secRet"
-	      }
-	  },
-	  "chat":{
-	      "nick":"Hey"
-	  }
-      }
+{
+    "session":{
+        "login":{
+            "username":"Me",
+            "password":"secRet"
+        }
+    },
+    "chat":{
+        "nick":"Hey"
+    }
+}
 
 #keyboard
 Keyboard
@@ -77,4 +76,4 @@ Toggles
 	tts          SAM speech synthesizer    Alt+M
 
 With "toggles" as comma separated list, bookmark:
- /?username=&lt<i>user</i>>&password=&lt<i>pass</i>>&nickname=&lt;<i>nick</i>>&login[=&lt;<i>toggles</i>>]>
+ /?username=<user>&password=<pass>&nickname=<nick>&login[=<toggles>]>
