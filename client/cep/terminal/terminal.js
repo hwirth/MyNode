@@ -90,7 +90,6 @@ export const DebugConsole = function (callback) {
 	`); // HTML_TERMINAL
 
 
-	//... Some elements are being added separately, see  //LOGIN FORM
 	const ELEMENT_SELECTORS = {
 		html        : 'html',
 		terminal    : true,  // Points to the container itself
@@ -116,7 +115,7 @@ export const DebugConsole = function (callback) {
 		help        : 'button.help',
 		btnClear    : 'button.clear',
 		btnEnter    : 'button.enter',
-		btnClose    : 'button.close',            //...! => exit
+		btnClose    : 'button.close',
 	// Login form
 		userName    : '[name=username]',
  		nickName    : '[name=nickname]',
@@ -138,13 +137,13 @@ console.log( 'command_button', command_button );
 		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
 	}
 	const KEYBOARD_SHORTCUTS = [
-  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1);  },
-},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1);  },
-},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)         },
-},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)         },
-},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.history.back();          },
-},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.history.forward();       },
-},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.shell.clearInput();      },
+  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1); },
+},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1); },
+},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)        },
+},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)        },
+},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.history.back();         },
+},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.history.forward();      },
+},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.shell.clearInput();     },
 },{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.clearScreen();    },
 },{ event:'keydown', key:'PageUp'    , modifiers:['shift']         , action:()=>{ self.shell.scrollPageUp();   },
 },{ event:'keydown', key:'PageDown'  , modifiers:['shift']         , action:()=>{ self.shell.scrollPageDown(); },
@@ -175,7 +174,7 @@ console.log( 'command_button', command_button );
 // Menus' .items can be pre-populated with buttons in TERMINAL_HTML
 // Highlight buttons: Set special color in layout.css:/* SPECIAL COLOR */
 // self.elements[menu]
-{ menu:'authItems' , name:'login',   script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
+{ menu:'authItems' , name:'login'      , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
 { menu:'authItems' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
 { menu:'authItems' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
 { menu:'authItems' , name:'logout'     , script:'session\n\tlogout' },
