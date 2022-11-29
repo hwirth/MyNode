@@ -37,14 +37,8 @@ export const DebugConsole = function (callback) {
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const SHORTHAND_COMMANDS = {
-		'nick'  : 'chat\n\tnick:*',
-		'who'   : 'session\n\twho',
-	};
-
 	const HTML_TERMINAL = (`
 <div class="terminal loading">
-
 	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
 		<output></output>
 		<textarea autocomplete="off"></textarea>

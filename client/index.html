@@ -37,7 +37,7 @@
 	addEventListener( 'unhandledrejection', watchdog );
 	function show_status (text) { document.querySelector('header.noscript p').innerHTML = text; }
 	function show_boot_error (error) {
-		console.log( 'Error:', error );
+		console.dir( 'Error:', error );
 		document.querySelector('html').classList.add('init');
 		setTimeout( ()=>{
 			document.querySelector('html').classList.add('init', 'error');
