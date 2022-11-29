@@ -30,6 +30,7 @@ export const DebugConsole = function (callback) {
 
 	// Properties
 	this.elements;    // Quick access to buttons, menus, etc. Will be queryRequest'ed from HTML_TERMINAL
+	                  // and extended when buttons and toggles are created
 	this.fontNames;   // Available fonts, extracted from CSS variables
 
 
@@ -173,7 +174,7 @@ console.log( 'command_button', command_button );
 // New buttons added to the DOM, order of entries affects positioning in menus
 // Menus' .items can be pre-populated with buttons in TERMINAL_HTML
 // Highlight buttons: Set special color in layout.css:/* SPECIAL COLOR */
-// self.elements[menu]
+// self.elements[menu] - Where to place the button, name is assigned to its class list
 { menu:'authItems' , name:'login'      , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
 { menu:'authItems' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
 { menu:'authItems' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
@@ -199,14 +200,14 @@ console.log( 'command_button', command_button );
 		// Buttons not in HTML_TERMINAL will be added by  create_toggles() .
 		// Atm. only Alt+Key works with toggles
 
-		const tH     = document.documentElement;
+		const tH = document.documentElement;
 		const tT = self.elements.terminal;
-		const tO   = self.elements.output;
+		const tO = self.elements.output;
 
 		const T = PRESETS.TOGGLE;
 		const F = PRESETS.FILTER;
 
-		return [   //...! Sync with keyboard shortcuts
+		return [   //... Sync with keyboard shortcuts
 { name:'terminal'   , preset:T.TERMINAL   , target:tT , menu:null          , shortcut:'Q',  caption:null         },
 { name:'ping'       , preset:F.PING       , target:tT , menu:'filterItems' , shortcut:'P',  caption:'Ping'       },
 { name:'cep'        , preset:F.CEP        , target:tO , menu:'filterItems' , shortcut:null, caption:'CEP'        },
@@ -246,18 +247,20 @@ console.log( 'command_button', command_button );
 
 	function on_keydown (event) {//... Move to  on_keyboard_event?
 		const shift = event.shiftKey;
-		const ctrl = event.ctrlKey;
-		const alt = event.altKey;
-		const key = event.key;
+		const ctrl  = event.ctrlKey;
+		const alt   = event.altKey;
+		const key   = event.key;
 
-		if ((key != 'Shift') && (key != 'Control') && (key != 'Alt') && (key != 'Meta')) self.audio.beep();
+		if ((key != 'Shift') && (key != 'Control') && (key != 'Alt') && (key != 'Meta')) {
+			self.audio.beep();
+		}
 
 	 	if (event.keyCode == 13) {
-			if (!event.shiftKey && !event.ctrlKey && !event.altKey) {
+			if (!shift && !ctrl && !alt) {
 				event.preventDefault();
 				self.elements.btnEnter.click();
 
-			} else if (event.shiftKey || !event.ctrlKey || !event.altKey) {
+			} else if (shift || !ctrl || !alt) {
 				const text = self.elements.input.value;
 				if (text.charAt( 0 ) == '.') {
 					self.elements.input.value = self.shell.parsers.parseShortRequest( text );
@@ -272,7 +275,7 @@ console.log( 'command_button', command_button );
 			const input           = self.elements.input;
 			const selection_start = input.selectionStart;
 			const before          = input.value.substring( 0, input.selectionStart );
-			const after           = input.value.substring( input.selectionEnd )
+			const after           = input.value.substring( input.selectionEnd );
 
 			input.value           = before + '\t' + after;
 			input.selectionEnd    = selection_start + EXTRA_LINES + 1;
