@@ -1,4 +1,4 @@
-// debug_console.js
+// config.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -16,8 +16,8 @@ export const DEBUG = {
 };
 
 export const SETTINGS = {
-	CSS_FILE_NAME : '/terminal/layout.css',
-	CSS_VARS_NAME : '/terminal/variables.css',
+	CSS_FILE_NAME : '/cep/terminal/css/layout.css',
+	CSS_VARS_NAME : '/cep/terminal/css/variables.css',
 
 	CONNECT_ON_START     : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS     : true,

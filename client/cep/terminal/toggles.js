@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { SETTINGS       } from '../cep/config.js';
+import { SETTINGS } from '../config.js';
 
 
 export function create_toggles (terminal, definition) {

@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { SETTINGS, DEBUG } from '../cep/config.js';
+import { SETTINGS, DEBUG } from '../config.js';
 
 
 export function StatusBar (container_element) {

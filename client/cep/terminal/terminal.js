@@ -5,9 +5,9 @@
 
 "use strict";
 
-import { SETTINGS       } from '../cep/config.js';
-import { PRESETS, DEBUG } from '../cep/config.js';
-import { GET            } from '../cep/helpers.js';
+import { SETTINGS       } from '../config.js';
+import { PRESETS, DEBUG } from '../config.js';
+import { GET            } from '../helpers.js';
 import { StatusBar      } from './status.js';
 import { DomActions     } from './dom_actions.js';
 import { Audio          } from './audio.js';
@@ -673,7 +673,7 @@ console.log( 'command_button', command_button );
 
 			self.shell.version += '^[' + shortcuts.split('').sort().join('') + '] ';
 			self.shell.printVersion('');
-			await self.shell.showFile( '/terminal/issue.txt' );
+			await self.shell.showFile( '/cep/terminal/txt/issue.txt' );
 
 			if (GET.has('username')) self.elements.userName.value = GET.get('username');
 			if (GET.has('nickname')) self.elements.nickName.value = GET.get('nickname');

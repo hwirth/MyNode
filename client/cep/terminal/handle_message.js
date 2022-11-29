@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { SETTINGS } from '../cep/config.js';
+import { SETTINGS } from '../config.js';
 
 
 export function handle_message (terminal, message, callback) {

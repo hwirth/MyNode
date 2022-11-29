@@ -5,10 +5,10 @@
 
 "use strict";
 
-import { SETTINGS } from '../cep/config.js';
+import { SETTINGS } from '../../config.js';
 
 
-export const ShellInput = function (terminal, callback) {
+export const ShellInput = function (shell, callback) {
 	const self = this;
 
 	const EXTRA_LINES = 1;   // When adjusting textarea size (rows), make it bigger
@@ -27,7 +27,7 @@ export const ShellInput = function (terminal, callback) {
 	this.focusPrompt = function (position = 0) {
 		const pos1  = -1;
 		const end   = +1;
-		const input = terminal.elements.input;
+		const input = shell.elements.input;
 
 		self.adjustTextarea();
 		input.focus();
@@ -39,14 +39,14 @@ export const ShellInput = function (terminal, callback) {
 
 
 	this.adjustTextarea = function () {
-		const bang = terminal.elements.input.value.charAt( 0 );
-		const has_newlines = (terminal.elements.input.value.indexOf('\n') >= 0);
+		const bang = shell.elements.input.value.charAt( 0 );
+		const has_newlines = (shell.elements.input.value.indexOf('\n') >= 0);
 		const is_request = has_newlines || (bang == '/') || (bang == '.');
-		terminal.elements.input.classList.toggle( 'request', is_request );
+		shell.elements.input.classList.toggle( 'request', is_request );
 
-		const lines = terminal.elements.input.value.split('\n');
+		const lines = shell.elements.input.value.split('\n');
 		const nr_lines = (lines.length > 0) ? lines.length : 1;
-		terminal.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
+		shell.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
 
 		const cssvar_height
 		= getComputedStyle( document.documentElement )
@@ -54,7 +54,7 @@ export const ShellInput = function (terminal, callback) {
 		;
 
 		const scale = parseFloat( cssvar_height || 1 );
-		terminal.elements.input.style.height = scale * (terminal.elements.input.rows + 1) + 'em';
+		shell.elements.input.style.height = scale * (shell.elements.input.rows + 1) + 'em';
 
 	}; // adjustTextarea
 
@@ -71,13 +71,13 @@ export const ShellInput = function (terminal, callback) {
 	this.onEnterClick = async function (event) {
 
 		// Replace chat commands with actual ones
-		let text = terminal.elements.input.value.trim();
+		let text = shell.elements.input.value.trim();
 
 		if ((text.trim() == '') && (event.button === 0)) {
-			if (terminal.output.isScrolledUp()) {
-				terminal.output.scrollDown();
+			if (shell.isScrolledUp()) {
+				shell.scrollDown();
 			} else {
-				terminal.output.print( '&nbsp;', 'mark' );
+				shell.print( '&nbsp;', 'mark' );
 			}
 			return;
 		}
@@ -90,7 +90,7 @@ export const ShellInput = function (terminal, callback) {
 		}
 
 		if (text.charAt(0) == '.') {
-			text = terminal.elements.input.value = terminal.parsers.parseShortRequest( text );
+			text = shell.elements.input.value = shell.parsers.parseShortRequest( text );
 			//...? self.focusPrompt();
 			//...? return;
 		}
@@ -99,8 +99,8 @@ export const ShellInput = function (terminal, callback) {
 			await remote_command( text );
 		}
 
-		terminal.history.add( text );
-		terminal.elements.input.value = '';
+		shell.history.add( text );
+		shell.elements.input.value = '';
 
 		self.focusPrompt();
 
@@ -111,11 +111,11 @@ export const ShellInput = function (terminal, callback) {
 		function perform_local (command) {
 			if (command.charAt(0) != '/') return false;
 
-			terminal.output.print( command, 'request' );
+			shell.print( command, 'request' );
 
 			const token     = command.split(' ')[0].slice(1);
 			const parameter = command.slice( token.length + 2 );
-			const show_file = terminal.output.showFile;
+			const show_file = shell.showFile;
 
 			switch (token) {
 				case 'connect': {
@@ -123,35 +123,35 @@ export const ShellInput = function (terminal, callback) {
 					break;
 				}
 				case 'disconnect': {
-					terminal.elements.navCEP.classList = 'connection warning';
-					terminal.elements.btnCEP.innerText = 'Offline';//... Needs callback
-					terminal.elements.title = '';
+					shell.elements.navCEP.classList = 'connection warning';
+					shell.elements.btnCEP.innerText = 'Offline';//... Needs callback
+					shell.elements.title = '';
 					callback.disconnect();
 					break;
 				}
-				case 'version' :  terminal.output.printVersion();                 break;
-				case 'clear'   :  terminal.output.clearScreen();                  break;
-				case 'help'    :  show_file( 'terminal/help.txt'  , parameter );  break;
-				case 'issue'   :  show_file( 'terminal/issue.txt' , parameter );  break;
-				case 'readme'  :  show_file( 'README'             , parameter );  break;
-				case 'todo'    :  show_file( 'TODO'               , parameter );  break;
-				case 'manual'  :  show_file( 'MyNode.html'        , parameter );  break;
-				case 'diary'   :  show_file( 'dev_diary.html'     , parameter );  break;
+				case 'version' :  shell.printVersion();   break;
+				case 'clear'   :  shell.clearScreen();    break;
+				case 'help'    :  show_file( '/cep/terminal/txt/help.txt'  , parameter );  break;
+				case 'issue'   :  show_file( '/cep/terminal/txt/issue.txt' , parameter );  break;
+				case 'readme'  :  show_file( '/docs/README'                , parameter );  break;
+				case 'todo'    :  show_file( '/docs/TODO'                  , parameter );  break;
+				case 'manual'  :  show_file( '/docs/MyNode.html'           , parameter );  break;
+				case 'diary'   :  show_file( '/docs/dev_diary.html'        , parameter );  break;
 				case 'test': {
-					for ( let i=0 ; i<5 ; ++i ) terminal.status.show.show( 'Test message ' + i );
+					for ( let i=0 ; i<5 ; ++i ) shell.status.show( 'Test message ' + i );
 					break;
 				}
 				case 'string'  : {
 					// Send raw string to the server, trying to crash it
-					terminal.output.print( 'Sending string: <q>' + parameter + '</q>', 'string' );
+					shell.print( 'Sending string: <q>' + parameter + '</q>', 'string' );
 					callback.send( parameter );
 					break;
 				}
 				default: {
-					terminal.elements.navCEP.classList = 'connection error';
-					terminal.elements.btnCEP.innerText = 'Error';
-					terminal.elements.title = 'Unknown command in perform_local()';
-					terminal.output.print( 'Unrecognized command', 'cep' );
+					shell.elements.navCEP.classList = 'connection error';
+					shell.elements.btnCEP.innerText = 'Error';
+					shell.elements.title = 'Unknown command in perform_local()';
+					shell.print( 'Unrecognized command', 'cep' );
 				}
 			}
 
@@ -164,10 +164,10 @@ export const ShellInput = function (terminal, callback) {
 		function send_json (text) {
 			const request
 			= (text.indexOf('\n') >= 0)
-			? terminal.parsers.textToRequest( text )
+			? shell.parsers.textToRequest( text )
 			: {chat: { say: text }}
 			;
-			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++terminal.requestId;
+			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++shell.requestId;
 			callback.send( request );
 		}
 
@@ -176,7 +176,7 @@ export const ShellInput = function (terminal, callback) {
 			let nr_attempts = 0;
 
 			if (!callback.isConnected()) {
-				terminal.output.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
+				shell.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
 
 				await callback.connect();  //...! Doesn't wait for onConnect yet
 				while ((nr_attempts++ < max_attempts) && !callback.isConnected()) {
@@ -186,10 +186,10 @@ export const ShellInput = function (terminal, callback) {
 				}
 			}
 
-			if (nr_attempts == max_attempts) terminal.output.print( 'Aborting auto-connect', 'cep' );
+			if (nr_attempts == max_attempts) shell.print( 'Aborting auto-connect', 'cep' );
 
 			if (callback.isConnected()) {
-				terminal.dom.animatePing( /*transmit*/true );
+				shell.dom.animatePing( /*transmit*/true );
 				send_json( text );
 
 			} else {
@@ -198,7 +198,7 @@ export const ShellInput = function (terminal, callback) {
 						if (callback.isConnected()) {
 							send_json( text );
 						} else {
-							terminal.output.print( 'Not connected', 'error' );
+							shell.print( 'Not connected', 'error' );
 						}
 						done();
 
@@ -209,18 +209,6 @@ export const ShellInput = function (terminal, callback) {
 		} // remote_command
 
 	}; // onEnterClick
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// CONSTRUCTOR
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.init = async function () {
-		console.log( 'Input.init' );
-
-	}; // init
-
-	self.init();
 
 }; // ShellInput
 

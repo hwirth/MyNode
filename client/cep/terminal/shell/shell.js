@@ -5,8 +5,8 @@
 
 "use strict";
 
-import { SETTINGS       } from '../../cep/config.js';
-import { PRESETS, DEBUG } from '../../cep/config.js';
+import { SETTINGS       } from '../../config.js';
+import { PRESETS, DEBUG } from '../../config.js';
 import { Parsers        } from './parsers.js';
 import { ShellOutput    } from './output.js';
 import { ShellInput     } from './input.js';

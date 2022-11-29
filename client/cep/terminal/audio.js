@@ -10,8 +10,8 @@
  */
 import * as DUMMY_SamJs from './samjs.js';
 
-import { SETTINGS, PRESETS } from '../cep/config.js';
-import { GET               } from '../cep/helpers.js';
+import { SETTINGS, PRESETS } from '../config.js';
+import { GET               } from '../helpers.js';
 
 
 export const Audio = function (terminal) {

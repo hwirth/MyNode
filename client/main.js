@@ -7,7 +7,7 @@
 
 import { SETTINGS, DEBUG } from './cep/config.js';
 import { WebSocketClient } from './cep/websocket.js';
-import { DebugConsole    } from './terminal/terminal.js';
+import { DebugConsole    } from './cep/terminal/terminal.js';
 
 
 const Application = function () {

@@ -5,7 +5,8 @@
 
 "use strict";
 
-export const ShellOutput = function (terminal, callback, CEP_VERSION) {
+
+export const ShellOutput = function (shell, callback, CEP_VERSION) {
 	const self = this;
 
 
@@ -16,24 +17,24 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 
 
 	this.clearScreen = function () {
-		terminal.elements.output.innerHTML = terminal.elements.input.value = '';
+		shell.elements.output.innerHTML = shell.elements.input.value = '';
 
 	} // clearScreen
 
 
 	this.scrollDown = function () {
-		if (!terminal.toggles//...?
-		|| terminal.toggles && terminal.toggles.scroll.enabled) {
-			terminal.elements.output.scrollBy(0, 99999);
+		if (!shell.toggles//...?
+		|| shell.toggles && shell.toggles.scroll.enabled) {
+			shell.elements.output.scrollBy(0, 99999);
 		}
 
 	}; // scrollDown
 
 
 	this.isScrolledUp = function () {
-		const client = terminal.elements.output.clientHeight;
-		const height = terminal.elements.output.scrollHeight;
-		const top    = terminal.elements.output.scrollTop;
+		const client = shell.elements.output.clientHeight;
+		const height = shell.elements.output.scrollHeight;
+		const top    = shell.elements.output.scrollTop;
 		console.log(
 			'DebugConsole.isScrolledUp: clientHeight:',
 			client, 'scrollHeight:', height, 'scrollTop:', top,
@@ -44,19 +45,19 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 
 
 	this.scrollPageUp = function () {
-		terminal.elements.output.scrollBy( 0, -terminal.elements.output.clientHeight );
+		shell.elements.output.scrollBy( 0, -shell.elements.output.clientHeight );
 	}
 
 
 	this.scrollPageDown = function () {
-		terminal.elements.output.scrollBy( 0, terminal.elements.output.clientHeight );
+		shell.elements.output.scrollBy( 0, shell.elements.output.clientHeight );
 	}
 
 
 	this.deleteToMarker = function () {
 		var element;
-		while (element = terminal.elements.output.querySelector(':scope > :last-child') ) {
-			terminal.elements.output.removeChild( element );
+		while (element = shell.elements.output.querySelector(':scope > :last-child') ) {
+			shell.elements.output.removeChild( element );
 			if (element.classList.contains( 'mark' )) return;
 		}
 	}
@@ -71,7 +72,7 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 		const file_extension = file_name.split('.').pop();
 		switch (file_extension) {
 			case 'html': {
-				terminal.toggles.compact.disable();
+				shell.toggles.compact.disable();
 
 				const iframe     = document.createElement( 'iframe' );
 				iframe.src       = file_name + '?included' + (id_selector ? '#'+id_selector : '');
@@ -83,13 +84,13 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 					iframe.style.height = (
 						iframe.contentWindow.document.documentElement.scrollHeight + 'px'
 					);
-					terminal.toggles.scroll.enable();
+					shell.toggles.scroll.enable();
 					self.scrollDown();
-					setTimeout( ()=>terminal.toggles.scroll.disable(), 500 );
+					setTimeout( ()=>shell.toggles.scroll.disable(), 500 );
 				});
-				const last_print = terminal.elements.output.querySelector( ':scope > :last-child' );
+				const last_print = shell.elements.output.querySelector( ':scope > :last-child' );
 				iframe.addEventListener( 'click', (event)=>{
-					terminal.elements.output.scrollTop = last_print.offsetTop - 15;
+					shell.elements.output.scrollTop = last_print.offsetTop - 15;
 				});
 				last_print.innerHTML += '\n';
 				last_print.appendChild( iframe );
@@ -171,7 +172,7 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 			let message_html = (
 				(typeof message == 'string')
 				? message
-				: terminal.parsers.requestToText( message )
+				: shell.requestToText( message )
 			)
 			.replace( /&/g, '&amp;' )
 			.replace( /</g, '&lt;'  )
@@ -199,7 +200,7 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 
 
 		// Let user scroll up   //... Make optional
-		const o = terminal.elements.output;
+		const o = shell.elements.output;
 		const do_scroll = (o.scrollHeight - o.scrollTop >= o.clientHeight - 1);
 
 		let print_message = null;
@@ -220,7 +221,7 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 		const new_element = document.createElement( 'pre' );
 		if (class_name) new_element.className = class_name;
 		new_element.innerHTML = print_message.trim();
-		terminal.elements.output.appendChild( new_element );
+		shell.elements.output.appendChild( new_element );
 
 		['response', 'broadcast'].forEach( (category)=>{
 			if (message[category] && message[category].type) {
@@ -233,28 +234,16 @@ export const ShellOutput = function (terminal, callback, CEP_VERSION) {
 
 		// Visualize/sonifiy success/failure
 		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
-			terminal.bit.say( message.broadcast.success );
+			shell.bit.say( message.broadcast.success );
 		}
 
 		if (message.response && (typeof message.response.success != 'undefined')) {
 			// We might receive several responses, when we sent several requersts,
 			// so we tell the bit to stack its answers:
-			terminal.bit.say( message.response.success, message.response.request - 1 );
+			shell.bit.say( message.response.success, message.response.request - 1 );
 		}
 
 	}; // print
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// CONSTRUCTOR
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.init = async function () {
-		console.log( 'ShellOutput.init' );
-
-	}; // init
-
-
-	self.init();
 
 }; // ShellOutput
 
