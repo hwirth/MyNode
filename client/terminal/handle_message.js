@@ -24,7 +24,7 @@ export function handle_message (terminal, message, callback) {
 				case 'chat/html'    :  update_chat_html();    break;
 				case 'server/name'  :  return update_server_name();
 			}
-			return terminal.print( message, 'update error' );
+			return terminal.shell.print( message, 'update error' );
 		}
 		case 'broadcast': {
 			let type = message.broadcast.type;
@@ -69,7 +69,7 @@ export function handle_message (terminal, message, callback) {
 		else if (typeof message.update    != 'undefined') class_name = 'update'
 		;
 
-		terminal.print( message, class_name );
+		terminal.shell.print( message, class_name );
 
 	} // print_message
 
@@ -93,11 +93,11 @@ export function handle_message (terminal, message, callback) {
 	function update_chat_say () {
 		print_message();
 		const sender = message.update.nickName || message.update.userName;
-		terminal.print( {[sender]: message.update.chat}, 'chat' );
+		terminal.shell.print( {[sender]: message.update.chat}, 'chat' );
 	}
 
 	function update_chat_html () {
-		terminal.print({ html: message.update.html });
+		terminal.shell.print({ html: message.update.html });
 	}
 
 

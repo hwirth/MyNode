@@ -54,7 +54,7 @@ export function create_toggles (terminal, definition) {
 		if (element.tagName == 'BUTTON') {   //...? Do we still have non-buttons?
 			element.addEventListener( 'click', ()=>{
 				flip();
-				terminal.focusPrompt();
+				terminal.shell.focusPrompt();
 			});
 		}
 
@@ -77,16 +77,14 @@ setTimeout( ()=>{
 				SETTINGS.HIDE_MESSAGES.PING = terminal.toggles.ping.enabled;
 });  //...? Argh. Why?
 			if (toggle.name == 'light') {
-				const prefers_light_scheme
-				= window.matchMedia( '(prefers-color-scheme:light)' ).matches
-				^ toggle.enabled
-				;
-				terminal.elements.html.classList.toggle( 'light', prefers_light_scheme );
-				terminal.elements.html.classList.toggle( 'dark', !prefers_light_scheme );
+				const matches = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
+				if (typeof toggle.enabled == 'undefined') toggle.enabled = matches;
+				terminal.elements.html.classList.toggle( 'light', toggle.enabled );
+				terminal.elements.html.classList.toggle( 'dark', !toggle.enabled );
 			}
 
-			terminal.scrollDown();
-			if (is_terminal && toggle.enabled) terminal.focusPrompt();
+			terminal.shell.scrollDown();
+			if (is_terminal && toggle.enabled) terminal.shell.focusPrompt();
 			setTimeout( update_toggle_state );
 
 		} // update_dom

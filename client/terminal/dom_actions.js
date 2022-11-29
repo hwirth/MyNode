@@ -154,19 +154,11 @@ list.appendChild( button );
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.exit = function () {
-		return Promise.resolve();
-
-	}; // exit
-
-
 	this.init = async function () {
-		return Promise.resolve();
-
 	}; // init
 
 
-	return self.init().then( ()=>self );   // const dom = await new DomActions()
+	self.init();
 
 }; // DomActions
 

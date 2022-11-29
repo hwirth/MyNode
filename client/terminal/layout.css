@@ -363,7 +363,7 @@ X.terminal textarea:focus { caret-color:#f0f; }
 /* SPECIAL COLOR */
 .terminal button.ssnStat,
 .terminal button.clear,
-.terminal button.btnHelp,
+.terminal button.help,
 .terminal button.bit,
 .terminal button.token,
 .terminal button.login,

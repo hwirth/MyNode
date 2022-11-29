@@ -11,11 +11,9 @@ import { GET            } from '../cep/helpers.js';
 import { StatusBar      } from './status.js';
 import { DomActions     } from './dom_actions.js';
 import { Audio          } from './audio.js';
-import { History        } from './history.js';
 import { create_toggles } from './toggles.js';
 import { handle_message } from './handle_message.js'
-
-let CEP_VERSION = 'v0.4.1α';   // Keyboard shortcuts will be appended in  self.init()
+import { CEPShell       } from './shell/shell.js';
 
 
 export const DebugConsole = function (callback) {
@@ -25,17 +23,14 @@ export const DebugConsole = function (callback) {
 
 	// Sub-objects
 	this.dom;         // DomActions() - Activate CSS animations, populate listWHo, ...
-	this.fontNames    // Available fonts, names extracted from CSS variables in  layout.css .
 	this.toggles;     // Options that can be toggled, connected to their buttons in the Toggle menu
 	this.audio;       // Sound effects (Keyboard beep and speech synthesis)
 	this.bit;         // The bit. It can say "yes" or "now" and glow green or red accordingly
 	this.status;      // Text shown in the footer toolbar. When nothing to show, displays the time.
-	this.history;     // Command history like in your shell with cursor-up
 
 	// Properties
 	this.elements;    // Quick access to buttons, menus, etc. Will be queryRequest'ed from HTML_TERMINAL
 	this.fontNames;   // Available fonts, extracted from CSS variables
-	this.requestId;   // Tag for requests, will be increased with each request and automatically added to the JSON
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -46,9 +41,6 @@ export const DebugConsole = function (callback) {
 		'nick'  : 'chat\n\tnick:*',
 		'who'   : 'session\n\twho',
 	};
-
-	const EXTRA_LINES = 1;   // When adjusting textarea size (rows), make it bigger
-	const MIN_LINES   = 0;   // When adjusting textarea size (rows), make it at least this
 
 	const HTML_TERMINAL = (`
 <div class="terminal loading">
@@ -152,17 +144,17 @@ console.log( 'command_button', command_button );
 		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
 	}
 	const KEYBOARD_SHORTCUTS = [
-  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1); },
-},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1); },
-},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)        },
-},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)        },
-},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.history.back();     },
-},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.history.forward();  },
-},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.clearInput();       },
-},{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.clearScreen();      },
-},{ event:'keydown', key:'PageUp'    , modifiers:['shift']         , action:()=>{ self.scrollPageUp();     },
-},{ event:'keydown', key:'PageDown'  , modifiers:['shift']         , action:()=>{ self.scrollPageDown();   },
-},{ event:'keydown', key:'Delete'    , modifiers:['shift', 'ctrl'] , action:()=>{ self.deletetToMarker();  },
+  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1);  },
+},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1);  },
+},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)         },
+},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)         },
+},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.history.back();          },
+},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.history.forward();       },
+},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.shell.clearInput();      },
+},{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.clearScreen();    },
+},{ event:'keydown', key:'PageUp'    , modifiers:['shift']         , action:()=>{ self.shell.scrollPageUp();   },
+},{ event:'keydown', key:'PageDown'  , modifiers:['shift']         , action:()=>{ self.shell.scrollPageDown(); },
+},{ event:'keydown', key:'Delete'    , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.deleteToMarker(); },
 // Toggles
 },{ event:'keydown', key:'a', modifiers:['alt'], action:()=>{ self.toggles.animate   .toggle(); },
 },{ event:'keydown', key:'b', modifiers:['alt'], action:()=>{ self.toggles.bit       .toggle(); },
@@ -253,8 +245,8 @@ console.log( 'command_button', command_button );
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_input_change () {
-		self.adjustTextarea();
-		self.scrollDown();
+		self.shell.adjustTextarea();
+		self.shell.scrollDown();
 
 	} // on_input_change
 
@@ -275,7 +267,7 @@ console.log( 'command_button', command_button );
 			} else if (event.shiftKey || !event.ctrlKey || !event.altKey) {
 				const text = self.elements.input.value;
 				if (text.charAt( 0 ) == '.') {
-					self.elements.input.value = parse_short_request( text );
+					self.elements.input.value = self.shell.parsers.parseShortRequest( text );
 					self.adjustTextarea();
 					return;
 				}
@@ -365,9 +357,9 @@ console.log( 'command_button', command_button );
 		if (!event.target.dataset.command) return;
 
 		event.preventDefault();
-		self.elements.input.value = parse_button_script( event.target.className );
-		self.adjustTextarea();
-		self.scrollDown();
+		self.elements.input.value = self.shell.parsers.parseButtonScript( event.target.className );
+		self.shell.adjustTextarea();
+		self.shell.scrollDown();
 
 	} // on_script_button_click
 
@@ -390,9 +382,9 @@ console.log( 'command_button', command_button );
 			closest_pre.parentNode.removeChild( closest_pre );
 		}
 
-		if      (event.target === self.elements.output) self.focusPrompt( -1 )//... Expand eats this
-		else if (event.target === self.elements.input ) self.focusPrompt(  0 )
-		else if (event.target === self.elements.shell ) self.focusPrompt( +1 )
+		if      (event.target === self.elements.output) self.shell.focusPrompt( -1 )//... Expand eats this
+		else if (event.target === self.elements.input ) self.shell.focusPrompt(  0 )
+		else if (event.target === self.elements.shell ) self.shell.focusPrompt( +1 )
 		;
 
 		if      (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
@@ -437,615 +429,14 @@ console.log( 'command_button', command_button );
 		if (command) {
 			// Command menu button was clicked
 			event.preventDefault();
-			self.elements.input.value = parse_button_script( command );
+			self.elements.input.value = self.shell.parsers.parseButtonScript( command );
 			self.elements.btnEnter.click();
 
 		} else {
-			self.focusPrompt();
+			self.shell.focusPrompt();
 		}
 
 	} // on_dblclick
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// INPUT
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.focusPrompt = function (position = 0) {
-		const pos1  = -1;
-		const end   = +1;
-		const input = self.elements.input;
-
-		self.adjustTextarea();
-		input.focus();
-
-		if (position == pos1) input.selectionEnd = input.selectionStart = 0;
-		if (position == end ) input.selectionEnd = input.selectionStart = input.value.length;
-
-	} // focusPrompt
-
-
-	this.adjustTextarea = function () {
-		const bang = self.elements.input.value.charAt( 0 );
-		const has_newlines = (self.elements.input.value.indexOf('\n') >= 0);
-		const is_request = has_newlines || (bang == '/') || (bang == '.');
-		self.elements.input.classList.toggle( 'request', is_request );
-
-		const lines = self.elements.input.value.split('\n');
-		const nr_lines = (lines.length > 0) ? lines.length : 1;
-		self.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
-
-		const cssvar_height
-		= getComputedStyle( document.documentElement )
-		.getPropertyValue( '--terminal-line-height' )
-		;
-
-		const scale = parseFloat( cssvar_height || 1 );
-		self.elements.input.style.height = scale * (self.elements.input.rows + 1) + 'em';
-
-	}; // adjustTextarea
-
-
-// PARSERS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function parse_button_script (script_name) {
-		let script   = BUTTON_SCRIPTS.find( script => script.name == script_name ).script;
-		const username = self.elements.userName.value;
-		const nickname = self.elements.nickName.value;
-		if (nickname && !username) self.elements.userName.value = 'guest';
-		const second_factor = self.elements.factor2.value || 'null';
-		script = script.replaceAll( '\n%N', (self.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
-		const result = (
-			script
-			.replaceAll( '%u', username )
-			.replaceAll( '%n', nickname )
-			.replaceAll( '%p', self.elements.passWord.value || 'null' )
-			.replaceAll( '%t', second_factor )
-			.split('\n')
-			.filter( line => line.indexOf('password: null') < 0 )
-			.filter( line => line.indexOf('factor2: null') < 0 )
-			.join('\n')
-		);
-
-		return result;
-
-	} // parse_button_script
-
-
-	this.requestToText = function (request, indentation = '') {
-		let text = '';
-
-		Object.keys( request ).forEach( (key)=>{
-			if ((typeof request[key] == 'object') && (request[key] !== null)) {
-				text
-				+= indentation + key + '\n'
-				+  self.requestToText( request[key], indentation + '\t' )
-				;
-			} else {
-				if (typeof request[key] == 'undefined') {
-					text += indentation + key + '\n';
-				} else {
-					text += indentation + key + ': ' + request[key] + '\n';
-				}
-			}
-		});
-
-		if (indentation === '') {
-			text = text.trim();
-		}
-
-		return text;
-
-	}; // requestToText
-
-
-	this.textToRequest = function (text, id = null) {
-		const lines = text.split( '\n' );
-
-		function find_indentation (text) {
-			var i;
-			for ( i = 0 ; (i < text.length) && (text.charAt(i) == '\t') ; ++i );
-			return i;
-		}
-
-		const result = {};
-		const stack = [result];
-		let current_indentation = 0;
-
-		const request = parse_line( 0 );
-
-		if (id) {
-			const new_request = { tag: id };
-			Object.keys( request ).forEach( key => new_request[key] = request[key] );
-			return new_request;
-		} else {
-			return request;
-		}
-
-
-		function parse_line (index, current_indentation = 0) {
-			// Line does not exist: End of text, end recursion:
-			if (typeof lines[index] == 'undefined') return result;
-
-			const line_indentation = find_indentation( lines[index] );
-			if (line_indentation < current_indentation) {
-				const difference = current_indentation - line_indentation;
-				for (let i = 0; i < difference; ++i) {
-					stack.pop();
-					--current_indentation;
-				}
-			}
-
-			// Add entry to current parent
-			const parent = stack[ stack.length - 1 ];
-			const parts = lines[index].split( ':', 2 );   // Get key and value
-			if (parts.length == 2) {
-				// Actually has key and value
-				const key = lines[index].split( ':', 1 )[0].trim();
-
-				const colon_pos = lines[index].indexOf( ':' );
-				let value = lines[index].slice( colon_pos + 1 ).trim();
-				switch (value) {
-					case 'true'  : value = true;   break;
-					case 'false' : value = false;  break;
-					case 'null'  : value = null;   break;
-				}
-
-				function isNumeric (string) {
-					return !isNaN(parseFloat(string)) && isFinite(string);
-				}
-				if (isNumeric( value )) {
-					value = parseFloat(value);
-				}
-
-				parent[key] = value;
-
-			} else if (parts.length == 1) {
-				// Is a sub-object
-				const key = lines[index].trim();
-				parent[key] = {};
-				stack.push( parent[key] );
-				//...? Expects next line with increased indentation
-				++current_indentation;
-
-			} else {
-				console.log( 'textToRequest: parts.length == 0' );
-			}
-
-			return parse_line( index + 1, current_indentation );
-		}
-
-	}; // textToRequest
-
-
-	function parse_short_request (text) {
-		const parts = text.slice(1).split('.')
-		let result = '';
-		let indentation = 0;
-
-		while (parts.length > 0) {
-			const part = parts.shift();
-
-			if (part === '') {
-				if (--indentation < 0) throw new Error( 'Malformed short request' );
-
-			} else {
-				const pos_comma = part.indexOf( ',' );
-				if (pos_comma >= 0) {
-					part.split( ',' ).forEach( (sub_part)=>{
-						result
-						+= '\n'
-						+  '\t'.repeat( indentation )
-						+  sub_part.replace( '=', ':' )
-						;
-					});
-
-				} else {
-					const pos_equals = part.indexOf( '=' );
-					if (pos_equals >= 0) {
-						result
-						+= '\n'
-						+  '\t'.repeat( indentation )
-						+  part.replace( '=', ':' )
-						;
-					} else {
-						result
-						+= '\n'
-						+  '\t'.repeat( indentation )
-						+  part
-						;
-						++indentation;
-					}
-				}
-			}
-		}
-
-		return result.trim();
-
-	} // parse_short_request
-
-
-// ENTER BUTTON //////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	async function on_enter_click (event) {
-
-		// Replace chat commands with actual ones
-		let text = self.elements.input.value.trim();
-
-		if ((text.trim() == '') && (event.button === 0)) {
-			if (self.isScrolledUp()) self.scrollDown(); else self.print( '&nbsp;', 'mark' );
-			return;
-		}
-
-		if (text.charAt(0) == '/') {
-			const tokens  = text.slice(1).split(' ');
-			const command = SHORTHAND_COMMANDS[ tokens.shift() ];
-			const rest    = tokens.join(' ');
-			if (command) text = command.replace( '*', rest );
-		}
-
-		if (text.charAt(0) == '.') {
-			text = self.elements.input.value = parse_short_request( text );
-			//...? self.focusPrompt();
-			//...? return;
-		}
-
-		if (!perform_local( text )) {
-			await remote_command( text );
-		}
-
-		self.history.add( text );
-		self.elements.input.value = '';
-
-		self.focusPrompt();
-
-		return;
-
-
-// LOCAL COMMAND /////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		function perform_local (command) {
-			if (command.charAt(0) != '/') return false;
-
-			self.print( command, 'request' );
-
-			const token     = command.split(' ')[0].slice(1);
-			const parameter = command.slice( token.length + 2 );
-
-			switch (token) {
-				case 'connect': {
-					callback.connect( parameter || SETTINGS.WEBSOCKET.URL );
-					break;
-				}
-				case 'disconnect': {
-					self.elements.navCEP.classList = 'connection warning';
-					self.elements.btnCEP.innerText = 'Offline';//... Needs callback
-					self.elements.title = '';
-					callback.disconnect();
-					break;
-				}
-				case 'version' :  print_version();     break;
-				case 'clear'   :  self.clearScreen();  break;
-				case 'help'    :  show_file( 'terminal/help.txt'  , parameter );  break;
-				case 'issue'   :  show_file( 'terminal/issue.txt' , parameter );  break;
-				case 'readme'  :  show_file( 'README'             , parameter );  break;
-				case 'todo'    :  show_file( 'TODO'               , parameter );  break;
-				case 'manual'  :  show_file( 'MyNode.html'        , parameter );  break;
-				case 'diary'   :  show_file( 'dev_diary.html'     , parameter );  break;
-				case 'test': {
-					for ( let i=0 ; i<5 ; ++i ) self.status.show( 'Test message ' + i );
-					break;
-				}
-				case 'string'  : {
-					// Send raw string to the server, trying to crash it
-					self.print( 'Sending string: <q>' + parameter + '</q>', 'string' );
-					callback.send( parameter );
-					break;
-				}
-				default: {
-					self.elements.navCEP.classList = 'connection error';
-					self.elements.btnCEP.innerText = 'Error';
-					self.elements.title = 'Unknown command in perform_local()';
-					self.print( 'Unrecognized command', 'cep' );
-				}
-			}
-
-			return true;
-
-		} // perform_local
-
-
-// SEND REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		function send_json (text) {
-			const request = (text.indexOf('\n') >= 0) ? self.textToRequest(text) : {chat: { say: text }};
-			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++self.requestId;
-			callback.send( request );
-		}
-
-		async function remote_command (text) {
-			const max_attempts = 10;
-			let nr_attempts = 0;
-
-			if (!callback.isConnected()) {
-				self.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
-
-				await callback.connect();  //...! Doesn't wait for onConnect yet
-				while ((nr_attempts++ < max_attempts) && !callback.isConnected()) {
-					await new Promise( (done)=>{
-						setTimeout( done, SETTINGS.TIMEOUT.RECONNECT );
-					});
-				}
-			}
-
-			if (nr_attempts == max_attempts) self.print( 'Aborting auto-connect', 'cep' );
-
-			if (callback.isConnected()) {
-				self.dom.animatePing( /*transmit*/true );
-				send_json( text );
-
-			} else {
-				await new Promise( (done)=>{
-					setTimeout( ()=>{
-						if (callback.isConnected()) {
-							send_json( text );
-						} else {
-							self.print( 'Not connected', 'error' );
-						}
-						done();
-
-					}, SETTINGS.TIMEOUT.RECONNECT);
-				});
-			}
-
-		} // remote_command
-
-	} // on_enter_click
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// OUTPUT
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function print_version (additional_text) {
-		self.print( 'CEP/Shell-' + CEP_VERSION + additional_text, 'cep' );
-
-	} // print_version
-
-
-	this.scrollDown = function () {
-		if (!self.toggles//...?
-		|| self.toggles && self.toggles.scroll.enabled) {
-			self.elements.output.scrollBy(0, 99999);
-		}
-
-	}; // scrollDown
-
-
-	this.isScrolledUp = function () {
-		const client = self.elements.output.clientHeight;
-		const height = self.elements.output.scrollHeight;
-		const top    = self.elements.output.scrollTop;
-		console.log(
-			'DebugConsole.isScrolledUp: clientHeight:',
-			client, 'scrollHeight:', height, 'scrollTop:', top,
-		);
-		return (height - client) - top;
-
-	}; // isScrolledUp
-
-
-	this.scrollPageUp = function () {
-		self.elements.output.scrollBy( 0, -self.elements.output.clientHeight );
-	}
-
-
-	this.scrollPageDown = function () {
-		self.elements.output.scrollBy( 0, self.elements.output.clientHeight );
-	}
-
-
-	this.deleteToMarker = function () {
-		var element;
-		while (element = self.elements.output.querySelector(':scope > :last-child') ) {
-			self.elements.output.removeChild( element );
-			if (element.classList.contains( 'mark' )) return;
-		}
-	}
-
-
-	async function show_file (file_name, id_selector) {
-		const file_contents = await fetch( file_name ).then( (response)=>{
-			if (! response.ok) throw new Error( 'HTTP error, status = ' + response.status );
-			return response.text();   // returns a Promise
-		});
-
-		const file_extension = file_name.split('.').pop();
-		switch (file_extension) {
-			case 'html': {
-				self.toggles.compact.disable();
-
-				const iframe     = document.createElement( 'iframe' );
-				iframe.src       = file_name + '?included' + (id_selector ? '#'+id_selector : '');
-				iframe.className = 'Xcep htmlfile expand';
-				iframe.setAttribute( 'tabindex'    , '0' );
-				iframe.setAttribute( 'frameborder' , '0' );
-				iframe.setAttribute( 'scrolling'   , 'yes' );
-				iframe.addEventListener( 'load', ()=>{
-					iframe.style.height = (
-						iframe.contentWindow.document.documentElement.scrollHeight + 'px'
-					);
-					self.toggles.scroll.enable();
-					self.scrollDown();
-					setTimeout( ()=>self.toggles.scroll.disable(), 500 );
-				});
-				const last_print = self.elements.output.querySelector( ':scope > :last-child' );
-				iframe.addEventListener( 'click', (event)=>{
-					self.elements.output.scrollTop = last_print.offsetTop - 15;
-				});
-				last_print.innerHTML += '\n';
-				last_print.appendChild( iframe );
-
-				break;
-			}
-			case 'txt': // fall through
-			default: {
-				const html_parsed = (
-					file_contents
-					.split( '//EOF', 1 )[0]
-					.replaceAll( '&', '&amp;' )
-					.replaceAll( '<', '&lt;'  )
-					.replaceAll( '\n[ ]' , '\n[<span class="todo"> </span>]'            )
-					.replaceAll( '\n[!]' , '\n[<span class="todo important">!</span>]'  )
-					.replaceAll( '\n[#]' , '\n[<span class="todo urgent">#</span>]'     )
-					.replaceAll( '\n[?]' , '\n[<span class="todo research">?</span>]'   )
-					.replaceAll( '\n[\\]', '\n[<span class="todo cancelled">\\</span>]' )
-				);
-				const pages = html_parsed.split( '\n#' );
-
-				if (!id_selector) {
-					return self.print( pages[0], 'Xcep textfile expand' );
-				}
-
-				const with_tag = page => page.slice( 0, id_selector.length ) == id_selector;
-				const found_page = pages.find( with_tag ).slice( id_selector.length )
-
-				if (found_page) {
-					self.print( found_page, 'Xcep textfile expand' );
-				} else {
-					self.print( 'Unknown help topic: ' + id_selector, 'cep error' );
-				}
-
-				self.scrollDown();
-			}
-		}
-
-	} // show_file
-
-
-// PRINT /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.print = function (message, class_name = null) {
-
-		function highlight () {
-			// Decorate tokens with HTML
-			const class_names = [
-		/*
-				'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
-				'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
-		*/
-				'true'     , 'false'   , 'null'
-			];
-			const tokens = [
-		/*
-				'/', '.', ':', ';', '{',
-				'[', '(', ')', ']', '}',
-		*/
-				'true', 'false', 'null',
-			];
-
-			const replace_href = (word)=>{
-				//...! Ignores tab-prefixed "words":
-				if ((word.slice(0,7) == 'http://') || (word.slice(0,8) == 'https://')) {
-					const pos_tab = Math.min(
-						(word + ' ').indexOf( ' ' ),
-						(word + '\t').indexOf( '\t' ),
-						(word + '\n').indexOf( '\n' ),
-					);
-					const href = word.slice(0, pos_tab);
-					const rest = word.slice(pos_tab);
-					return '<a target="_blank" href="' + href + '">' + href + '</a>' + rest;
-				} else {
-					return word;
-				}
-			};
-
-			let message_html = (
-				(typeof message == 'string')
-				? message
-				: self.requestToText( message )
-			)
-			.replace( /&/g, '&amp;' )
-			.replace( /</g, '&lt;'  )
-			.replaceAll('\\n', '\n')   // '\\n' for .readme
-			.replaceAll( '&lt;', '###lt###' )
-			.replaceAll( '&gt;', '###gt###' )
-			.replaceAll( '&amp;', '###amp###' )
-			;
-
-			tokens.forEach( (token, index)=>{
-				const html = '<code class="' + class_names[index] + '">' + token + '</code>';
-				message_html = message_html.replaceAll( token, html );
-			});
-
-			message_html = message_html
-			.replaceAll( '###amp###', '&amp;' )
-			.replaceAll( '###gt###', '&gt;' )
-			.replaceAll( '###lt###', '&lt;' )
-			.split(' ').map( replace_href ).join(' ')
-			.split('\n').map( replace_href).join('\n')
-			;
-
-			return message_html;
-		}
-
-
-		// Let user scroll up   //... Make optional
-		const o = self.elements.output;
-		const do_scroll = (o.scrollHeight - o.scrollTop >= o.clientHeight - 1);
-
-		let print_message = null;
-		if (message.html) {
-			print_message = message.html.replaceAll( '<a href', '<a target="_blank" href' );
-			print_message = message.html.replaceAll( '\n', '<br>\n' );
-			class_name = 'html';
-
-		} else {
-			print_message
-			= (typeof message == 'string')
-			? message
-			: highlight( JSON.stringify(message, null, '\t') )
-			;
-		}
-
-		// Create DOM element
-		const new_element = document.createElement( 'pre' );
-		if (class_name) new_element.className = class_name;
-		new_element.innerHTML = print_message.trim();
-		self.elements.output.appendChild( new_element );
-
-		['response', 'broadcast'].forEach( (category)=>{
-			if (message[category] && message[category].type) {
-				new_element.dataset.type = message[category].type;
-			}
-		});
-
-		self.scrollDown();
-
-
-		// Visualize/sonifiy success/failure
-		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
-			self.bit.say( message.broadcast.success );
-		}
-
-		if (message.response && (typeof message.response.success != 'undefined')) {
-			// We might receive several responses, when we sent several requersts,
-			// so we tell the bit to stack its answers:
-			self.bit.say( message.response.success, message.response.request - 1 );
-		}
-
-	}; // print
-
-
-	this.clearScreen = function () {
-		self.elements.output.innerHTML = self.elements.input.value = '';
-
-	} // clearScreen
-
-
-	this.clearInput = function () {
-		self.elements.input.value = '';
-		self.scrollDown();
-
-	} // clearInput
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -1178,18 +569,13 @@ console.log( 'command_button', command_button );
 			return result;
 		}
 
-		self.dom       = await new DomActions( self );
+		self.audio     = await new Audio( self );
+		self.bit       = self.audio.bit;   //... still needs to be created before shell. Move to shell entirely
+		self.dom       = new DomActions( self );
+		self.shell     = new CEPShell( self, callback, BUTTON_SCRIPTS );
 		self.fontNames = extract_css_font_names();
 		self.toggles   = create_toggles( self, create_toggles_definition() );
-		self.audio     = await new Audio( self );
-		self.bit       = self.audio.bit;
 		self.status    = new StatusBar( self.elements.navStatus )
-		self.history   = new History( self.elements.input, {
-			onInputChanged: ()=>{
-				self.adjustTextarea();
-				self.scrollDown();
-			},
-		});
 
 		// MAIN MENU Create macro buttons
 		BUTTON_SCRIPTS.forEach( (script)=>{
@@ -1232,12 +618,12 @@ console.log( 'command_button', command_button );
 		});
 
 		// BUTTON: "Clear"
-		self.elements.btnClear.addEventListener( 'click'    , self.clearInput  );
-		self.elements.btnClear.addEventListener( 'dblclick' , self.clearScreen );
+		self.elements.btnClear.addEventListener( 'click'    , self.shell.clearInput  );
+		self.elements.btnClear.addEventListener( 'dblclick' , self.shell.clearScreen );
 
 		// BUTTON: "Enter"
 		self.requestId = 0;
-		self.elements.btnEnter.addEventListener( 'click', on_enter_click );
+		self.elements.btnEnter.addEventListener( 'click', self.shell.onEnterClick );
 
 		// BUTTON: "Exit"
 		self.elements.btnClose.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
@@ -1272,7 +658,7 @@ console.log( 'command_button', command_button );
 		self.elements.output.addEventListener( 'mouseup', (event)=>{
 			if (event.button != 0) return;
 			if (!mouse_moved) {
-				self.focusPrompt();
+				self.shell.focusPrompt();
 			}
 		});
 
@@ -1285,9 +671,9 @@ console.log( 'command_button', command_button );
 			const characters = toggle => toggle.key
 			const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
 
-			CEP_VERSION += '^[' + shortcuts.split('').sort().join('') + '] ';
-			print_version('');
-			await show_file( '/terminal/issue.txt' );
+			self.shell.version += '^[' + shortcuts.split('').sort().join('') + '] ';
+			self.shell.printVersion('');
+			await self.shell.showFile( '/terminal/issue.txt' );
 
 			if (GET.has('username')) self.elements.userName.value = GET.get('username');
 			if (GET.has('nickname')) self.elements.nickName.value = GET.get('nickname');
@@ -1299,7 +685,7 @@ console.log( 'command_button', command_button );
 			}, 0);
 
 			if (self.elements.terminal.classList.contains( 'enabled' )) {
-				setTimeout( self.focusPrompt, 100 );
+				setTimeout( self.shell.focusPrompt, 100 );
 			} else {
 				setTimeout( ()=>{
 					document.querySelector( 'form [name=nickname]' ).focus();//...? not effective

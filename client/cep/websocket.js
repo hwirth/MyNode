@@ -183,7 +183,7 @@ export const WebSocketClient = function (parameters = {}) {
 		// See app-on_websocket_message
 		const hide_message =  (SETTINGS.HIDE_MESSAGES.PING && request.session && request.session.pong);
 		if (!hide_message) {
-			parameters.terminal.print( request, 'request' );
+			parameters.terminal.shell.print( request, 'request' );
 		}
 
 		self.websocket.send( JSON.stringify(request, null, '\t') );

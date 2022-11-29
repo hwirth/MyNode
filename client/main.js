@@ -95,14 +95,14 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_websocket_open (event, socket)  {
-		self.terminal.print( 'Connected to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
+		self.terminal.shell.print( 'Connected to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
 		self.terminal.onSocketOpen();
 
 	} // on_websocket_open
 
 
 	function on_websocket_close (event, socket)  {
-		self.terminal.print( 'Connection lost', 'cep' );
+		self.terminal.shell.print( 'Connection lost', 'cep' );
 		self.terminal.onSocketClose();
 
 	} // on_websocket_close
@@ -115,7 +115,7 @@ const Application = function () {
 
 
 	function on_websocket_error (event, socket) {
-		self.terminal.print( 'Connection error', 'cep' );
+		self.terminal.shell.print( 'Connection error', 'cep' );
 		self.terminal.onSocketError();
 
 	} // on_websocket_error
