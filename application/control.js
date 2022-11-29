@@ -413,7 +413,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.exit' );
-		Object.keys( fsWatchers ).forEach( key => self.watchers[key].close() );
+		Object.keys( self.fsWatchers ).forEach( key => self.fsWatchers[key].close() );
 		return Promise.resolve();
 
 	}; // exit

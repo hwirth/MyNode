@@ -50,9 +50,16 @@
 				<div>I'll fix it</div>
 		`)}, 1000);
 	}
+	var timeout, interval;
+	let count = 15;
 	function watchdog (error) {
-		setTimeout( ()=>location.reload(), 10*1000 );
+		if (!timeout) timeout = setTimeout( ()=>location.reload(), count*1000 );
+		if (!interval) interval = setInterval( ()=>console.log(count--), 1000 );
 		show_boot_error( error );
+	}
+	function noreboot () {
+		if (timeout) clearTimeout( timeout );
+		if (interval) clearInterval( interval );
 	}
 </script>
 <style class="noscript">
@@ -184,7 +191,7 @@ body > form {
 		text-align:left; padding-left:5px;
 	}
 
-	body > form .option { display:flex; gap:0.5em; margin-left:2em; }
+	body > form .option { display:flex; gap:0.5em; align-items:center; margin-left:2em; }
 	body > form .option > :nth-child(1) { order:2; }
 
 

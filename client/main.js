@@ -44,7 +44,11 @@ const Application = function () {
 
 
 	function disconnect_from_websocket (websocket) {
-		return self.webSocketClient.exit().then( ()=>self.webSocketClient = null );
+		if (self.webSocketClient) {
+			return self.webSocketClient.exit().then( ()=>self.webSocketClient = null );
+		} else {
+			console.log( 'Main-disconnect_from_websocket(): self.webSocketClient is', null );
+		}
 
 	} // disconnect_from_websocket
 
@@ -128,6 +132,7 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
+		self.terminal.exit();
 		return Promise.resolve();
 
 	}; // exit

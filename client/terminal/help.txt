@@ -1,4 +1,5 @@
 MyNode CHAT and DEBUG CONSOLE
+-----------------------------
 Single lines input by the user are sent as  chat.say  requests,
 otherwise TAB formatted multiline text is sent as JSON objects.
 Debug mode shows all websocket messages going in or out.
@@ -10,10 +11,11 @@ Topics:
 	keyboard
 	toggles
 
-Check README for more details.
+Check the project README for more details.
 
 #tabJSON
 ENTER TAB FORMATTED tabJSON
+---------------------------
 You can enter tab-indented pseudo-JSON, in order to send arbitrary
 requests to the server. In essence, you type a JSON object without the
 curly braces and quotation marks.
@@ -33,6 +35,7 @@ character mandatory           }
 
 #shortJSON
 ENTER SINGLE LINE shortJSON
+---------------------------
 A dot indents (nests), a double dot unindents, triple dots unindent 2
 times, etc. Entries on the same level are separated with a comma.
 
@@ -52,18 +55,20 @@ results in:
 }
 
 #keyboard
-Keyboard
+KEYBOARD
+--------
 	Enter            Sends text/request, adds marker
 	Shift+Enter      Inserts line break (tabJSON)
 	Ctrl+Home        Clears input
 	Ctrl+Shift+Home  Clears screen
+	Shift+Ctrl+Del   Clears eveything up to the last marker
 	Alt+[.|,]        Change font
 	Alt+[+|-]        Change font size
 
 #toggles
-Toggles
+TOGGLES
+-------
 	terminal     Open the terminal         Alt+T
-	debug        Chat mode off             Alt+D
 	scroll       Lock auto-scrolling       Alt+R
 	compact      Collapse all messages     Alt+C
 	separators   Separate messages         Alt+S

@@ -1,0 +1,270 @@
+/*** Terminal Layout ***/
+
+/* BASE SETTINGS */
+:not(.connected).fancy.terminal {
+	--toolbar-bg : var(--offline-bg);
+}
+.terminal {
+	--size-tablet : 65rem;   /* @media min-witdth */
+
+	--font-size:16px;
+	--line-height : 1.2rem;
+
+	--fade-time : 0.333s;
+
+	--tab-size       : 4;
+	--input-tab-size : 8; X:var(--tab-size);
+
+	--toolbar-outline : none;
+
+	--terminal-height   : calc(100vh - 2 * (var(--terminal-margin) + var(--toolbar-height)));
+	--terminal-height   : calc(100vh - 2 * (var(--terminal-margin) ));
+	--terminal-margin   : 0;
+	--terminal-padding  : 10px; X:var(--menu-gap);
+
+	--toolbar-height : 2rem;
+	--toolbar-gap    : 2px;   /*//...*/
+
+	--menu-offset        : 0px;
+	--menu-gap           : 2px;
+	--menu-border-radius : 5px;
+	--menu-enter-width   : 21em;
+
+	--user-radius : 3px;
+
+	--items-gap      : 2px;
+	--item-min-width : 8em;
+
+	--output-margin-top : 0.25em;
+	--output-margin-x   : 0px;
+	--output-padding-x  : 0.25em;
+
+	--input-border       : solid 1px transparent;
+	--input-border-width : 1px;
+	--input-radius       : 0;
+	--input-padding-x    : calc(var(--toolbar-height) / 3.5);
+	--input-padding-y    : 0px;
+
+	--button-padding        : 5px 10px;
+
+	--textarea-color : var(--text-color);
+
+	--speaker     : '🗣';
+	--one-person  : '👤';
+	--two-persons : '👥';
+
+	--self-content : var(--one-person);
+	--self-color   : #fff;
+
+	--todo-color           : #aaa;
+	--todo-important-color : #fc0d;
+	--todo-urgent-color    : #fa0;
+	--todo-research-color  : #8cfc;
+	--todo-cancelled-color : #8cfc;
+}
+
+/* DARK MODE */
+.terminal {
+	--focus-box-shadow : #0f8;
+	--focus-filter : brightness(1.2);
+
+	--a-color   : #0af;
+	--a-visited : #b8f;
+	--a-active  : #0ff;
+	--a-focus   : #fff;
+	--a-hover   : #0ff;
+
+	--terminal-bg    : #000;
+
+	--toolbar-bg     : #333;
+	--toolbar-color  : #999;
+
+	--input-color : #fc0;
+	--input-bg    : #000f;
+
+	--button-color          : #fed;
+	--button-bg             : #08f2;
+	--button-enabled-color  : #af4;
+	--button-enabled-bg     : #88ff0040;
+	--button-special-bg     : var(--button-bg);X:#402838;
+	--button-special-color : #fed;
+	--button-special-bg    : #645;
+
+	--button-enter-color : var(--button-special-color);
+	--button-enter-bg    : var(--button-special-bg);
+	--button-close-color : var(--button-special-color);
+	--button-close-bg    : var(--button-special-bg);
+
+	--caret-color : #ff0;
+
+	--stripes-color0 : #8882;
+	--stripes-color1 : var(--terminal-bg);
+
+	--toggle-state-off : #78a;
+	--toggle-state-on  : #bdf;
+
+	--chat-color : #8df;
+	--cep-color  : #abc;
+	--mcp-color  : #f00;
+
+	--warning-color   : #fc0;
+	--error-color     : #e20;
+	--success-color   : #0f0;
+
+	--code-color    : #fcb;
+	--success-color : #0a0;
+	--warning-color : #c80;
+	--error-color   : #c00;
+	--true-color    : var(--success-color);
+	--false-color   : var(--error-color);
+	--null-color    : #0cc;
+
+	--hover-color     : #fff;
+	--text-color      : #fed;
+	--request-color   : #ca0;
+	--response-color  : #78f;
+	--string-color    : #5c6;
+	--notice-color    : #acf;
+	--broadcast-color : #86f;
+	--update-color    : #090;
+
+	--offline-color       : #fc08;
+	--offline-bg          : #555;
+	--online-color        : #0af;
+	--online-color-0      : #0afc;
+	--online-color-f      : #0aff;
+	--online-bg           : #268;
+	--authenticated-color : #fff;
+
+	--transmit-bg : #48a;
+
+	--separator-color  : #a60;
+	--separator-border : dashed 1px var(--separator-color);
+}
+
+
+/* LIGHT MODE */
+html.light :not(.fancy).terminal {
+	--focus-box-shadow : #fff4;
+	--focus-filter : saturate(1.25) brightness(1.2);
+
+	--a-color   : #058;
+	--a-visited : #648;
+	--a-active  : #08f;
+	--a-focus   : #08f;
+	--a-hover   : #08c;
+
+	--terminal-bg   : #fff;
+	--toolbar-bg    : #ccc;
+	--toolbar-color : #666;
+
+	--input-color : #028;
+	--input-bg    : #fff;
+
+	--button-color         : #eee;
+	--button-bg            : #666;
+	--button-enabled-color : #cf8;
+	--button-enabled-bg    : #684;
+	--button-special-color : #fff;
+	--button-special-bg    : #678;
+
+	--button-enter-color : var(--button-special-color);
+	--button-enter-bg    : var(--button-special-bg);
+	--button-close-color : var(--button-special-color);
+	--button-close-bg    : var(--button-special-bg);
+
+	--caret-color    : #f00;
+
+	--stripes-color0 : #0001;
+	--stripes-color1 : var(--terminal-bg);
+
+	--toggle-state-off : #36a;
+	--toggle-state-on  : #48f;
+
+	--chat-color : #478;
+	--cep-color  : #555;
+	--mcp-color  : #f00;
+
+	--warning-color : #c80;
+	--error-color   : #e20;
+	--success-color : #0a0;
+
+	--code-color    : #fcb;
+	--success-color : #060;
+	--warning-color : #fc0;
+	--error-color   : #f00;
+	--true-color    : var(--true-color);
+	--false-color   : var(--error-color);
+	--null-color    : #28a;
+
+	--hover-color     : #000;
+	--text-color      : #210;
+	--request-color   : #a60;
+	--response-color  : #348;
+	--string-color    : #162;
+	--notice-color    : #568;
+	--broadcast-color : #86c;
+	--update-color    : #040;
+
+	--offline-color       : #c80;
+	--offline-bg          : #654;
+	--online-color        : #0af;
+	--online-color-0      : #03b;
+	--online-color-f      : #0af;
+	--online-bg           : #268;
+	--authenticated-color : #fff;
+
+	--transmit-bg : #48a;
+
+	--separator-color  : #a60;
+	--separator-border : dashed 1px var(--separator-color);
+}
+
+
+/* SCIFI RPG */
+.fancy.terminal {
+	--focus-box-shadow : #0ff;
+
+	--terminal-bg        : unset;
+	--terminal-margin    : 10px;
+	--toolbar-color      : #fff;
+	--toolbar-gap        : 3px;
+
+	--toolbar-bg         : #202848f0;
+	--toolbar-outline    : none;X:solid 2px #000;
+	--toolbar-box-shadow :
+		inset 0 0 0 1px #08f4,
+		inset 0 0 5px 0 #0008j
+	;
+
+	--menu-gap           : 5px;
+	--top-menu-radius    : 0 0 var(--input-radius) var(--input-radius);
+	--bottom-menu-radius : var(--input-radius) var(--input-radius) 0 0;
+	--user-radius        : 0px;
+
+	--output-margin-top  : 1rem;
+	--output-margin-x    : 0px;
+	--output-padding-x   : 0;X:var(--menu-gap);
+
+	--input-border       : solid 1px #000;
+	--input-radius       : 1rem;
+	--input-padding-x    : 0.8rem;
+	--button-bg          : #08f1;
+	--button-enabled-bg  : #88ff0018;
+	--button-special-bg  : #ff000018;
+	--button-enter-bg    : var(--button-special-bg);
+	--button-close-bg    : var(--button-special-bg);
+
+	--top-menu-radius    : var(--input-radius);
+	--bottom-menu-radius : var(--input-radius);
+
+	--online-bg          : #0484;   /* Buttons bg */
+	--offline-bg         : #230d;
+
+	--transmit-bg        : #48a5;
+}
+
+
+
+
+//EOF

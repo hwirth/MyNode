@@ -194,7 +194,7 @@ module.exports = function AppReloader (callback) {
 			}
 
 			const message = {
-				type    : 'application error',
+				type    : 'error/application',
 				message : error.message,
 				error   : format_error( error ),
 			};

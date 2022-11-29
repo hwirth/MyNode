@@ -48,7 +48,7 @@ module.exports = function ChatServer (persistent, callback) {
 			if( !feed_items[key] ) {
 				const new_item = {
 					//...date  : item.date,
-					title : item.title,
+					title : item.title.slice(0, 240),
 					link  : item.link,
 				};
 				feed_items[key] = report_items[key] = new_item;
@@ -244,7 +244,7 @@ module.exports = function ChatServer (persistent, callback) {
 			const data = {
 				feeds: [
 { enabled:false, name:'Der Standard'              , url:'https://www.derstandard.at/rss' },
-{ enabled:false, name:'www.orf.at'                , url:'https://rss.orf.at/news.xml'    },
+{ enabled:false, name:'ORF'                       , url:'https://rss.orf.at/news.xml'    },
 { enabled:false, name:'Fefes Blog'                , url:'https://blog.fefe.de/rss.xml'   },
 { enabled:false, name:'BBC World'                 , url:'http://feeds.bbci.co.uk/news/world/rss.xml' },
 { enabled:false, name:'BBC Science & Environment' , url:'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml' },
