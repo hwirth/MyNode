@@ -258,8 +258,8 @@ export const DebugConsole = function (callback) {
 			if (!shift && !ctrl && !alt) {
 				event.preventDefault();
 				self.elements.btnEnter.click();
-
-			} else if (shift || !ctrl || !alt) {
+			}
+			else if (shift || !ctrl || !alt) {
 				const text = self.elements.input.value;
 				if (text.charAt( 0 ) == '.') {
 					self.elements.input.value = self.shell.parsers.parseShortRequest( text );
@@ -267,7 +267,8 @@ export const DebugConsole = function (callback) {
 					return;
 				}
 			}
-	 	} else if (event.keyCode == 9 || event.which == 9) {
+	 	}
+	 	else if (event.keyCode == 9 || event.which == 9) {
 			// Insert TAB character instead of leaving the textarea
 			event.preventDefault();
 
