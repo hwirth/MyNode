@@ -134,7 +134,6 @@ export const DebugConsole = function (callback) {
 
 	// KEYBOARD SHORTCUTS
 	function shortcut_exec (command_button) {
-console.log( 'command_button', command_button );
 		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
 	}
 	const KEYBOARD_SHORTCUTS = [
