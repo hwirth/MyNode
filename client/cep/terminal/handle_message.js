@@ -133,21 +133,15 @@ export function handle_message (terminal, message, callback) {
 	function broacast_reload () {
 		Object.keys( message.broadcast.reload ).forEach( (file_name)=>{
 			if (message.broadcast.type == 'reload/client') {
-
-				if( (SETTINGS.RELOAD_FOLDER.TERMINAL)
-				&&  (file_name.split('/')[1] == 'terminal')
-				) {
-					location.reload();
-				}
-
+				if (file_name.slice(-3) == '.js') location.reload();
 				switch (file_name) {
-					case 'client/terminal/layout.css':
-					case 'client/terminal/variables.css': {
+					case 'client/cep/terminal/css/layout.css':
+					case 'client/cep/terminal/css/variables.css': {
 						terminal.dom.reloadCSS( file_name.replace('client/', '') );
 						return print_message();
 					}
-					case 'client/terminal/terminal.js' :  // fall through
-					case 'client/main.js'              :  // fall through
+					case 'client/cep/terminal/terminal.js' :  // fall through
+					case 'client/main.js'                  :  // fall through
 					case 'client/index.html': {
 						location.reload();
 						return;

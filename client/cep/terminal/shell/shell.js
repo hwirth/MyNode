@@ -43,10 +43,11 @@ export const CEPShell = function (terminal, callback, BUTTON_SCRIPTS) {
 	const relay = 'IS_RELAY';
 
 	// Parsers
-	this.parseButtonScript = relay;
-	this.requestToText     = relay;
-	this.textToRequest     = relay;
-	this.parseShortRequest = relay;
+	this.executeButtonScript = relay;
+	this.parseButtonScript   = relay;
+	this.requestToText       = relay;
+	this.textToRequest       = relay;
+	this.parseShortRequest   = relay;
 
 	// Output
 	this.printVersion   = relay;
@@ -74,6 +75,7 @@ export const CEPShell = function (terminal, callback, BUTTON_SCRIPTS) {
 		console.log( 'CEPShell.init' );
 
 		self.version  = CEP_VERSION;
+		self.requestId = 0;
 
 		self.elements = terminal.elements;
 		self.dom      = terminal.dom;
@@ -81,9 +83,9 @@ export const CEPShell = function (terminal, callback, BUTTON_SCRIPTS) {
 		self.bit      = terminal.bit;
 		self.status   = terminal.status;
 
-		self.parsers = new Parsers    ( self, BUTTON_SCRIPTS        );
-		self.output  = new ShellOutput( self, callback, CEP_VERSION );
-		self.input   = new ShellInput ( self, callback              );
+		self.parsers = new Parsers    ( self, BUTTON_SCRIPTS );
+		self.output  = new ShellOutput( self );
+		self.input   = new ShellInput ( self, callback       );
 
 		self.history = new History( terminal.elements.input, {
 			onInputChanged: ()=>{

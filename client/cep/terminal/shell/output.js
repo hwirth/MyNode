@@ -6,12 +6,12 @@
 "use strict";
 
 
-export const ShellOutput = function (shell, callback, CEP_VERSION) {
+export const ShellOutput = function (shell) {
 	const self = this;
 
 
 	this.printVersion = function (additional_text) {
-		self.print( 'CEP/Shell-' + CEP_VERSION + additional_text, 'cep' );
+		self.print( 'CEP-Shell-' + shell.version + additional_text, 'cep' );
 
 	}; // printVersion
 

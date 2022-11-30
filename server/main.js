@@ -270,7 +270,6 @@ function parse_json(message) {//...
 						update: {
 							type   : 'server/name',
 							name   : SETTINGS.SERVER_NAME,
-							banner : SETTINGS.SERVER_BANNER,
 						},
 					}),
 				);

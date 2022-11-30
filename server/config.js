@@ -63,13 +63,15 @@ const SETTINGS = {
 	APP_PATH    : '../application/',
 	MAIN_MODULE : '../application/router.js',
 
-	MESSAGE_TIMESTAMPS   : true,    // Send time with each JSON reply
-	REPORT_HANDLED       : !true,   // Always send response handled/rejected
+	MESSAGE_TIMESTAMPS   : true,   // Send time with each JSON reply
+	REPORT_HANDLED       :!true,   // Always send response handled/rejected
+	WATCH_FILES          : true,   // Report file changes via broadcast
 
 	PING: {
-		LOG      : !true,      // true: Might flood your log output
+		LOG      : false,      // true: Might flood your log output
 		KICK     : true,       // false: Allow clients to ignore ping updates
-		INTERVAL : 2*1000,
+		INTERVAL : 2*1000,     // How long to wait before the next ping
+		TIMEOUT  : 1*1000,     // How long the client has to send a pong
 	},
 
 	ROUTER_ALWAYS_RELOAD : false,
@@ -99,7 +101,15 @@ const SETTINGS = {
 		IDLE          : null,//60*60*1000,
 	},
 
-	BROADCAST_FILE_CHANGE_FOLDERS: ['client', 'client/cep', 'client/terminal'],
+	BROADCAST_FILE_CHANGE_FOLDERS: [
+		'client',
+		'client/cep',
+		'client/docs',
+		'client/cep/terminal',
+		'client/cep/terminal/shell',
+		'client/cep/terminal/css',
+		'client/cep/terminal/txt',
+	],
 
 }; // SETTINGS
 

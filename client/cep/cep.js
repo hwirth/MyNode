@@ -10,6 +10,10 @@ import { SETTINGS, DEBUG } from './config.js';
 export const ClientEndPoint = function (parameters = {}) {
 	const self = this;
 
+	this.eventListeners;
+	this.isConnected;
+
+
 	const callbacks = parameters.events;
 
 	let nr_attempts = 0;
@@ -31,7 +35,7 @@ export const ClientEndPoint = function (parameters = {}) {
 		console.groupEnd();
 	}
 
-	function websocket_connection (callback_connection_established) {
+	function websocket_connection (url, event_handlers) {
 		console.log( 'Connecting to ' + parameters.url + '...' );
 
 		// When unable to connect, try again after a few seconds
@@ -62,7 +66,7 @@ export const ClientEndPoint = function (parameters = {}) {
 		ws.addEventListener( 'open', on_open );
 		ws.addEventListener( 'close', on_close );
 		ws.addEventListener( 'error', on_error );
-		ws.addEventListener( 'message', on_receive );
+		ws.addEventListener( 'message', on_message );
 
 		self.websocket = ws;
 
@@ -103,7 +107,7 @@ export const ClientEndPoint = function (parameters = {}) {
 	} // on_error
 
 
-	function on_receive (event) {
+	function on_message (event) {
 		let message = event.data;
 
 		if (typeof message == 'string') {
@@ -128,7 +132,7 @@ export const ClientEndPoint = function (parameters = {}) {
 
 		if (callbacks.onMessage) callbacks.onMessage( event, self, message );
 
-	} // on_receive
+	} // on_message
 
 
 	function on_send (request) {
@@ -165,26 +169,59 @@ export const ClientEndPoint = function (parameters = {}) {
 
 	} // on_beforeunload
 
+	this.closeConnection = function (connection_name) {
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONNECTION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.isConnected;
-
-	this.closeConnection = function (connection_name) {
-	}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	const known_events = ['open', 'close', 'error', 'message', 'send'];
+
+	this.addEventListener = function (event_name, event_handler) {
+		if (known_events.indexOf(event_name) < 0) {
+			throw new Error( 'CEP.addEventListener: Unknown event' );
+		}
+
+		const already_registered = self.eventListeners[event_name].indexOf( event_handler ) >= 0;
+
+		if (already_registered) {
+			throw new Error( 'CEP.addEventListener: Event handler already registered' );
+		}
+
+		self.eventListeners[event_name].push( event_handler );
+
+	}; // addEventListener
+
+
+	this.removeEventListener = function (event_name, event_handler) {
+		if (typeof self.eventListeners[event_name] == 'undefined') {
+			throw new Error( 'CEP.removeEventListener: Unknown event' );
+		}
+
+		const found_index = self.eventHandlers[event_name].indexOf( event_handler );
+
+		if (found_index < 0) {
+			throw new Error( 'CEP.removeEventListener: Handler not registered' );
+		}
+
+		self.eventHandlers[event_name].splice( index, 1 );
+
+	}; // removeEventListener
+
+
 	this.connect = function (websocket_url) {
 		return new Promise( async (done)=>{
 			await websocket_connection( done );
 			addEventListener( 'beforeunload', on_beforeunload, false );
 		});
+
+		websocket_connection( websocket_url );
 
 	}; // connect
 
@@ -215,7 +252,13 @@ export const ClientEndPoint = function (parameters = {}) {
 
 
 	this.init = function () {
-		console.log( 'WebSocketClient.init' );
+		console.log( 'CEP.init' );
+
+		self.eventListeners = {};
+		known_events.forEach( (event_name)=>{
+			self.eventListeners[event_name] = [];
+		});
+
 		return Promise.resolve();
 
 	}; // init

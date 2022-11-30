@@ -10,19 +10,28 @@ export const Parsers = function (shell, BUTTON_SCRIPTS) {
 	const self = this;
 
 
+	this.executeButtonScript = function (script_name) {
+		shell.elements.input.value = self.parseButtonScript( script_name );
+		shell.elements.btnEnter.click();
+
+	}; // executeButtonScript
+
+
 	this.parseButtonScript = function (script_name) {
-		let script   = BUTTON_SCRIPTS.find( script => script.name == script_name ).script;
 		const username = shell.elements.userName.value;
 		const nickname = shell.elements.nickName.value;
+		const factor2  = shell.elements.factor2.value || 'null';
+		let script = BUTTON_SCRIPTS.find( script => script.name == script_name ).script;
+
 		if (nickname && !username) shell.elements.userName.value = 'guest';
-		const second_factor = shell.elements.factor2.value || 'null';
+
 		script = script.replaceAll( '\n%N', (shell.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
 		const result = (
 			script
 			.replaceAll( '%u', username )
 			.replaceAll( '%n', nickname )
 			.replaceAll( '%p', shell.elements.passWord.value || 'null' )
-			.replaceAll( '%t', second_factor )
+			.replaceAll( '%t', factor2 )
 			.split('\n')
 			.filter( line => line.indexOf('password: null') < 0 )
 			.filter( line => line.indexOf('factor2: null') < 0 )

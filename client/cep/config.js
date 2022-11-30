@@ -5,8 +5,6 @@
 
 "use strict";
 
-import { get } from './helpers.js';
-
 
 export const DEBUG = {
 	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
@@ -47,12 +45,18 @@ export const SETTINGS = {
 		PING : true,    // Being set, when the toggle is instantiated (See  PRESETS[] )
 		CHAT : false,
 	},
-
-	RELOAD_FOLDER: {
-		TERMINAL : false,
-	},
 };
 
+export function get (search) {
+	const decoded_uri = decodeURIComponent( location.href );
+	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
+	const result = search.split(' ').reduce( (prev, term)=>{
+		return prev || (decoded_uri.indexOf( term ) >= 0);
+	}, false);
+
+	return result;
+
+}
 export const PRESETS = {
 	FILTER: {
 		PING      : true,
@@ -66,25 +70,26 @@ export const PRESETS = {
 	},
 
 	TOGGLE: {
-		TERMINAL   : get( 'terminal' ),
-		ALL_USERS  : !get( 'terminal' ),
-		SCROLL     : !get( 'scroll' ),
-		COMPACT    : !get( 'compact' ),
-		SEPARATORS : get( 'separators' ),
-		STRIPES    : get( 'stripes' ),
-		OVERFLOW   : !get( 'overflow' ),
-		ANIMATE    : get( 'animate' ),
-		BIT        : !get( 'bit' ),
-		FANCY      : get( 'fancy' ),
-		KEY_BEEP   : get( 'keybeep' ),
-		LAST       : !get( 'last' ),
-		TTS        : get( 'tts' ),
+		TERMINAL   :  get( 'terminal'   ),
+		FILTER     :  get( 'filter   '  ),
+		ALL_USERS  : !get( 'terminal'   ),
+		SCROLL     : !get( 'scroll'     ),
+		COMPACT    : !get( 'compact'    ),
+		SEPARATORS :  get( 'separators' ),
+		STRIPES    :  get( 'stripes'    ),
+		OVERFLOW   : !get( 'overflow'   ),
+		ANIMATE    :  get( 'animate'    ),
+		BIT        : !get( 'bit'        ),
+		FANCY      :  get( 'fancy'      ),
+		KEY_BEEP   :  get( 'keybeep'    ),
+		LAST       : !get( 'last'       ),
+		TTS        :  get( 'tts'        ),
 	},
 
 	VOLUME: {
 		SAM: 0.01,
 	},
 };
-
+console.log( 'FIK######', PRESETS.TOGGLE.FILTER );
 
 //EOF

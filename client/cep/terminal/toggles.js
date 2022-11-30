@@ -108,7 +108,11 @@ setTimeout( ()=>{
 			terminal.bit.say( toggle.enabled );//..., /*delay*/0, (toggle.name == 'tts') );
 
 			let blink_button = terminal.elements.btnToggles;
-			if (toggle.menu == 'filter') blink_button = terminal.elements.btnFilter;
+			//...if (toggle.menu == 'filterItems') blink_button = terminal.elements.btnFilter;
+			//...if (toggle.menu == 'toggleItems') blink_button = terminal.elements.btnToggles;
+			if ((toggle.menu == 'toggleItems') || (toggle.menu == 'filterItems')) {
+				blink_button = terminal.elements.btnEnter;
+			}
 
 			const cep_button = terminal.elements.btnCEP;
 			blink_button.classList.add( 'blink', toggle.enabled ? 'success' : 'error' );

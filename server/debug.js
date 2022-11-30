@@ -109,6 +109,7 @@ const COLORS = {
 
 	MCP          : ANSI_COLORS.BRIGHT + ANSI_COLORS.BLUE,
 	TOKEN        : ANSI_COLORS.BRIGHT + ANSI_COLORS.CYAN,
+	EXEC         : ANSI_COLORS.BRIGHT + ANSI_COLORS.YELLOW,
 
 	RSS_ENABLED  : ANSI_COLORS.GREEN,
 	RSS_DISABLED : ANSI_COLORS.DIM    + ANSI_COLORS.CYAN,
@@ -267,27 +268,6 @@ function dump (data, short_format = false) {
 
 	if (data.login && short_format) {
 		return [ data.address, data.login.userName, data.login.nickName, data.login.factor2 ];
-/*
-		if (short_format) {
-			return [ data.address, data.login.userName, data.login.nickName ];
-		} else {
-			return {
-				address  : data.address,
-				username : data.login.userName,
-				nickname : data.login.nickName,
-				factor2  : data.factor2,
-			};
-		}
-	} else if (data.address) {
-		if (short_format) {
-			return  [ data.address ];
-		} else {
-			return {
-				address : data.address,
-				factor2 : data.factor2,
-			};
-		}
-*/
 	} else {
 		return JSON.parse( JSON.stringify(data) );   // Re-parsing turns it into a single line
 	}

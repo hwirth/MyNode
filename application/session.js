@@ -57,7 +57,7 @@ module.exports = function SessionHandler (persistent, callback) {
 	this.getClientByName = function (name) {
 		const client_address = Object.keys( persistent.clients ).find( (test_address)=>{
 			const client = persistent.clients[test_address];
-			return (client.login && (client.login.userName == name));
+			return (client.login && (client.login.userName.toLowerCase() == name.toLowerCase()));
 		});
 
 		return (client_address) ? persistent.clients[client_address] : null;
@@ -301,25 +301,24 @@ if (message.broadcast) console.trace();
 			async function send_cookie () {
 				const exec = require( 'child_process' ).exec;
 				const command = '/usr/games/fortune';//SETTINGS.BASE_DIR + 'functions.sh';
-				console.log( COLORS.ERROR + 'EXEC' + COLORS.RESET + ':', command );
+				console.log( COLORS.EXEC + 'EXEC' + COLORS.RESET + ':', command );
 
 				const fortune_cookie = await new Promise( (resolve, reject)=>{
 					exec( command, (error, stdout, stderr)=>{
 						if (error !== null) {
 							reject( error );
 						} else {
-							resolve( stdout.trim().replace( /\t/g, ' ' ).split('\n') );
+							resolve( stdout.trim().replace( /\t/g, ' ' ) );
 						}
 					});
 				})
 
 				console.log( 'COOKIE:', fortune_cookie );
-				const banner = fortune_cookie[0];
 				client.send({
 					notice: {
 						login       : login.nickName || login.userName || client.address,
 						maxIdleTime : client.maxIdleTime,
-						fortune     : '"' + banner + '"',
+						fortune     : '"' + fortune_cookie + '"',
 					},
 				});
 			}
@@ -390,7 +389,6 @@ if (message.broadcast) console.trace();
 
 
 	this.request.clients = async function (client, request_id, parameters) {
-
 		if (client.login) {
 			color_log( COLORS.COMMAND, '<session.clients>', client );
 
@@ -417,7 +415,7 @@ if (message.broadcast) console.trace();
 		}
 if (!client.login) throw new Error( 'NO CLIENT' );
 		//... cant kick multiple
-
+console.log( 'KICK: parameters:', parameters );
 		if (parameters.username) parameters.username = parameters.username.toLowerCase();
 
 		let target_client = null;

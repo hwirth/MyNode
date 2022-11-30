@@ -112,7 +112,7 @@ module.exports = function ServerControl (persistent, callback) {
 	async function get_source_info () {
 		const entries = await new Promise( (resolve, reject)=>{
 			const command = SETTINGS.BASE_DIR + 'functions.sh';
-			console.log( COLORS.ERROR + 'EXEC' + COLORS.RESET + ':', command );
+			console.log( COLORS.EXEC + 'EXEC' + COLORS.RESET + ':', command );
 			exec( command, (error, stdout, stderr)=>{
 				if (error !== null) {
 					reject( error );
@@ -218,7 +218,6 @@ module.exports = function ServerControl (persistent, callback) {
 				{
 					upTime   : get_uptime( /*formatted*/true ),
 					memory   : get_memory_info(),
-					source   : await get_source_info(),
 				},
 			];
 		}
@@ -277,7 +276,7 @@ module.exports = function ServerControl (persistent, callback) {
 		async function send_cookie () {
 			const exec = require( 'child_process' ).exec;
 			const command = '/usr/games/fortune';//SETTINGS.BASE_DIR + 'functions.sh';
-			console.log( COLORS.ERROR + 'EXEC' + COLORS.RESET + ':', command );
+			console.log( COLORS.EXEC + 'EXEC' + COLORS.RESET + ':', command );
 
 			const fortune_cookie = await new Promise( (resolve, reject)=>{
 				exec( command, (error, stdout, stderr)=>{
@@ -413,7 +412,9 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.exit' );
-		Object.keys( self.fsWatchers ).forEach( key => self.fsWatchers[key].close() );
+		if (SETTINGS.WATCH_FILES) {
+			Object.keys( self.fsWatchers ).forEach( key => self.fsWatchers[key].close() );
+		}
 		return Promise.resolve();
 
 	}; // exit
@@ -432,20 +433,22 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
 		self.reset();
 
-		self.fsWatchers = [];
-		SETTINGS.BROADCAST_FILE_CHANGE_FOLDERS.forEach( (dir)=>{
-			const path = SETTINGS.BASE_DIR + dir;
-			self.fsWatchers[dir] = fs.watch( path, (event, filename)=>{
-				if (filename && (filename.charAt(0) != '.')) {
-					callback.broadcast({
-						type   : 'reload/client',
-						reload : {
-							[dir + '/' + filename] : {},
-						},
-					});
-				}
+		if (SETTINGS.WATCH_FILES) {
+			self.fsWatchers = [];
+			SETTINGS.BROADCAST_FILE_CHANGE_FOLDERS.forEach( (dir)=>{
+				const path = SETTINGS.BASE_DIR + dir;
+				self.fsWatchers[dir] = fs.watch( path, (event, filename)=>{
+					if (filename && (filename.charAt(0) != '.')) {
+						callback.broadcast({
+							type   : 'reload/client',
+							reload : {
+								[dir + '/' + filename] : {},
+							},
+						});
+					}
+				});
 			});
-		});
+		}
 
 		return Promise.resolve();
 

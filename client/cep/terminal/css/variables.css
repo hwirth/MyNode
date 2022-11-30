@@ -227,14 +227,16 @@ html.light :not(.fancy).terminal {
 
 	--terminal-bg        : unset;
 	--terminal-margin    : 10px;
-	--toolbar-color      : #fff;
-	--toolbar-gap        : 3px;
 
+	--toolbar-color      : #fff;
 	--toolbar-bg         : #202848f0;
+	--toolbar-bg         : #283868c0;
+	--toolbar-bg         : #014d;
+	--toolbar-gap        : 3px;
 	--toolbar-outline    : none;X:solid 2px #000;
 	--toolbar-box-shadow :
 		inset 0 0 0 1px #08f4,
-		inset 0 0 5px 0 #0008j
+		inset 0 0 5px 0 #000
 	;
 
 	--menu-gap           : 5px;
@@ -249,9 +251,9 @@ html.light :not(.fancy).terminal {
 	--input-border       : solid 1px #000;
 	--input-radius       : 1rem;
 	--input-padding-x    : 0.8rem;
-	--button-bg          : #08f1;
-	--button-enabled-bg  : #88ff0018;
-	--button-special-bg  : #ff000018;
+	--button-bg          : #48c3;
+	--button-enabled-bg  : #88ff0028;
+	--button-special-bg  : #ff000028;
 	--button-enter-bg    : var(--button-special-bg);
 	--button-close-bg    : var(--button-special-bg);
 

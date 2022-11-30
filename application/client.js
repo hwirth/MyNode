@@ -197,19 +197,32 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 	this.sendPing = function () {
 		if (!SETTINGS.PING.KICK) return;
 
+		//...socket.ping();
+		// Not sufficient, connection can "fall asleep" and hang before waking up. App level ping helps.
+
 		self.send({
 			update: {
 				type: 'session/ping',
 				pong: ++self.pingNr,
 			}
 		});
-//...socket.ping();
+
+		set_timeout( 'pong', failed_to_pong, SETTINGS.PING.TIMEOUT );
+
+		function failed_to_pong () {
+			color_log( COLORS.WARNING, 'NO PONG:', dump(self) );
+			socket.send( JSON.stringify({
+				notice: 'Ping timeout',
+			}));
+			socket.close();
+		}
+
 	}; // sendPing
 
 
 	this.receivePong = function () {
 		if (!SETTINGS.PING.KICK) return;
-
+		clear_timeout( 'pong' );
 		set_timeout( 'ping', self.sendPing, SETTINGS.PING.INTERVAL );
 
 	}; // receivePong

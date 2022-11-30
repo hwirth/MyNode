@@ -6,10 +6,10 @@ Debug mode shows all websocket messages going in or out.
 
 /help <topic>
 Topics:
-	tabJSON
-	shortJSON
-	keyboard
-	toggles
+	dotJSON    Single line short format, limited use
+	tabJSON    Mulitline input, values may contain white space
+	keyboard   Keyboard controls for the terminal not listed under "toggles"
+	toggles    Keyboard shortcuts for terminal options
 
 Check the project README for more details.
 
@@ -33,9 +33,9 @@ tabJSON, You enter:           Resulting JSON:
 Indenting with TAB                }
 character mandatory           }
 
-#shortJSON
-ENTER SINGLE LINE shortJSON
----------------------------
+#dotJSON
+ENTER SINGLE LINE dotJSON
+--------------------------
 A dot indents (nests), a double dot unindents, triple dots unindent 2
 times, etc. Entries on the same level are separated with a comma.
 

@@ -159,7 +159,7 @@ export function StatusBar (container_element) {
 		//...console.log( 'StatusBar.show: html:', html );
 
 		if (html === null) return clear_list();
-		if (self.elements.children.length > 10) return;   //...!
+		//...if (self.elements.children.length > 10) return;
 
 		add_element( clean(html) );
 

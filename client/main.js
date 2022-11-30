@@ -11,7 +11,7 @@ import { DebugConsole    } from './cep/terminal/terminal.js';
 
 
 const Application = function () {
-	const app = self = this;
+	const self = this;
 
 	this.webSocketClient;
 	this.terminal;

@@ -62,15 +62,14 @@ export const DebugConsole = function (callback) {
 		<nav class="connection">
 			<button title="Connection state, or your user/nick name">OFFLINE</button>
 			<div class="items">
-				<nav class="filter">
-					<button>Filter</button>
-					<div class="items"></div>
-				</nav>
-				<nav class="toggles">
-					<button>Toggle</button>
-					<div class="items"></div>
-				</nav>
+				<button class="help">Help</button>
+				<button class="close" title="Minimize terminal. Shortcut: Alt+T">Exit</button>
 			</div>
+		</nav>
+		<nav class="apps">
+			<button class="enabled">Chat</button>
+			<button>Settings</button>
+			<button>terminal.js</button>
 		</nav>
 		<nav class="status">
 			<span class="time"></span>
@@ -79,11 +78,17 @@ export const DebugConsole = function (callback) {
 		<nav title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
 			<button class="clear" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">Clear</button>
 		</nav>
-		<nav class="main" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
+		<nav class="main">
 			<button class="enter" title="Execute command/send chat text. Keyboard: Enter">Enter</button>
 			<div class="items">
-				<button class="help">Help</button>
-				<button class="close" title="Minimize terminal. Shortcut: Alt+T">Exit</button>
+				<nav class="filter">
+					<button title="Hide certain types of messages when filters are enabled">Filter</button>
+					<div class="items"></div>
+				</nav>
+				<nav class="toggles">
+					<button title="Change various modes">Toggle</button>
+					<div class="items"></div>
+				</nav>
 			</div>
 		</nav>
 	</footer>
@@ -104,12 +109,14 @@ export const DebugConsole = function (callback) {
 		toggleState : '.toggle_state',
 	// Menu items
 		authItems   : '.auth .items',
+		cepItems    : '.connection .items',
 		mainItems   : '.main .items',
 		filterItems : '.filter .items',
 		toggleItems : '.toggles .items',
 	// Buttons
 		btnCEP      : '.connection button',
 		btnNode     : 'nav.node button',
+		filter      : '.filter button',
 		btnFilter   : '.filter button',
 		btnToggles  : '.toggles button',
 		//... These buttons have "simple names", so they can be used in BUTTON_SCRIPTS with less effort
@@ -137,21 +144,22 @@ export const DebugConsole = function (callback) {
 		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
 	}
 	const KEYBOARD_SHORTCUTS = [
-  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1); },
-},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1); },
-},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)        },
-},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)        },
-},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.history.back();         },
-},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.history.forward();      },
-},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.shell.clearInput();     },
-},{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.clearScreen();    },
-},{ event:'keydown', key:'PageUp'    , modifiers:['shift']         , action:()=>{ self.shell.scrollPageUp();   },
-},{ event:'keydown', key:'PageDown'  , modifiers:['shift']         , action:()=>{ self.shell.scrollPageDown(); },
-},{ event:'keydown', key:'Delete'    , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.deleteToMarker(); },
+  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1);  },
+},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1);  },
+},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)         },
+},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)         },
+},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.shell.history.back();    },
+},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.shell.history.forward(); },
+},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.shell.clearInput();      },
+},{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.clearScreen();     },
+},{ event:'keydown', key:'PageUp'    , modifiers:['shift']         , action:()=>{ self.shell.scrollPageUp();    },
+},{ event:'keydown', key:'PageDown'  , modifiers:['shift']         , action:()=>{ self.shell.scrollPageDown();  },
+},{ event:'keydown', key:'Delete'    , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.deleteToMarker();  },
 // Toggles
 },{ event:'keydown', key:'a', modifiers:['alt'], action:()=>{ self.toggles.animate   .toggle(); },
 },{ event:'keydown', key:'b', modifiers:['alt'], action:()=>{ self.toggles.bit       .toggle(); },
 },{ event:'keydown', key:'c', modifiers:['alt'], action:()=>{ self.toggles.compact   .toggle(); },
+},{ event:'keydown', key:'d', modifiers:['alt'], action:()=>{ self.toggles.filter    .toggle(); },
 },{ event:'keydown', key:'e', modifiers:['alt'], action:()=>{ shortcut_exec( 'disconnect' );    },
 },{ event:'keydown', key:'f', modifiers:['alt'], action:()=>{ self.toggles.fancy     .toggle(); },
 },{ event:'keydown', key:'k', modifiers:['alt'], action:()=>{ self.toggles.keyBeep   .toggle(); },
@@ -173,6 +181,7 @@ export const DebugConsole = function (callback) {
 // New buttons added to the DOM, order of entries affects positioning in menus
 // Menus' .items can be pre-populated with buttons in TERMINAL_HTML
 // Highlight buttons: Set special color in layout.css:/* SPECIAL COLOR */
+//  script  will be stored in the buttons dataset as data-command
 // self.elements[menu] - Where to place the button, name is assigned to its class list
 { menu:'authItems' , name:'login'      , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
 { menu:'authItems' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
@@ -181,17 +190,17 @@ export const DebugConsole = function (callback) {
 { menu:'authItems' , name:'disconnect' , script:'/disconnect' },
 { menu:'authItems' , name:'user'       , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
 { menu:'authItems' , name:'root'       , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
-{ menu:'mainItems' , name:'manual'     , script:'/manual' },
-{ menu:'mainItems' , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
-{ menu:'mainItems' , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
-{ menu:'mainItems' , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
-{ menu:'mainItems' , name:'who'        , script:'session\n\twho' },
-{ menu:'mainItems' , name:'token'      , script:'server\n\ttoken' },
-{ menu:'mainItems' , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'mainItems' , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'mainItems' , name:'vStat'      , script:'server\n\tstatus' },
-{ menu:'mainItems' , name:'nStat'      , script:'session\n\tstatus' },
-{ menu:'mainItems' , name:'help'       , script:'/help' },
+{ menu:'cepItems'  , name:'manual'     , script:'/manual' },
+{ menu:'cepItems'  , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
+{ menu:'cepItems'  , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
+{ menu:'cepItems'  , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
+{ menu:'cepItems'  , name:'who'        , script:'session\n\twho' },
+{ menu:'cepItems'  , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'cepItems'  , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
+{ menu:'cepItems'  , name:'token'      , script:'server\n\ttoken' },
+{ menu:'cepItems'  , name:'vStat'      , script:'server\n\tstatus' },
+{ menu:'cepItems'  , name:'nStat'      , script:'session\n\tstatus' },
+{ menu:'cepItems'  , name:'help'       , script:'/help' },
 	]; // BUTTON_SCRIPTS
 
 
@@ -216,6 +225,7 @@ export const DebugConsole = function (callback) {
 { name:'update'     , preset:F.UPDATE     , target:tO , menu:'filterItems' , shortcut:null, caption:'Update'     },
 { name:'request'    , preset:F.REQUEST    , target:tO , menu:'filterItems' , shortcut:null, caption:'Request'    },
 { name:'response'   , preset:F.RESPONSE   , target:tO , menu:'filterItems' , shortcut:null, caption:'Response'   },
+{ name:'filter'     , preset:T.FILTER     , target:tO , menu:'filterItems' , shortcut:'D',  caption:'Filter'     },
 { name:'last'       , preset:T.LAST       , target:tO , menu:'toggleItems' , shortcut:'Y',  caption:'Show Last'  },
 { name:'compact'    , preset:T.COMPACT    , target:tO , menu:'toggleItems' , shortcut:'C',  caption:'Compact'    },
 { name:'overflow'   , preset:T.OVERFLOW   , target:tO , menu:'toggleItems' , shortcut:'V',  caption:'Overflow'   },
@@ -244,7 +254,7 @@ export const DebugConsole = function (callback) {
 	} // on_input_change
 
 
-	function on_keydown (event) {//... Move to  on_keyboard_event?
+	function on_keydown (event) {//... Move to  on_keyboard_event ?
 		const shift = event.shiftKey;
 		const ctrl  = event.ctrlKey;
 		const alt   = event.altKey;
@@ -263,7 +273,7 @@ export const DebugConsole = function (callback) {
 				const text = self.elements.input.value;
 				if (text.charAt( 0 ) == '.') {
 					self.elements.input.value = self.shell.parsers.parseShortRequest( text );
-					self.adjustTextarea();
+					self.shell.adjustTextarea();
 					return;
 				}
 			}
@@ -277,14 +287,15 @@ export const DebugConsole = function (callback) {
 			const before          = input.value.substring( 0, input.selectionStart );
 			const after           = input.value.substring( input.selectionEnd );
 
-			input.value           = before + '\t' + after;
-			input.selectionEnd    = selection_start + EXTRA_LINES + 1;
+			input.value        = before + '\t' + after;
+			input.selectionEnd = selection_start + EXTRA_LINES + 1;
 		}
 
 	} // on_keydown
 
 
 	function on_keyup () {
+		// Change color of prompt to indicate, if we are entering chat text or a command
 		const bang = self.elements.input.value.charAt(0);
 		const is_local_command = (self.elements.input.value.charAt(0) == '.');
 		self.elements.input.classList.toggle( 'local', (bang == '.') );
@@ -301,7 +312,7 @@ export const DebugConsole = function (callback) {
 		const input = self.elements.input;
 		const cursor_pos1 = (input.value.length == 0) || (input.selectionStart == 0);
 		const cursor_end  = (input.value.length == 0) || (input.selectionStart == input.value.length);
-		const in_input    = event.target === input;
+		//...const in_input    = event.target === input;
 
 		KEYBOARD_SHORTCUTS.forEach( (shortcut)=>{
 			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
@@ -350,10 +361,13 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_script_button_click (event) {
-		if (!event.target.dataset.command) return;
+		// Single click: Show command as multiline request in input
+		if (!event.target.dataset.script) return;
 
 		event.preventDefault();
-		self.elements.input.value = self.shell.parsers.parseButtonScript( event.target.className );
+
+		const script_name = event.target.dataset.script;
+		self.elements.input.value = self.shell.parsers.parseButtonScript( script_name );
 		self.shell.adjustTextarea();
 		self.shell.scrollDown();
 
@@ -420,13 +434,11 @@ export const DebugConsole = function (callback) {
 		const alt = event.altKey;
 
 		const connected = true;//...callback.isConnected();
-		const command   = event.target.dataset.command;
 
-		if (command) {
-			// Command menu button was clicked
+		const script_name = event.target.dataset.script;
+		if (script_name) {
 			event.preventDefault();
-			self.elements.input.value = self.shell.parsers.parseButtonScript( command );
-			self.elements.btnEnter.click();
+			self.shell.parsers.executeButtonScript( script_name );
 
 		} else {
 			self.shell.focusPrompt();
@@ -578,10 +590,10 @@ export const DebugConsole = function (callback) {
 			const caption = script.caption || script.name.charAt(0).toUpperCase() + script.name.slice(1);
 			const existing   = self.elements[script.name];
 			const new_button =  existing || document.createElement( 'button' );
-			new_button.dataset.command = script.name;
-			new_button.className       = script.name;
-			new_button.innerText       = caption;
-			new_button.title           = new_button.title || 'Click shows command, double click executes';
+			new_button.dataset.script = script.name;
+			new_button.className      = script.name;
+			new_button.innerText      = caption;
+			new_button.title          = new_button.title || 'Click shows command, double click executes';
 			new_button.addEventListener( 'click', on_script_button_click );
 
 			if (!existing) self.elements[script.menu].appendChild( new_button );
@@ -618,7 +630,6 @@ export const DebugConsole = function (callback) {
 		self.elements.btnClear.addEventListener( 'dblclick' , self.shell.clearScreen );
 
 		// BUTTON: "Enter"
-		self.requestId = 0;
 		self.elements.btnEnter.addEventListener( 'click', self.shell.onEnterClick );
 
 		// BUTTON: "Exit"
@@ -643,7 +654,7 @@ export const DebugConsole = function (callback) {
 		});
 
 		// PROMPT
-		self.elements.input.addEventListener( 'keyup'  , self.adjustTextarea );
+		self.elements.input.addEventListener( 'keyup'  , self.shell.adjustTextarea );
 		self.elements.input.addEventListener( 'input'  , on_input_change );
 		self.elements.input.addEventListener( 'change' , on_input_change );
 
