@@ -30,7 +30,7 @@ export const ClientEndPoint = function (parameters = {}) {
 
 	this.eventListeners;   // Dict of arrays of registered event handlers
 	this.webSocketURL;     // Set at creation time
-	this.autoReconnect;    // Clear this flag to false to stop the reconnect loop
+	this.autoReconnect;    // Clear this flag to stop the reconnect loop
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
