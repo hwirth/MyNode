@@ -29,8 +29,8 @@ export const ClientEndPoint = function (parameters = {}) {
 	this.getCredentials;   // Callback returning a Promise while displaying a dialog
 
 	this.eventListeners;   // Dict of arrays of registered event handlers
-	this.webSocketURL;     // Set at creation time or passed to  .connect()
-	this.autoReconnect;    // Set this flag to false to stop the reconnect loop
+	this.webSocketURL;     // Set at creation time
+	this.autoReconnect;    // Clear flag to false to stop the reconnect loop
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
