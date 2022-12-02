@@ -71,7 +71,7 @@ const SETTINGS = {
 		LOG      : false,      // true: Might flood your log output
 		KICK     : true,       // false: Allow clients to ignore ping updates
 		INTERVAL : 2*1000,     // How long to wait before the next ping
-		TIMEOUT  : 1*1000,     // How long the client has to send a pong
+		TIMEOUT  : 5*1000,     // How long the client has to send a pong
 	},
 
 	ROUTER_ALWAYS_RELOAD : false,
@@ -109,6 +109,9 @@ const SETTINGS = {
 		'client/cep/terminal/shell',
 		'client/cep/terminal/css',
 		'client/cep/terminal/txt',
+		'client/new',
+		'client/new/cep',
+		'client/new/cep/terminal',
 	],
 
 }; // SETTINGS

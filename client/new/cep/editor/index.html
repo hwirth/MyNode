@@ -1,0 +1,21 @@
+<!DOCTYPE html><html id="top" lang="en" class="init Xfancy animate"><head><meta charset="UTF-8"><title>Spielwiese</title>
+<script src="codemirror.js"></script>
+<link rel="stylesheet" href="codemirror.css">
+<script src="mode/javascript/javascript.js" type="module"></script>
+<script type="module">
+	addEventListener( 'load', ()=>{
+		const textarea = document.querySelector('textarea' );
+		//const parent = document.body;
+		const parent = cm_element => textarea.parentNode.replaceChild( cm_element, textarea );
+		const options = {
+			value: 'function myScript(){return 100;}\n',
+			mode: 'javascript',
+		};
+		const codemirror = CodeMirror( parent, options );
+	});
+
+</script></head><body>
+
+	<textarea></textarea>
+
+</body></html>

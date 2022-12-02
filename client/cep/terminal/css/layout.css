@@ -1,3 +1,6 @@
+.terminal { transition:filter 1s ease-in-out; }
+X.terminal { filter:hue-rotate(80deg); }
+
 /*** spielwiese.css ***/
 
 :root {
@@ -232,6 +235,7 @@ X.terminal .toolbar nav:is(:hover,:focus,:focus-within) .items { box-shadow:inse
 
 /* PROMPT */
 .terminal textarea {
+	position:relative; z-index:1;
 	width:100%; border:none;
 	background:transparent; color:var(--textarea-color);
 	margin:0 calc(var(--output-padding-x) + var(--output-margin-x));

@@ -437,14 +437,24 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 			self.fsWatchers = [];
 			SETTINGS.BROADCAST_FILE_CHANGE_FOLDERS.forEach( (dir)=>{
 				const path = SETTINGS.BASE_DIR + dir;
-				self.fsWatchers[dir] = fs.watch( path, (event, filename)=>{
-					if (filename && (filename.charAt(0) != '.')) {
-						callback.broadcast({
-							type   : 'reload/client',
-							reload : {
-								[dir + '/' + filename] : {},
-							},
-						});
+				self.fsWatchers[dir] = fs.watch( path, (event, file_name)=>{
+					if (file_name && (file_name.charAt(0) != '.')) {
+						const path = dir + '/' + file_name;
+						if (path.slice(0,7) == 'client/') {
+							callback.broadcast({
+								type   : 'reload/client',
+								reload : {
+									[path.slice(7)] : {},
+								},
+							});
+						} else {
+							callback.broadcast({
+								type   : 'reload/server',
+								reload : {
+									[path] : {},
+								},
+							});
+						}
 					}
 				});
 			});

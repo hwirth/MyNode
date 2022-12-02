@@ -290,7 +290,7 @@ function parse_json(message) {//...
 				response.end(
 					  '<h1>'  + code + '</h1>'
 					+ '<h2>'  + http.STATUS_CODES[code] + '</h2>'
-					+ '<pre>' + file_name + '</pre>'
+					+ '<pre>' + url + '</pre>'
 				);
 
 			} // return_http_error
@@ -501,6 +501,20 @@ function parse_json(message) {//...
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.exit' );
 
 		if (self.reloader.exit) {
+			const EC = EXIT_CODES;
+			let reason = '';
+			switch (event) {
+				case 'SIGINT' :  reason = '/shutdown';  break;
+				case -1       :  reason = '/restart';   break;
+				default       :  reason = '/' + error;  break;   //...? Does this always work?
+			}
+			const notice = JSON.stringify( {notice: 'server/exit' + reason} );
+			const clients = self.reloader.persistent.session.clients;
+			Object.keys( clients ).forEach( (address)=>{
+				clients[address].send( notice );
+				clients[address].exit();
+			});
+
 			await self.reloader.exit().then( cleanup_and_die );
 		} else {
 			cleanup_and_die();

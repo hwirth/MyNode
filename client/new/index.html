@@ -32,10 +32,12 @@
 <meta name="viewport"     content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <script src="main.js"     type="module"></script>
-<script class="noscript">
-	addEventListener( 'error', watchdog );
-	addEventListener( 'unhandledrejection', watchdog );
-	function load_status (text) { document.querySelector('header.noscript > div').innerHTML = text; }
+<script class="boot">
+	//location.href = 'https://spielwiese.central-dogma.at:1337/';
+	const cat_person = false;   // true: Disables watchdog and throws test error
+	if (!cat_person) addEventListener( 'error', watchdog );
+	if (!cat_person) addEventListener( 'unhandledrejection', watchdog );
+	function load_status (text) { document.querySelector('header.boot > div').innerHTML = text; }
 	function load_error (error) {
 		let message = error.message;
 		if (error.filename && error.lineno) {
@@ -65,11 +67,12 @@
 		if (interval) clearInterval( interval );
 		return 'Auto-reload aborted';
 	}
-</script><style class="noscript">
+	if (cat_person) throw new Error( "Intentional test error" );
+</script><style class="boot">
 	.init, .init * { margin:0; padding:0; box-sizing:border-box; line-height:1.4; }
 	.init, .init body { height:100%; }
 	.init body { background:#000; color:#fc0; }
-	.init body > :not(.noscript) { display:none !important; }
+	.init body > :not(.boot) { display:none !important; }
 	.init header {
 		display:flex; flex-direction:column; align-items:center; justify-content:center;
 		width:100%; height:100%; text-align:center;
@@ -77,52 +80,66 @@
 	.init h2 { color:#fe8; }
 	.init h3 { color:#ffa; font-size:2em; }
 	html.error header :is(h1,h2),
-	html:not(.init) .noscript { display:none; }
-	.noscript h1 small { text-transform:uppercase; font-size:0.72em; }
-	.noscript h3 { margin:0 0 0.25rem; }
-	.noscript p { margin-top:1em 0; }
-	.noscript h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
-	.noscript img { display:block; margin:0 auto; }
-	.noscript p + p { margin-top:2em; }
+	html:not(.init) .boot { display:none; }
+	.boot h1 small { text-transform:uppercase; font-size:0.72em; }
+	.boot h3 { margin:0 0 0.25rem; }
+	.boot p { margin-top:1em 0; }
+	.boot h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
+	.boot img { display:block; margin:0 auto; }
+	.boot p + p { margin-top:2em; }
 </style><style class="chat">
 	* { margin:0; padding:0; box-sizing:border-box; line-height:1.4; }
 	html, body { height:100%; background:#000; color:#fed; font-family:sans-serif; }
-	form.chat { display:grid; grid-template-rows:min-content 1fr min-content; width:100%; height:100%; padding:1em; }
-	form.chat.offline    { background:#001; }
+	form.chat { display:grid; grid-template-rows:min-content min-content 1fr min-content; width:100%; height:100%; padding:0.2em 1em 1em; }
+	form.chat output::before {
+		content:''; position:fixed; top:0; left:0; width:100%; height:100%;
+		background:url(/images/spielwiese_transparent.png) center center no-repeat;
+		filter:brightness(0) drop-shadow(0 -25px 150px #fff);
+		opacity:0.5; pointer-events:none;
+	}
+	form.chat.offline    { background:#000018; }
 	form.chat.connecting { background:#c90; }
 	form.chat.connected  { background:#fc0; }
-	form.chat.online     { background:#010; }
+	form.chat.online     { background:#343; }
 	form.chat.error      { background:#400; }
+	form.chat.retry      { background:#600; }
 	form.chat :focus { outline:none; }
 	form.chat h1 { text-align:center; font-size:1em; }
 	form.chat h1 img { height:2em; }
+	form.chat:is(.connected,.online) h1 img { filter:hue-rotate(60deg); }
 	form.chat :is(h1,img) { pointer-events:none; }
-	form.chat .input { display:grid; grid-template-columns:8em 1fr min-content; width:100%; margin-top:-1px; }
-	form.chat :is(output,input,button) { border:solid 1px #444; padding:0.2em 0.5em; background:#000; color:#fff8f0; font-size:1rem; }
-	form.chat :is(output,input,button,pre):focus { position:relative; z-index:1; outline:solid 1px #fff; }
-	form.chat button { padding:0.2em 1em; }
-	form.chat input { margin-right:-1px; Xcolor:#fff; }
+	form.chat .input { display:grid; grid-template-columns:8em 1fr min-content; width:100%; margin-top:1em; }
+	form.chat :is(output,input,button) { border:solid 1px #0008; padding:0.2em 0.5em; background:#010; color:#fffcf4; font-size:1rem; }
+	form.chat :is(output,input,button,pre):focus { position:relative; z-index:1; outline:solid 1px #fff; overflow:visible; white-space:pre-wrap; }
+	form.chat button { padding:0.2em 1em; border-radius:2em; }
+	form.chat input { margin-right:0.5em; color:#fff; }
 	form.chat [name=nick] { text-align:center; }
-	form.chat output { white-space:pre-wrap; overflow-y:auto; }
-	form.chat output > * { width:100%; overflow:hidden; text-overflow:ellipsis; margin:0.25em 0; color:#bab0a6; }
+	form.chat .users { text-align:center; }
+	form.chat .users > span::after { content:', '; color:#aaa; }
+	form.chat .users > span:last-child::after { content:'.'; }
+	form.chat output { position:relative; white-space:pre-wrap; overflow-y:auto; Xbackground:#010; border-radius:0.5em; }
+	form.chat output > * { position:relative; z-index:1; width:100%; overflow:hidden; text-overflow:ellipsis; margin:0.25em 0; color:#dad0c6; }
+	form.chat output > div[class]:hover { color:#fff; }
 	form.chat output > div.talk { color:#fff8f0; }
+	form.chat output > div.reload { color:#fff; }
 	form.chat output > div > span:nth-child(1) { color:#888; float:right; }
+	form.chat output > div:hover > span:nth-child(1) { color:#fff; }
 	form.chat output > div > span:nth-child(1)::after { content:' '; }
-	form.chat output > div.talk > span:nth-child(2)::after { content:': '; color:#aaa;}
+	form.chat output > div.talk > span:nth-child(2)::after { content:': '; color:#aaa; }
 	form.chat output > pre { display:none; color:#888; white-space:nowrap; font-family:monospace,monospace; font-size:1rem; cursor:default; }
 	form.chat output.debug > pre { display:block; }
-	form.chat output > pre:focus { white-space:pre; overflow:visible; }
 	form.chat output > pre.sent::before { content:'🡅 '; color:#080; }
 	form.chat output > pre.received::before { content:'🡇 '; color:#048; }
 </style></head><body>
-	<header class="noscript">
+	<header class="boot">
 		<h1><img src="/images/spielwiese_transparent.png" alt="Site icon"></h1>
 		<h2>spielwiese</h2>
 		<div><p>Please enable JavaScript</p></div>
 	</header>
-	<script class="noscript"> load_status('Loading...'); </script>
+	<script class="boot"> load_status('Loading...'); </script>
 	<form class="chat offline">
 		<h1><img src="/images/spielwiese_transparent.png" alt="Site icon"> Spielwiese</h1>
+		<div class="users"></div>
 		<output></output>
 		<p class="input">
 			<input type="text" name="nick" placeholder="Your name">

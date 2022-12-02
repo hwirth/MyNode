@@ -233,11 +233,16 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketClient.exit' );
+		if (DEBUG.INSTANCES) color_log(
+			COLORS.INSTANCES, 'WebSocketClient.exit:',
+			self.address, self.login ? self.login.userName : '', self.login ? self.login.nickName : ''
+		);
 
 		Object.keys( timeouts ).forEach( (name)=>{
 			clear_timeout( name );
 		});
+
+		socket.close();
 
 		return Promise.resolve();
 

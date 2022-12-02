@@ -7,27 +7,31 @@
 
 
 export const DEBUG = {
-	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
-	WEBSOCKET       : !false,
+	WINDOW_APP: !false,   // Reference DebugConsole instance under window.APP
+	WEBSOCKET: {
+		LOG_EVENTS   : !false,   // Log event objects of messages
+		LOG_MESSAGES : !false,   // Log formatted messages to dev console
+	},
 	KEYBOARD_EVENTS : false,
 };
 
 export const SETTINGS = {
 	CONNECT_ON_START     : location.href.indexOf('connect') >= 0,
 
+	RELOAD_ON_UPDATE : true,
+
 	WEBSOCKET: {
-		MAX_RETRIES    : 35,
+		MAX_RETRIES    : 100, //Number.POSITIVE_INFINITY,
 		RETRY_INTERVAL : 1000,
+		HANDLE_PING    : true,
 		HIDE_PING      : true,
-		LOG_MESSAGES   :!false,
 		LOG_SLICE      : 60,
-		RESET_RETRIES  : true,   // When the server closes connection, do we retry endlessly?
 	},
 };
 
 
 export function log_event (caption, data) {
-	if (!DEBUG.WEBSOCKET) return;
+	if (!DEBUG.WEBSOCKET.LOG_EVENTS) return;
 	console.groupCollapsed( caption );
 	console.log( data );
 	console.groupEnd();

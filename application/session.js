@@ -57,7 +57,12 @@ module.exports = function SessionHandler (persistent, callback) {
 	this.getClientByName = function (name) {
 		const client_address = Object.keys( persistent.clients ).find( (test_address)=>{
 			const client = persistent.clients[test_address];
-			return (client.login && (client.login.userName.toLowerCase() == name.toLowerCase()));
+			return (
+				client.login
+				&&( (client.login.userName.toLowerCase() == name.toLowerCase())
+				||  client.login.nickName && (client.login.nickName.toLowerCase() == name.toLowerCase())
+				)
+			);
 		});
 
 		return (client_address) ? persistent.clients[client_address] : null;
@@ -425,6 +430,9 @@ console.log( 'KICK: parameters:', parameters );
 		else if (parameters.username) {
 			target_client = self.getClientByName( parameters.username );
 		}
+		else if (typeof parameters == 'string') {
+			target_client = self.getClientByName( parameters );
+		}
 
 		if (!target_client) {
 			if (parameters.address) {
@@ -494,14 +502,20 @@ console.log( 'KICK: parameters:', parameters );
 	}; // status
 
 
+	this.request.pum = function (client, request_id, parameters) {
+		client.respond( STATUS.SUCCESS, request_id, {pom: 'yay'} );
+
+	}; // status
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.exit' );
-
-		return new Promise( done => setTimeout(done, SETTINGS.TIMEOUT.SOCKET_CLOSE) );
+		return Promise.resolve();
+		//return new Promise( done => setTimeout(done, SETTINGS.TIMEOUT.SOCKET_CLOSE) );
 
 	}; // exit
 

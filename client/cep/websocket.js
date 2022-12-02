@@ -114,21 +114,11 @@ export const WebSocketClient = function (parameters = {}) {
 					'%c🡇 WebSocketClient received%c:',
 					'color:#48f', 'color:unset',
 					key + ':',
-					Object.keys( message[key] ).join(' '),
-				/*
-					message[key].type,
-					message[key].command,
-					message[key].success,
-				*/
-				/*//...
-					JSON.stringify( message )
-					.replaceAll( '"', '' )
-					.replaceAll( '{', '' )
-					.replaceAll( '}', '' )
-					.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE)
-					split( ':', 1 )[0]
-					,
-				*/
+					(
+						(typeof message[key] == 'string')
+						? message[key]
+						: Object.keys( message[key] ).join(' ')
+					),
 				);
 				console.log( JSON.stringify(message, null, '\t') );
 				console.groupEnd();

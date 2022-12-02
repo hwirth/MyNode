@@ -154,9 +154,9 @@ body > form {
 		width:13rem; box-sizing:content-box;
 		filter:hue-rotate(45deg) contrast(0.8);
 	}
-	body > form h2 { color:var(--title-color); filter:drop-shadow(0 0 10px #8f4); margin-bottom:0.25rem; }
+	body > form h2 { color:var(--title-color); Xfilter:drop-shadow(0 0 10px #8f4); margin-bottom:0.25rem; }
 	body > form img {
-		filter:
+		Xfilter:
 			drop-shadow(0   0px  1px #000)
 			drop-shadow(0 -15px 15px #6f6)
 			drop-shadow(0 -15px 15px #ffa)
@@ -166,6 +166,10 @@ body > form {
 	.guest .no_guest { display:none; }
 	body > form label { width:100%; }
 
+	body > form :is(input,button) {
+		border-radius:1em;
+		padding-left:1em; padding-right:1em;
+	}
 	body > form input {
 		height:2em;
 		border:none;
@@ -187,7 +191,7 @@ body > form {
 	body > form input:hover { background:var(--input-bg); color:var(--hover-color); }
 	body > form input:focus {
 		background:var(--focus-bg); color:var(--focus-color);
-		text-align:left; padding-left:5px;
+		text-align:left; Xpadding-left:5px;
 	}
 
 	body > form .option { display:flex; gap:0.5em; align-items:center; margin-left:2em; }

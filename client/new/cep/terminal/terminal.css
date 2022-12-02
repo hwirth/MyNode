@@ -1,0 +1,83 @@
+cep-terminal {
+	--font-family : monospace,monospace;
+	--font-size   : 1rem;
+	--line-height : 1.4rem;
+
+	--terminal-padding    : 1em;
+	--terminal-color      : #fff;
+	--terminal-background : #000;
+
+	--toolbar-border-radius : 2em;
+	--toolbar-padding       : 0;
+	--toolbar-background    : #333;
+
+	--button-border        : solid 1px #fff;
+	--button-border-radius : 1em;
+	--button-outline       : none;
+	--button-padding       : 0.25em 1em;
+	--button-color         : #fff;
+	--button-background    : #000;
+
+	--items-outline       : none;
+	--items-border        : none;
+	--items-border-radius : 1em;
+	--items-padding       : 0.5em;
+	--items-background    : var(--toolbar-background);
+}
+
+
+cep-terminal {
+	position:fixed; top:0; left:0; z-index:999;
+	width:100%; height:100%; padding:var(--terminal-padding);
+	display:grid; grid-template-rows:min-content 1fr min-content;
+	background:var(--terminal-background); color:var(--terminal-color);
+}
+cep-terminal.hidden { display:none; }
+cep-terminal * { margin:0; padding:0; box-sizing:border-box; }
+
+cep-terminal .toolbar {
+	display:flex; align-items:center; justify-content:center;
+	border-radius:var(--toolbar-border-radius);
+	padding:var(--toolbar-padding);
+	background:var(--toolbar-background);
+}
+cep-terminal :is(header,footer) > * { text-align:center; }
+cep-terminal :is(header,footer) > div { flex-grow:1; }
+
+cep-terminal button {
+	position:relative;
+	outline:var(--button-outline);
+	border:var(--button-border); border-radius:var(--button-border-radius);
+	padding:var(--button-padding);
+	color:var(--button-color);
+	background:var(--button-background);
+	font-family:var(--font-family); font-size:var(--font-size);
+}
+
+cep-terminal .menu {
+	position:relative;
+}
+cep-terminal .menu .items {
+	position:absolute;
+	outline:var(--items-outline);
+	border:var(--items-border); border-radius:var(--items-border-radius);
+	padding:var(--items-padding);
+	background:var(--items-background);
+	gap:0.5em; /*vertical*/
+}
+cep-terminal .toolbar .menu > .items { display:none; }
+X cep-terminal .menu .items,
+cep-terminal .menu:is(:hover,:focus-within) > .items { display:flex; flex-direction:column; }
+
+cep-terminal .toolbar > .menu:is(:nth-last-child(1),:nth-last-child(2)) .items { right:0; }
+cep-terminal footer > .menu > .items { bottom:100%; }
+
+cep-terminal .toolbar > .menu:first-child .items .items { left:100%; Xtop:0; }
+cep-terminal .toolbar > .menu:is(:nth-last-child(1),:nth-last-child(2)) .items .items { right:100%; }
+cep-terminal header > .menu > .items .items { top:calc(-1 * var(--items-padding));  }
+cep-terminal footer > .menu > .items .items { bottom:calc(-1 * var(--items-padding));  }
+
+cep-terminal .menu .items button {
+	Xflex-basis:10em; /*//... Makes them tall */
+	white-space:nowrap;
+}
