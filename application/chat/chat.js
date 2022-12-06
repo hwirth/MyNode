@@ -9,9 +9,10 @@ const fetch     = require( 'node-fetch' );
 const DomParser = require( 'dom-parser' );
 const RssParser = require( 'rss-parser' );
 
-const { DEBUG, COLORS   } = require( '../../server/debug.js' );
-const { color_log, dump } = require( '../../server/debug.js' );
-const { REASONS, STATUS } = require( '../constants.js' );
+const { SETTINGS        } = require( '../../server/config.js' );
+const { DEBUG, COLORS   } = require( '../../server/debug.js'  );
+const { color_log, dump } = require( '../../server/debug.js'  );
+const { REASONS, STATUS } = require( '../constants.js'        );
 
 
 module.exports = function ChatServer (persistent, callback, meta) {
@@ -32,9 +33,12 @@ module.exports = function ChatServer (persistent, callback, meta) {
 	meta( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
 	this.request.nick = function (client, request_id, parameters) {
 		if (client.login) {
+			const allowed  = char => SETTINGS.ALLOWED_NAME_CHARS.indexOf(char) >= 0;
+			const filtered = parameters.split('').filter( allowed ).join('');
+
 			//... Check nick validity/availability
-			if (!parameters) {
-				client.respond( STATUS.FAILURE, request_id, STATUS.INVALID_NICKNAME );
+			if (!parameters || (filtered != parameters)) {
+				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_NICKNAME );
 				return;
 			}
 

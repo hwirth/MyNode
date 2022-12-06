@@ -126,7 +126,6 @@ module.exports.Router = function (persistent, callback) {
 				return;
 			}
 
-
 			handled_commands.push( combined_name );
 
 			if (DEBUG.ROUTER) color_log(

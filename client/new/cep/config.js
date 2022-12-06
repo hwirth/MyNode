@@ -13,16 +13,18 @@ export const DEBUG = {
 		LOG_MESSAGES : !false,   // Log formatted messages to dev console
 	},
 	KEYBOARD_EVENTS : false,
+	INSTANCES       :! false,
+	EVENTS          : false,
 };
 
 export const SETTINGS = {
-	CONNECT_ON_START     : location.href.indexOf('connect') >= 0,
-
+	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
 	RELOAD_ON_UPDATE : true,
 
 	WEBSOCKET: {
 		MAX_RETRIES    : 100, //Number.POSITIVE_INFINITY,
 		RETRY_INTERVAL : 1000,
+		RETRY_TIMOUT   : 3000,
 		HANDLE_PING    : true,
 		HIDE_PING      : true,
 		LOG_SLICE      : 60,

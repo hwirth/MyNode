@@ -84,16 +84,20 @@
 	.boot h1 small { text-transform:uppercase; font-size:0.72em; }
 	.boot h3 { margin:0 0 0.25rem; }
 	.boot p { margin-top:1em 0; }
-	.boot h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
+	X.boot h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
 	.boot img { display:block; margin:0 auto; }
 	.boot p + p { margin-top:2em; }
 </style><style class="chat">
-	* { margin:0; padding:0; box-sizing:border-box; line-height:1.4; }
+	* { margin:0; padding:0; box-sizing:border-box; Xline-height:1.4; }
 	html, body { height:100%; background:#000; color:#fed; font-family:sans-serif; }
-	form.chat { display:grid; grid-template-rows:min-content min-content 1fr min-content; width:100%; height:100%; padding:0.2em 1em 1em; }
+	html.init form.chat { display:none; }
+	form.chat { display:grid; grid-template-rows:min-content 1fr min-content; width:100%; height:100%; padding:0.2em 1.5em 1em; }
 	form.chat output::before {
-		content:''; position:fixed; top:0; left:0; width:100%; height:100%;
+		content:'\A\A\A\A\A\A\Aspielwiese';
+		position:fixed; top:0; left:0; width:100%; height:100%;
+		display:flex; align-items:center; justify-content:center;
 		background:url(/images/spielwiese_transparent.png) center center no-repeat;
+		color:#000; font-size:20px; font-weight:bold;
 		filter:brightness(0) drop-shadow(0 -25px 150px #fff);
 		opacity:0.5; pointer-events:none;
 	}
@@ -132,19 +136,19 @@
 	form.chat output > pre.received::before { content:'🡇 '; color:#048; }
 </style></head><body>
 	<header class="boot">
-		<h1><img src="/images/spielwiese_transparent.png" alt="Site icon"></h1>
+		<h1><img src="/images/spielwiese_dark.jpg" alt="Site icon"></h1>
 		<h2>spielwiese</h2>
 		<div><p>Please enable JavaScript</p></div>
 	</header>
 	<script class="boot"> load_status('Loading...'); </script>
 	<form class="chat offline">
-		<h1><img src="/images/spielwiese_transparent.png" alt="Site icon"> Spielwiese</h1>
+		<!-- h1><img src="/images/spielwiese_transparent.png" alt="Site icon"> Spielwiese</h1 -->
 		<div class="users"></div>
 		<output></output>
-		<p class="input">
+		<div class="input">
 			<input type="text" name="nick" placeholder="Your name">
 			<input type="text" name="text" placeholder="Your message" autocomplete="off">
 			<button class="send">Send</button>
-		</p>
+		</div>
 	</form>
 </body></html>

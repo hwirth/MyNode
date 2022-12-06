@@ -408,7 +408,7 @@ export const DebugConsole = function (callback) {
 			self.elements.nickName.focus();
 		}
 
-	} // on_dblclick
+	} // on_click
 
 
 	function on_dblclick (event) {

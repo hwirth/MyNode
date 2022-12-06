@@ -112,6 +112,8 @@ const SETTINGS = {
 		'client/new',
 		'client/new/cep',
 		'client/new/cep/terminal',
+		'client/new/cep/terminal/gadgets',
+		'client/new/cep/terminal/shell',
 	],
 
 }; // SETTINGS

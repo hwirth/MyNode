@@ -116,7 +116,7 @@ function parse_json(message) {//...
 	let result = message;
 	try   { result = JSON.parse( message ); }
 	catch { /* Assume string */
-	log_header(
+		log_header(
 			COLORS.WARNING,
 			'GOT BUFFER '
 			+ request_nr
@@ -375,7 +375,7 @@ function parse_json(message) {//...
 
 // WEB SOCKET ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function create_web_socket (callbacks) {
+	function create_web_socket (callback) {
 		color_log( COLORS.WSS, 'WebSocketServer:', 'Creating web socket' );
 
 		const new_server = new WebSocket.Server({ noServer: true });
@@ -405,7 +405,7 @@ function parse_json(message) {//...
 			}
 
 			socket.on( 'message', (message_data)=>{
-				callbacks.onMessage( socket, client_address, message_data );
+				callback.onMessage( socket, client_address, message_data );
 			});
 
 			socket.on( 'pong', (...params)=>{
@@ -413,14 +413,14 @@ function parse_json(message) {//...
 			});
 
 			socket.on( 'close', ()=>{
-				callbacks.onDisconnect( socket, client_address );
+				callback.onDisconnect( socket, client_address );
 			});
 
 			socket.onerror = function (error) {
 				color_log( COLORS.ERROR, 'WebSocketServer-create_websocket:', error  );
 			}
 
-			callbacks.onConnect( socket, client_address );
+			callback.onConnect( socket, client_address );
 		});
 
 		color_log( COLORS.WSS, 'WebSocketServer:', 'Web socket running on port', HTTPS_OPTIONS.port );

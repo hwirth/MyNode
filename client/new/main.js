@@ -12,7 +12,8 @@ const PROGRAM_NAME = 'Chat';
 const PROGRAM_VERSION = '0.0.1α';
 
 const DEBUG = {
-	EVENTS: false,
+	INSTANCES : false,
+	EVENTS    : false,
 };
 
 const Application = function () {
@@ -85,56 +86,39 @@ const Application = function () {
 
 // COLOR FROM NAME ///////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function hsl_to_rgb (h, s, l) {
-		var r, g, b;
+	function hue_to_rgb (p, q, t) {
+		if (t < 0) t += 1;
+		if (t > 1) t -= 1;
+		if (t < 1/6) return p + (q - p) * 6 * t;
+		if (t < 1/2) return q;
+		if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+		return p;
 
-		if (s == 0) {
-		r = g = b = l; // achromatic
-		} else {
-			var hue2rgb = function hue2rgb( p, q, t ) {
-				if (t < 0) t += 1;
-				if (t > 1) t -= 1;
-				if (t < 1/6) return p + (q - p) * 6 * t;
-				if (t < 1/2) return q;
-				if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-				return p;
-			}
-
-			var q
-			= (l < 0.5)
-			? l * (1 + s)
-			: l + s - l * s
-			;
-			var p = 2 * l - q;
-			r = hue2rgb(p, q, h + 1/3);
-			g = hue2rgb(p, q, h      );
-			b = hue2rgb(p, q, h - 1/3);
-		}
-
-		return [
-			Math.round(r * 255),
-			Math.round(g * 255),
-			Math.round(b * 255)
-		];
-
-	} // hsl_to_rgb
+	} // hue_to_rgb
 
 
-	function hsl_to_html_color (h, s, l) {
+	function dec_to_hex2 (dec) {
 		const hex_digits = "0123456789abcdef";
+		const hi_nibble  = (dec & 0xF0) >> 4;
+		const lo_nibble  = (dec & 0x0F) >> 0;
+		return hex_digits[hi_nibble] + hex_digits[lo_nibble];
 
-		function dec_to_hex2( dec ) {
-			const hi_nibble = (dec & 0xF0) >> 4;
-			const lo_nibble = (dec & 0x0F) >> 0;
-			return hex_digits[ hi_nibble ] + hex_digits[ lo_nibble ];
-		}
+	} // dec_to_hex2
 
-		const rgb = hsl_to_rgb( h, s, l );
-		const r = dec_to_hex2( rgb[0] );
-		const g = dec_to_hex2( rgb[1] );
-		const b = dec_to_hex2( rgb[2] );
 
-		return "#" + r + g + b;
+	function hsl_to_html_color (h, s = 0.5, l = 0.5) {
+		const q = (l < 0.5) ? (l * (1 + s)) : (l + s - l * s);
+		const p = 2 * l - q;
+		const r = hue_to_rgb(p, q, h + 1/3);
+		const g = hue_to_rgb(p, q, h      );
+		const b = hue_to_rgb(p, q, h - 1/3);
+
+		return (
+			'#'
+			+ dec_to_hex2( Math.round(r * 255) )
+			+ dec_to_hex2( Math.round(g * 255) )
+			+ dec_to_hex2( Math.round(b * 255) )
+		);
 
 	} // hsl_to_html_color
 
@@ -310,13 +294,15 @@ const Application = function () {
 	}; // onWsMessage
 
 
+// PROTOCOL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
 	this.getCredentials = function (websocket_url) {
 		console.log( 'Application.getCredentials:', websocket_url );
 
 		return new Promise( (proceed, abort)=>{
 			//... Await dialog
 			self.nickName = self.elements.textNickName.value.trim();
-
+console.log( 'MAIN nick_name', self.nickName );
 			if (self.nickName) {
 				proceed({ session:{login:{username:'guest'}}, chat:{nick:self.nickName} });
 			} else {
@@ -332,6 +318,7 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
+		if (DEBUG.INSTANCES) console.log( 'Application.exit' );
 		return Promise.resolve();
 
 	}; // exit
@@ -339,7 +326,7 @@ const Application = function () {
 
 	this.init = async function () {
 		console.log( '%c' + PROGRAM_NAME + ' v' + PROGRAM_VERSION, 'color:#080; font-weight:bold;' );
-		console.log( 'Application.init' );
+		if (DEBUG.INSTANCES) console.log( 'Application.init' );
 
 		// Gather DOM elements
 		self.elements = Object.entries({
@@ -354,9 +341,6 @@ const Application = function () {
 			return { ...prev, [name]:document.querySelector(selector) };
 
 		}, /*initialValue*/{} );
-
-		// Disable <form> submission
-		self.elements.form.addEventListener( 'submit', event => event.preventDefault() );
 
 		const params = new URLSearchParams( location.search.slice(1) );
 		const name = params.get('name');
@@ -377,10 +361,16 @@ const Application = function () {
 					send    : self.onWsSend,
 				},
 			},
+	/*
 			events: {
-				onReload : ()=>print( 'div', 'The client was updated.', 'reload' ),
+				'reload/client' : ()=>print( 'div', 'The client was updated, reloading.', 'reload' ),
+				'reload/css'    : ()=>print( 'div', 'A CSS file has been reloaded.'     , 'reload' ),
 			},
+	*/
 		});
+
+		// Disable <form> submission
+		CEP.dom.disableFormSubmit( self.elements.form );
 
 		self.elements.form.addEventListener( 'click', (event)=>{
 			if (['FORM', 'OUTPUT'].indexOf( event.target.tagName) >= 0) {
@@ -444,7 +434,7 @@ const Application = function () {
 addEventListener( 'load', async ()=>{
 	load_status( 'Initializing...' );
 	await new Application();
-	document.querySelector( 'html' ).classList.remove('init')
+	document.querySelector( 'html' ).classList.remove('init');
 });
 
 
