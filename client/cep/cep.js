@@ -5,238 +5,117 @@
 
 "use strict";
 
-import { SETTINGS, DEBUG } from './config.js';
+import { SETTINGS, DEBUG, log_event } from './config.js';
+
+import { Events        } from './events.js';
+import { DomAssist     } from './dom_assist.js';
+import { AutoWebSocket } from './websocket.js';
+import { DebugTerminal } from './terminal/terminal.js';
+
 
 export const ClientEndPoint = function (parameters = {}) {
 	const self = this;
+	self.templateName = 'ClientEndPoint';
 
-	this.eventListeners;
-	this.isConnected;
+	if (DEBUG.WINDOW_APP) window.CEP = self;
 
+	this.events;
+	this.connection;
+	this.terminal;
 
-	const callbacks = parameters.events;
-
-	let nr_attempts = 0;
-	let connection_timeout = null;
-	let unload_handler = null;
-
-	let websocket = null;
+	this.baseDir;      // Folder name of  index.html, eg. / or  /test/
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// WEB SOCKET
+// CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function log_event (caption, data) {
-		if (!DEBUG.WEBSOCKET) return;
-
-		console.groupCollapsed( caption );
-		console.log( data );
-		console.groupEnd();
-	}
-
-	function websocket_connection (url, event_handlers) {
-		console.log( 'Connecting to ' + parameters.url + '...' );
-
-		// When unable to connect, try again after a few seconds
-		connection_timeout = setTimeout( ()=>{
-			console.log( 'Connection timed out' );
-			connection_timeout = null;
-			websocket_connection( callback_connection_established );
-		}, CONNECTION_TIMEOUT_MS );
-
-
-		function stop_timeout_loop () {
-			clearTimeout( connection_timeout );   // Prevent new connection attempt
-
-		} // stop_timeout_loop
-
-
-		// Create socket and connect
-		//...document.cookie = 'username=' + parameters.username + '; path=/';
-		//...document.cookie = 'password=' + parameters.password + '; path=/';
-
-		let ws = null;
-		try {
-			ws = new WebSocket( parameters.url );
-		} catch (error) {
-			console.log( 'Connection failed', error.message );
-		}
-
-		ws.addEventListener( 'open', on_open );
-		ws.addEventListener( 'close', on_close );
-		ws.addEventListener( 'error', on_error );
-		ws.addEventListener( 'message', on_message );
-
-		self.websocket = ws;
-
-	} // websocket_connection
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENTS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function on_open (event) {
-		log_event( 'WebSocketClient.onOpen', event );
-		stop_timeout_loop();
-
-		if (callbacks.onOpen) callbacks.onOpen( event, self );
-
-		callback_connection_established();
-
-	} // on_open
-
-
-	function on_close (event) {
-		log_event( 'WebSocketClient.onClose', event );
-		stop_timeout_loop();
-
-		if (callbacks.onClose) callbacks.onClose( event, self );
-
-	} // on_close
-
-
-	function on error (event) {
-		log_event( 'WebSocketClient.onError', event );
-		console.log( 'ws: Error:', event );
-		stop_timeout_loop();
-
-		if (callbacks.onError) callbacks.onError( event, self );
-
-	} // on_error
-
-
-	function on_message (event) {
-		let message = event.data;
-
-		if (typeof message == 'string') {
-			try { message = JSON.parse( message ); }
-			catch { /* Assume string */ }
-		}
-
-		// Hide ping/pong log messages
-		const is_pingpong = message.update && message.update.pong;
-		const do_log = (!SETTINGS.HIDE_MESSAGES.PING || (SETTINGS.HIDE_MESSAGES.PING && !is_pingpong));
-		if (DEBUG.WEBSOCKET && do_log) {
-			const key = Object.keys( message )[0];
-			console.groupCollapsed(
-				'%c🡇 WebSocketClient received%c:',
-				'color:#48f', 'color:unset',
-				key + ':',
-				Object.keys( message[key] ).join(' '),
-			);
-			console.log( JSON.stringify(message, null, '\t') );
-			console.groupEnd();
-		}
-
-		if (callbacks.onMessage) callbacks.onMessage( event, self, message );
-
-	} // on_message
-
-
-	function on_send (request) {
-		// Hide ping/pong log messages
-		const is_pingpong = request.session && request.session.pong;
-		const do_log = (!SETTINGS.HIDE_MESSAGES.PING || (SETTINGS.HIDE_MESSAGES.PING && !is_pingpong));
-		if (DEBUG.WEBSOCKET && do_log) {
-			console.groupCollapsed(
-				'%c🡅 WebSocketClient sending%c:',
-				'color:#480', 'color:unset',
-				JSON.stringify( request )
-				.replaceAll( '"', '' )
-				.replaceAll( '{', '' )
-				.replaceAll( '}', '' )
-				.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
-			);
-			console.log( JSON.stringify(request, null, '\t') );
-			console.groupEnd();
-		}
-
-		// See app-on_websocket_message
-		const hide_message =  (SETTINGS.HIDE_MESSAGES.PING && request.session && request.session.pong);
-		if (!hide_message) {
-			parameters.terminal.print( request, 'request' );
-		}
-
-		self.websocket.send( JSON.stringify(request, null, '\t') );
-
-	} // on_send
-
-
-	function on_beforeunload () {
-		self.send( 'HUP' );   //...! Does this work?
-
-	} // on_beforeunload
-
-	this.closeConnection = function (connection_name) {
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// CONNECTION
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	const EMITS_EVENTS = ['reload/client', 'reload/css'];
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const known_events = ['open', 'close', 'error', 'message', 'send'];
+	this.connected = function () {
+		return self.connection.connected();
 
-	this.addEventListener = function (event_name, event_handler) {
-		if (known_events.indexOf(event_name) < 0) {
-			throw new Error( 'CEP.addEventListener: Unknown event' );
-		}
-
-		const already_registered = self.eventListeners[event_name].indexOf( event_handler ) >= 0;
-
-		if (already_registered) {
-			throw new Error( 'CEP.addEventListener: Event handler already registered' );
-		}
-
-		self.eventListeners[event_name].push( event_handler );
-
-	}; // addEventListener
+	} // connected
 
 
-	this.removeEventListener = function (event_name, event_handler) {
-		if (typeof self.eventListeners[event_name] == 'undefined') {
-			throw new Error( 'CEP.removeEventListener: Unknown event' );
-		}
-
-		const found_index = self.eventHandlers[event_name].indexOf( event_handler );
-
-		if (found_index < 0) {
-			throw new Error( 'CEP.removeEventListener: Handler not registered' );
-		}
-
-		self.eventHandlers[event_name].splice( index, 1 );
-
-	}; // removeEventListener
-
-
-	this.connect = function (websocket_url) {
-		return new Promise( async (done)=>{
-			await websocket_connection( done );
-			addEventListener( 'beforeunload', on_beforeunload, false );
-		});
-
-		websocket_connection( websocket_url );
+	this.connect = function () {
+		self.connection.connect();
 
 	}; // connect
 
 
-	this.isConnected = function () {
-		return (self.websocket.readyState == SOCKET_STATES.OPEN);
+	this.disconnect = async function () {
+		self.connection.disconnect();
 
-	}; // isConnected
-
-
-	this.disconnect = function () {
-	}; // disconnect
+	}; // connect
 
 
-	this.send = on_send;
+	this.send = function (request) {
+		self.connection.send( request );
+
+	};  // send
+
+
+	this.toggleTerminal = async function () {
+		if (!self.terminal) {
+			self.terminal = await new DebugTerminal( self );
+		} else {
+			self.terminal.toggleVisibility();
+		}
+
+		return Promise.resolve();
+
+	}; // toggleTerminal
+
+
+// HELPERS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.GET = new URLSearchParams( location.search.slice(1) );
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.onWsMessage = function (message) {
+		if (message.broadcast && (message.broadcast.type == 'reload/client')) {
+			let do_reload = false;
+			Object.keys( message.broadcast.reload ).forEach( (file_name)=>{//...! change protocol
+				file_name = file_name.replace( 'client/', '' ).replace( CEP.baseDir + '/', '' );
+				if (file_name.slice(-4) == '.css') {
+					const html
+					= 'The file <a href="'
+					+ file_name
+					+ '">'
+					+ file_name
+					+ '</a> was reloaded'
+					;
+					self.events.emit( 'reload/css', html );
+					self.dom.reloadCSS( file_name );
+				} else {
+					do_reload |= !(
+						   (file_name.slice(-4) == '.css')
+						|| (file_name.slice(-4) == '.txt')
+						|| (file_name.slice(-4) == 'TODO')
+						|| (file_name.slice(-6) == 'README')
+					);
+				}
+			});
+			if (do_reload) {
+				if (SETTINGS.RELOAD_ON_UPDATE) {
+					self.events.emit( 'reload/client' );
+					self.send( {chat:{say:'Reloading'}} );
+					document.documentElement.classList.add( 'client_reload' );
+					setTimeout( ()=>location.reload(), 333 );
+				}
+			}
+		}
+	}; // onMessage
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -244,29 +123,41 @@ export const ClientEndPoint = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		removeEventListener( 'beforeunload', on_before_unload, false );
-		self.websocket.close();
+		if (DEBUG.INSTANCES) console.log( 'ClientEndPoint.exit' );
 		return Promise.resolve();
 
 	}; // exit
 
 
-	this.init = function () {
-		console.log( 'CEP.init' );
+	this.init = async function () {
+		if (DEBUG.INSTANCES) console.log( 'ClientEndPoint.init' );
 
-		self.eventListeners = {};
-		known_events.forEach( (event_name)=>{
-			self.eventListeners[event_name] = [];
+		self.baseDir = location.pathname.split( '/' ).slice( 0, -1 ).join( '/' );
+
+		//init_event_listeners( parameters.events );
+		self.events     = await new Events( self, EMITS_EVENTS, parameters.events );
+		self.dom        = await new DomAssist( self );
+		self.connection = await new AutoWebSocket( parameters.connection );
+
+		self.connection.events.add( 'message', self.onWsMessage );
+
+		document.documentElement.addEventListener( 'keydown', (event)=>{
+			if ((event.key == 't') && !event.shiftKey && !event.ctrlKey && event.altKey) {
+				event.preventDefault();
+				self.toggleTerminal();
+			}
 		});
+
+		if (self.GET.has('terminal')) await self.toggleTerminal();
 
 		return Promise.resolve();
 
 	}; // init
 
 
-	self.init().then( ()=>self );   // const websocket = await new WebSocketClient()
+	return self.init().then( ()=>self );   // const cep = await new ClientEndPoint()
 
-}; // WebSocketClient
+}; // ClientEndPoint
 
 
 //EOF

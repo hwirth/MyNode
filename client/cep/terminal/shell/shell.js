@@ -5,122 +5,640 @@
 
 "use strict";
 
-import { SETTINGS       } from '../../config.js';
-import { PRESETS, DEBUG } from '../../config.js';
-import { Parsers        } from './parsers.js';
-import { ShellOutput    } from './output.js';
-import { ShellInput     } from './input.js';
-import { History        } from './history.js';
+import { DEBUG             } from '../../config.js';
+import { SETTINGS, PRESETS } from '../config.js';
+import { Toggle            } from '../gadgets/toggle.js';
+import { handle_message    } from './handle_message.js'
+import { ShellInput        } from './input.js';
+import { ShellOutput       } from './output.js';
+import { Parsers           } from './parsers.js';
+import { History           } from './history.js';
 
-const CEP_VERSION = 'v0.4.1α';   // Keyboard shortcuts will be appended in  self.init()
+const PROGRAM_NAME = 'CEP-Shell';
+const PROGRAM_VERSION = '0.5.0α';
 
 
-export const CEPShell = function (terminal, callback, BUTTON_SCRIPTS) {
+export const CEPShell = function (cep, terminal) {
 	const self = this;
+	this.templateName = 'CEPShell';
 
-	// Properties
-	this.version;     // Terminal will append toggle codes
-	this.requestId;   // Tag for requests, incremented in ShellInput-send_json and automatically added to the JSON
+	this.version = PROGRAM_VERSION;
 
-	// Imported from DebugConsole
-	this.elements;    // DOM elements
-	this.toggles;     // Toggle buttons
-	this.dom;         // DOM actions (animate ping, etc);
-	this.bit;         // The bit. It says "yes" or "no"
-	this.status;      // Message in footer toolbar
+	this.containers;
+	this.elements;
+	this.history;
+	this.toggles;
 
-	// Objects
-	this.output;      // Top section of the screen
-	this.input;       // A <textarea> that is moving around, pretending to be a shell prompt
-	this.parsers;     // Converts short formats into JSON, etc.
-	this.history;     // Command history like in your shell with cursor-up
+	this.requestId;
+	this.buttonScripts;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// CONFIGURATION
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	const RESSOURCE = [
+		// Containers will be removed and re-inserted by the UI.
+		// If a mount location needs more than one element, they need to be separate containers:
+		{	parent   : 'terminal',
+			html     : (`
+				<main class="shell">
+					<output></output>
+					<textarea></textarea>
+				</main>
+			`),
+			elements : {
+				main   : 'CONTAINER',
+				output : 'output',
+				input  : 'textarea',
+			},
+		},{
+			parent   : 'bottomRight',
+			html     : '<div class="toggle_states"></div>',
+			elements : { toggleState: 'CONTAINER' },
+		},{
+			parent   : 'bottomRight',
+			html     : '<button class="clear">Clear</button>',
+			elements : { btnClear: 'CONTAINER' },
+		},{
+			parent   : 'bottomRight',
+			html     : (`
+				<nav class="shell menu">
+					<button class="enter">Enter</button>
+					<div class="items">
+						<nav class="toggles menu">
+							<button>Toggles</button>
+							<div class="items"></div>
+						</nav>
+						<nav class="filters menu">
+							<button>Filter</button>
+							<div class="items"></div>
+						</nav>
+						<nav class="debug menu">
+							<button>Debug</button>
+							<div class="items"></div>
+						</nav>
+					</div>
+				</nav>
+			`),
+			elements : {
+				menuShell    : 'CONTAINER',
+				menuFilter   : '.menu.filters',
+				menuToggles  : '.menu.toggles',
+				itemsFilter  : '.menu.filters > .items',
+				itemsToggles : '.menu.toggles > .items',
+				itemsDebug   : '.menu.debug   > .items',
+				btnEnter     : '.enter',
+				btnFilters   : '.menu.filters > button',
+				btnToggles   : '.menu.toggles > button',
+				btnDebug     : '.menu.debug   > button',
+			},
+		},
+	];
+
+
+	function create_toggles_definition() {
+		// When  .init()  creates the toggles, entries are added to  self.keyboardShortcuts
+		const pT   = PRESETS.TOGGLE;
+		const pF   = PRESETS.FILTER;
+		const tO   = self.elements.output;
+		const tT   = terminal.elements.terminal;
+		const bF   = [self.elements.btnEnter, self.elements.btnFilters];
+		const bT   = [self.elements.btnEnter, self.elements.btnToggles];
+		const mF   = self.elements.itemsFilter;
+		const mT   = self.elements.itemsToggles;
+		const btnF = self.elements.btnFilters;
+		return {
+// Classname  InitialValue          PutClassOn BlinkThese ButtonIn KeyboardAlt+   innerHTML
+ping      : { preset:pF.PING      , target:tO, blink:bF, menu:mF, shortcut:'p',  caption:'Ping'       },
+cep       : { preset:pF.CEP       , target:tO, blink:bF, menu:mF, shortcut:null, caption:'CEP'        },
+string    : { preset:pF.STRING    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'String'     },
+notice    : { preset:pF.NOTICE    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Notice'     },
+broadcast : { preset:pF.BROADCAST , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Broadcast'  },
+update    : { preset:pF.UPDATE    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Update'     },
+request   : { preset:pF.REQUEST   , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Request'    },
+response  : { preset:pF.RESPONSE  , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Response'   },
+filter    : { preset:pT.FILTER    , target:tO, blink:bF, menu:mF, shortcut:'d',  caption:'Filter'    , button:btnF },
+last      : { preset:pT.LAST      , target:tO, blink:bT, menu:mT, shortcut:'y',  caption:'Show Last'  },
+compact   : { preset:pT.COMPACT   , target:tO, blink:bT, menu:mT, shortcut:'c',  caption:'Compact'    },
+overflow  : { preset:pT.OVERFLOW  , target:tO, blink:bT, menu:mT, shortcut:'v',  caption:'Overflow'   },
+separators: { preset:pT.SEPARATORS, target:tO, blink:bT, menu:mT, shortcut:'s',  caption:'Separators' },
+stripes   : { preset:pT.STRIPES   , target:tO, blink:bT, menu:mT, shortcut:'x',  caption:'Stripes'    },
+scroll    : { preset:pT.SCROLL    , target:tO, blink:bT, menu:mT, shortcut:'r',  caption:'AutoScroll' },
+		};
+
+	} // create_toggles_definition
+
+
+	function create_scriptbutton_definition () {
+		const AUTH  = terminal.applets.loginMenu.elements.itemsLogin;
+		const DEBUG = self.elements.itemsDebug;
+		return {
+// Classname MakeButtonIn LetItEnterThis
+connect   : { menu:AUTH , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
+disconnect: { menu:AUTH , script:'/disconnect' },
+login     : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
+logout    : { menu:AUTH , script:'session\n\tlogout' },
+guest     : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
+user      : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
+root      : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
+help      : { menu:DEBUG, script:'/help'   },
+manual    : { menu:DEBUG, script:'/manual' },
+restart   : { menu:DEBUG, script:'server\n\trestart\n\t\ttoken: ' },
+reset     : { menu:DEBUG, script:'server\n\trestart\n\t\ttoken: ' },
+token     : { menu:DEBUG, script:'server\n\ttoken'   },
+who       : { menu:DEBUG, script:'session\n\twho'    },
+vStat     : { menu:DEBUG, script:'server\n\tstatus'  },
+nStat     : { menu:DEBUG, script:'session\n\tstatus' },
+kroot     : { menu:DEBUG, script:'session\n\tkick\n\t\tusername: root'  },
+kuser     : { menu:DEBUG, script:'session\n\tkick\n\t\tusername: user'  },
+RSS       : { menu:DEBUG, script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
+		};
+
+	} // create_scriptbutton_defninition
+
+
+	// KEYBOARD SHORTCUTS
+	function shortcut_exec (command_button) {
+		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
+	}
+	this.keyboardShortcuts = [
+  { event:'keydown', key:'+'        , modifiers:'alt'       , action:()=>{ terminal.changeFontSize(+1);    },
+},{ event:'keydown', key:'-'        , modifiers:'alt'       , action:()=>{ terminal.changeFontSize(-1);    },
+},{ event:'keydown', key:'.'        , modifiers:'alt'       , action:()=>{ terminal.nextFont(+1)           },
+},{ event:'keydown', key:','        , modifiers:'alt'       , action:()=>{ terminal.nextFont(-1)           },
+},{ event:'keydown', key:'ArrowUp'  , modifiers:'cursorPos1', action:()=>{ self.history.back();            },
+},{ event:'keydown', key:'ArrowDown', modifiers:'cursorEnd' , action:()=>{ self.history.forward();         },
+},{ event:'keydown', key:'Home'     , modifiers:'ctrl'      , action:()=>{ self.output.clearInput();       },
+},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.deleteToMarker();   },
+},{ event:'keydown', key:'PageUp'   , modifiers:'shift'     , action:()=>{ self.output.scrollPageUp();     },
+},{ event:'keydown', key:'PageDown' , modifiers:'shift'     , action:()=>{ self.output.scrollPageDown();   },
+},{ event:'keydown', key:'Delete'   , modifiers:'shift,ctrl', action:()=>{ self.output.clearScreen();      },
+},{ event:'keydown', key:'Enter'    , modifiers:null        , action:()=>{ self.elements.btnEnter.click(); },
+},
+	];
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const relay = 'IS_RELAY';
+	this.taskName      = PROGRAM_NAME;
+	this.taskMainClass = 'shell';
 
-	// Parsers
-	this.executeButtonScript = relay;
-	this.parseButtonScript   = relay;
-	this.requestToText       = relay;
-	this.textToRequest       = relay;
-	this.parseShortRequest   = relay;
+	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
 
-	// Output
-	this.printVersion   = relay;
-	this.clearScreen    = relay;
-	this.scrollDown     = relay;
-	this.isScrolledUp   = relay;
-	this.scrollPageUp   = relay;
-	this.scrollPageDown = relay;
-	this.deleteToMarker = relay;
-	this.showFile       = relay;
-	this.print          = relay;
+	this.show  = function () { terminal.showApplet ( self ); }; // show
+	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
+	this.close = function () { terminal.closeApplet( self ); }; // close
 
-	// Input
-	this.focusPrompt    = relay;
-	this.adjustTextarea = relay;
-	this.clearInput     = relay;
-	this.onEnterClick   = relay;
+	this.contextMenu = function () {
+		return {
+			show  : { caption:'Show' , action:self.show  },
+			hide  : { caption:'Hide' , action:self.hide  },
+			close : { caption:'Close', action:self.close },
+		};
+
+	}; // contextMenu
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function on_keydown (event) {//... Move to  on_keyboard_event ?
+		const shift = event.shiftKey;
+		const ctrl  = event.ctrlKey;
+		const alt   = event.altKey;
+		const key   = event.key;
+
+	 	if ((event.keyCode == 13) && shift && !ctrl && !alt) {
+			// Tranform dotJSON --> tabJSON
+			event.preventDefault();
+			const text = self.elements.input.value;
+			if (text.charAt( 0 ) == '.') {
+				self.elements.input.value = self.parsers.parseShortRequest( text );
+				self.input.adjustTextarea();
+				return;
+			}
+	 	}
+	 	else if (event.keyCode == 9 || event.which == 9) {
+			// Insert TAB character instead of leaving the textarea
+			event.preventDefault();
+
+			const input           = self.elements.input;
+			const selection_start = input.selectionStart;
+			const before          = input.value.substring( 0, input.selectionStart );
+			const after           = input.value.substring( input.selectionEnd );
+
+			input.value        = before + '\t' + after;
+			input.selectionEnd = selection_start + EXTRA_LINES + 1;
+		}
+
+	} // on_keydown
+
+
+	function on_keyboard_event (event) {
+		if ((event.type == 'keydown') && DEBUG.KEYBOARD_EVENTS) {
+			console.log( 'KEYDOWN:', 'key:', event.key, 'code:', event.code );
+		}
+
+		const input = self.elements.input;
+		const cursor_pos1 = (input.value.length == 0) || (input.selectionStart == 0);
+		const cursor_end  = (input.value.length == 0) || (input.selectionStart == input.value.length);
+
+		self.keyboardShortcuts.forEach( (shortcut)=>{
+			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
+			const is_event = (shortcut.event.split( ',' )).indexOf( event.type ) >= 0;
+
+			if (is_event && is_key && modifiers( shortcut )) {
+				event.stopPropagation();
+				event.preventDefault();
+				terminal.audio.beep();
+				shortcut.action( event );
+			}
+		});
+
+		function modifiers (shortcut) {
+			const modifiers = shortcut.modifiers ? shortcut.modifiers.split(',') : [];
+			const requires = {
+				shift      : modifiers.indexOf( 'shift'      ) >= 0,
+				ctrl       : modifiers.indexOf( 'ctrl'       ) >= 0,
+				alt        : modifiers.indexOf( 'alt'        ) >= 0,
+				cursorPos1 : modifiers.indexOf( 'cursorPos1' ) >= 0,
+				cursorEnd  : modifiers.indexOf( 'cursorEnd'  ) >= 0,
+				inInput    : modifiers.indexOf( 'inInput'    ) >= 0,
+			};
+
+			const ignore_pos1end
+			=  !requires.cursorPos1 && !requires.cursorEnd
+			|| (input.value.length == 0)
+			;
+
+			const key_matches
+			=  (event.shiftKey == requires.shift)
+			&& (event.ctrlKey == requires.ctrl)
+			&& (event.altKey == requires.alt)
+			&& (ignore_pos1end || (cursor_pos1 == requires.cursorPos1))
+			&& (ignore_pos1end || (cursor_end == requires.cursorEnd))
+			;
+
+			return key_matches;
+		}
+
+	} // on_keyboard_event
+
+
+// MOUSE /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function on_output_click (event) {
+		const TE = terminal.applets.loginMenu.elements;
+		const SE = self.elements;
+
+		const iframe = event.target.querySelector( 'iframe' )
+		if (iframe) {
+			SE.output.scrollTop = event.target.offsetTop - 15;
+		}
+
+		const closest_pre = event.target.closest( 'pre' );
+		if (event.ctrlKey && closest_pre) {
+			closest_pre.parentNode.removeChild( closest_pre );
+		}
+
+		//...! Does no longer work:
+		if      (event.target === TE.root ) fill( 'root'  , '12345' )
+		else if (event.target === TE.user ) fill( 'user'  , 'pass2' )
+		else if (event.target === TE.guest) fill( 'guest' , '' )
+		;
+
+		function fill (username, password) {
+			TE.userName.value = username;
+			TE.passWord.value = password;
+			TE.elements.nickName.focus();
+		}
+
+	} // on_click
+
+
+	function on_output_dblclick (event) {
+		if (event.target.tagName == 'BODY') return terminal.toggles.terminal.toggle();
+
+		// Toggle .compact
+		const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
+		const clicked_element = event.target.closest( 'pre' );
+		if (clicked_element === last_element) {
+			// Don't .compact, instead toggle "uncollapse last message"
+			self.toggles.last.toggle();
+		}
+
+		event.target.classList.toggle( 'expand' );     // Force it to expand
+		event.target.classList.toggle( 'unexpand' );   //...Keep track of user-clicked expands
+
+	} // on_output_dblclick
+
+
+// BUTTON SCRIPTS ////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function on_scriptbutton_click (event) {
+		// Single click: Show command as multiline request in input
+		if (!event.target.dataset.script) return;
+
+		event.preventDefault();
+
+		const name = event.target.dataset.script;
+		const script = self.buttonScripts[name];
+
+		self.elements.input.value = self.parsers.parseButtonScript( script );
+		self.input.adjustTextarea();
+		self.output.scrollDown();
+
+	} // on_scriptbutton_click
+
+
+	function on_scriptbutton_dblclick (event) {
+		if (!event.target.dataset.script) return;
+
+		if (cep.connection.isConnected()) {
+			on_scriptbutton_click( event );
+			self.elements.btnEnter.click();
+		} else {
+			cep.connection.connect();
+			self.elements.input.value = '';
+			self.input.focusPrompt();
+		}
+
+		//...? self.input.focusPrompt();
+
+	} // on_scriptbutton_dblclick
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// TOGGLE STATES
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.updateToggleStates = function () {
+		const all_toggles  = {...terminal.toggles, ...self.toggles};
+		const has_shortcut = toggle => toggle.shortcut !== null;
+		const shortcuts    = Object.values( all_toggles ).filter( has_shortcut );
+
+		const nr_first    = Math.floor( Object.keys( shortcuts ).length / 2 );
+		const first_half  = (dummy, index) => index <  nr_first;
+		const second_half = (dummy, index) => index >= nr_first;
+
+		self.elements.toggleState.innerHTML
+		= '<span>'
+		+  create_part( shortcuts, first_half )
+		+ '</span><span>'
+		+ create_part( shortcuts, second_half );
+		+ '</span>'
+		;
+
+		function create_part (toggles, half) {
+			const alphabetically = (a, b) => (a.shortcut > b.shortcut) ? +1 : -1;
+			const to_character   = (toggle, index) => (
+				toggle.enabled
+				? '<b>' + toggle.shortcut.toLowerCase() + '</b>'
+				: toggle.shortcut.toLowerCase()
+			);
+			return (
+				Object.values( shortcuts )
+				.sort( alphabetically )
+				.filter( half )
+				.map( to_character )   // Uppercase for enabled toggles
+				.join('')
+			);
+		}
+
+	}; // updateToggleStates
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// WEBSOCKET
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.onWsOpen  = function (event) {
+		self.output.print( 'Connected to ' + event.target.url, 'cep' );
+
+	}; // onWsOpen
+
+
+	this.onWsClose = function () {
+		self.output.print( 'Connection closed', 'cep' );
+
+	}; // onWsClose
+
+
+	this.onWsError = function () {
+		self.output.print( 'Connection error', 'cep' );
+
+	}; // onWsError
+
+
+	this.onWsRetry = function () {
+		self.output.print( 'Reconnecting to ' + event.target.url, 'cep' );
+
+	}; // onWsRetry
+
+
+	this.onCepReload = function () {
+		self.output.print( 'The client was updated and will reload', 'cep' );
+
+	}; // onCepReload
+
+
+	this.onWsSend = function (message) {
+		if (typeof message == 'string') {
+			self.output.print( 'Sending string: <q>' + message + '</q>', 'string' );
+		} else {
+			const extra_class =  (message.session && message.session.pong) ? ' ping' : '';
+			const html = self.parsers.requestToText( message );
+			self.output.print( html, 'request' + extra_class );
+		}
+
+	}; // onWsSend
+
+
+	this.onWsMessage = function (message) {
+		handle_message( cep, terminal, self, message );
+
+	}; // onWsMessage
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.init = async function () {
-		console.log( 'CEPShell.init' );
+	this.exit = function () {
+		if (DEBUG.INSTANCES) console.log( 'CEPShell.exit' );
+		return Promise.resolve();
 
-		self.version  = CEP_VERSION;
+	}; // exit
+
+
+	this.init = async function () {
+		if (DEBUG.INSTANCES) console.log( 'CEPShell.init' );
+
+		self.containers = [];
+		self.elements = {};
+		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+
 		self.requestId = 0;
 
-		self.elements = terminal.elements;
-		self.dom      = terminal.dom;
-		self.toggles  = terminal.toggles;
-		self.bit      = terminal.bit;
-		self.status   = terminal.status;
-
-		self.parsers = new Parsers    ( self, BUTTON_SCRIPTS );
-		self.output  = new ShellOutput( self );
-		self.input   = new ShellInput ( self, callback       );
-
-		self.history = new History( terminal.elements.input, {
+		self.parsers = new Parsers    ( cep, terminal, self );
+		self.output  = new ShellOutput( cep, terminal, self );
+		self.input   = new ShellInput ( cep, terminal, self );
+		self.history = new History    ( self.elements.input, {
 			onInputChanged: ()=>{
 				self.input.adjustTextarea();
 				self.output.scrollDown();
 			},
 		});
 
-		const modules = ['parsers', 'output', 'input'];
-
-		// Check, if every method of our modules is registered
-		modules.forEach( (module)=>{
-			Object.keys( self[module] ).forEach( (method)=>{
-				const registered = (self[method] == relay);
-				if (!registered) throw new Error( 'Unregistered relay: ' + module + '.' +  method );
+		self.toggles = {};
+		Object.entries( create_toggles_definition() ).forEach( ([name, definition])=>{
+			self.toggles[name] = new Toggle( cep, terminal, {
+				...definition,
+				name : name,
+			});
+			self.keyboardShortcuts.push({
+				event     : 'keydown',
+				key       : definition.shortcut,
+				modifiers : 'alt',
+				action    : ()=>{ self.toggles[name].toggle(); },
 			});
 		});
-
-		// Check if every registered relay exists in one of the modules
-		// Store a reference to the real method in the according relay property
-		Object.keys( self )
-		.filter( key => self[key] == relay )
-		.forEach( (relay)=>{
-			const found = modules.reduce( (prev, module)=>{
-				const exists = (typeof self[module][relay] == 'function');
-				if (exists) self[relay] = self[module][relay];
-				return prev || exists;
-			}, false);
-
-			if (!found) throw new Error( 'Registered relay not found: ' + relay );
+		terminal.events.add( 'toggle', (toggle)=>{
+			const scrollers = ['compact','separators','overflow'];
+			if (scrollers.indexOf(toggle.name) >= 0) {
+				self.output.scrollDown();
+			}
 		});
+
+		self.updateToggleStates();
+		terminal.events.add( 'toggle', self.updateToggleStates );
+
+		self.buttonScripts = {};
+		Object.entries( create_scriptbutton_definition() ).forEach( ([name, definition])=>{
+			self.buttonScripts[name] = definition.script;
+
+			const existing = definition.menu.querySelector( 'button.' + name );
+			const button = (existing) ? existing : make_button();
+
+			//... Dirty: Exception for login menu: Can not be truly reloaded in the future like this
+			//... Looks like this would actually work, but it still smells weird to do it here
+			//... instead of having a facility in  DebugTerminal()  for it
+			const already_installed = definition.menu.querySelector( '[data-script="' + name + '"]' );
+			if (!already_installed) {
+				button.addEventListener( 'click'   , on_scriptbutton_click    );
+				button.addEventListener( 'dblclick', on_scriptbutton_dblclick );
+			}
+
+			if (!existing) definition.menu.appendChild( button );
+			button.dataset.script = name;
+
+			function make_button () {
+				return cep.dom.newElement({
+					tagName   : 'button',
+					className : name,
+					innerHTML : definition.caption || name,
+				});
+			}
+		});
+
+
+		// MAIN ELEMENT
+		self.elements.main.addEventListener( 'click', (event)=>{
+			if (event.target === self.elements.main) self.input.focusPrompt();
+		});
+		// KEYBOARD
+		['keydown', 'keypress', 'keyup'].forEach(
+			event => self.elements.main.addEventListener( event, on_keyboard_event, {passive: false} )
+		);
+		// INPUT
+        	self.elements.input .addEventListener( 'keydown' , on_keydown );
+        	//...self.elements.input .addEventListener( 'keyup'   , on_keyup   );
+
+		// MOUSE
+		self.elements.output.addEventListener( 'click'   , on_output_click    );
+		self.elements.output.addEventListener( 'dblclick', on_output_dblclick );
+
+		// BUTTON: "Clear"
+		self.elements.btnClear.addEventListener( 'click'    , self.output.clearInput     );
+		self.elements.btnClear.addEventListener( 'dblclick' , self.output.deleteToMarker );
+
+		// BUTTON: "Enter"
+		self.elements.btnEnter.addEventListener( 'click', self.input.onEnterClick );
+
+		// BUTTON: "Exit"
+		//...self.elements.btnClose.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
+
+		// TOGGLE_STATE
+		self.elements.toggleState.addEventListener( 'click', ()=>{
+			const TE = terminal.applets.mainMenu.elements;
+			TE.btnCEP.focus();
+			setTimeout( ()=>TE.btnToggles.focus() );
+		});
+
+		// PROMPT
+		self.elements.input.addEventListener( 'keyup'  , self.input.adjustTextarea );
+		self.elements.input.addEventListener( 'input'  , on_input_change );
+		self.elements.input.addEventListener( 'change' , on_input_change );
+		function on_input_change () {
+			self.input.adjustTextarea();
+			self.output.scrollDown();
+		}
+
+		// Re-focus prompt
+		let mouse_moved = true;   // Detect actual clicks, not text selection
+		self.elements.output.addEventListener( 'blur',      ()=>mouse_moved = false );
+		self.elements.output.addEventListener( 'mousedown', ()=>mouse_moved = false );
+		self.elements.output.addEventListener( 'mousemove', ()=>mouse_moved = true  );
+		self.elements.output.addEventListener( 'mouseup', (event)=>{
+			if (event.button != 0) return;
+			if (!mouse_moved) self.input.focusPrompt();
+		});
+
+		// SNIFF WEBSOCKET TRAFFIC
+		cep.connection.events.add( 'open'   , self.onWsOpen       );
+		cep.connection.events.add( 'close'  , self.onWsClose      );
+		cep.connection.events.add( 'error'  , self.onWsError      );
+		cep.connection.events.add( 'retry'  , self.onWsRetry      );
+		cep.connection.events.add( 'send'   , self.onWsSend       );
+		cep.connection.events.add( 'message', self.onWsMessage    );
+
+		cep.events.add( 'reload/client', self.onCepReload );
+
+
+// PROMPT ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+		self.output.printVersion();
+
+		let welcome = '';
+		if (!cep.GET.has( 'terminal' )) {
+			welcome += 'Guest Login: Choose a nick(!)name in the "MyNode" menu, press Return<br>';
+		}
+		welcome += 'Enter /help for more information';
+		self.output.print( welcome, 'expand' );
+
+		const login_menu = terminal.applets.loginMenu;
+		if (cep.GET.has('username')) login_menu.elements.userName.value = cep.GET.get('username');
+		if (cep.GET.has('nickname')) login_menu.elements.nickName.value = cep.GET.get('nickname');
+		if (cep.GET.has('password')) login_menu.elements.passWord.value = cep.GET.get('password');
+
+		if (cep.GET.has('login')) setTimeout( ()=>{
+			login_menu.elements.login.click();
+			self.elements.btnEnter.click();
+		}, 0);
+
+		if (!terminal.elements.terminal.classList.contains( 'hidden' )) {
+			setTimeout( self.output.focusPrompt, 100 );
+		}
+
+		return Promise.resolve();
 
 	}; // init
 
-	self.init();
+
+	return self.init().then( ()=>self );   // const terminal = await new DebugTerminal()
 
 }; // CEPShell
 

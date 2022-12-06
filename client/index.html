@@ -13,8 +13,8 @@
 | o !                                  | |   |/ Personal Playing\|Ground                                          ! o |
 |   !                                  |/                                                                         !   \
 | o !       /                                                                                                     ! o |
-|   !       \               *) Multiuser, online, personal playing ground (MOPPG)                                 !   /
-/ o !                      *) Press Alt+T to open the terminal                                                    ! o |
+|   !       \                   Multiuser, online, personal playing ground (MOPPG)                                !   /
+/ o !                                                                                                             ! o |
 |   !               -------------------------------------------------------------------------------               !   |
 | o !                                                                                                             ! o |
 |   !                                     WARNING                                                                 !   /
@@ -26,45 +26,53 @@
 |   !                         \                                                                                   ! _/
 |_o_\__________ ____ _ ______ ______________________________ _____.__ _______ _ _.._._______ __ ________ _ ___. -->
 
-<link rel="help"          href="README">
+<link rel="help"          href="/docs/README">
 <link rel="shortcut icon" href="/favicon.ico">
 <meta name="robots"       content="noindex,nofollow">
 <meta name="viewport"     content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <script src="main.js"     type="module"></script>
-<script class="noscript">
-	addEventListener( 'error', watchdog );
-	addEventListener( 'unhandledrejection', watchdog );
-	function show_status (text) { document.querySelector('header.noscript p').innerHTML = text; }
-	function show_boot_error (error) {
+<script class="boot">
+	//location.href = 'https://spielwiese.central-dogma.at:1337/';
+	const cat_person = false;   // true: Disables watchdog and throws test error
+	if (!cat_person) addEventListener( 'error', watchdog );
+	if (!cat_person) addEventListener( 'unhandledrejection', watchdog );
+	function load_status (text) { document.querySelector('header.boot > div').innerHTML = text; }
+	function load_error (error) {
+		let message = error.message;
+		if (error.filename && error.lineno) {
+			message = error.message + '<br>' + error.filename + ':' + error.lineno;
+		}
 		document.querySelector('html').classList.add('init');
 		setTimeout( ()=>{
 			document.querySelector('html').classList.add('init', 'error');
-			show_status(`
+			load_status(`
 				<div>I broke it</div>
 				<img src='/images/rtfm_transparent.png'>
-				<div>Error: ${error.message}</div>
+				<p>${message}</p>
 				<h3>Please stand by</h3>
-				<div>Let it reload</div>
-				<div>I'll fix it</div>
+				<p>Let it reload</p>
+				<p>I'll fix it</p>
 		`)}, 1000);
+		throw error;
 	}
-	var timeout, interval;
-	let count = 15;
+	var timeout, interval; let count = 15;
 	function watchdog (error) {
 		if (!timeout) timeout = setTimeout( ()=>location.reload(), count*1000 );
 		if (!interval) interval = setInterval( ()=>console.log(count--), 1000 );
-		show_boot_error( error );
+		load_error( error );
 	}
 	function noreboot () {
 		if (timeout) clearTimeout( timeout );
 		if (interval) clearInterval( interval );
+		return 'Auto-reload aborted';
 	}
-</script>
-<style class="noscript">
+	if (cat_person) throw new Error( "Intentional test error" );
+</script><style class="boot">
 	.init, .init * { margin:0; padding:0; box-sizing:border-box; line-height:1.4; }
-	.init body { width:100%; height:100%; background:#000; color:#fc0; }
-	.init body > :not(.noscript) { display:none !important; }
+	.init, .init body { height:100%; }
+	.init body { background:#000; color:#fc0; }
+	.init body > :not(.boot) { display:none !important; }
 	.init header {
 		display:flex; flex-direction:column; align-items:center; justify-content:center;
 		width:100%; height:100%; text-align:center;
@@ -72,215 +80,75 @@
 	.init h2 { color:#fe8; }
 	.init h3 { color:#ffa; font-size:2em; }
 	html.error header :is(h1,h2),
-	html:not(.init) .noscript { display:none; }
-	.noscript h1 small { text-transform:uppercase; font-size:0.72em; }
-	.noscript h3 { margin:0 0 0.25rem; }
-	.noscript p { margin-top:2em; }
-	.noscript h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
-	.noscript img { display:block; margin:0 auto; }
-	.noscript div + div { margin-top:2em; }
-	@media (prefers-color-scheme:light) {
-		html.light.init body,
-		html.light.init,
-		html.init body,
-		html.init {
-			background:#fff; color:#000;
-		}
-		header.noscript h2 { color:#b90; }
-		.noscript h1 img { filter:drop-shadow(0 -15px 15px #ffa); }
-		.init h2 { color:#a30; }
-		.init h3 { color:#c75; font-size:2em; }
-		.init p img { filter:brightness(0.1) saturate(0); }
+	html:not(.init) .boot { display:none; }
+	.boot h1 small { text-transform:uppercase; font-size:0.72em; }
+	.boot h3 { margin:0 0 0.25rem; }
+	.boot p { margin-top:1em 0; }
+	X.boot h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
+	.boot img { display:block; margin:0 auto; }
+	.boot p + p { margin-top:2em; }
+</style><style class="chat">
+	* { margin:0; padding:0; box-sizing:border-box; Xline-height:1.4; }
+	html, body { height:100%; background:#000; color:#fed; font-family:sans-serif; }
+	html.init form.chat { display:none; }
+	form.chat { display:grid; grid-template-rows:min-content 1fr min-content; width:100%; height:100%; padding:0.2em 1.5em 1em; }
+	form.chat output::before {
+		content:'\A\A\A\A\A\A\Aspielwiese';
+		position:fixed; top:0; left:0; width:100%; height:100%;
+		display:flex; align-items:center; justify-content:center;
+		background:url(/images/spielwiese_transparent.png) center center no-repeat;
+		color:#000; font-size:20px; font-weight:bold;
+		filter:brightness(0) drop-shadow(0 -25px 150px #fff);
+		opacity:0.5; pointer-events:none;
 	}
-</style>
-<script class="login_page">
-	addEventListener( 'load', ()=>{
-		const types = element => ['submit', 'hidden'].indexOf(element.type) < 0;
-		[...document.querySelectorAll('body > form input')]
-		.filter( types )
-		.forEach( input =>{
-			input.addEventListener( 'input'  , on_input_change, {passive:false} );
-			input.addEventListener( 'change' , on_input_change, {passive:false} );
-		});
-		on_input_change();
-	});
-	function on_input_change (event) {
-		const element = document.querySelector( '[name=username]' );
-		const value   = element.value
-		const form    = document.querySelector( 'body > form' );
-		form.classList.toggle( 'guest', (element.value.toLowerCase() == 'guest') );
-		if (!value.trim()) setTimeout( ()=>element.select() );
-	}
-</script>
-<style class="login_page">
-body > form {
-	--input-color       : #fed;
-	--hover-color       : #fff;
-	--input-bg          : #444;
-	--focus-color       : #fff;
-	--focus-bg          : #8f02;
-	--login-color       : #fc0;
-	--login-bg          : #8e6100;
-	--placeholder-color : #fc0;
-	--title-color       : #fc0;
-}
-@media (prefers-color-scheme:light) {
-	html.light,
-	body > form {
-		--input-color       : #210;
-		--hover-color       : #000;
-		--input-bg          : #ccc;
-		--focus-color       : #000;
-		--focus-bg          : #eee;
-		--login-color       : #fec;
-		--login-hover-color : #fff;
-		--login-bg          : #8e6100;
-		--placeholder-color : #000;
-		--title-color       : #840;
-	}
-}
-	* { margin:0; padding:0; box-sizing:border-box; Xfont-family:font0, monospace, sans-serif; }
-	html, body { width:100%; height:100%; font-family:sans-serif; Xbackground:#000; Xcolor:#fff; }
-	body { overflow:hidden; }
-
-	:focus { outline:none; }
-
-	body > header { display:none; }
-	.fancy body > header:not(.noscript) { display:block; }
-
-	body > form {
-		position:absolute; top:50.7%; left:50%; transform:translate(-50%,-50%);
-		display:flex; flex-direction:column; gap:5px; justify-content:center; align-items:center;
-		width:13rem; box-sizing:content-box;
-		filter:hue-rotate(45deg) contrast(0.8);
-	}
-	body > form h2 { color:var(--title-color); Xfilter:drop-shadow(0 0 10px #8f4); margin-bottom:0.25rem; }
-	body > form img {
-		Xfilter:
-			drop-shadow(0   0px  1px #000)
-			drop-shadow(0 -15px 15px #6f6)
-			drop-shadow(0 -15px 15px #ffa)
-		;
-	}
-
-	.guest .no_guest { display:none; }
-	body > form label { width:100%; }
-
-	body > form :is(input,button) {
-		border-radius:1em;
-		padding-left:1em; padding-right:1em;
-	}
-	body > form input {
-		height:2em;
-		border:none;
-		background:var(--input-bg); color:var(--input-color);
-		text-align:center;
-	}
-	body > form button {
-		width:100%; height:2em;
-		border:none;
-		background:var(--input-bg); color:var(--input-color);
-		text-align:center;
-	}
-	body > form input::placeholder { font-size:1em; color:var(--placeholder-color); }
-
-
-	body > form .hide_label :is(input,button) { width:100%; }
-	body > form .hide_label > span            { display:none; }
-
-	body > form input:hover { background:var(--input-bg); color:var(--hover-color); }
-	body > form input:focus {
-		background:var(--focus-bg); color:var(--focus-color);
-		text-align:left; Xpadding-left:5px;
-	}
-
-	body > form .option { display:flex; gap:0.5em; align-items:center; margin-left:2em; }
-	body > form .option > :nth-child(1) { order:2; }
-
-
-	body > form :is(input,button)[type=submit][value="Enter Chat"] {
-		text-transform:uppercase;
-	}
-	body > form :is(input,button)[type=submit] {
-		color:var(--login-color); background:var(--login-bg); text-align:center;
-	}
-	body > form :is(input,button)[type=submit]:is(:hover,:focus,:active) {
-		color:var(--login-hover-color); filter:brightness(1.2);
-	}
-
-	body > form button.debug {
-		height:1.4em;
-		filter:brightness(0.65);
-		opacity:0;
-		transition:all 0.25s ease-in-out;
-	}
-	body > form button.debug::after {
-		content:"with debug presets"; color:var(--login-color); pointer-events:none;
-	}
-	body > form :is(input,button).debug:is(:hover,:focus,:active) {
-		color:#fff; filter:brightness(1.1);
-	}
-	body > form label:is(:hover,:focus,:active) button.debug {
-		opacity:1; transition:all 0.25s ease-in-out;
-	}
-
-
-	.loading.terminal { display:none; }
-
+	form.chat.offline    { background:#000018; }
+	form.chat.connecting { background:#c90; }
+	form.chat.connected  { background:#fc0; }
+	form.chat.online     { background:#343; }
+	form.chat.error      { background:#400; }
+	form.chat.retry      { background:#600; }
+	form.chat :focus { outline:none; }
+	form.chat h1 { text-align:center; font-size:1em; }
+	form.chat h1 img { height:2em; }
+	form.chat:is(.connected,.online) h1 img { filter:hue-rotate(60deg); }
+	form.chat :is(h1,img) { pointer-events:none; }
+	form.chat .input { display:grid; grid-template-columns:8em 1fr min-content; width:100%; margin-top:1em; }
+	form.chat :is(output,input,button) { border:solid 1px #0008; padding:0.2em 0.5em; background:#010; color:#fffcf4; font-size:1rem; }
+	form.chat :is(output,input,button,pre):focus { position:relative; z-index:1; outline:solid 1px #fff; overflow:visible; white-space:pre-wrap; }
+	form.chat button { padding:0.2em 1em; border-radius:2em; }
+	form.chat input { margin-right:0.5em; color:#fff; }
+	form.chat [name=nick] { text-align:center; }
+	form.chat .users { text-align:center; }
+	form.chat .users > span::after { content:', '; color:#aaa; }
+	form.chat .users > span:last-child::after { content:'.'; }
+	form.chat output { position:relative; white-space:pre-wrap; overflow-y:auto; Xbackground:#010; border-radius:0.5em; }
+	form.chat output > * { position:relative; z-index:1; width:100%; overflow:hidden; text-overflow:ellipsis; margin:0.25em 0; color:#dad0c6; }
+	form.chat output > div[class]:hover { color:#fff; }
+	form.chat output > div.talk { color:#fff8f0; }
+	form.chat output > div.reload { color:#fff; }
+	form.chat output > div > span:nth-child(1) { color:#888; float:right; }
+	form.chat output > div:hover > span:nth-child(1) { color:#fff; }
+	form.chat output > div > span:nth-child(1)::after { content:' '; }
+	form.chat output > div.talk > span:nth-child(2)::after { content:': '; color:#aaa; }
+	form.chat output > pre { display:none; color:#888; white-space:nowrap; font-family:monospace,monospace; font-size:1rem; cursor:default; }
+	form.chat output.debug > pre { display:block; }
+	form.chat output > pre.sent::before { content:'🡅 '; color:#080; }
+	form.chat output > pre.received::before { content:'🡇 '; color:#048; }
 </style></head><body>
-
-	<header class="noscript">
-		<h1>
-			<img src="/images/spielwiese_transparent.png" alt="Site icon">
-		</h1>
+	<header class="boot">
+		<h1><img src="/images/spielwiese_dark.jpg" alt="Site icon"></h1>
 		<h2>spielwiese</h2>
-		<p>Please enable JavaScript</p>
+		<div><p>Please enable JavaScript</p></div>
 	</header>
-	<script class="noscript"> show_status('Loading'); </script>
-
-	<header class="meta">
-		<a href="//spielwiese.central-dogma.at:443/" title="Recommended: Load this page via Apache">Apache</a>
-		<a href="//spielwiese.central-dogma.at:1337/" title="For Developers: Load this page directly from MyNode">Node</a>
-	</header>
-	<form tabindex="0" accept-charset="utf-8" class="guest">
-		<img src="/images/spielwiese_transparent.png" alt="Site icon">
-		<h2>spielwiese</h2>
-		<label class="hide_label" title='Account name. When "Guest", choose a nick name'>
-			<span>Username</span>
-			<input tabindex="0" type="text" name="username" placeholder="Username" autocomplete="username" value="Guest">
-		</label>
-		<label class="hide_label" title="Choose a name for the chat (recommended)">
-			<span>Nickname</span>
-			<input tabindex="0" type="text" name="nickname" placeholder="Nickname" autocomplete="nickname" autofocus>
-		</label>
-		<label class="hide_label no_guest" title="Password (for registered accounts)">
-			<span>Password</span>
-			<input tabindex="0" type="password" name="password" placeholder="Password" autocomplete="password">
-		</label>
-		<label class="hide_label no_guest" title="Token (for admins)">
-			<span>Second Factor</span>
-			<input tabindex="0" type="password" name="factor2" placeholder="Factor 2" autocomplete="one-time-code">
-		</label>
-
-		<input type="hidden" name="toggle" value="terminal">
-
-		<label class="hide_label">
-			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to the MyNode Chat">
-			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Useful for developers"></button>
-		</label>
-
-		<label class="option" title="Lightweight aminations">
-			<span>Animations</span>
-			<input tabindex="0" type="checkbox" name="animate">
-		</label>
-		<label class="option" title="Don't use with animations on slow computers">
-			<span>Fancy graphics</span>
-			<input tabindex="0" type="checkbox" name="fancy">
-		</label>
-		<label class="option" title="SAM - Software Automatic Mouth">
-			<span>Speech synthesizer</span>
-			<input tabindex="0" type="checkbox" name="tts">
-		</label>
+	<script class="boot"> load_status('Loading...'); </script>
+	<form class="chat offline">
+		<!-- h1><img src="/images/spielwiese_transparent.png" alt="Site icon"> Spielwiese</h1 -->
+		<div class="users"></div>
+		<output></output>
+		<div class="input">
+			<input type="text" name="nick" placeholder="Your name">
+			<input type="text" name="text" placeholder="Your message" autocomplete="off">
+			<button class="send">Send</button>
+		</div>
 	</form>
-
 </body></html>

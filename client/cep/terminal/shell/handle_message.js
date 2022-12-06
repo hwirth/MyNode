@@ -15,6 +15,8 @@ export function handle_message (cep, terminal, shell, message) {
 	try   { message = JSON.parse( event.data ); }
 	catch { /* Assume string */ }
 
+	process_who( message );
+
 	const root_key = Object.keys( message )[0];
 	switch (root_key) {
 		case 'update': {
@@ -57,7 +59,7 @@ export function handle_message (cep, terminal, shell, message) {
 	return print_message();
 
 
-// PRINT MESSAGE /////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HELPERS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function print_message (extra_class = '') {
 		let class_name = 'response';
@@ -75,14 +77,21 @@ export function handle_message (cep, terminal, shell, message) {
 	} // print_message
 
 
-// UPDATE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	function process_who (message) {
+		if (message.who) return update( message.who );
 
-	function update_server_name () {
-		terminal.applets.loginMenu.elements.btnNode.innerText = message.update.name;
-		terminal.updateWhoList( null ); //{dummy:'Logged out'} );
-		print_message();
-	}
+		Object.values( message ).forEach( (entry)=>{
+			if (entry.who) update( entry.who );
+			Object.entries( entry ).forEach( (sub_entry)=>{
+				if (sub_entry.who) update( sub_entry.who );
+			});
+		});
 
+		function update (data) {
+			terminal.applets.userList.update( data );
+		}
+
+	} // process_who
 
 
 // COLOR FROM NAME ///////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -129,7 +138,7 @@ export function handle_message (cep, terminal, shell, message) {
 
 		const sum = name.split('').reduce( (sum, char) => (sum + char.charCodeAt(0)), 0 );
 		const nr_colors = 16;
-		const color = hsl_to_html_color( ((sum * 13) % nr_colors) / nr_colors, 0.5, 0.65 );
+		const color = hsl_to_html_color( ((sum * 13) % nr_colors) / nr_colors, 0.8, 0.7 );
 		return color;
 
 		function rotl (byte, amount = 1) {
@@ -140,6 +149,14 @@ export function handle_message (cep, terminal, shell, message) {
 
 	} // color_from_name
 
+
+// UPDATE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function update_server_name () {
+		terminal.applets.loginMenu.elements.btnNode.innerText = message.update.name;
+		terminal.updateWhoList( null ); //{dummy:'Logged out'} );
+		print_message();
+	}
 
 
 	function update_chat_say () {
@@ -208,7 +225,7 @@ export function handle_message (cep, terminal, shell, message) {
 
 
 	function response_session_who () {
-		if (message.response.success) terminal.updateWhoList( message.response.result );
+		if (message.response.success) terminal.applets.userList.update( message.response.result );
 	}
 
 

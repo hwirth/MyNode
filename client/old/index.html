@@ -1,0 +1,286 @@
+<!DOCTYPE html><html id="top" lang="en" class="init Xfancy animate"><head><meta charset="UTF-8"><title>Spielwiese</title>
+ <!-- ___ ______ __________ _ ______________________________________ _  ___  _______ __ _ _____ ________________   ____
+|-o_!`                                                                '    `            .                        '/ o_/
+|   !                         |/                       \|                                                         !   \
+| o !                                                                                                             ! o |
+|   !                                                                 \                                           !   \
+| o !                                               __                                                            ! o |
+|   !                             ___ _       _     \ \         _                                                 !   |
+\_o_!_ _ _ _ _ _ _ _ _ _ _ _ _ _ / ___/__ __ (_) _ _|_|_ _ _ _ (_) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _!_o_/
+|   !                            \___ \| '_ \| |/ _ \ | \ /\ / / |/ _ \/ __|/ _ \                 /               !   \
+| o !                          ___ __) | |_) | |  __/ |\ V  V /| |  __/\__ \  __| _                               ! o |
+\_  !                         /____ __/| .__/| |\___/\_/\_/\_/ | |\___/|___/\___ __\                              !   |
+| o !                                  | |   |/ Personal Playing\|Ground                                          ! o |
+|   !                                  |/                                                                         !   \
+| o !       /                                                                                                     ! o |
+|   !       \               *) Multiuser, online, personal playing ground (MOPPG)                                 !   /
+/ o !                      *) Press Alt+T to open the terminal                                                    ! o |
+|   !               -------------------------------------------------------------------------------               !   |
+| o !                                                                                                             ! o |
+|   !                                     WARNING                                                                 !   /
+| o !                                     SYSTEM IS GUARDED BY MASTER CONTROL                        \            ! o |
+|   !                                     ICE MAY BE DEPLOYED                                                     !   |
+| o !                                     END OF LINE.                                                            ! o_|
+\   !                                          |                                                                  ! _\
+| o !                                                                                              /              ! o|
+|   !                         \                                                                                   ! _/
+|_o_\__________ ____ _ ______ ______________________________ _____.__ _______ _ _.._._______ __ ________ _ ___. -->
+
+<link rel="help"          href="README">
+<link rel="shortcut icon" href="/favicon.ico">
+<meta name="robots"       content="noindex,nofollow">
+<meta name="viewport"     content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<script src="main.js"     type="module"></script>
+<script class="noscript">
+	addEventListener( 'error', watchdog );
+	addEventListener( 'unhandledrejection', watchdog );
+	function show_status (text) { document.querySelector('header.noscript p').innerHTML = text; }
+	function show_boot_error (error) {
+		document.querySelector('html').classList.add('init');
+		setTimeout( ()=>{
+			document.querySelector('html').classList.add('init', 'error');
+			show_status(`
+				<div>I broke it</div>
+				<img src='/images/rtfm_transparent.png'>
+				<div>Error: ${error.message}</div>
+				<h3>Please stand by</h3>
+				<div>Let it reload</div>
+				<div>I'll fix it</div>
+		`)}, 1000);
+	}
+	var timeout, interval;
+	let count = 15;
+	function watchdog (error) {
+		if (!timeout) timeout = setTimeout( ()=>location.reload(), count*1000 );
+		if (!interval) interval = setInterval( ()=>console.log(count--), 1000 );
+		show_boot_error( error );
+	}
+	function noreboot () {
+		if (timeout) clearTimeout( timeout );
+		if (interval) clearInterval( interval );
+	}
+</script>
+<style class="noscript">
+	.init, .init * { margin:0; padding:0; box-sizing:border-box; line-height:1.4; }
+	.init body { width:100%; height:100%; background:#000; color:#fc0; }
+	.init body > :not(.noscript) { display:none !important; }
+	.init header {
+		display:flex; flex-direction:column; align-items:center; justify-content:center;
+		width:100%; height:100%; text-align:center;
+	}
+	.init h2 { color:#fe8; }
+	.init h3 { color:#ffa; font-size:2em; }
+	html.error header :is(h1,h2),
+	html:not(.init) .noscript { display:none; }
+	.noscript h1 small { text-transform:uppercase; font-size:0.72em; }
+	.noscript h3 { margin:0 0 0.25rem; }
+	.noscript p { margin-top:2em; }
+	.noscript h1 img { filter:brightness(0) drop-shadow(0 -15px 15px #ffa); }
+	.noscript img { display:block; margin:0 auto; }
+	.noscript div + div { margin-top:2em; }
+	@media (prefers-color-scheme:light) {
+		html.light.init body,
+		html.light.init,
+		html.init body,
+		html.init {
+			background:#fff; color:#000;
+		}
+		header.noscript h2 { color:#b90; }
+		.noscript h1 img { filter:drop-shadow(0 -15px 15px #ffa); }
+		.init h2 { color:#a30; }
+		.init h3 { color:#c75; font-size:2em; }
+		.init p img { filter:brightness(0.1) saturate(0); }
+	}
+</style>
+<script class="login_page">
+	addEventListener( 'load', ()=>{
+		const types = element => ['submit', 'hidden'].indexOf(element.type) < 0;
+		[...document.querySelectorAll('body > form input')]
+		.filter( types )
+		.forEach( input =>{
+			input.addEventListener( 'input'  , on_input_change, {passive:false} );
+			input.addEventListener( 'change' , on_input_change, {passive:false} );
+		});
+		on_input_change();
+	});
+	function on_input_change (event) {
+		const element = document.querySelector( '[name=username]' );
+		const value   = element.value
+		const form    = document.querySelector( 'body > form' );
+		form.classList.toggle( 'guest', (element.value.toLowerCase() == 'guest') );
+		if (!value.trim()) setTimeout( ()=>element.select() );
+	}
+</script>
+<style class="login_page">
+body > form {
+	--input-color       : #fed;
+	--hover-color       : #fff;
+	--input-bg          : #444;
+	--focus-color       : #fff;
+	--focus-bg          : #8f02;
+	--login-color       : #fc0;
+	--login-bg          : #8e6100;
+	--placeholder-color : #fc0;
+	--title-color       : #fc0;
+}
+@media (prefers-color-scheme:light) {
+	html.light,
+	body > form {
+		--input-color       : #210;
+		--hover-color       : #000;
+		--input-bg          : #ccc;
+		--focus-color       : #000;
+		--focus-bg          : #eee;
+		--login-color       : #fec;
+		--login-hover-color : #fff;
+		--login-bg          : #8e6100;
+		--placeholder-color : #000;
+		--title-color       : #840;
+	}
+}
+	* { margin:0; padding:0; box-sizing:border-box; Xfont-family:font0, monospace, sans-serif; }
+	html, body { width:100%; height:100%; font-family:sans-serif; Xbackground:#000; Xcolor:#fff; }
+	body { overflow:hidden; }
+
+	:focus { outline:none; }
+
+	body > header { display:none; }
+	.fancy body > header:not(.noscript) { display:block; }
+
+	body > form {
+		position:absolute; top:50.7%; left:50%; transform:translate(-50%,-50%);
+		display:flex; flex-direction:column; gap:5px; justify-content:center; align-items:center;
+		width:13rem; box-sizing:content-box;
+		filter:hue-rotate(45deg) contrast(0.8);
+	}
+	body > form h2 { color:var(--title-color); Xfilter:drop-shadow(0 0 10px #8f4); margin-bottom:0.25rem; }
+	body > form img {
+		Xfilter:
+			drop-shadow(0   0px  1px #000)
+			drop-shadow(0 -15px 15px #6f6)
+			drop-shadow(0 -15px 15px #ffa)
+		;
+	}
+
+	.guest .no_guest { display:none; }
+	body > form label { width:100%; }
+
+	body > form :is(input,button) {
+		border-radius:1em;
+		padding-left:1em; padding-right:1em;
+	}
+	body > form input {
+		height:2em;
+		border:none;
+		background:var(--input-bg); color:var(--input-color);
+		text-align:center;
+	}
+	body > form button {
+		width:100%; height:2em;
+		border:none;
+		background:var(--input-bg); color:var(--input-color);
+		text-align:center;
+	}
+	body > form input::placeholder { font-size:1em; color:var(--placeholder-color); }
+
+
+	body > form .hide_label :is(input,button) { width:100%; }
+	body > form .hide_label > span            { display:none; }
+
+	body > form input:hover { background:var(--input-bg); color:var(--hover-color); }
+	body > form input:focus {
+		background:var(--focus-bg); color:var(--focus-color);
+		text-align:left; Xpadding-left:5px;
+	}
+
+	body > form .option { display:flex; gap:0.5em; align-items:center; margin-left:2em; }
+	body > form .option > :nth-child(1) { order:2; }
+
+
+	body > form :is(input,button)[type=submit][value="Enter Chat"] {
+		text-transform:uppercase;
+	}
+	body > form :is(input,button)[type=submit] {
+		color:var(--login-color); background:var(--login-bg); text-align:center;
+	}
+	body > form :is(input,button)[type=submit]:is(:hover,:focus,:active) {
+		color:var(--login-hover-color); filter:brightness(1.2);
+	}
+
+	body > form button.debug {
+		height:1.4em;
+		filter:brightness(0.65);
+		opacity:0;
+		transition:all 0.25s ease-in-out;
+	}
+	body > form button.debug::after {
+		content:"with debug presets"; color:var(--login-color); pointer-events:none;
+	}
+	body > form :is(input,button).debug:is(:hover,:focus,:active) {
+		color:#fff; filter:brightness(1.1);
+	}
+	body > form label:is(:hover,:focus,:active) button.debug {
+		opacity:1; transition:all 0.25s ease-in-out;
+	}
+
+
+	.loading.terminal { display:none; }
+
+</style></head><body>
+
+	<header class="noscript">
+		<h1>
+			<img src="/images/spielwiese_transparent.png" alt="Site icon">
+		</h1>
+		<h2>spielwiese</h2>
+		<p>Please enable JavaScript</p>
+	</header>
+	<script class="noscript"> show_status('Loading'); </script>
+
+	<header class="meta">
+		<a href="//spielwiese.central-dogma.at:443/" title="Recommended: Load this page via Apache">Apache</a>
+		<a href="//spielwiese.central-dogma.at:1337/" title="For Developers: Load this page directly from MyNode">Node</a>
+	</header>
+	<form tabindex="0" accept-charset="utf-8" class="guest">
+		<img src="/images/spielwiese_transparent.png" alt="Site icon">
+		<h2>spielwiese</h2>
+		<label class="hide_label" title='Account name. When "Guest", choose a nick name'>
+			<span>Username</span>
+			<input tabindex="0" type="text" name="username" placeholder="Username" autocomplete="username" value="Guest">
+		</label>
+		<label class="hide_label" title="Choose a name for the chat (recommended)">
+			<span>Nickname</span>
+			<input tabindex="0" type="text" name="nickname" placeholder="Nickname" autocomplete="nickname" autofocus>
+		</label>
+		<label class="hide_label no_guest" title="Password (for registered accounts)">
+			<span>Password</span>
+			<input tabindex="0" type="password" name="password" placeholder="Password" autocomplete="password">
+		</label>
+		<label class="hide_label no_guest" title="Token (for admins)">
+			<span>Second Factor</span>
+			<input tabindex="0" type="password" name="factor2" placeholder="Factor 2" autocomplete="one-time-code">
+		</label>
+
+		<input type="hidden" name="toggle" value="terminal">
+
+		<label class="hide_label">
+			<input class="login" name="login" type="submit" value="Enter Chat" title="Connect to the MyNode Chat">
+			<button class="debug" name="login" type="submit" value="debug-separators-last" title="Useful for developers"></button>
+		</label>
+
+		<label class="option" title="Lightweight aminations">
+			<span>Animations</span>
+			<input tabindex="0" type="checkbox" name="animate">
+		</label>
+		<label class="option" title="Don't use with animations on slow computers">
+			<span>Fancy graphics</span>
+			<input tabindex="0" type="checkbox" name="fancy">
+		</label>
+		<label class="option" title="SAM - Software Automatic Mouth">
+			<span>Speech synthesizer</span>
+			<input tabindex="0" type="checkbox" name="tts">
+		</label>
+	</form>
+
+</body></html>

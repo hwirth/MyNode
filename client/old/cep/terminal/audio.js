@@ -10,11 +10,11 @@
  */
 import * as DUMMY_SamJs from './samjs.js';
 
-import { DEBUG             } from '../config.js';
-import { SETTINGS, PRESETS } from './config.js';
+import { SETTINGS, PRESETS } from '../config.js';
+import { GET               } from '../helpers.js';
 
 
-export const Audio = function (cep, terminal) {
+export const Audio = function (terminal) {
 	const self = this;
 
 	this.audioContext;
@@ -33,7 +33,7 @@ export const Audio = function (cep, terminal) {
 		speak: function (text, ignore_toggle) {
 			if (!self.audioContext) return;
 
-			if (!terminal.toggles.speech.enabled && !ignore_toggle) return;
+			if (!terminal.toggles.tts.enabled && !ignore_toggle) return;
 
 			if (!sam_tts || SETTINGS.SAM_ALWAYS_NEW) {
 				sam_tts = new SamJs({
@@ -53,7 +53,7 @@ export const Audio = function (cep, terminal) {
 				await prev;
 				const part = parts[index].trim();
 				return new Promise( async (done)=>{
-					if (terminal.toggles.speech.enabled || ignore_toggle) {
+					if (terminal.toggles.tts.enabled || ignore_toggle) {
 						if (part != '') await sam_tts.speak( parts[index] );
 						setTimeout( done, 150 );
 					} else {
@@ -131,7 +131,7 @@ export const Audio = function (cep, terminal) {
 
 		if( !SETTINGS.KEY_BEEP
 		//...||  !self.audioContext
-		||  !terminal.toggles.beep.enabled
+		||  !terminal.toggles.keyBeep.enabled
 		||  (nr_active_sounds > 25)
 		||  (elapsed_time < SETTINGS.TIMEOUT.BEEP_IGNORE)
 		) {
@@ -197,14 +197,7 @@ setTimeout( ()=>{
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.exit = function () {
-		if (DEBUG.INSTANCES) console.log( 'Audio.exit' );
-		return Promise.resolve();
-
-	}; // exit
-
 	this.init = function () {
-		if (DEBUG.INSTANCES) console.log( 'Audio.init' );
 
 		self.audioContext = new( window.AudioContext || window.webkitAudioContext )();
 
@@ -216,13 +209,13 @@ setTimeout( ()=>{
 				self.audioContext.resume();
 				removeEventListener( 'keydown', activate_audio );
 				removeEventListener( 'mouseup', activate_audio );
-				terminal.applets.status.show( 'Audio context resumed.', /*clear*/true );
-				if (cep.GET.has('speech')) self.bit.say( 'yes' );
+				terminal.status.show( 'Audio context resumed.', /*clear*/true );
+				if (GET.has('tts')) self.bit.say( 'yes' );
 			}
 			addEventListener( 'keydown', activate_audio );
 			addEventListener( 'mouseup', activate_audio );
 
-			setTimeout( ()=>terminal.applets.status.show('User gesture required to activate audio.') );
+			setTimeout( ()=>terminal.status.show('User gesture required to activate audio.') );
 		}
 
 		return Promise.resolve();

@@ -33,7 +33,7 @@ module.exports = function ChatServer (persistent, callback, meta) {
 	meta( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
 	this.request.nick = function (client, request_id, parameters) {
 		if (client.login) {
-			const allowed  = char => SETTINGS.ALLOWED_NAME_CHARS.indexOf(char) >= 0;
+			const allowed  = char => SETTINGS.ALLOWED_NAME_CHARS.indexOf(char.toLowerCase()) >= 0;
 			const filtered = parameters.split('').filter( allowed ).join('');
 
 			//... Check nick validity/availability

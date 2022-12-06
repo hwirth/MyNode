@@ -6,35 +6,26 @@
 "use strict";
 
 
-export const ShellOutput = function (cep, terminal, shell) {
+export const ShellOutput = function (shell) {
 	const self = this;
 
 
-	this.printVersion = function (additional_text = '') {
-		self.print( 'CEP-Shell v' + shell.version + additional_text, 'cep' );
-	};
+	this.printVersion = function (additional_text) {
+		self.print( 'CEP-Shell-' + shell.version + additional_text, 'cep' );
 
-
-	this.clearInput = function () {
-		shell.elements.input.value = '';
-		shell.input.focusPrompt();
-	};
+	}; // printVersion
 
 
 	this.clearScreen = function () {
-		shell.elements.output.innerHTML = '';
-		self.clearInput();
-	};
+		shell.elements.output.innerHTML = shell.elements.input.value = '';
+
+	} // clearScreen
 
 
 	this.scrollDown = function () {
-		if (shell.toggles.scroll.enabled) {
+		if (!shell.toggles//...?
+		|| shell.toggles && shell.toggles.scroll.enabled) {
 			shell.elements.output.scrollBy(0, 99999);
-		}
-		if( !document.activeElement.closest( 'cep-terminal' )   // In case the main app steals our focus
-		||  !document.activeElement.closest( '.login.menu'  )   // Don't take focus out of login form
-		) {
-			shell.input.focusPrompt();
 		}
 
 	}; // scrollDown
@@ -44,12 +35,10 @@ export const ShellOutput = function (cep, terminal, shell) {
 		const client = shell.elements.output.clientHeight;
 		const height = shell.elements.output.scrollHeight;
 		const top    = shell.elements.output.scrollTop;
-	/*
 		console.log(
 			'DebugConsole.isScrolledUp: clientHeight:',
 			client, 'scrollHeight:', height, 'scrollTop:', top,
 		);
-	*/
 		return (height - client) - top;
 
 	}; // isScrolledUp
@@ -57,31 +46,21 @@ export const ShellOutput = function (cep, terminal, shell) {
 
 	this.scrollPageUp = function () {
 		shell.elements.output.scrollBy( 0, -shell.elements.output.clientHeight );
-	};
+	}
 
 
 	this.scrollPageDown = function () {
 		shell.elements.output.scrollBy( 0, shell.elements.output.clientHeight );
-	};
+	}
 
 
 	this.deleteToMarker = function () {
-		let element = get_last();
-		shell.elements.input.value = '';
-		if (element.classList.contains( 'mark' )) {
+		var element;
+		while (element = shell.elements.output.querySelector(':scope > :last-child') ) {
 			shell.elements.output.removeChild( element );
-			return;
+			if (element.classList.contains( 'mark' )) return;
 		}
-		while (element = get_last()) {
-			if (element.classList.contains( 'mark' )) break;
-			shell.elements.output.removeChild( element );
-		}
-		shell.input.focusPrompt();
-
-		function get_last () {
-			return shell.elements.output.querySelector( ':scope > :last-child' );
-		}
-	};
+	}
 
 
 	this.showFile = async function (file_name, id_selector) {
@@ -157,27 +136,10 @@ export const ShellOutput = function (cep, terminal, shell) {
 
 	this.print = function (message, class_name = null) {
 
-		function replace_href (word) {
-			//...! Ignores tab-prefixed "words":
-			if ((word.slice(0,7) == 'http://') || (word.slice(0,8) == 'https://')) {
-				const pos_tab = Math.min(
-					(word + ' ').indexOf( ' ' ),
-					(word + '\t').indexOf( '\t' ),
-					(word + '\n').indexOf( '\n' ),
-				);
-				const href = word.slice(0, pos_tab);
-				const rest = word.slice(pos_tab);
-				return '<a target="_blank" href="' + href + '">' + href + '</a>' + rest;
-			} else {
-				return word;
-			}
-
-		} // replace_href
-
 		function highlight () {
 			// Decorate tokens with HTML
 			const class_names = [
-		/*//... Removed to reduce CPU load
+		/*
 				'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
 				'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
 		*/
@@ -191,10 +153,26 @@ export const ShellOutput = function (cep, terminal, shell) {
 				'true', 'false', 'null',
 			];
 
+			const replace_href = (word)=>{
+				//...! Ignores tab-prefixed "words":
+				if ((word.slice(0,7) == 'http://') || (word.slice(0,8) == 'https://')) {
+					const pos_tab = Math.min(
+						(word + ' ').indexOf( ' ' ),
+						(word + '\t').indexOf( '\t' ),
+						(word + '\n').indexOf( '\n' ),
+					);
+					const href = word.slice(0, pos_tab);
+					const rest = word.slice(pos_tab);
+					return '<a target="_blank" href="' + href + '">' + href + '</a>' + rest;
+				} else {
+					return word;
+				}
+			};
+
 			let message_html = (
 				(typeof message == 'string')
 				? message
-				: shell.parsers.requestToText( message )
+				: shell.requestToText( message )
 			)
 			.replace( /&/g, '&amp;' )
 			.replace( /</g, '&lt;'  )
@@ -218,8 +196,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 			;
 
 			return message_html;
-
-		} // highlight
+		}
 
 
 		// Let user scroll up   //... Make optional
@@ -228,14 +205,9 @@ export const ShellOutput = function (cep, terminal, shell) {
 
 		let print_message = null;
 		if (message.html) {
-			print_message = message.html; //... .replaceAll( '<a href', '<a target="_blank" href' );
-			print_message = print_message.replaceAll( '\n', '<br>\n' );
-			print_message = (
-				print_message
-				.split(' ' ).map( replace_href ).join(' ' )
-				.split('\n').map( replace_href ).join('\n')
-			);
-			if (!class_name) class_name = 'html';
+			print_message = message.html.replaceAll( '<a href', '<a target="_blank" href' );
+			print_message = message.html.replaceAll( '\n', '<br>\n' );
+			class_name = 'html';
 
 		} else {
 			print_message
@@ -262,13 +234,13 @@ export const ShellOutput = function (cep, terminal, shell) {
 
 		// Visualize/sonifiy success/failure
 		if (message.broadcast && (typeof message.broadcast.success != 'undefined')) {
-			terminal.bit.say( message.broadcast.success );
+			shell.bit.say( message.broadcast.success );
 		}
 
 		if (message.response && (typeof message.response.success != 'undefined')) {
 			// We might receive several responses, when we sent several requersts,
 			// so we tell the bit to stack its answers:
-			terminal.bit.say( message.response.success, message.response.request - 1 );
+			shell.bit.say( message.response.success, message.response.request - 1 );
 		}
 
 	}; // print

@@ -6,7 +6,7 @@
 "use strict";
 
 
-export const Parsers = function (shell, BUTTON_SCRIPTS) {
+export const Parsers = function (cep, terminal, shell, BUTTON_SCRIPTS) {
 	const self = this;
 
 
@@ -17,20 +17,20 @@ export const Parsers = function (shell, BUTTON_SCRIPTS) {
 	}; // executeButtonScript
 
 
-	this.parseButtonScript = function (script_name) {
-		const username = shell.elements.userName.value;
-		const nickname = shell.elements.nickName.value;
-		const factor2  = shell.elements.factor2.value || 'null';
-		let script = BUTTON_SCRIPTS.find( script => script.name == script_name ).script;
+	this.parseButtonScript = function (script) {
+		const login_menu = terminal.applets.loginMenu;
+		const username = login_menu.elements.userName.value;
+		const nickname = login_menu.elements.nickName.value;
+		const factor2  = login_menu.elements.factor2.value || 'null';
 
-		if (nickname && !username) shell.elements.userName.value = 'guest';
+		if (nickname && !username) login_menu.elements.userName.value = 'guest';
 
-		script = script.replaceAll( '\n%N', (shell.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
+		script = script.replaceAll( '\n%N', (login_menu.elements.nickName.value) ? '\nchat\n\tnick: %n' : '' );
 		const result = (
 			script
 			.replaceAll( '%u', username )
 			.replaceAll( '%n', nickname )
-			.replaceAll( '%p', shell.elements.passWord.value || 'null' )
+			.replaceAll( '%p', login_menu.elements.passWord.value || 'null' )
 			.replaceAll( '%t', factor2 )
 			.split('\n')
 			.filter( line => line.indexOf('password: null') < 0 )

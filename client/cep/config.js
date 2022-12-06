@@ -7,89 +7,38 @@
 
 
 export const DEBUG = {
-	WINDOW_APP      : !false,   // Reference DebugConsole instance under window.APP
-	WEBSOCKET       : !false,
+	WINDOW_APP: !false,   // Reference DebugConsole instance under window.APP
+	WEBSOCKET: {
+		LOG_EVENTS   : !false,   // Log event objects of messages
+		LOG_MESSAGES : !false,   // Log formatted messages to dev console
+	},
 	KEYBOARD_EVENTS : false,
-	FONTS           : !false,    // Show font changes
+	INSTANCES       :! false,
+	EVENTS          : false,
 };
 
 export const SETTINGS = {
-	CSS_FILE_NAME : '/cep/terminal/css/layout.css',
-	CSS_VARS_NAME : '/cep/terminal/css/variables.css',
-
-	CONNECT_ON_START     : location.href.indexOf('connect') >= 0,
-	AUTO_APPEND_TAGS     : true,
-	KEY_BEEP             : true,   // Turn off entirely, see PRESETS
-	MAIN_VOLUME          : 1.0,    //0..1
-	SAM_ALWAYS_NEW       : !true,   // Reinstantiate SAM on every call, enabling MAIN_VOLUME
-	ANIMATE_TRANSMISSION : true,   // Blink buttons/beam, when websocket data are sent or received
-
-	KEEP_STATUS_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789 .,;:!?+-="\'*$%&/|\\()[<>]{}ßäöü~#_@€',
+	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
+	RELOAD_ON_UPDATE : true,
 
 	WEBSOCKET: {
-		URL       : 'wss://spielwiese.central-dogma.at:1337',
-		LOG_SLICE : 60,
-	},
-
-	TIMEOUT: {
-		PING_CSS         : 100,
-		RECONNECT        : 200,   //1000 ms
-		STATUS_FADE      : 333,
-		STATUS_SHOW      : 10000,   // Max. display time, max length 240 (status.js, rss.js)
-		BEEP_IGNORE      : 100,
-		BIT_ANSWER_COLOR : 200,
-		BIT_ANSWER_SOUND : 270,
-	},
-
-	HIDE_MESSAGES: {
-		PING : true,    // Being set, when the toggle is instantiated (See  PRESETS[] )
-		CHAT : false,
+		MAX_RETRIES    : 100, //Number.POSITIVE_INFINITY,
+		RETRY_INTERVAL : 1000,
+		RETRY_TIMOUT   : 3000,
+		HANDLE_PING    : true,
+		HIDE_PING      : true,
+		LOG_SLICE      : 60,
 	},
 };
 
-export function get (search) {
-	const decoded_uri = decodeURIComponent( location.href );
-	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
-	const result = search.split(' ').reduce( (prev, term)=>{
-		return prev || (decoded_uri.indexOf( term ) >= 0);
-	}, false);
 
-	return result;
+export function log_event (caption, data) {
+	if (!DEBUG.WEBSOCKET.LOG_EVENTS) return;
+	console.groupCollapsed( caption );
+	console.log( data );
+	console.groupEnd();
 
-}
-export const PRESETS = {
-	FILTER: {
-		PING      : true,
-		CEP       : false,
-		STRING    : false,
-		NOTICE    : false,
-		BROADCAST : true,
-		UPDATE    : true,
-		REQUEST   : true,
-		RESPONSE  : true,
-	},
+} // log_event
 
-	TOGGLE: {
-		TERMINAL   :  get( 'terminal'   ),
-		FILTER     :  get( 'filter   '  ),
-		ALL_USERS  : !get( 'terminal'   ),
-		SCROLL     : !get( 'scroll'     ),
-		COMPACT    : !get( 'compact'    ),
-		SEPARATORS :  get( 'separators' ),
-		STRIPES    :  get( 'stripes'    ),
-		OVERFLOW   : !get( 'overflow'   ),
-		ANIMATE    :  get( 'animate'    ),
-		BIT        : !get( 'bit'        ),
-		FANCY      :  get( 'fancy'      ),
-		KEY_BEEP   :  get( 'keybeep'    ),
-		LAST       : !get( 'last'       ),
-		TTS        :  get( 'tts'        ),
-	},
-
-	VOLUME: {
-		SAM: 0.01,
-	},
-};
-console.log( 'FIK######', PRESETS.TOGGLE.FILTER );
 
 //EOF

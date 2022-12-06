@@ -5,316 +5,325 @@
 
 "use strict";
 
-import { SETTINGS       } from '../config.js';
-import { PRESETS, DEBUG } from '../config.js';
-import { GET            } from '../helpers.js';
-import { StatusBar      } from './status.js';
-import { DomActions     } from './dom_actions.js';
-import { Audio          } from './audio.js';
-import { create_toggles } from './toggles.js';
-import { handle_message } from './handle_message.js'
-import { CEPShell       } from './shell/shell.js';
+import { SETTINGS as CEP_SETTINGS, DEBUG } from '../config.js';
+
+import { SETTINGS  } from './config.js';
+import { Audio     } from './audio.js';
+import { Events    } from '../events.js';
+import { MainMenu  } from './gadgets/main_menu.js';
+import { LoginMenu } from './gadgets/login_menu.js';
+import { UserList  } from './gadgets/user_list.js';
+import { StatusBar } from './gadgets/status.js';
+import { CEPShell  } from './shell/shell.js';
 
 
-export const DebugConsole = function (callback) {
+export const DebugTerminal = function (cep) {
 	const self = this;
+	self.templateName = 'DebugTerminal';
 
-	if (DEBUG.WINDOW_APP) window.CEP = this;
+	this.audio        // Beep and speech synthesis. Currently houses the Bit too.
+	this.events;      // Events we can emit
+	this.elements;    // DOM elements mainly querySelector'ed from RESSOURCE
+	this.toggles;     // Created in  main_menu.js
+	this.shortcuts;   // Currently registered keyboard shortcuts
+	this.applets;     // The actual tools and features: Main menu, status bar, shell, editor, ...
 
-	// Sub-objects
-	this.dom;         // DomActions() - Activate CSS animations, populate listWHo, ...
-	this.toggles;     // Options that can be toggled, connected to their buttons in the Toggle menu
-	this.audio;       // Sound effects (Keyboard beep and speech synthesis)
-	this.bit;         // The bit. It can say "yes" or "now" and glow green or red accordingly
-	this.status;      // Text shown in the footer toolbar. When nothing to show, displays the time.
-
-	// Properties
-	this.elements;    // Quick access to buttons, menus, etc. Will be queryRequest'ed from HTML_TERMINAL
-	                  // and extended when buttons and toggles are created
-	this.fontNames;   // Available fonts, extracted from CSS variables
+	this.fontNames;   // List of names extracted from the CSS file
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const HTML_TERMINAL = (`
-<div class="terminal loading">
-	<main class="chat shell"><!-- //...? Must be first in DOM to allow popup menus in header -->
-		<output></output>
-		<textarea autocomplete="off"></textarea>
-	</main><!-- main needs to be before header in the DOM for position:absolute in dropdowns to work -->
+	const EMITS_EVENTS = ['toggle'];
 
-	<header class="toolbar">
-		<nav class="node auth">
-			<button title="MyNode Server">MyNode</button>
-			<form class="items">
-				<input type="text"     name="username" placeholder="Username" autocomplete="username">
-				<input type="text"     name="nickname" placeholder="Nickname" autocomplete="nickname" Xautofocus>
-				<input type="password" name="password" placeholder="Password" autocomplete="password">
-				<input type="password" name="factor2"  placeholder="Factor 2" autocomplete="one-time-code">
-			</form>
-		</nav>
-		<nav class="list who" title="List of connected users"></nav>
-	</header>
-
-	<footer class="toolbar">
-		<nav class="connection">
-			<button title="Connection state, or your user/nick name">OFFLINE</button>
-			<div class="items">
-				<button class="help">Help</button>
-				<button class="close" title="Minimize terminal. Shortcut: Alt+T">Exit</button>
-			</div>
-		</nav>
-		<nav class="apps">
-			<button class="enabled">Chat</button>
-			<button>Settings</button>
-			<button>terminal.js</button>
-		</nav>
-		<nav class="status">
-			<span class="time"></span>
-		</nav>
-		<nav class="list toggle_state" title="Toggle states, shown as Alt+Key shortcuts"></nav>
-		<nav title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">
-			<button class="clear" title="Clears input/screen. Shortcuts: Ctrl+Home, Ctrl+Shift+Home">Clear</button>
-		</nav>
-		<nav class="main">
-			<button class="enter" title="Execute command/send chat text. Keyboard: Enter">Enter</button>
-			<div class="items">
-				<nav class="filter">
-					<button title="Hide certain types of messages when filters are enabled">Filter</button>
-					<div class="items"></div>
-				</nav>
-				<nav class="toggles">
-					<button title="Change various modes">Toggle</button>
-					<div class="items"></div>
-				</nav>
-			</div>
-		</nav>
-	</footer>
-</div>
-	`); // HTML_TERMINAL
-
-
-	const ELEMENT_SELECTORS = {
-		html        : 'html',
-		terminal    : true,  // Points to the container itself
-		shell       : '.shell',
-		output      : '.shell output',
-		input       : '.shell textarea',
-	// Gadgets
-		navCEP      : '.connection',
-		navWho      : 'nav.who',
-		navStatus   : 'nav.status',
-		toggleState : '.toggle_state',
-	// Menu items
-		authItems   : '.auth .items',
-		cepItems    : '.connection .items',
-		mainItems   : '.main .items',
-		filterItems : '.filter .items',
-		toggleItems : '.toggles .items',
-	// Buttons
-		btnCEP      : '.connection button',
-		btnNode     : 'nav.node button',
-		filter      : '.filter button',
-		btnFilter   : '.filter button',
-		btnToggles  : '.toggles button',
-		//... These buttons have "simple names", so they can be used in BUTTON_SCRIPTS with less effort
-		help        : 'button.help',
-		btnClear    : 'button.clear',
-		btnEnter    : 'button.enter',
-		btnClose    : 'button.close',
-	// Login form
-		userName    : '[name=username]',
- 		nickName    : '[name=nickname]',
-		passWord    : '[name=password]',
-		factor2     : '[name=factor2]',
-		login       : 'button.login',
-		logout      : 'button.logout',
-		disconnect  : 'button.disconnect',
-		asGuest     : 'button.asGuest',
-		asUser      : 'button.asUser',
-		asRoot      : 'button.asRoot',
-
-	}; // ELEMENT_SELECTORS
+	const RESSOURCE = {
+		html: (`
+			<cep-terminal>
+				<header class="toolbar">
+					<div></div>
+					<div class="location"><span><abbr>CEP</abbr> Debug Terminal</span></div>
+					<div></div>
+				</header>
+				<footer class="toolbar">
+					<div></div>
+					<div class="status"></div>
+					<div></div>
+				</footer>
+			</cep-terminal>
+		`),
+		elements: {
+			terminal      : 'CONTAINER',
+			header        : ':scope > header',
+			footer        : ':scope > footer',
+			topLeft       : ':scope > header > :first-child',
+			topRight      : ':scope > header > :last-child',
+			bottomLeft    : ':scope > footer > :first-child',
+			bottomRight   : ':scope > footer > :last-child',
+			location      : '.location',
+			status        : '.status',
+		},
+	};
 
 
 	// KEYBOARD SHORTCUTS
 	function shortcut_exec (command_button) {
+		//...if (!self.applets.shell) return;
 		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
+		self.audio.beep();
 	}
-	const KEYBOARD_SHORTCUTS = [
-  { event:'keydown', key:'+'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(+1);  },
-},{ event:'keydown', key:'-'         , modifiers:['alt']           , action:()=>{ self.dom.changeFontSize(-1);  },
-},{ event:'keydown', key:'.'         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(+1)         },
-},{ event:'keydown', key:','         , modifiers:['alt']           , action:()=>{ self.dom.nextFont(-1)         },
-},{ event:'keydown', key:'ArrowUp'   , modifiers:['cursorPos1']    , action:()=>{ self.shell.history.back();    },
-},{ event:'keydown', key:'ArrowDown' , modifiers:['cursorEnd']     , action:()=>{ self.shell.history.forward(); },
-},{ event:'keydown', key:'Home'      , modifiers:['ctrl']          , action:()=>{ self.shell.clearInput();      },
-},{ event:'keydown', key:'Home'      , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.clearScreen();     },
-},{ event:'keydown', key:'PageUp'    , modifiers:['shift']         , action:()=>{ self.shell.scrollPageUp();    },
-},{ event:'keydown', key:'PageDown'  , modifiers:['shift']         , action:()=>{ self.shell.scrollPageDown();  },
-},{ event:'keydown', key:'Delete'    , modifiers:['shift', 'ctrl'] , action:()=>{ self.shell.deleteToMarker();  },
-// Toggles
-},{ event:'keydown', key:'a', modifiers:['alt'], action:()=>{ self.toggles.animate   .toggle(); },
-},{ event:'keydown', key:'b', modifiers:['alt'], action:()=>{ self.toggles.bit       .toggle(); },
-},{ event:'keydown', key:'c', modifiers:['alt'], action:()=>{ self.toggles.compact   .toggle(); },
-},{ event:'keydown', key:'d', modifiers:['alt'], action:()=>{ self.toggles.filter    .toggle(); },
-},{ event:'keydown', key:'e', modifiers:['alt'], action:()=>{ shortcut_exec( 'disconnect' );    },
-},{ event:'keydown', key:'f', modifiers:['alt'], action:()=>{ self.toggles.fancy     .toggle(); },
-},{ event:'keydown', key:'k', modifiers:['alt'], action:()=>{ self.toggles.keyBeep   .toggle(); },
-},{ event:'keydown', key:'l', modifiers:['alt'], action:()=>{ self.toggles.light     .toggle(); },
-},{ event:'keydown', key:'m', modifiers:['alt'], action:()=>{ self.toggles.tts       .toggle(); },
-},{ event:'keydown', key:'p', modifiers:['alt'], action:()=>{ self.toggles.ping      .toggle(); },
-},{ event:'keydown', key:'q', modifiers:['alt'], action:()=>{ self.toggles.terminal  .toggle(); },
-},{ event:'keydown', key:'r', modifiers:['alt'], action:()=>{ self.toggles.scroll    .toggle(); },
-},{ event:'keydown', key:'s', modifiers:['alt'], action:()=>{ self.toggles.separators.toggle(); },
-},{ event:'keydown', key:'v', modifiers:['alt'], action:()=>{ self.toggles.overflow  .toggle(); },
-},{ event:'keydown', key:'w', modifiers:['alt'], action:()=>{ shortcut_exec( 'login' );         },
-},{ event:'keydown', key:'x', modifiers:['alt'], action:()=>{ self.toggles.stripes   .toggle(); },
-},{ event:'keydown', key:'y', modifiers:['alt'], action:()=>{ self.toggles.last      .toggle(); },
-},
+	this.keyboardShortcuts = [
+		  { event:'keydown', key:'+', modifiers:'alt', action:()=>{ self.changeFontSize(+1);     },
+		},{ event:'keydown', key:'-', modifiers:'alt', action:()=>{ self.changeFontSize(-1);     },
+		},{ event:'keydown', key:'.', modifiers:'alt', action:()=>{ self.nextFont(+1);           },
+		},{ event:'keydown', key:',', modifiers:'alt', action:()=>{ self.nextFont(-1);           },
+		},{ event:'keydown', key:'e', modifiers:'alt', action:()=>{ shortcut_exec('disconnect'); },
+		},{ event:'keydown', key:'w', modifiers:'alt', action:()=>{ shortcut_exec('login');      },
+		},
 	];
 
 
-	const BUTTON_SCRIPTS = [
-// New buttons added to the DOM, order of entries affects positioning in menus
-// Menus' .items can be pre-populated with buttons in TERMINAL_HTML
-// Highlight buttons: Set special color in layout.css:/* SPECIAL COLOR */
-//  script  will be stored in the buttons dataset as data-command
-// self.elements[menu] - Where to place the button, name is assigned to its class list
-{ menu:'authItems' , name:'login'      , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
-{ menu:'authItems' , name:'connect'    , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
-{ menu:'authItems' , name:'guest'      , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
-{ menu:'authItems' , name:'logout'     , script:'session\n\tlogout' },
-{ menu:'authItems' , name:'disconnect' , script:'/disconnect' },
-{ menu:'authItems' , name:'user'       , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
-{ menu:'authItems' , name:'root'       , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
-{ menu:'cepItems'  , name:'manual'     , script:'/manual' },
-{ menu:'cepItems'  , name:'RSS'        , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
-{ menu:'cepItems'  , name:'kroot'      , script:'session\n\tkick\n\t\tusername: root' },
-{ menu:'cepItems'  , name:'kuser'      , script:'session\n\tkick\n\t\tusername: user' },
-{ menu:'cepItems'  , name:'who'        , script:'session\n\twho' },
-{ menu:'cepItems'  , name:'restart'    , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'cepItems'  , name:'reset'      , script:'server\n\trestart\n\t\ttoken: ' },
-{ menu:'cepItems'  , name:'token'      , script:'server\n\ttoken' },
-{ menu:'cepItems'  , name:'vStat'      , script:'server\n\tstatus' },
-{ menu:'cepItems'  , name:'nStat'      , script:'session\n\tstatus' },
-{ menu:'cepItems'  , name:'help'       , script:'/help' },
-	]; // BUTTON_SCRIPTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// INTERFACE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.taskTitle;   // Extracted from RESSOURCE .location
 
 
-	function create_toggles_definition() {
-		// Buttons not in HTML_TERMINAL will be added by  create_toggles() .
-		// Atm. only Alt+Key works with toggles
+// GADGETS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-		const tH = document.documentElement;
-		const tT = self.elements.terminal;
-		const tO = self.elements.output;
+	this.createGadgets = function (applet, gadgets) {
+		gadgets.forEach( (gadget)=>{
+			const content = cep.dom.elementFromHTML( gadget.html );
+			applet.containers.push({
+				parent  : gadget.parent,
+				element : content,
+			});
+			applet.elements = {
+				...applet.elements,
+				...cep.dom.gatherElements( content, gadget.elements ),
+				parent    : self.elements[gadget.parent],
+				container : content,
+			};
+		});
 
-		const T = PRESETS.TOGGLE;
-		const F = PRESETS.FILTER;
+	}; // createGadgets
 
-		return [   //... Sync with keyboard shortcuts
-{ name:'terminal'   , preset:T.TERMINAL   , target:tT , menu:null          , shortcut:'Q',  caption:null         },
-{ name:'ping'       , preset:F.PING       , target:tT , menu:'filterItems' , shortcut:'P',  caption:'Ping'       },
-{ name:'cep'        , preset:F.CEP        , target:tO , menu:'filterItems' , shortcut:null, caption:'CEP'        },
-{ name:'string'     , preset:F.STRING     , target:tO , menu:'filterItems' , shortcut:null, caption:'String'     },
-{ name:'notice'     , preset:F.NOTICE     , target:tO , menu:'filterItems' , shortcut:null, caption:'Notice'     },
-{ name:'broadcast'  , preset:F.BROADCAST  , target:tO , menu:'filterItems' , shortcut:null, caption:'Broadcast'  },
-{ name:'update'     , preset:F.UPDATE     , target:tO , menu:'filterItems' , shortcut:null, caption:'Update'     },
-{ name:'request'    , preset:F.REQUEST    , target:tO , menu:'filterItems' , shortcut:null, caption:'Request'    },
-{ name:'response'   , preset:F.RESPONSE   , target:tO , menu:'filterItems' , shortcut:null, caption:'Response'   },
-{ name:'filter'     , preset:T.FILTER     , target:tO , menu:'filterItems' , shortcut:'D',  caption:'Filter'     },
-{ name:'last'       , preset:T.LAST       , target:tO , menu:'toggleItems' , shortcut:'Y',  caption:'Show Last'  },
-{ name:'compact'    , preset:T.COMPACT    , target:tO , menu:'toggleItems' , shortcut:'C',  caption:'Compact'    },
-{ name:'overflow'   , preset:T.OVERFLOW   , target:tO , menu:'toggleItems' , shortcut:'V',  caption:'Overflow'   },
-{ name:'separators' , preset:T.SEPARATORS , target:tO , menu:'toggleItems' , shortcut:'S',  caption:'Separators' },
-{ name:'stripes'    , preset:T.STRIPES    , target:tO , menu:'toggleItems' , shortcut:'X',  caption:'Stripes'    },
-{ name:'scroll'     , preset:T.SCROLL     , target:tO , menu:'toggleItems' , shortcut:'R',  caption:'AutoScroll' },
-{ name:'light'      , preset:T.LIGHT      , target:tH , menu:'toggleItems' , shortcut:'L',  caption:'Light Mode' },
-{ name:'fancy'      , preset:T.FANCY      , target:tT , menu:'toggleItems' , shortcut:'F',  caption:'Fancy'      },
-{ name:'animate'    , preset:T.ANIMATE    , target:tT , menu:'toggleItems' , shortcut:'A',  caption:'Animations' },
-{ name:'keyBeep'    , preset:T.KEY_BEEP   , target:tT , menu:'toggleItems' , shortcut:'K',  caption:'Key Beep'   },
-{ name:'tts'        , preset:T.TTS        , target:tT , menu:'toggleItems' , shortcut:'M',  caption:'Speech'     },
-{ name:'bit'        , preset:T.BIT        , target:tT , menu:'toggleItems' , shortcut:'B',  caption:'Bit'        },
-		];
 
-	} // create_toggles_definition
+// APPLETS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.installApplet = async function (name, template, show_applet = false) {
+		if (self.applets[name]) await self.applets[name].exit();
+
+		const instance_nr
+		= (name.slice(-1) == ')')
+		? name.slice( name.indexOf('(') )
+		: ''
+		;
+
+		const applet = self.applets[name] = await new template( cep, self, {
+			events : {
+				show  : self.showApplet,
+				hide  : self.hideApplet,
+				close : self.closeApplet,
+			},
+		});
+
+		if (applet.taskName) {
+			const NEW = cep.dom.newElement;
+
+			const context_menu = applet.contextMenu();
+			const menu_entries = [];
+			Object.entries( context_menu ).forEach( ([name, definition])=>{
+				menu_entries.push( NEW({
+					tagName   : 'button',
+					innerHTML : definition.caption,
+					events    : {click: definition.action},
+				}) );
+			});
+
+			const task_name = applet.taskName || applet.taskTitle || applet.templateName;
+			applet.taskEntry = NEW({
+				tagName   : 'nav',
+				className : 'task menu',
+				dataset   : {name: name},
+				children  : [
+					NEW({
+						tagName   : 'button',
+						innerText : task_name + instance_nr,
+					}),
+					NEW({
+						tagName   : 'div',
+						className : 'items',
+						children  : menu_entries,
+					}),
+				],
+			});
+
+			applet.taskTitle = task_name + instance_nr;
+
+			self.elements.bottomLeft.appendChild( applet.taskEntry );
+		}
+
+		if (show_applet) self.showApplet( applet );
+
+	}; // installApplet
+
+
+	this.showApplet = function (applet) {
+		Object.values( self.applets ).forEach( (unmount_applet)=>{
+			if (unmount_applet === applet) return;
+			if (unmount_applet.taskName) unmount_applet.containers.forEach( (container)=>{
+				const is_mounted = container.element.parentNode === self.elements[container.parent];
+				if (is_mounted) self.elements[container.parent].removeChild( container.element );
+				if (unmount_applet.taskEntry) unmount_applet.taskEntry.classList.remove( 'enabled' );
+			});
+		});
+
+		applet.containers.forEach( (container)=>{
+			const is_mounted = container.element.parentNode === self.elements[container.parent];
+			if (!is_mounted) self.elements[container.parent].appendChild( container.element );
+		});
+
+		if (applet.taskEntry) {
+			self.elements.location.innerHTML = applet.taskTitle;
+			applet.taskEntry.classList.add( 'enabled' );
+		}
+
+	}; // showApplet
+
+
+	this.hideApplet = function (applet) {
+		applet.containers.forEach( (container)=>{
+			const is_mounted = container.element.parentNode === self.elements[container.parent];
+			if (is_mounted) self.elements[container.parent].removeChild( container.element );
+		});
+
+		self.elements.location.innerHTML = self.taskTitle;
+
+	}; // hideApplet
+
+
+	this.closeApplet = function (applet) {
+		self.hideApplet( applet );
+
+		if (applet.taskEntry) self.elements.bottomLeft.removeChild( applet.taskEntry );
+
+		const applet_name = applet.taskEntry.dataset.name;
+		delete self.applets[ applet_name ];
+
+		return applet.exit();
+
+	}; // closeApplet
+
+
+// TERMINAL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.toggleVisibility = function (make_visible = null) {
+		if (make_visible === null) {
+			make_visible = self.elements.terminal.classList.contains( 'hidden' )
+		}
+
+		self.elements.terminal.classList.toggle( 'hidden', !make_visible );
+
+		if (make_visible) {
+			cep.connection.events.add( 'login', self.getCredentials );
+		} else {
+			cep.connection.events.remove( 'login', self.getCredentials );
+		}
+
+	}; // toggleVisibility
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// KEYBOARD EVENTS
+// DOM ACTIONS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function on_input_change () {
-		self.shell.adjustTextarea();
-		self.shell.scrollDown();
+this.updateWhoList = function () {};//...
 
-	} // on_input_change
+	this.animatePing = function (transmit = false) {
+		if (!SETTINGS.ANIMATE_TRANSMISSION) return;
+		if (!self.toggles.animate.enabled) return;
+
+		self.elements.terminal.classList.add( transmit ? 'transmit' : 'ping' );
+		setTimeout( ()=>{
+			self.elements.terminal.classList.remove( transmit ? 'transmit' : 'ping' );
+		}, SETTINGS.TIMEOUT.PING_CSS);
+
+	}; // animatePing
 
 
-	function on_keydown (event) {//... Move to  on_keyboard_event ?
-		const shift = event.shiftKey;
-		const ctrl  = event.ctrlKey;
-		const alt   = event.altKey;
-		const key   = event.key;
+	this.setFont = function (font_index = 0) {
+		//...const new_font_name = terminal.fontNames[font_index] || terminal.fontNames[0];
+		//...terminal.elements.terminal.style.setProperty( '--font-family', new_font_name );
 
-		if ((key != 'Shift') && (key != 'Control') && (key != 'Alt') && (key != 'Meta')) {
-			self.audio.beep();
+		for (let i = 0; i < self.fontNames.length; ++i) {
+			self.elements.terminal.classList.toggle( 'font' + i, i == font_index );
 		}
 
-	 	if (event.keyCode == 13) {
-			if (!shift && !ctrl && !alt) {
-				event.preventDefault();
-				self.elements.btnEnter.click();
-			}
-			else if (shift || !ctrl || !alt) {
-				const text = self.elements.input.value;
-				if (text.charAt( 0 ) == '.') {
-					self.elements.input.value = self.shell.parsers.parseShortRequest( text );
-					self.shell.adjustTextarea();
-					return;
-				}
-			}
-	 	}
-	 	else if (event.keyCode == 9 || event.which == 9) {
-			// Insert TAB character instead of leaving the textarea
-			event.preventDefault();
+		if (DEBUG.FONTS) console.log(
+			'DebugConsole.setFont: Font', font_index, self.fontNames[font_index],
+		);
 
-			const input           = self.elements.input;
-			const selection_start = input.selectionStart;
-			const before          = input.value.substring( 0, input.selectionStart );
-			const after           = input.value.substring( input.selectionEnd );
+	} // setFont
 
-			input.value        = before + '\t' + after;
-			input.selectionEnd = selection_start + EXTRA_LINES + 1;
+
+	this.nextFont = function (delta = 1) {
+		const nr_fonts = self.fontNames.length;
+		const terminal = self.elements.terminal;
+
+		let index = -1;
+		for (let i = 0; i < nr_fonts; ++i) {
+			const class_name = 'font' + i;
+			if (terminal.classList.contains( class_name )) index = i;
+			terminal.classList.remove( class_name );
 		}
 
-	} // on_keydown
+		if (index < 0) {
+			index = 1;
+		} else {
+			index = ((index + delta + nr_fonts) % nr_fonts);
+		}
+
+		const new_class = 'font' + index;
+
+		terminal.classList.add( new_class );
+
+		if (DEBUG.FONTS) console.log( 'DebugConsole.nextFont: Font', index, self.fontNames[index] );
+		self.applets.status.show( 'Font ' + self.fontNames[index] + ' was selected' );
+
+	}; // nextFont
 
 
-	function on_keyup () {
-		// Change color of prompt to indicate, if we are entering chat text or a command
-		const bang = self.elements.input.value.charAt(0);
-		const is_local_command = (self.elements.input.value.charAt(0) == '.');
-		self.elements.input.classList.toggle( 'local', (bang == '.') );
-		self.elements.input.classList.toggle( 'cep', (bang == '/') );
+	this.changeFontSize = function (delta_px) {
+		const css_size     = CEP.dom.getCSSVariable( '--font-size', terminal.elements.terminal );
+		const current_size = parseInt( css_size.slice(0, -2), 10 );
+		const new_size     = Math.min( 100, Math.max( 3, current_size + delta_px ));
 
-	} // on_keyup
+		terminal.elements.terminal.style.setProperty( '--font-size', new_size+'px' );
 
+		if (DEBUG.FONTS) console.log( 'DebugConsole.changeFontSize:', new_size );
+
+	}; // changeFontSize
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_keyboard_event (event) {
 		if ((event.type == 'keydown') && DEBUG.KEYBOARD_EVENTS) {
 			console.log( 'KEYDOWN:', 'key:', event.key, 'code:', event.code );
 		}
 
-		const input = self.elements.input;
-		const cursor_pos1 = (input.value.length == 0) || (input.selectionStart == 0);
-		const cursor_end  = (input.value.length == 0) || (input.selectionStart == input.value.length);
-		//...const in_input    = event.target === input;
+		if( (event.type == 'keydown')
+		//..done in beep &&  (self.toggles.beep.enabled)
+		//...&&  !((event.key == 'Enter') && event.target.closest('.login.menu'))
+		) {
+			self.audio.beep();
+		}
 
-		KEYBOARD_SHORTCUTS.forEach( (shortcut)=>{
+		self.keyboardShortcuts.forEach( (shortcut)=>{
 			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
 			const is_event = (shortcut.event.split( ',' )).indexOf( event.type ) >= 0;
 
@@ -327,27 +336,17 @@ export const DebugConsole = function (callback) {
 		});
 
 		function modifiers (shortcut) {
-			const modifiers = shortcut.modifiers;
+			const modifiers = shortcut.modifiers ? shortcut.modifiers.split(',') : [];
 			const requires = {
-				shift      : modifiers.indexOf( 'shift'      ) >= 0,
-				ctrl       : modifiers.indexOf( 'ctrl'       ) >= 0,
-				alt        : modifiers.indexOf( 'alt'        ) >= 0,
-				cursorPos1 : modifiers.indexOf( 'cursorPos1' ) >= 0,
-				cursorEnd  : modifiers.indexOf( 'cursorEnd'  ) >= 0,
-				inInput    : modifiers.indexOf( 'inInput'    ) >= 0,
+				shift : modifiers.indexOf( 'shift' ) >= 0,
+				ctrl  : modifiers.indexOf( 'ctrl'  ) >= 0,
+				alt   : modifiers.indexOf( 'alt'   ) >= 0,
 			};
-
-			const ignore_pos1end
-			=  !requires.cursorPos1 && !requires.cursorEnd
-			|| (input.value.length == 0)
-			;
 
 			const key_matches
 			=  (event.shiftKey == requires.shift)
 			&& (event.ctrlKey == requires.ctrl)
 			&& (event.altKey == requires.alt)
-			&& (ignore_pos1end || (cursor_pos1 == requires.cursorPos1))
-			&& (ignore_pos1end || (cursor_end == requires.cursorEnd))
 			;
 
 			return key_matches;
@@ -357,140 +356,96 @@ export const DebugConsole = function (callback) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// MOUSE EVENTS
+// PROTOCOL
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function on_script_button_click (event) {
-		// Single click: Show command as multiline request in input
-		if (!event.target.dataset.script) return;
+	this.getCredentials = function (websocket_url) {
+		console.log( 'DebugTerminal.getCredentials:', websocket_url );
 
-		event.preventDefault();
+		return new Promise( (proceed, abort)=>{
+			//... Await dialog
+			let user_name = self.applets.loginMenu.elements.userName.value.trim();
+			let nick_name = self.applets.loginMenu.elements.nickName.value.trim();
+			let password  = self.applets.loginMenu.elements.passWord.value.trim();
+			let factor2   = self.applets.loginMenu.elements.factor2 .value.trim();
 
-		const script_name = event.target.dataset.script;
-		self.elements.input.value = self.shell.parsers.parseButtonScript( script_name );
-		self.shell.adjustTextarea();
-		self.shell.scrollDown();
+			if (!user_name && !nick_name) return null;   // Connect only
 
-	} // on_script_button_click
+			const request = { session: { login: { username: user_name }}};
+			if (user_name.toLowerCase() != 'guest') request.session.login.password = password;
+			if (nick_name                         ) request.chat = { nick: nick_name };
 
+			proceed( request );
+		});
 
-	function on_click (event) {
-		if (event.target.tagName == 'BUTTON') self.audio.beep();
-
-		const iframe = event.target.querySelector( 'iframe' )
-		if (iframe) {
-			self.elements.output.scrollTop = event.target.offsetTop - 15;
-		}
-
-		if (event.target.closest('.toggle_state')) {
-			self.elements.btnCEP.focus();
-			setTimeout( ()=>self.elements.btnToggles.focus() );
-		}
-
-		const closest_pre = event.target.closest( 'pre' );
-		if (event.ctrlKey && closest_pre) {
-			closest_pre.parentNode.removeChild( closest_pre );
-		}
-
-		if      (event.target === self.elements.output) self.shell.focusPrompt( -1 )//... Expand eats this
-		else if (event.target === self.elements.input ) self.shell.focusPrompt(  0 )
-		else if (event.target === self.elements.shell ) self.shell.focusPrompt( +1 )
-		;
-
-		if      (event.target === self.elements.asRoot ) fill( 'root'  , '12345' )
-		else if (event.target === self.elements.asUser ) fill( 'user'  , 'pass2' )
-		else if (event.target === self.elements.asGuest) fill( 'guest' , '' )
-		;
-
-		function fill (username, password) {
-			self.elements.userName.value = username;
-			self.elements.passWord.value = password;
-			self.elements.nickName.focus();
-		}
-
-	} // on_click
-
-
-	function on_dblclick (event) {
-		if (event.target.tagName == 'BODY') return self.toggles.terminal.toggle();
-
-		if (event.target.parentNode === self.elements.output) {
-			// Toggle .compact
-			const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
-			const clicked_element = event.target.closest( 'pre' );
-			if (clicked_element === last_element) {
-				// Don't .compact, instead toggle "uncollapse last message"
-				self.toggles.last.toggle();
-			}
-
-				event.target.classList.toggle( 'expand' );     // Force it to expand
-				event.target.classList.toggle( 'unexpand' );   //...Keep track of user-clicked expands
-
-			return;
-		}
-
-		const shift = event.shiftKey;
-		const ctrl = event.ctrlKey;
-		const alt = event.altKey;
-
-		const connected = true;//...callback.isConnected();
-
-		const script_name = event.target.dataset.script;
-		if (script_name) {
-			event.preventDefault();
-			self.shell.parsers.executeButtonScript( script_name );
-
-		} else {
-			self.shell.focusPrompt();
-		}
-
-	} // on_dblclick
+	}; // getCredentials
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // WEBSOCKET
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.onSocketOpen = function () {
-		self.elements.navCEP.classList = 'connection connected';
-		self.elements.btnCEP.innerText = 'Connected';
-		self.elements.title = SETTINGS.WEBSOCKET.URL;
+	this.onWsOpen = function (event) {
+		self.animatePing( /*transmit*/true );
+
+		const url = event.target.url.replace( 'wss://', '' ).replace( 'ws://', '' ).split(':')[0];
 
 		self.elements.terminal.classList.add( 'connected' );
+		self.applets.mainMenu.elements.btnCEP.innerText = 'Connected';
 
-	}; // onSocketConnect
+		self.applets.loginMenu.elements.btnNode.innerText = url;
+		self.applets.loginMenu.elements.btnNode.title = event.target.url;
 
-
-	this.onSocketClose = function () {
-		self.elements.navCEP.classList = 'connection';
-		self.elements.btnCEP.innerText = 'Offline';
-		self.elements.title = '';
-
-		self.elements.btnNode.innerText = 'MyNode';
-		self.elements.navWho.innerHTML = '';
-
-		self.elements.terminal.classList.remove( 'connected' );
-
-	}; // onSocketClose
+	}; // onWsConnect
 
 
-	this.onSocketError = function () {
-		self.onSocketClose();
-		self.elements.navCEP.classList = 'connection error';
-		self.elements.btnCEP.innerText = 'Error';
-		self.elements.title = '';
-
-		self.elements.btnNode.innerText = 'MyNode';
+	this.onWsClose = function () {
+		self.animatePing( /*transmit*/true );
 
 		self.elements.terminal.classList.remove( 'connected' );
+		self.applets.mainMenu.elements.btnCEP.innerText = 'Offline';
 
-	}; // onSocketError
+		self.applets.loginMenu.elements.btnNode.innerText = 'MyNode';
+		self.applets.loginMenu.elements.btnNode.title = 'Not connected';
+
+		//...self.elements.navWho.innerHTML = '';
+
+	}; // onWsClose
 
 
-	this.onReceive = function (message) {
-		handle_message( self, message, callback );
+	this.onWsError = function () {
+		self.animatePing( /*transmit*/true );
 
-	}; // onReceive
+		self.onWsClose();
+		self.applets.mainMenu.elements.btnCEP.innerText = 'Error';
+
+	}; // onWsError
+
+
+	this.onWsSend = function () {
+		self.animatePing( /*transmit*/true );
+
+	}; // onWsSend
+
+
+	this.onWsMessage = function (message) {
+		self.animatePing( /*transmit*/true );
+
+		if (message.broadcast && message.broadcast.reload) {
+			Object.keys( message.broadcast.reload ).forEach( (file_name)=>{
+				if (file_name.charAt(0) != '/') file_name = '/' + file_name;
+				file_name = file_name.replace( 'client/', '' ).replace( CEP.baseDir + '/', '' );
+				self.applets.status.show(
+					'The file <a href="'
+					+ file_name
+					+ '">'
+					+ file_name.replaceAll( '/', '/<wbr>' )
+					+ '</a> was updated.'
+				);
+			});
+		}
+
+	}; // onWsMessage
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -498,223 +453,130 @@ export const DebugConsole = function (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		self.status.exit();
+		if (DEBUG.INSTANCES) console.log( 'DebugTerminal.exit' );
 		return Promise.resolve();
 
 	}; // exit
 
 
 	this.init = async function () {
-		console.log( 'DebugConsole.init' );
+		if (DEBUG.INSTANCES) console.log( 'DebugTerminal.init' );
 
-// DOM ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		function gather_dom_elements (container) {
-			// Additional script and toggle buttons are created later on,
-			// so this function will be called again to update   self.elements .
-			return Object.entries( ELEMENT_SELECTORS ).map( ([key, value])=>{
-				switch (key) {
-					case 'html'     : return [key, document.documentElement];
-					case 'terminal' : return [key, container];
-					default         : return [key, container.querySelector( value ) ];
-				}
-			}).reduce( (prev, next)=>{
-				return { ...prev, [next[0]]: next[1] };
-			}, {});
+		await Promise.all([
+			cep.dom.loadCSS( 'cep/terminal/variables.css' ),
+			cep.dom.loadCSS( 'cep/terminal/terminal.css' ),
+		]);
 
-		} // gather_dom_elements
-
-
-		// Add main element to body
-		const parser        = new DOMParser();
-		const temp_document = await parser.parseFromString( HTML_TERMINAL, 'text/html' );
-		const container     = temp_document.querySelector( '.terminal' );
+		const container = cep.dom.elementFromHTML( RESSOURCE.html );
+		self.elements = {
+			html     : document.documentElement,
+			...cep.dom.gatherElements( container, RESSOURCE.elements ),
+		},
 
 		document.body.appendChild( container );
 
-		self.elements = gather_dom_elements( container );   // We'll gather more later
+		self.taskTitle = self.elements.location.innerHTML;
 
-		// Load CSS files
-		function add_css_link (file_name) {
-			const selector = 'link[href="' + file_name + '"]';
-			const old_link = document.querySelector( selector );
-			if (old_link) old_link.parentNode.removeChild( old_link );
-
-			const new_link = document.createElement( 'link' );
-			new_link.rel  = 'stylesheet';
-			new_link.href = file_name;
-			new_link.type = 'text/css';
-			document.querySelector( 'head' ).appendChild( new_link );
-
-			return new_link;
-		}
-		const main_css_file = new Promise( (done)=>{
-			const new_link = add_css_link( SETTINGS.CSS_FILE_NAME );
-			new_link.addEventListener( 'load', ()=>setTimeout(
-				()=>{
-					self.elements.terminal.classList.remove( 'loading' );
-					self.elements.terminal.classList.remove( 'ping' );
-					done();
-				}
-			));
-		});
-		const vars_css_file = new Promise( (done)=>{
-			const new_link = add_css_link( SETTINGS.CSS_VARS_NAME );
-			new_link.addEventListener( 'load', done );
-		});
-
-		await Promise.all( [main_css_file, vars_css_file] );
-
-// OBJECTS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+		self.fontNames = extract_css_font_names();
 		function extract_css_font_names () {
 			const result = [];
-			const style = getComputedStyle( self.elements.terminal );
 			let font_name = null;
 			let i = 0;
-			while (font_name = style.getPropertyValue( '--font' + i )) {
+			while (font_name = CEP.dom.getCSSVariable( '--font' + i )) {
 				result.push( font_name );
 				++i;
 			}
 			return result;
 		}
+		//self.setFont();
 
-		self.audio     = await new Audio( self );
-		self.bit       = self.audio.bit;   //... still needs to be created before shell. Move to shell entirely
-		self.dom       = new DomActions( self );
-		self.shell     = new CEPShell( self, callback, BUTTON_SCRIPTS );
-		self.fontNames = extract_css_font_names();
-		self.toggles   = create_toggles( self, create_toggles_definition() );
-		self.status    = new StatusBar( self.elements.navStatus )
+		self.audio   = await new Audio( cep, self );
+		self.bit     = self.audio.bit;   //... still needs to be created before shell. Move to shell entirely
+		self.events  = await new Events( self, EMITS_EVENTS, {toggle: self.onToggle} );
 
-		// MAIN MENU Create macro buttons
-		BUTTON_SCRIPTS.forEach( (script)=>{
-			const caption = script.caption || script.name.charAt(0).toUpperCase() + script.name.slice(1);
-			const existing   = self.elements[script.name];
-			const new_button =  existing || document.createElement( 'button' );
-			new_button.dataset.script = script.name;
-			new_button.className      = script.name;
-			new_button.innerText      = caption;
-			new_button.title          = new_button.title || 'Click shows command, double click executes';
-			new_button.addEventListener( 'click', on_script_button_click );
+		self.toggles = {};
+		self.applets = {};                                // true/false: Whether to activate (show)
+		await self.installApplet( 'mainMenu' , MainMenu , true );   // Creates our toggles, must be first
+		await self.installApplet( 'loginMenu', LoginMenu, true );
+		await self.installApplet( 'userList' , UserList , true );
+		await self.installApplet( 'status'   , StatusBar, true );
+		await self.installApplet( 'shell'    , CEPShell , true );
 
-			if (!existing) self.elements[script.menu].appendChild( new_button );
-		});
 
-		self.elements = gather_dom_elements( container );   // Also gather newly created buttons
+		// MAIN MENU ENTRY
+		add_menu_entry( 'shell', 'CEP-Shell', CEPShell );
+		function add_menu_entry (name, caption, template) {
+			self.applets.mainMenu.elements.itemsMain.appendChild( cep.dom.newElement({
+				tagName   : 'button',
+				innerText : caption,
+				events    : { click:()=>add_task(name, template) },
+			}) );
 
-// EVENTS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		// KEYBOARD
-        	self.elements.input.addEventListener( 'keydown' , on_keydown );
-        	self.elements.input.addEventListener( 'keyup'   , on_keyup   );
-		['keydown', 'keypress', 'keyup'].forEach(
-			event => addEventListener( event, on_keyboard_event, {passive: false} )
-		);
+			function add_task (name, template) {
+				let attempt_nr = 1;
+				while (name_exists()) ++attempt_nr;
 
-		// CLICK and DOUBLE CLICK
-		function set_html_animate () {
-			self.elements.html.classList.remove( 'animate' );
-			self.elements.terminal.removeEventListener( 'click', set_html_animate );
-		}
-		self.elements.terminal.addEventListener( 'click'    , set_html_animate );
-		self.elements.terminal.addEventListener( 'click'    , on_click    );
-		self.elements.terminal.addEventListener( 'dblclick' , on_dblclick );
+				self.installApplet( name, template, /*show_applet*/true );
 
-		// Open terminal from main screen
-		addEventListener( 'dblclick', (event)=>{
-			if (!event.target.closest( '.terminal' )) {
-				self.toggles.terminal.toggle();
-			}
-		});
-
-		// BUTTON: "Clear"
-		self.elements.btnClear.addEventListener( 'click'    , self.shell.clearInput  );
-		self.elements.btnClear.addEventListener( 'dblclick' , self.shell.clearScreen );
-
-		// BUTTON: "Enter"
-		self.elements.btnEnter.addEventListener( 'click', self.shell.onEnterClick );
-
-		// BUTTON: "Exit"
-		self.elements.btnClose.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
-
-		// LOGIN FORM
-		self.elements.terminal.querySelectorAll( 'input' ).forEach( (input)=>{
-			input.addEventListener( 'input'  , ()=>self.elements.login.click() );
-			input.addEventListener( 'change' , ()=>self.elements.login.click() );
-			input.addEventListener( 'keyup'  , async(event)=>{
-				if (event.key == 'Enter') {
-					const dblclick_event = document.createEvent( 'MouseEvents' );
-					dblclick_event.initEvent( 'dblclick', true, true );
-					self.elements.login.dispatchEvent( dblclick_event );
+				function name_exists () {
+					if (!self.applets[name]) return false;
+					if (!self.applets[name + '(' + attempt_nr + ')']) {
+						name = name + '(' + attempt_nr + ')';
+						return false;
+					}
+					return true;
 				}
-			});
-		});
-
-		// Disable <form> submission
-		self.elements.terminal.querySelectorAll( 'form' ).forEach( (form)=>{
-			form.addEventListener( 'submit', event => event.preventDefault() );
-		});
-
-		// PROMPT
-		self.elements.input.addEventListener( 'keyup'  , self.shell.adjustTextarea );
-		self.elements.input.addEventListener( 'input'  , on_input_change );
-		self.elements.input.addEventListener( 'change' , on_input_change );
-
-		let mouse_moved = true;   // Detect actual clicks, not text selection
-		self.elements.output.addEventListener( 'blur',      ()=>mouse_moved = false );
-		self.elements.output.addEventListener( 'mousedown', ()=>mouse_moved = false );
-		self.elements.output.addEventListener( 'mousemove', ()=>mouse_moved = true  );
-		self.elements.output.addEventListener( 'mouseup', (event)=>{
-			if (event.button != 0) return;
-			if (!mouse_moved) {
-				self.shell.focusPrompt();
-			}
-		});
-
-// PROMPT ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		async function init_prompt () {
-			self.dom.setFont();
-
-			// Find shortcuts and add list of keys to CEP_VERSION
-			const toggles    = sc => (sc.modifiers.length == 1) && (sc.modifiers[0] == 'alt');
-			const characters = toggle => toggle.key
-			const shortcuts  = KEYBOARD_SHORTCUTS.filter( toggles ).map( characters ).join('');
-
-			self.shell.version += '^[' + shortcuts.split('').sort().join('') + '] ';
-			self.shell.printVersion('');
-			await self.shell.showFile( '/cep/terminal/txt/issue.txt' );
-
-			if (GET.has('username')) self.elements.userName.value = GET.get('username');
-			if (GET.has('nickname')) self.elements.nickName.value = GET.get('nickname');
-			if (GET.has('password')) self.elements.passWord.value = GET.get('password');
-
-			if (GET.has('login')) setTimeout( ()=>{
-				self.elements.login.click();
-				self.elements.btnEnter.click();
-			}, 0);
-
-			if (self.elements.terminal.classList.contains( 'enabled' )) {
-				setTimeout( self.shell.focusPrompt, 100 );
-			} else {
-				setTimeout( ()=>{
-					document.querySelector( 'form [name=nickname]' ).focus();//...? not effective
-				}, 100);
 			}
 		}
 
-		init_prompt();
 
-		const c = console;
-		c.groupCollapsed( 'DebugConsole.elements' );  c.dir( self.elements );         c.groupEnd();
-		c.groupCollapsed( 'DebugConsole.toggles' );   c.dir( self.toggles );          c.groupEnd();
-		c.groupCollapsed( 'KEYBOARD_SHORTCUTS' );     c.table( KEYBOARD_SHORTCUTS );  c.groupEnd();
+		if (cep.GET.has( 'name' )) {
+			self.applets.loginMenu.elements.userName.value = 'root';
+			self.applets.loginMenu.elements.passWord.value = '12345';
+			self.applets.loginMenu.elements.nickName.value = cep.GET.get( 'name' );
+		}
+
+		// KEYBOARD
+		['keydown', 'keypress', 'keyup'].forEach(
+			event => self.elements.terminal.addEventListener( event, on_keyboard_event, {passive: false} )
+		);
+		// BUTTON BEEP
+		self.elements.terminal.addEventListener( 'click', (event)=>{
+			if (event.target.tagName == 'BUTTON') self.audio.beep();
+		});
+
+		cep.connection.events.add( 'open'   , self.onWsOpen    );
+		cep.connection.events.add( 'close'  , self.onWsClose   );
+		cep.connection.events.add( 'error'  , self.onWsError   );
+		cep.connection.events.add( 'send'   , self.onWsSend    );
+		cep.connection.events.add( 'message', self.onWsMessage );
+		cep.connection.events.add( 'ping'   , self.animatePing );
+
+		self.events.add( 'toggle', (toggle)=>{
+			if (toggle.name == 'ping') {
+				CEP_SETTINGS.WEBSOCKET.HIDE_PING = toggle.enabled;
+			}
+			self.bit.say( toggle.enabled );
+		})
+if (self.applets.shell)//...!
+		CEP_SETTINGS.WEBSOCKET.HIDE_PING = self.applets.shell.toggles.ping.enabled;
+
+	/*//...!
+		if (cep.connection.isConnected) {
+			self.elements.terminal.classList.add( 'connected' );
+		}
+	*/
+
+		self.toggleVisibility( true );
 
 		return Promise.resolve();
 
 	}; // init
 
-	self.init().catch( watchdog/*//...main only?*/ ).then( ()=>self );
-	// const terminal = await new DebugConsole();
 
-}; // DebugConsole
+	return self.init().then( ()=>self );   // const terminal = await new DebugTerminal()
+
+}; // DebugTerminal
 
 
 //EOF

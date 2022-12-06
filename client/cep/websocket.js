@@ -1,13 +1,14 @@
-// websocket.js
+// cep.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
 
-import { SETTINGS, DEBUG } from './config.js';
+import { SETTINGS, DEBUG, log_event } from './config.js';
 
-const CONNECTION_TIMEOUT_MS = 5000;
+import { Events        } from './events.js';
+import { DebugTerminal } from './terminal/terminal.js';
 
 const SOCKET_STATES = {
 	CONNECTING : 0,   // Socket has been created. The connection is not yet open
@@ -16,130 +17,25 @@ const SOCKET_STATES = {
 	CLOSED     : 3,   // The connection is closed or couldn't be opened
 };
 
-export const WebSocketClient = function (parameters = {}) {
+
+export const AutoWebSocket = function (parameters = {}) {
 	const self = this;
+	self.templateName = 'AutoWebSocket';
 
-	const callbacks = parameters.events;
+	this.webSocket;
 
-	let nr_attempts = 0;
-	let connection_timeout = null;
-	let unload_handler = null;
+	this.getCredentials;   // Callback returning a Promise while displaying a dialog
 
-	this.websocket = null;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HELPERS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function log_event (caption, data) {
-		if (!DEBUG.WEBSOCKET) return;
-
-		console.groupCollapsed( caption );
-		console.log( data );
-		console.groupEnd();
-	}
+	this.eventListeners;   // Dict of arrays of registered event handlers
+	this.webSocketURL;     // Set at creation time
+	this.autoReconnect;    // Clear this flag to stop the reconnect loop
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// WEB SOCKET
+// CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function websocket_connection (callback_connection_established) {
-		console.log( 'Connecting to ' + parameters.url + '...' );
-
-		// When unable to connect, try again after a few seconds
-		connection_timeout = setTimeout( ()=>{
-			console.log( 'Connection timed out' );
-			connection_timeout = null;
-			websocket_connection( callback_connection_established );
-		}, CONNECTION_TIMEOUT_MS );
-
-
-		function stop_timeout_loop () {
-			clearTimeout( connection_timeout );   // Prevent new connection attempt
-
-		} // stop_timeout_loop
-
-
-		// Create socket and connect
-		//...document.cookie = 'username=' + parameters.username + '; path=/';
-		//...document.cookie = 'password=' + parameters.password + '; path=/';
-
-		let ws = null;
-		try {
-			ws = new WebSocket( parameters.url );
-		} catch (error) {
-			console.log( 'Connection failed', error.message );
-		}
-
-		ws.addEventListener( 'open', (event)=>{
-			log_event( 'WebSocketClient.onOpen', event );
-			stop_timeout_loop();
-
-			if (callbacks.onOpen) callbacks.onOpen( event, self );
-
-			callback_connection_established();
-		});
-		ws.addEventListener( 'close', (event)=>{
-			log_event( 'WebSocketClient.onClose', event );
-			stop_timeout_loop();
-
-			if (callbacks.onClose) callbacks.onClose( event, self );
-		});
-		ws.addEventListener( 'error', (event)=>{
-			log_event( 'WebSocketClient.onError', event );
-			console.log( 'ws: Error:', event );
-			stop_timeout_loop();
-
-			if (callbacks.onError) callbacks.onError( event, self );
-		});
-		ws.addEventListener( 'message', (event)=>{
-			let message = event.data;
-
-			if (typeof message == 'string') {
-				try {
-					message = JSON.parse( message );
-				} catch {
-					// Assume string
-				}
-			}
-
-			// Hide ping/pong log messages
-			const is_pingpong = message.update && message.update.pong;
-			const do_log = (!SETTINGS.HIDE_MESSAGES.PING || (SETTINGS.HIDE_MESSAGES.PING && !is_pingpong));
-			if (DEBUG.WEBSOCKET && do_log) {
-				const key = Object.keys( message )[0];
-				console.groupCollapsed(
-					'%c🡇 WebSocketClient received%c:',
-					'color:#48f', 'color:unset',
-					key + ':',
-					(
-						(typeof message[key] == 'string')
-						? message[key]
-						: Object.keys( message[key] ).join(' ')
-					),
-				);
-				console.log( JSON.stringify(message, null, '\t') );
-				console.groupEnd();
-			}
-
-			if (callbacks.onMessage) callbacks.onMessage( event, self, message );
-		});
-
-		self.websocket = ws;
-
-	} // websocket_connection
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENTS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function on_before_unload () {
-		self.send( 'HUP' );
-
-	} // on_before_unload
+	const EMITS_EVENTS = ['login', 'open', 'close', 'error', 'retry', 'message', 'send', 'ping'];
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -147,38 +43,226 @@ export const WebSocketClient = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.isConnected = function () {
-		return (self.websocket.readyState == SOCKET_STATES.OPEN);
+		return (self.webSocket && (self.webSocket.readyState == SOCKET_STATES.OPEN));
 
-	}; // isConnected
+	} // isConnected
 
 
-	this.send = function (request) {
-		// Hide ping/pong log messages
-		const is_pingpong = request.session && request.session.pong;
-		const do_log = (!SETTINGS.HIDE_MESSAGES.PING || (SETTINGS.HIDE_MESSAGES.PING && !is_pingpong));
-		if (DEBUG.WEBSOCKET && do_log) {
+	this.connect = function () {
+		if (self.isConnected()) {
+			throw new Error( 'ClientEndPoint.connect: Already connected' );
+		}
+
+		if (self.isConnecting) {
+			throw new Error( 'ClientEndPoint.connect: Already connecting' );
+		}
+
+		self.isConnecting = true;
+
+		return (
+			self.events.callback( 'login', self.webSocketURL )
+			.then( credentials => websocket_connection(credentials) )
+			.then( ()=>{
+				console.log( 'AutoWebSocket.connect' );
+				addEventListener( 'beforeunload', on_beforeunload, false );
+				self.isConnecting = false;
+			})
+			.catch( (error)=>{
+				console.log( 'AutoWebSocket.connect: Error:', error );
+				self.events.emit( 'error', error );
+				self.isConnecting = false;
+			})
+		);
+
+	}; // connect
+
+
+	this.disconnect = async function () {
+		if (self.isConnected()) {
+			removeEventListener( 'beforeunload', on_beforeunload, false );
+			self.webSocket.close();
+		}
+
+	}; // connect
+
+
+	this.send = function (request, callback = null) {
+		if (!self.isConnected()) {
+			return self.connect().then( ()=>on_send(request) );
+		} else {
+			on_send( request );
+		}
+
+		if (callback) callback();//...! Buffer outgoing while reconnecting
+
+	};  // send
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function on_message (event) {
+		let message = event.data;
+
+		if (typeof message != 'string') {
+			throw new Error( 'ClientEndPoint-on_message: Received non-string' );//...?
+		}
+
+		try { message = JSON.parse( message ); }
+		catch { /* Assume string */ }
+
+		const is_pingpong = message.update && message.update.pong;
+		const do_log = (!SETTINGS.WEBSOCKET.HIDE_PING || (SETTINGS.WEBSOCKET.HIDE_PING && !is_pingpong));
+
+		if (DEBUG.WEBSOCKET.LOG_MESSAGES && do_log) {
+			const key = Object.keys( message )[0];
 			console.groupCollapsed(
-				'%c🡅 WebSocketClient sending%c:',
+				'%c🡇 ClientEndPoint received%c:',
+				'color:#48f', 'color:unset',
+				key + ':',
+				(
+					(typeof message == 'string')
+					? message
+					: (typeof message[key] == 'string')
+					? message[key]
+					: Object.keys( message[key] ).join(' ')
+				),
+			);
+			console.log( JSON.stringify(message, null, '\t') );
+			console.groupEnd();
+		}
+
+		if (message.update && (message.update.type == 'session/ping') && SETTINGS.WEBSOCKET.HANDLE_PING) {
+			if (!SETTINGS.WEBSOCKET.HIDE_PING) self.events.emit( 'ping', message.update.pong );
+			self.send( {session:{pong:message.update.pong}} );
+		} else {
+			self.events.emit( 'message', message );
+		}
+
+	} // on_message
+
+
+	async function on_send (request) {
+		const is_pingpong = request.session && request.session.pong;
+		const do_log = (!SETTINGS.WEBSOCKET.HIDE_PING || (SETTINGS.WEBSOCKET.HIDE_PING && !is_pingpong));
+
+		if (DEBUG.WEBSOCKET.LOG_MESSAGES && do_log) {
+			console.groupCollapsed(
+				'%c🡅 ClientEndPoint sending%c:',
 				'color:#480', 'color:unset',
-				JSON.stringify( request )
-				.replaceAll( '"', '' )
-				.replaceAll( '{', '' )
-				.replaceAll( '}', '' )
-				.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE),
+				(
+					(typeof request == 'string')
+					? request.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE)
+					: (
+						JSON.stringify( request )
+						.replaceAll( '"', '' )
+						.replaceAll( '{', '' )
+						.replaceAll( '}', '' )
+						.slice(0, SETTINGS.WEBSOCKET.LOG_SLICE)
+					)
+				),
 			);
 			console.log( JSON.stringify(request, null, '\t') );
 			console.groupEnd();
 		}
 
-		// See app-on_websocket_message
-		const hide_message =  (SETTINGS.HIDE_MESSAGES.PING && request.session && request.session.pong);
-		if (!hide_message) {
-			parameters.terminal.shell.print( request, 'request' );
+		if (!self.isConnected()) {
+			try { await self.connect(); }
+			catch { return; }
 		}
 
-		self.websocket.send( JSON.stringify(request, null, '\t') );
+		self.webSocket.send( JSON.stringify(request) );
+		if (request.session && request.session.pong) {
+			self.events.emit( 'ping', request.session.pong );
+		}
+		if (!(request.session && request.session.pong && SETTINGS.WEBSOCKET.HIDE_PING)) {
+			self.events.emit( 'send', request );
+		}
 
-	} // send
+	} // on_send
+
+
+	function on_beforeunload () {
+		if (self.isConnected()) {
+			self.send( 'HUP' );   //...! Does this work?
+		}
+
+	} // on_beforeunload
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// WEB SOCKET
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function websocket_connection (credentials, attempt_nr = 0) {
+		return new Promise( (resolve, reject)=>{
+			if (attempt_nr > 0) {
+				console.log(
+					'ClientEndPoint-websocket_connection:',
+					self.webSocketURL,
+					'Attempt:',
+					attempt_nr,
+				);
+			} else {
+				console.log( 'ClientEndPoint-websocket_connection:', self.webSocketURL );
+			}
+			// Create socket and connect
+			//...document.cookie = 'username=' + parameters.username + '; path=/';
+			//...document.cookie = 'password=' + parameters.password + '; path=/';
+
+			let timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_TIMOUT );
+			self.webSocket = null;
+			try {
+				self.webSocket = new WebSocket( self.webSocketURL );
+			}
+			catch (error) {
+				self.events.emit( 'error', error );
+				//reject( error );
+			}
+
+			if (self.webSocket) {
+				clearTimeout( timeout );
+				self.webSocket.addEventListener( 'open'   , on_open    );
+				self.webSocket.addEventListener( 'close'  , on_close   );
+				self.webSocket.addEventListener( 'error'  , on_error   );
+				self.webSocket.addEventListener( 'message', on_message );
+			}
+
+			function on_open (event) {
+				clearTimeout( timeout );
+				self.events.emit( 'open', event );
+				if (credentials) on_send( credentials );
+				attempt_nr = 0;
+console.log('OPEN isConnecting false');
+self.isConnecting = false;//...? Why here, should happen in resolve!?
+				resolve();
+			}
+			function on_close (event) {
+				self.events.emit( 'close', event );
+				if (!timeout) timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+			}
+			function on_error (event) {
+				self.events.emit( 'error', event );
+				if (!timeout) timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+			}
+			function retry () {
+				clearTimeout( timeout );
+				timeout = null;
+				self.webSocket = null;
+				const max_attempts = (attempt_nr >= SETTINGS.WEBSOCKET.MAX_RETRIES);
+
+				if (self.autoReconnect && !max_attempts) {
+					++attempt_nr;
+					self.events.emit( 'retry', attempt_nr );
+					websocket_connection( credentials, attempt_nr );
+				} else {
+					reject();
+				}
+			}
+		});
+
+	} // websocket_connection
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -186,29 +270,33 @@ export const WebSocketClient = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		removeEventListener( 'beforeunload', on_before_unload, false );
-
-		self.websocket.close();
-
+		if (DEBUG.INSTANCES) console.log( 'AutoWebSocket.exit' );
+		self.disconnect();
 		return Promise.resolve();
 
 	}; // exit
 
 
-	this.init = function () {
-		console.log( 'WebSocketClient.init' );
+	this.init = async function () {
+		if (DEBUG.INSTANCES) console.log( 'AutoWebSocket.init' );
 
-		return new Promise( async (done)=>{
-			await websocket_connection( done );
-			addEventListener( 'beforeunload', on_before_unload, false );
-		});
+		self.webSocket     = null;
+		self.webSocketURL  = parameters.webSocketURL;
+		self.autoReconnect = parameters.autoReconnect;
+
+		if (!self.webSocketURL) throw new Error( 'ClientEndPoint.init: WebSocket URL undefined' );
+		//...! Check for valid URL
+
+		self.events = await new Events( self, EMITS_EVENTS, parameters.events );
+
+		return Promise.resolve();
 
 	}; // init
 
 
-	self.init().then( ()=>self );   // const websocket = await new WebSocketClient()
+	return self.init().then( ()=>self );   // const websocket = await new WebSocketClient()
 
-}; // WebSocketClient
+}; // AutoWebSocket
 
 
 //EOF

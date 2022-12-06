@@ -1,6 +1,6 @@
 cep-terminal {
-	--font-size:14px;
-	--line-height : 1.1rem;
+	--font-size   : 14px;
+	--line-height : 1rem;
 
 	--marker-left    : var(--terminal-margin);
 	--marker-width   : 100%;

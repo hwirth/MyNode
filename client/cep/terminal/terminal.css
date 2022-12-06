@@ -180,7 +180,7 @@ cep-terminal .toolbar {
 	background    : var(--toolbar-background);
 	box-shadow    : var(--toolbar-box-shadow);
 }
-cep-terminal .toolbar > * { display:flex; align-items:center; justify-content:center; gap:var(--toolbar-gap); }
+cep-terminal .toolbar > * { display:flex; align-items:center; justify-content:center; gap:var(--menu-gap); }
 cep-terminal .toolbar > * > * { position:relative; }
 cep-terminal .toolbar > :nth-child(1) { justify-content:start;  align-self:start;  }
 cep-terminal .toolbar > :nth-child(2) { justify-content:center; align-self:center; flex-grow:1; }
@@ -188,6 +188,8 @@ cep-terminal .toolbar > :nth-child(3) { justify-content:end;    align-self:end; 
 cep-terminal .toolbar > :nth-child(1) > * { text-align:left;   }
 cep-terminal .toolbar > :nth-child(2) > * { text-align:center; }
 cep-terminal .toolbar > :nth-child(3) > * { text-align:right;  }
+
+cep-terminal header.toolbar > :nth-child(3) > .who_list { display:flex; flex-direction:row-reverse; }
 
 cep-terminal footer > :nth-child(1) { flex-wrap:wrap; }
 cep-terminal footer > :nth-child(3) { flex-wrap:wrap-reverse; }
@@ -199,12 +201,8 @@ cep-terminal.status footer.toolbar > :nth-child(1) { flex-basis:30%; flex-grow:1
 cep-terminal.status footer.toolbar > :nth-child(2) { flex-basis:40%; flex-grow:1; flex-shrink:0; }
 cep-terminal.status footer.toolbar > :nth-child(3) { flex-basis:30%; flex-grow:1; flex-shrink:1; }
 Xcep-terminal .toolbar .status > .messages .time { white-space:nowrap; }
-@media (max-width:40rem) {
-	cep-terminal footer.toolbar .toggle_state { display:none; }
-}
-@media (max-width:65rem) {
-	cep-terminal footer.toolbar div.status { display:none; }
-}
+@media (max-width:40rem) { cep-terminal footer.toolbar .toggle_state { display:none; } }
+@media (max-width:65rem) { cep-terminal footer.toolbar div.status    { display:none; } }
 
 
 /* MENU */
@@ -405,7 +403,7 @@ cep-terminal main.shell * { line-height:var(--line-height); }
 
 /* OUTPUT */
 cep-terminal .shell output {
-	margin:var(--output-margin-top) var(--output-margin-x) 0;
+	Xmargin:var(--output-margin-top) var(--output-margin-x) 0;
 	padding:0 calc(var(--output-padding-x));
 	color:var(--text-color);
 	white-space:pre-wrap;
@@ -461,7 +459,7 @@ cep-terminal .shell pre.broadcast { color:var(--broadcast-color); }
 cep-terminal .shell pre.update    { color:var(--update-color);    }
 cep-terminal .shell pre.request   { color:var(--request-color);   }
 cep-terminal .shell pre.response  { color:var(--response-color);  }
-cep-terminal .shell pre.chat      { color:var(--chat-color);      }
+cep-terminal .shell pre.chat      { color:var(--chat-color);      Xfont-weight:bold; }
 cep-terminal .shell pre.error     { color:var(--error-color);     }
 
 cep-terminal code      { color:var(--code-color   ); }
@@ -628,14 +626,14 @@ cep-terminal.fancy.bit.no    output::after {
 /* FANCY PRE */
 cep-terminal.fancy :is(textarea, pre) { padding-left:50px; }
 /* Beam DOTS */
-cep-terminal.fancy pre::before {
+cep-terminal.fancy .shell pre::before {
 	content:'';
 	position:absolute; left:var(--beam-dots-left); top:0.5rem;
 	width:10px; height:7px; transform:translate(-50%,-50%);
 	outline:solid 1px #fff2; border-radius:100%;
 	background:radial-gradient(ellipse at center, #fff, #fff8 2px, #fff1 5px, #fff0 6px);
 }
-cep-terminal.animate.fancy pre.expand::before {
+cep-terminal.animate.fancy .shell pre.expand::before {
 	animation: MARKER_GLOW 3s ease-in-out infinite;
 }
 @keyframes MARKER_GLOW {
@@ -643,18 +641,19 @@ cep-terminal.animate.fancy pre.expand::before {
 	   50% { opacity:0.6; }
 	  100% { opacity:1.0; }
 }
-cep-terminal.fancy pre.expand::before {
+cep-terminal.fancy .shell pre.expand::before {
 	outline-color:#fff4; border-radius:100%;
 	background:radial-gradient(ellipse at center, #ffff, #fff8 3px, #fff1 10px, #fff0 20px);
 	width:20px;
 }
-cep-terminal.fancy pre.chat::before {
-	--h:calc(var(--line-height) - 2px);
+cep-terminal.fancy .shell pre.chat span { display:inline; }
+cep-terminal.fancy .shell pre.chat::before {
+	--h:calc(var(--line-height) - 4px);
 	content:'Msg';
-	top:calc(0.5rem + 1px);
-	width:30px; height:var(--h); line-height:var(--h);
-	outline:none; border:solid 1px #fff4; border-radius:3px;
+	top:calc(0.5rem);
+	width:22px; left:12px; height:var(--h); line-height:var(--h);
+	outline:solid 1px #4af; border-radius:3px;
 	font-size:0.8em; text-align:center;
-	background:#0006;
+	background:#0006; color:#cef;
 }
 cep-terminal.fancy pre.chat.unexpand::before { background:#fff6; }
