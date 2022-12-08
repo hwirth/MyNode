@@ -86,7 +86,8 @@ export const ClientEndPoint = function (parameters = {}) {
 		if (message.broadcast && (message.broadcast.type == 'reload/client')) {
 			let do_reload = false;
 			Object.keys( message.broadcast.reload ).forEach( (file_name)=>{//...! change protocol
-				file_name = file_name.replace( 'client/', '' ).replace( CEP.baseDir + '/', '' );
+				file_name = file_name.replace( 'client/', '' );
+				if (self.baseDir) file_name = file_name.replace( self.baseDir + '/', '' );
 				if (file_name.slice(-4) == '.css') {
 					const html
 					= 'The file <a href="'

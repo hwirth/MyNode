@@ -27,7 +27,7 @@ export function Toggle (cep, terminal, parameters) {
 		self.enabled = new_state;
 
 		self.button.classList.toggle( 'enabled', new_state );
-console.log( 'selfblink' , self.blink );
+
 		self.blink.forEach( (element)=>{
 			element.classList.add( new_state ? 'blinkEnabled' : 'blinkDisabled' );
 		});

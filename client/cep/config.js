@@ -13,7 +13,7 @@ export const DEBUG = {
 		LOG_MESSAGES : !false,   // Log formatted messages to dev console
 	},
 	KEYBOARD_EVENTS : false,
-	INSTANCES       :! false,
+	INSTANCES       : false,
 	EVENTS          : false,
 };
 

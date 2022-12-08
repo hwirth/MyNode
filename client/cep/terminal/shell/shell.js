@@ -74,6 +74,23 @@ export const CEPShell = function (cep, terminal) {
 							<button>Filter</button>
 							<div class="items"></div>
 						</nav>
+						<nav class="mode menu">
+							<button>Mode</button>
+							<div class="items">
+								<nav class="defcon menu">
+									<button>Defcon</button>
+									<div class="items"></div>
+								</nav>
+								<nav class="add menu">
+									<button>Add</button>
+									<div class="items"></div>
+								</nav>
+								<nav class="del menu">
+									<button>Del</button>
+									<div class="items"></div>
+								</nav>
+							</div>
+						</nav>
 						<nav class="debug menu">
 							<button>Debug</button>
 							<div class="items"></div>
@@ -87,6 +104,10 @@ export const CEPShell = function (cep, terminal) {
 				menuToggles  : '.menu.toggles',
 				itemsFilter  : '.menu.filters > .items',
 				itemsToggles : '.menu.toggles > .items',
+				itemsMode    : '.menu.mode    > .items',
+				itemsDefcon  : '.menu.defcon  > .items',
+				itemsAdd     : '.menu.add     > .items',
+				itemsDel     : '.menu.del     > .items',
 				itemsDebug   : '.menu.debug   > .items',
 				btnEnter     : '.enter',
 				btnFilters   : '.menu.filters > button',
@@ -131,28 +152,42 @@ scroll    : { preset:pT.SCROLL    , target:tO, blink:bT, menu:mT, shortcut:'r', 
 
 
 	function create_scriptbutton_definition () {
-		const AUTH  = terminal.applets.loginMenu.elements.itemsLogin;
-		const DEBUG = self.elements.itemsDebug;
+		const AUTH   = terminal.applets.loginMenu.elements.itemsLogin;
+		const MODE   = self.elements.itemsMode;
+		const DEFCON = self.elements.itemsDefcon;
+		const ADD    = self.elements.itemsAdd;
+		const DEL    = self.elements.itemsDel;
+		const DEBUG  = self.elements.itemsDebug;
 		return {
 // Classname MakeButtonIn LetItEnterThis
-connect   : { menu:AUTH , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
-disconnect: { menu:AUTH , script:'/disconnect' },
-login     : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
-logout    : { menu:AUTH , script:'session\n\tlogout' },
-guest     : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
-user      : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
-root      : { menu:AUTH , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
-help      : { menu:DEBUG, script:'/help'   },
-manual    : { menu:DEBUG, script:'/manual' },
-restart   : { menu:DEBUG, script:'server\n\trestart\n\t\ttoken: ' },
-reset     : { menu:DEBUG, script:'server\n\trestart\n\t\ttoken: ' },
-token     : { menu:DEBUG, script:'server\n\ttoken'   },
-who       : { menu:DEBUG, script:'session\n\twho'    },
-vStat     : { menu:DEBUG, script:'server\n\tstatus'  },
-nStat     : { menu:DEBUG, script:'session\n\tstatus' },
-kroot     : { menu:DEBUG, script:'session\n\tkick\n\t\tusername: root'  },
-kuser     : { menu:DEBUG, script:'session\n\tkick\n\t\tusername: user'  },
-RSS       : { menu:DEBUG, script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
+connect   : { menu:AUTH  , script:'/connect ' + SETTINGS.WEBSOCKET.URL },
+disconnect: { menu:AUTH  , script:'/disconnect' },
+login     : { menu:AUTH  , script:'session\n\tlogin\n\t\tusername: %u\n\t\tpassword: %p\n\t\tfactor2: %t\n%N\n' },
+logout    : { menu:AUTH  , script:'session\n\tlogout' },
+guest     : { menu:AUTH  , script:'session\n\tlogin\n\t\tusername: guest\n%N' },
+user      : { menu:AUTH  , script:'session\n\tlogin\n\t\tusername: user\n\t\tpassword: pass2\n%N' },
+root      : { menu:AUTH  , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
+help      : { menu:DEBUG , script:'/help'   },
+manual    : { menu:DEBUG , script:'/manual' },
+restart   : { menu:DEBUG , script:'server\n\trestart\n\t\ttoken: ' },
+reset     : { menu:DEBUG , script:'server\n\trestart\n\t\ttoken: ' },
+token     : { menu:DEBUG , script:'server\n\ttoken'   },
+who       : { menu:DEBUG , script:'session\n\twho'    },
+vStat     : { menu:DEBUG , script:'server\n\tstatus'  },
+nStat     : { menu:DEBUG , script:'session\n\tstatus' },
+kroot     : { menu:DEBUG , script:'session\n\tkick\n\t\tusername: root'  },
+kuser     : { menu:DEBUG , script:'session\n\tkick\n\t\tusername: user'  },
+RSS       : { menu:DEBUG , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
+defcon3   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,red' },
+defcon2   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,uv' },
+defcon1   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,green' },
+defcon0   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,normal' },
+addFancy  : { menu:ADD   , script:'chat\n\tmode\n\t\tadd:fancy' },
+addBlink  : { menu:ADD   , script:'chat\n\tmode\n\t\tadd:gridblink' },
+addMCP    : { menu:ADD   , script:'chat\n\tmode\n\t\tadd:mcp' },
+delFancy  : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:fancy' },
+delBlink  : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:gridblink' },
+delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		};
 
 	} // create_scriptbutton_defninition
@@ -175,15 +210,20 @@ RSS       : { menu:DEBUG, script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 },{ event:'keydown', key:'PageDown' , modifiers:'shift'     , action:()=>{ self.output.scrollPageDown();   },
 },{ event:'keydown', key:'Delete'   , modifiers:'shift,ctrl', action:()=>{ self.output.clearScreen();      },
 },{ event:'keydown', key:'Enter'    , modifiers:null        , action:()=>{ self.elements.btnEnter.click(); },
+},{ event:'keydown', key:'e'        , modifiers:'alt'       , action:()=>{ login_exec('disconnect');       },
+},{ event:'keydown', key:'w'        , modifiers:'alt'       , action:()=>{ login_exec('login');            },
 },
 	];
-
+	function login_exec (button_name) {
+		terminal.applets.loginMenu.elements[button_name].click();
+		self.elements.btnEnter.click();
+	}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.taskName      = PROGRAM_NAME;
+	this.taskName      = 'Shell';
 	this.taskMainClass = 'shell';
 
 	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
@@ -212,14 +252,29 @@ RSS       : { menu:DEBUG, script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 		const alt   = event.altKey;
 		const key   = event.key;
 
-	 	if ((event.keyCode == 13) && shift && !ctrl && !alt) {
-			// Tranform dotJSON --> tabJSON
-			event.preventDefault();
-			const text = self.elements.input.value;
-			if (text.charAt( 0 ) == '.') {
-				self.elements.input.value = self.parsers.parseShortRequest( text );
-				self.input.adjustTextarea();
-				return;
+
+	 	if (event.keyCode == 13) {
+			if (shift && !ctrl && !alt) {
+				// Insert newline
+				event.preventDefault();
+
+				const input           = self.elements.input;
+				const selection_start = input.selectionStart;
+				const before          = input.value.substring( 0, input.selectionStart );
+				const after           = input.value.substring( input.selectionEnd );
+
+				input.value        = before + '\n' + after;
+				input.selectionEnd = selection_start + 1;
+			}
+			else if (!shift || ctrl || !alt) {
+				// Tranform dotJSON --> tabJSON
+				event.preventDefault();
+				const text = self.elements.input.value;
+				if (text.charAt( 0 ) == '.') {
+					self.elements.input.value = self.parsers.parseShortRequest( text );
+					self.input.adjustTextarea();
+					return;
+				}
 			}
 	 	}
 	 	else if (event.keyCode == 9 || event.which == 9) {
@@ -232,7 +287,7 @@ RSS       : { menu:DEBUG, script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 			const after           = input.value.substring( input.selectionEnd );
 
 			input.value        = before + '\t' + after;
-			input.selectionEnd = selection_start + EXTRA_LINES + 1;
+			input.selectionEnd = selection_start + 1;
 		}
 
 	} // on_keydown

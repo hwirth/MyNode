@@ -1,8 +1,3 @@
-
-
-cep-terminal { transition:filter 1s ease-in-out; }
-Xcep-terminal { filter:hue-rotate(80deg); }
-
 /*** spielwiese.css ***/
 
 :root {
@@ -108,7 +103,7 @@ cep-terminal.font9 { --font-family : var(--font9); }
 
 
 
-
+/*
 .loading.enabled.terminal { display:none; }
 .enabled.terminal { display:grid; }
 .terminal {
@@ -131,7 +126,7 @@ cep-terminal.font9 { --font-family : var(--font9); }
 	font-family:var(--font-family); font-size:var(--font-size); line-height:var(--line-height);
 	tab-size:var(--tab-size);
 }
-
+*/
 
 /*** MAIN LAYOUT ***/
 
@@ -188,18 +183,17 @@ cep-terminal .toolbar > :nth-child(3) { justify-content:end;    align-self:end; 
 cep-terminal .toolbar > :nth-child(1) > * { text-align:left;   }
 cep-terminal .toolbar > :nth-child(2) > * { text-align:center; }
 cep-terminal .toolbar > :nth-child(3) > * { text-align:right;  }
-
-cep-terminal header.toolbar > :nth-child(3) > .who_list { display:flex; flex-direction:row-reverse; }
-
 cep-terminal footer > :nth-child(1) { flex-wrap:wrap; }
 cep-terminal footer > :nth-child(3) { flex-wrap:wrap-reverse; }
 cep-terminal footer > :nth-child(3) > * { flex-basis:0; flex-shrink:1; flex-grow:0; }
 cep-terminal footer.toolbar > :nth-child(1) { flex-basis:90%; flex-grow:1; flex-shrink:1; }
 cep-terminal footer.toolbar > :nth-child(2) { display:none; }
-cep-terminal footer.toolbar > :nth-child(3) { flex-basis:auto; flex-grow:1; flex-shrink:1; }
+cep-terminal footer.toolbar > :nth-child(3) { flex-wrap:nowrap; }
+cep-terminal footer.toolbar > :nth-child(1) .main.menu > .items { flex-direction:column-reverse; }
 cep-terminal.status footer.toolbar > :nth-child(1) { flex-basis:30%; flex-grow:1; flex-shrink:1; }
 cep-terminal.status footer.toolbar > :nth-child(2) { flex-basis:40%; flex-grow:1; flex-shrink:0; }
 cep-terminal.status footer.toolbar > :nth-child(3) { flex-basis:30%; flex-grow:1; flex-shrink:1; }
+
 Xcep-terminal .toolbar .status > .messages .time { white-space:nowrap; }
 @media (max-width:40rem) { cep-terminal footer.toolbar .toggle_state { display:none; } }
 @media (max-width:65rem) { cep-terminal footer.toolbar div.status    { display:none; } }
@@ -247,13 +241,21 @@ cep-terminal .toolbar > :last-child  .menu .menu > button::before {
 /* Task button */
 cep-terminal .task.menu > button { background:var(--button-task-background); }
 /* Safety zone */
-cep-terminal .menu .items::after {
-	--p:2em; --np:calc(var(--p) * -0.5);
+cep-terminal .toolbar .menu .items::after {
+	--p:2em;
+	--np:calc(var(--p) * -0.5);
 	content:'';
-	position:absolute; top:var(--np); left:var(--np); z-index:-1;
+	position:absolute; top:0; left:var(--np); z-index:-1;
 	width:calc(100% + var(--p)); height:calc(100% + var(--p));
-	background:#0000;
+	background:#fff0;
 }
+cep-terminal .toolbar > div:last-child .menu .items::after {
+	left:unset; right:var(--np);
+}
+cep-terminal footer.toolbar .menu .items::after {
+	top:unset; bottom:0;
+}
+
 
 /*** BASIC ELEMENTS ***/
 
@@ -282,6 +284,9 @@ cep-terminal button {
 	color         : var(--button-color      );
 	white-space:nowrap;
 }
+cep-terminal.fancy.animate button {
+	transition:all 0.1s ease-in-out;
+}
 cep-terminal :is(input,button):is(:hover,:focus,:focus-within) {
 	filter:var(--focus-filter);
 	box-shadow:var(--hover-box-shadow);
@@ -295,12 +300,18 @@ X:is(:hover,:focus) { box-shadow:inset 0 0 1px #f0f !important; }
 /* BUTTON */
 cep-terminal button {
 	position:relative;
-	outline:var(--button-outline);
-	border:var(--button-border); border-radius:var(--button-border-radius);
-	padding:var(--button-padding);
-	color:var(--button-color);
-	background:var(--button-background);
-	font-family:var(--font-family); font-size:var(--font-size);
+	outline       : var(--button-outline);
+	border        : var(--button-border);
+	border-radius : var(--button-border-radius);
+	padding       : var(--button-padding);
+	color         : var(--button-color);
+	background    : var(--button-background);
+	font-family   : var(--font-family);
+	font-size     : var(--font-size);
+}
+cep-terminal.fancy button:is(:hover,:focus) {
+	box-shadow:0 0 15px 1px #4af4;
+	z-index:1;
 }
 
 cep-terminal .toolbar nav.enabled > button,
@@ -324,32 +335,34 @@ cep-terminal button:is(.blinkEnabled,.blinkDisabled) {
 	66% { filter:brightness(var(--b2)) contrast(var(--c1)); }
 }
 /* SPECIAL COLOR */
-cep-terminal button:is(.ssnStat,.clear,.help,.bit,.speech,.token,.login,.logout,.connect,.disconnect) {
+cep-terminal button:is(.ssnStat,.clear,.help,.token,.login,.logout,.connect,.disconnect) {
 	color: var(--button-special-color);
 	background:var(--button-special-background);
 }
 cep-terminal button.enter   { background:var(--button-enter-background ); color:var(--button-enter-color  ); }
 cep-terminal button.close   { background:var(--button-close-background ); color:var(--button-close-color  ); }
-cep-terminal button.enabled:is(.ssnStat,.clear,.help,.bit,.speech,.token,.login,.logout,.connect,.disconnect) {
+cep-terminal button.enabled:is(.ssnStat,.clear,.help,.token,.login,.logout,.connect,.disconnect) {
 	background:var(--button-special-enabled-background); color:var(--button-special-enabled-color);
 }
 
 /* CONNECTION BUTTONS */
-cep-terminal.animate .toolbar button.connection {
+cep-terminal .toolbar button.connection {
 	color:var(--offline-color); background:var(--offline-background);
 }
 cep-terminal.fancy .toolbar button.connection {
 	margin:var(--connection-margin); height:var(--connection-height);
+	box-shadow:var(--offline-box-shadow);
+	z-index:1;
 }
-cep-terminal.connected.animate .toolbar button.connection {
+cep-terminal.connected .toolbar button.connection {
 	color:var(--online-color); background:var(--online-background);
 	border:var(--online-border);
 	box-shadow:var(--online-box-shadow);
 }
-cep-terminal.authenticated.animate .toolbar button.connection {
+cep-terminal.connected.authenticated .toolbar button.connection {
 	color:var(--authenticated-color);
 }
-cep-terminal:is(.ping,.transmit).animate .toolbar button.connection {
+Xcep-terminal:is(.ping,.transmit).animate .toolbar button.connection {
 	background:var(--transmit-background);
 	box-shadow:var(--transmit-box-shadow);
 }
@@ -357,9 +370,26 @@ cep-terminal:is(.ping,.transmit).animate .toolbar button.connection {
 
 /*** GADGETS ***/
 
+/* USER LIST */
 /* TASKS */
+cep-terminal header.toolbar > :nth-child(3) > .who_list {
+	display:flex; flex-direction:row-reverse; gap:var(--menu-gap);
+}
+
+cep-terminal:not(.connected).fancy .toolbar .who_list > button.enabled,
+cep-terminal:not(.connected).fancy .toolbar nav.task.enabled > button {
+	box-shadow:var(--offline-box-shadow); z-index:1;
+	background:var(--offline-background); color:var(--offline-color);
+}
+
+cep-terminal.connected.fancy .toolbar .who_list > button.enabled,
+cep-terminal.connected.fancy .toolbar nav.task.enabled > button {
+	box-shadow:var(--main-active-box-shadow); z-index:1;
+}
+
 
 /* STATUS */
+cep-terminal.status a { text-decoration:none; }
 cep-terminal.status div.status { display:flex; position:relative; cursor:pointer; }
 cep-terminal .status .messages { width:100%; text-align:center; }
 cep-terminal .status .messages > span:not(.fade):first-child { opacity:1; }
@@ -371,8 +401,8 @@ cep-terminal .status .messages > span {
 }
 cep-terminal .toolbar .status > .messages * {
 	white-space:normal;
-	Xline-height:1em;
-	Xfont-size:1rem;
+	line-height:0.8em;
+	font-size:1rem;
 }
 cep-terminal.animate .status .messages > span:not(.fade):first-child { transform:scale(1); }
 cep-terminal.animate .status .messages > span.fade { transform:scale(0); transition:all var(--status-fade-time) ease-in-out; }
@@ -429,7 +459,7 @@ cep-terminal:not(.fancy) .shell output.stripes {
 }
 
 /* PROMPT */
-cep-terminal .shell textarea {
+cep-terminal main.shell textarea {
 	position:relative; z-index:1;
 	width:100%; border:none;
 	background:transparent; color:var(--textarea-color);
@@ -441,26 +471,28 @@ cep-terminal .shell textarea {
 	caret-color:var(--caret-color);
 	tab-size:var(--input-tab-size);
 }
-cep-terminal .shell textarea:focus { Xcaret-color:#f0f; outline:none; border:none; }
-cep-terminal .shell textarea.request { color:var(--request-color); }
-cep-terminal .shell textarea.cep     { color:var(--request-color); }
-cep-terminal .shell textarea.local   { color:var(--request-color); }
-cep-terminal .shell textarea.local ::first-letter { color:#fff; }
+cep-terminal main.shell textarea:focus { Xcaret-color:#f0f; outline:none; border:none; }
+cep-terminal main.shell textarea.request { color:var(--request-color); }
+cep-terminal main.shell textarea.cep     { color:var(--request-color); }
+cep-terminal main.shell textarea.local   { color:var(--request-color); }
+cep-terminal main.shell textarea.local ::first-letter { color:#fff; }
 
 
 
 /*** OUTPUT PRE ***/
 
 /* PRE */
-cep-terminal .shell pre.cep       { color:var(--cep-color);       }
-cep-terminal .shell pre.string    { color:var(--string-color);    Xfont-family:var(--string-font-family); }
-cep-terminal .shell pre.notice    { color:var(--notice-color);    }
-cep-terminal .shell pre.broadcast { color:var(--broadcast-color); }
-cep-terminal .shell pre.update    { color:var(--update-color);    }
-cep-terminal .shell pre.request   { color:var(--request-color);   }
-cep-terminal .shell pre.response  { color:var(--response-color);  }
-cep-terminal .shell pre.chat      { color:var(--chat-color);      Xfont-weight:bold; }
-cep-terminal .shell pre.error     { color:var(--error-color);     }
+cep-terminal main.shell pre.cep       { color:var(--cep-color);       }
+cep-terminal main.shell pre.string    { color:var(--string-color);    Xfont-family:var(--string-font-family); }
+cep-terminal main.shell pre.notice    { color:var(--notice-color);    }
+cep-terminal main.shell pre.broadcast { color:var(--broadcast-color); }
+cep-terminal main.shell pre.update    { color:var(--update-color);    }
+cep-terminal main.shell pre.request   { color:var(--request-color);   }
+cep-terminal main.shell pre.response  { color:var(--response-color);  }
+cep-terminal main.shell pre.chat      { color:var(--chat-color);      Xfont-weight:bold; }
+cep-terminal main.shell pre.error     { color:var(--error-color);     }
+
+cep-terminal main.shell pre.chat > :first-child::after { content:':'; color:#888; }
 
 cep-terminal code      { color:var(--code-color   ); }
 cep-terminal .success  { color:var(--success-color); }
@@ -554,10 +586,78 @@ cep-terminal .shell iframe {
 }
 
 
+/*** SETTINGS ***/
+
+cep-terminal main { position:relative; }
+cep-terminal main > div.settings {
+	height:100%; width:100%;
+	text-align:center; overflow:scroll; padding:1em 0;
+}
+cep-terminal.fancy main > div.settings { margin-left:50px; }
+cep-terminal main > .settings .settings {
+	display:inline-table; table-layout:fixed;
+	width:100%; margin:1em 0;
+}
+cep-terminal main > .settings .settings label { display:table-row; width:100%; }
+cep-terminal main > .settings .settings label > * { display:table-cell; padding:0.5rem; }
+cep-terminal main > .settings .settings input { text-align:right; width:100%; }
+cep-terminal main > .settings .settings span  { text-align:left; }
+cep-terminal main > .settings .settings span:hover { color:#fff; }
+cep-terminal main > .settings h2 { color:var(--terminal-color); }
+
+cep-terminal.fancy main > .settings {
+	--w:calc( 90% - 10vw );
+	--l:calc( (100% - var(--w)) / 2 );
+	--p:100vmin;
+	position:absolute;
+	width:var(--w); height:calc(100% - 1vh); left:var(--l); padding:1em 0 0;
+	perspective-origin:center; transform:perspective(var(--p)) rotateX(5deg) translate(0,-1vh);
+}
+cep-terminal main > .settings :is(:focus,:hover) { outline:none; border:none; box-shadow:none; }
+
+
+/*** EDITOR ***/
+
+cep-terminal main.editor { text-align:center; }
+cep-terminal main.editor textarea {
+	--w1:68.35em;
+	--w2:calc(var(--w1) + 1px);
+	display:inline-block;
+	border:none; outline:none; background:transparent; color:#fed;
+	width:100%; height:100%; resize:none;
+	padding:2px;
+	white-space:pre;
+	tab-size:var(--editor-tab-size);
+	Xbackground:#000c;
+	Xbackground:linear-gradient(to right, #fff0, #fff0 var(--w1), #fff var(--w1), #fff0 var(--w2), #fff0 100%);
+}
+cep-terminal.fancy main.editor textarea { width:calc(100% - 50px); margin-left:50px; }
+
 
 /*** FANCY TERMINAL ***/
 
+/* CONNECTED COLORS */
+Xcep-terminal.fancy::before,
+cep-terminal.fancy::after,
+Xcep-terminal.fancy .toolbar {
+	transition:filter 0.25s ease-in-out;
+}
+
+Xcep-terminal.fancy::after,
+Xcep-terminal.fancy:not(.connected)::before,
+cep-terminal.fancy:not(.connected)::after,
+Xcep-terminal.fancy:not(.connected) .toolbar {
+	filter:hue-rotate(157deg) saturate(10) brightness(0.85) opacity(0.8) !important;
+}
+
 /* GRID BACKGROUND */
+cep-terminal.fancy {
+	background:unset;
+	background-image:url(/images/bg_grid3.jpg);
+	background-size:cover;
+	background-size:auto 100%;
+	background-position:center;
+}
 cep-terminal.fancy::before {
 	content:''; position:absolute; top:0; left:0; width:100%; height:100%;
 	background:unset;
@@ -565,8 +665,6 @@ cep-terminal.fancy::before {
 	background-size:cover;
 	background-size:auto 100%;
 	background-position:center;
-	transition:filter 0.5s ease-in-out;
-	Xfilter:hue-rotate(70deg);
 }
 @media (min-aspect-ratio: 4/3) {
 	cep-terminal.fancy::before {
@@ -574,9 +672,7 @@ cep-terminal.fancy::before {
 	}
 }
 cep-terminal.fancy.connected { opacity:1; }
-:not(.connected).terminal::before {
-	filter:hue-rotate(-60deg);
-}
+
 
 /* BEAM */
 cep-terminal.fancy::after {
@@ -586,24 +682,22 @@ cep-terminal.fancy::after {
 	background-position:var(--beam-offset-x) center;
 	background-repeat:no-repeat;
 	background-size:calc(96px / 2) var(--terminal-height);
-	Xfilter:hue-rotate(200deg) brightness(0.75) contrast(1.5);
-	filter:hue-rotate(-60deg) brightness(0.75) contrast(1.5);
 }
 cep-terminal.fancy.connected::after {
 	filter:hue-rotate(0deg) brightness(1) contrast(1);
 }
 cep-terminal.fancy.connected:is(.ping,.transmit)::after {
-	filter:hue-rotate(0deg) brightness(1.1) contrast(1);
+	filter:brightness(1) contrast(1.4);
 }
 
 /* BIT */
-cep-terminal.fancy.bit output::before {
+cep-terminal.fancy.bit main::before {
 	transform:translate(-50%,-50%) scale(1);
 }
-cep-terminal.fancy output::before {
+cep-terminal.fancy main::before {
 	--b:0.85;
 	content:'';
-	position:absolute; top:50%; left:50%; Xz-index:-2; transform:translate(-50%,-50%) scale(0.00001);
+	position:absolute; top:50%; left:50%; z-index:-1; transform:translate(-50%,-50%) scale(0.00001);
 	width:130px; height:125px;
 	background-image:url(/images/bit_transparent.gif);
 	filter:hue-rotate(180deg) brightness(var(--b));
@@ -611,11 +705,11 @@ cep-terminal.fancy output::before {
 }
 cep-terminal.fancy > * { z-index:1; }
 cep-terminal.fancy .toolbar { z-index:2; }
-cep-terminal.fancy.connected output::before { filter:hue-rotate(  0deg) brightness(var(--b));        }
-cep-terminal.fancy.bit.yes   output::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
-cep-terminal.fancy.bit.no    output::before { filter:hue-rotate(140deg) brightness(0.8) contrast(3); }
-cep-terminal.fancy.bit.yes   output::after,
-cep-terminal.fancy.bit.no    output::after {
+cep-terminal.fancy.connected main::before { filter:hue-rotate(  0deg) brightness(var(--b));        }
+cep-terminal.fancy.bit.yes   main::before { filter:hue-rotate(-90deg) brightness(0.9) contrast(2); }
+cep-terminal.fancy.bit.no    main::before { filter:hue-rotate(140deg) brightness(0.8) contrast(3); }
+cep-terminal.fancy.bit.yes   main::after,
+cep-terminal.fancy.bit.no    main::after {
 	content:'';
 	position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:-1;
 	width:200%; height:200%;
@@ -624,7 +718,9 @@ cep-terminal.fancy.bit.no    output::after {
 }
 
 /* FANCY PRE */
-cep-terminal.fancy :is(textarea, pre) { padding-left:50px; }
+cep-terminal.fancy main.shell :is(textarea, pre) { padding-left:50px; }
+
+
 /* Beam DOTS */
 cep-terminal.fancy .shell pre::before {
 	content:'';
@@ -648,12 +744,127 @@ cep-terminal.fancy .shell pre.expand::before {
 }
 cep-terminal.fancy .shell pre.chat span { display:inline; }
 cep-terminal.fancy .shell pre.chat::before {
-	--h:calc(var(--line-height) - 4px);
-	content:'Msg';
-	top:calc(0.5rem);
-	width:22px; left:12px; height:var(--h); line-height:var(--h);
-	outline:solid 1px #4af; border-radius:3px;
-	font-size:0.8em; text-align:center;
-	background:#0006; color:#cef;
+	--s:10px;
+	content:'';
+	top:3px; left:6px;
+	width:var(--s); height:var(--s);
+	outline:solid 1px #f8cd; border-radius:0px;
+	background:#0006; transform:rotate(45deg);
+}
+cep-terminal.fancy.connected .shell pre.chat::before {
+	outline:solid 1px #6cfc;
 }
 cep-terminal.fancy pre.chat.unexpand::before { background:#fff6; }
+
+
+/*** ANIMATIONS ***/
+
+/* Online Status */
+cep-terminal.fancy.animate.flicker.connected .connection > button,
+cep-terminal.fancy.animate.flicker.connected button.connection {
+	animation: CONNECTION .05s ease-in-out infinite alternate;
+}
+@keyframes CONNECTION {
+	  0% { filter:brightness( 1.0 ) drop-shadow(0 0 5px var(--online-color-0)); }
+	100% { filter:brightness( 1.0 ) drop-shadow(0 0 5px var(--online-color-f)); }
+}
+
+/* Beams */
+:not(.init).animate body::after,
+cep-terminal.fancy.animate.flicker::after {
+	animation: BEAM 0.1s ease-in-out infinite;
+}
+@keyframes BEAM {
+	  0% { opacity:1.0;  }
+	 49% { opacity:1.0;  }
+	 50% { opacity:0.95; }
+	 99% { opacity:0.95; }
+	100% { opacity:1.0;  }
+}
+
+/* Transmission */
+Xcep-terminal.fancy .toolbar button.transmit::before,
+Xcep-terminal.fancy .toolbar button.ping::before {
+	animation:TRANSMISSION 0.4s linear;
+	opacity:0;
+}
+@keyframes TRANSMISSION {
+	  0% { opacity:0;   }
+	  1% { opacity:1;   }
+	 30% { opacity:1;   }
+	 31% { opacity:0.6; }
+	 50% { opacity:0.9; }
+	 68% { opacity:0.6; }
+	 69% { opacity:1;   }
+	 99% { opacity:1;   }
+	100% { opacity:0;   }
+}
+
+/* MCP */
+:not(.init) cep-terminal.fancy.animate.mcp::before {
+	content:''; position:absolute; top:0; left:0; width:100%; height:100%;
+	background-image: url(/images/mcp.png);
+	background-size: cover;
+	background-size: auto 100%;
+	background-repeat: no-repeat;
+	background-position: center;
+	filter:contrast(1.5) brightness(0.5);
+	animation: MCP_MOVE 90s ease-in-out infinite;
+}
+@keyframes MCP_MOVE {
+	 00% { transform:scale(1.00) rotate( 0deg); opacity:0.0; }
+	 11% { transform:scale(1.03) rotate( 1deg); }
+	 22% { transform:scale(1.10) rotate( 5deg); }
+	 33% { transform:scale(1.25) rotate( 2deg); }
+	 40% {                                      opacity:0.3; }
+	 50% { transform:scale(1.50) rotate( 0deg); opacity:1.0; }
+	 60% {                                      opacity:0.8; }
+	 66% { transform:scale(1.25) rotate(-2deg); }
+	 77% { transform:scale(1.10) rotate(-5deg); }
+	 88% { transform:scale(1.03) rotate(-1deg); }
+	100% { transform:scale(1.00) rotate( 0deg); opacity:0.0; }
+}
+
+
+/*** TOGGLEABLES ***/
+
+cep-terminal.fancy { transition:filter 1.2s ease-in-out; }
+cep-terminal.fancy.rainbowflash { filter:hue-rotate(360deg); }
+
+cep-terminal.fancy.green    { filter:hue-rotate(-80deg); }
+cep-terminal.fancy.red      { filter:hue-rotate(180deg) brightness(1.25) contrast(1.5) saturate(2); }
+cep-terminal.fancy.uv       { filter:hue-rotate(30deg); }
+cep-terminal.fancy.pink     { filter:hue-rotate(90deg); }
+cep-terminal.fancy.contrast { filter:contrast(2) brightness(1.5); }
+cep-terminal.fancy.white    { filter:blur(3px) saturate(10) grayscale(1) brightness(1.25) contrast(1.25); }
+cep-terminal.fancy.cold     { filter:sepia(1) hue-rotate(180deg); }
+cep-terminal.fancy.halt     {
+	filter:blur(3px) saturate(10) grayscale(1) brightness(1.5) contrast(1.75);
+	pointer-events:none;
+}
+
+
+cep-terminal.fancy.animate.gridblink::before { transition:all 0.1s ease-in-out; }
+cep-terminal.fancy.animate.gridblink.transmit::before {
+	filter:contrast(1.1) brightness(1.5) saturate(0.9) hue-rotate(10deg);
+}
+
+
+/*EOF*/
+
+
+
+
+/* Time */
+cep-terminal .time {
+	Xfont-variant-numeric: normal;
+	Xfont-variant-numeric: ordinal;
+	Xfont-variant-numeric: slashed-zero;
+	Xfont-variant-numeric: lining-nums; /* <numeric-figure-values> */
+	Xfont-variant-numeric: oldstyle-nums; /* <numeric-figure-values> */
+	Xfont-variant-numeric: proportional-nums; /* <numeric-spacing-values> */
+	Xfont-variant-numeric: tabular-nums; /* <numeric-spacing-values> */
+	Xfont-variant-numeric: diagonal-fractions; /* <numeric-fraction-values> */
+	Xfont-variant-numeric: stacked-fractions; /* <numeric-fraction-values> */
+	Xfont-variant-numeric: oldstyle-nums stacked-fractions;
+}

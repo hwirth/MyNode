@@ -135,6 +135,44 @@ module.exports = function ChatServer (persistent, callback, meta) {
 	}; // request.html
 
 
+	meta( 'mod,admin,dev,owner: {chat:{mode:string}}' );
+	this.request.mode = function (client, request_id, parameters) {
+		color_log( COLORS.COMMAND, '<char.mode>', client	);
+
+		if (client.login) {
+			const message       = parameters;
+			const t0            = Date.now();
+			const all_clients   = callback.getAllClients();
+			const authenticated = client_address => all_clients[client_address].login;
+
+			const command_type
+			= (parameters.set) ? 'set'
+			: (parameters.add) ? 'add'
+			: (parameters.del) ? 'del'
+			: null
+			;
+
+			if (!command_type) {
+				return client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_REQUEST );
+			}
+
+			callback.broadcast({
+				address  : client.address,
+				type     : 'chat/mode/' + command_type,
+				//...userName : client.login.userName,
+				//...nickName : client.login.nickName,
+				mode     : parameters[command_type],
+			});
+
+			client.respond( STATUS.SUCCESS, request_id );
+
+		} else {
+			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+		}
+
+	}; // request.mode
+
+
 	meta( 'mod,admin,dev,owner: {chat:{remote:string}}' );
 	this.request.remote = function (client, request_id, parameters) {
 		color_log( COLORS.COMMAND, '<chat.remote>', client	);

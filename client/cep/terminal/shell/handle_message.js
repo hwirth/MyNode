@@ -40,7 +40,7 @@ export function handle_message (cep, terminal, shell, message) {
 				case 'session/connect'    : // fall through
 				case 'session/login'      : // fall through
 				case 'session/logout'     : // fall through
-				case 'session/disconnect' :  terminal.updateWhoList( message.broadcast.who );  break;
+				case 'session/disconnect' : break;
 			}
 			break;
 		}
@@ -154,7 +154,6 @@ export function handle_message (cep, terminal, shell, message) {
 
 	function update_server_name () {
 		terminal.applets.loginMenu.elements.btnNode.innerText = message.update.name;
-		terminal.updateWhoList( null ); //{dummy:'Logged out'} );
 		print_message();
 	}
 
@@ -212,7 +211,6 @@ export function handle_message (cep, terminal, shell, message) {
 			terminal.elements.terminal.classList.add( 'authenticated' );
 			terminal.applets.mainMenu.elements.btnCEP.innerText
 			= message.response.result.login.nickName || message.response.result.login.userName;
-			terminal.updateWhoList( true );
 		}
 	}
 
@@ -234,7 +232,6 @@ export function handle_message (cep, terminal, shell, message) {
 			const parts = terminal.applets.mainMenu.elements.btnCEP.innerText.split(':');
 			const new_name = message.response.result.userName + ':' + message.response.result.nickName;
 			terminal.applets.mainMenu.elements.btnCEP.innerText = new_name;
-			terminal.updateWhoList( true );
 		} else {
 			shell.output.print( 'Nick change failed: ' + message.response.result, 'cep error' );
 		}

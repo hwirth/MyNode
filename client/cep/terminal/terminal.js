@@ -15,6 +15,8 @@ import { LoginMenu } from './gadgets/login_menu.js';
 import { UserList  } from './gadgets/user_list.js';
 import { StatusBar } from './gadgets/status.js';
 import { CEPShell  } from './shell/shell.js';
+import { Settings  } from './applets/settings.js';
+import { Editor    } from './editor/editor.js';
 
 
 export const DebugTerminal = function (cep) {
@@ -39,13 +41,13 @@ export const DebugTerminal = function (cep) {
 
 	const RESSOURCE = {
 		html: (`
-			<cep-terminal>
-				<header class="toolbar">
+			<cep-terminal tabindex="0">
+				<header class="toolbar" tabindex="0">
 					<div></div>
 					<div class="location"><span><abbr>CEP</abbr> Debug Terminal</span></div>
 					<div></div>
 				</header>
-				<footer class="toolbar">
+				<footer class="toolbar" tabindex="0">
 					<div></div>
 					<div class="status"></div>
 					<div></div>
@@ -67,18 +69,20 @@ export const DebugTerminal = function (cep) {
 
 
 	// KEYBOARD SHORTCUTS
-	function shortcut_exec (command_button) {
-		//...if (!self.applets.shell) return;
-		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
-		self.audio.beep();
-	}
 	this.keyboardShortcuts = [
-		  { event:'keydown', key:'+', modifiers:'alt', action:()=>{ self.changeFontSize(+1);     },
-		},{ event:'keydown', key:'-', modifiers:'alt', action:()=>{ self.changeFontSize(-1);     },
-		},{ event:'keydown', key:'.', modifiers:'alt', action:()=>{ self.nextFont(+1);           },
-		},{ event:'keydown', key:',', modifiers:'alt', action:()=>{ self.nextFont(-1);           },
-		},{ event:'keydown', key:'e', modifiers:'alt', action:()=>{ shortcut_exec('disconnect'); },
-		},{ event:'keydown', key:'w', modifiers:'alt', action:()=>{ shortcut_exec('login');      },
+		  { event:'keydown', key:'+', modifiers:'alt' , action:()=>{ self.changeFontSize(+1);     },
+		},{ event:'keydown', key:'-', modifiers:'alt' , action:()=>{ self.changeFontSize(-1);     },
+		},{ event:'keydown', key:'.', modifiers:'alt' , action:()=>{ self.nextFont(+1);           },
+		},{ event:'keydown', key:',', modifiers:'alt' , action:()=>{ self.nextFont(-1);           },
+		},{ event:'keydown', key:'1', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 1 );       },
+		},{ event:'keydown', key:'2', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 2 );       },
+		},{ event:'keydown', key:'3', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 3 );       },
+		},{ event:'keydown', key:'4', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 4 );       },
+		},{ event:'keydown', key:'5', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 5 );       },
+		},{ event:'keydown', key:'6', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 6 );       },
+		},{ event:'keydown', key:'7', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 7 );       },
+		},{ event:'keydown', key:'8', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 8 );       },
+		},{ event:'keydown', key:'9', modifiers:'ctrl', action:()=>{ self.focusTaskNr( 9 );       },
 		},
 	];
 
@@ -151,6 +155,9 @@ export const DebugTerminal = function (cep) {
 					NEW({
 						tagName   : 'button',
 						innerText : task_name + instance_nr,
+						events    : {
+							click: ()=>self.showApplet( applet ),
+						},
 					}),
 					NEW({
 						tagName   : 'div',
@@ -168,6 +175,15 @@ export const DebugTerminal = function (cep) {
 		if (show_applet) self.showApplet( applet );
 
 	}; // installApplet
+
+
+	this.focusTaskNr = function (task_number) {
+		const selector = ':scope > nav.task:nth-child(' + (task_number) + ') button';
+		const tasks = self.elements.bottomLeft.querySelectorAll( ':scope > nav.task' );
+		const button = tasks[task_number - 1].querySelector( 'button' );
+		if (button) button.click();
+
+	}; // focusApplet
 
 
 	this.showApplet = function (applet) {
@@ -189,6 +205,8 @@ export const DebugTerminal = function (cep) {
 			self.elements.location.innerHTML = applet.taskTitle;
 			applet.taskEntry.classList.add( 'enabled' );
 		}
+
+		self.elements.terminal.focus();
 
 	}; // showApplet
 
@@ -238,8 +256,6 @@ export const DebugTerminal = function (cep) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // DOM ACTIONS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-this.updateWhoList = function () {};//...
 
 	this.animatePing = function (transmit = false) {
 		if (!SETTINGS.ANIMATE_TRANSMISSION) return;
@@ -296,11 +312,11 @@ this.updateWhoList = function () {};//...
 
 
 	this.changeFontSize = function (delta_px) {
-		const css_size     = CEP.dom.getCSSVariable( '--font-size', terminal.elements.terminal );
+		const css_size     = cep.dom.getCSSVariable( '--font-size', self.elements.terminal );
 		const current_size = parseInt( css_size.slice(0, -2), 10 );
 		const new_size     = Math.min( 100, Math.max( 3, current_size + delta_px ));
 
-		terminal.elements.terminal.style.setProperty( '--font-size', new_size+'px' );
+		self.elements.terminal.style.setProperty( '--font-size', new_size+'px' );
 
 		if (DEBUG.FONTS) console.log( 'DebugConsole.changeFontSize:', new_size );
 
@@ -402,7 +418,7 @@ this.updateWhoList = function () {};//...
 	this.onWsClose = function () {
 		self.animatePing( /*transmit*/true );
 
-		self.elements.terminal.classList.remove( 'connected' );
+		self.elements.terminal.classList.remove( 'connected', 'authenticated' );
 		self.applets.mainMenu.elements.btnCEP.innerText = 'Offline';
 
 		self.applets.loginMenu.elements.btnNode.innerText = 'MyNode';
@@ -429,12 +445,20 @@ this.updateWhoList = function () {};//...
 
 
 	this.onWsMessage = function (message) {
+		const known_classes = [
+			'fancy','animate','normal',
+			'uv','red','green','pink','white','cold',
+			'contrast',
+			'gridblink','flicker','mcp',
+			'halt',
+		];
+
 		self.animatePing( /*transmit*/true );
 
 		if (message.broadcast && message.broadcast.reload) {
 			Object.keys( message.broadcast.reload ).forEach( (file_name)=>{
 				if (file_name.charAt(0) != '/') file_name = '/' + file_name;
-				file_name = file_name.replace( 'client/', '' ).replace( CEP.baseDir + '/', '' );
+				file_name = file_name.replace( 'client/', '' ).replace( cep.baseDir + '/', '' );
 				self.applets.status.show(
 					'The file <a href="'
 					+ file_name
@@ -443,6 +467,24 @@ this.updateWhoList = function () {};//...
 					+ '</a> was updated.'
 				);
 			});
+		}
+		else if (message.broadcast && (message.broadcast.type == 'chat/mode/set')) {
+			known_classes.forEach( (class_name)=>{
+				self.elements.terminal.classList.toggle(
+					class_name,
+					message.broadcast.mode.indexOf(class_name) >= 0,
+				);
+			});
+		}
+		else if (message.broadcast && (message.broadcast.type == 'chat/mode/add')) {
+			if (known_classes.indexOf(message.broadcast.mode) >= 0) {
+				self.elements.terminal.classList.add( message.broadcast.mode );
+			}
+		}
+		else if (message.broadcast && (message.broadcast.type == 'chat/mode/del')) {
+			if (known_classes.indexOf(message.broadcast.mode) >= 0) {
+				self.elements.terminal.classList.remove( message.broadcast.mode );
+			}
 		}
 
 	}; // onWsMessage
@@ -482,7 +524,7 @@ this.updateWhoList = function () {};//...
 			const result = [];
 			let font_name = null;
 			let i = 0;
-			while (font_name = CEP.dom.getCSSVariable( '--font' + i )) {
+			while (font_name = cep.dom.getCSSVariable( '--font' + i )) {
 				result.push( font_name );
 				++i;
 			}
@@ -496,15 +538,19 @@ this.updateWhoList = function () {};//...
 
 		self.toggles = {};
 		self.applets = {};                                // true/false: Whether to activate (show)
-		await self.installApplet( 'mainMenu' , MainMenu , true );   // Creates our toggles, must be first
-		await self.installApplet( 'loginMenu', LoginMenu, true );
-		await self.installApplet( 'userList' , UserList , true );
-		await self.installApplet( 'status'   , StatusBar, true );
-		await self.installApplet( 'shell'    , CEPShell , true );
+		await self.installApplet( 'mainMenu' , MainMenu , true  );   // Creates our toggles, must be first
+		await self.installApplet( 'loginMenu', LoginMenu, true  );
+		await self.installApplet( 'userList' , UserList , true  );
+		await self.installApplet( 'status'   , StatusBar, true  );
+		await self.installApplet( 'editor'   , Editor   , true  );
+		await self.installApplet( 'settings' , Settings , true  );
+		await self.installApplet( 'shell'    , CEPShell , true  );
 
 
 		// MAIN MENU ENTRY
-		add_menu_entry( 'shell', 'CEP-Shell', CEPShell );
+		add_menu_entry( 'shell'   , 'Shell'    , CEPShell );
+		add_menu_entry( 'editor'  , 'Editor'   , Editor   );
+		add_menu_entry( 'settings', 'Settings' , Settings );
 		function add_menu_entry (name, caption, template) {
 			self.applets.mainMenu.elements.itemsMain.appendChild( cep.dom.newElement({
 				tagName   : 'button',
@@ -566,6 +612,11 @@ if (self.applets.shell)//...!
 			self.elements.terminal.classList.add( 'connected' );
 		}
 	*/
+
+		if (self.toggles.bit.enabled) {
+			self.toggles.bit.toggle( false );
+			setTimeout( ()=>self.toggles.bit.toggle(true), 333 );
+		}
 
 		self.toggleVisibility( true );
 

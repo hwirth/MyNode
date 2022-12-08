@@ -102,18 +102,19 @@ const SETTINGS = {
 	},
 
 	BROADCAST_FILE_CHANGE_FOLDERS: [
+		'server',
+		'application',
+		'application/chat',
+		'application/rss',
 		'client',
 		'client/cep',
-		'client/docs',
 		'client/cep/terminal',
+		'client/cep/terminal/applets',
+		'client/cep/terminal/gadgets',
 		'client/cep/terminal/shell',
-		'client/cep/terminal/css',
+		'client/cep/terminal/editor',
 		'client/cep/terminal/txt',
-		'client/new',
-		'client/new/cep',
-		'client/new/cep/terminal',
-		'client/new/cep/terminal/gadgets',
-		'client/new/cep/terminal/shell',
+		'client/docs',
 	],
 
 }; // SETTINGS

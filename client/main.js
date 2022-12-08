@@ -152,47 +152,43 @@ const Application = function () {
 	}
 
 	this.onWsConnecting = function (event) {
-		if (DEBUG.EVENTS) log_event( 'Application.onWsconnecting', event );
 		set_connection_state( 'connecting' );
+
 	}; // onWsConnecting
 
 
-	function remove (class_name) {
-		const element = self.elements.textOutput.querySelector( ':scope > :last-child' );
-		if (element.classList.contains(class_name)) element.parentNode.removeChild( element );
-	}
-
-
 	this.onWsRetry = function (attempt_nr) {
-		if (DEBUG.EVENTS) log_event( 'Application.onWsRetry', event );
-
+		function remove (class_name) {
+			const element = self.elements.textOutput.querySelector( ':scope > :last-child' );
+			if (element.classList.contains(class_name)) element.parentNode.removeChild( element );
+		}
 		remove( 'warning' );
 		remove( 'error' );
 		remove( 'retry' );
 
 		print('div', 'Reconnecting... ' + attempt_nr, 'retry')
 		set_connection_state( 'retry' );
+
 	}; // onWsRetry
 
 
 	this.onWsOpen = function (event) {
-		if (DEBUG.EVENTS) log_event( 'Application.onWsOpen', event );
 		set_connection_state( 'connected' );
+
 	}; // onWsOpen
 
 
 	this.onWsClose = function (event) {
-		if (DEBUG.EVENTS) log_event( 'Application.onWsClose', event );
 		print( 'div', 'Connection lost.', 'warning' );
 		set_connection_state( 'offline' );
+
 	}; // onWsClose
 
 
 	this.onWsError = function (event) {
-		if (DEBUG.EVENTS) log_event( 'Application.onWsError', event );
 		set_connection_state( 'error' );
-
 		print( 'div', 'Connection failed.', 'error' );
+
 	}; // onWsError
 
 
@@ -207,7 +203,6 @@ const Application = function () {
 
 
 	this.onWsMessage = function (message) {
-		if (DEBUG.EVENTS) log_event( 'Application.onWsMessage', message );
 
 		// Print hidden protocol debug messages
 		const pre     = document.createElement( 'pre' );
@@ -224,7 +219,6 @@ const Application = function () {
 		&&  (message.response.command == 'session.login')
 		) {
 			const login = message.response.result.login;
-			//...self.cep.send( {session:{who:true}} );
 			return set_connection_state( 'online' );
 		}
 		else if( (message.response)
@@ -239,7 +233,7 @@ const Application = function () {
 		&& (message.response.type == 'result')
 		&& (message.response.command == 'session.who')
 		) {
-			update_user_list(message.response.result);
+			update_user_list( message.response.result );
 		}
 		else if (message.update && (message.update.type == 'server/name')) {
 			const html =  'Connected to MyNode ' + message.update.name + '.';
@@ -250,8 +244,8 @@ const Application = function () {
 			const text   = message.update.chat;
 			const html
 			= '<span>' + format_timestamp(message.update.time) + '</span>'
-			+ '<span style="color:' + color_from_name( sender )
-			+ '">' + sender + '</span><span>' + text + '</span>'
+			+ '<span style="color:' + color_from_name( sender ) + '">' + sender + '</span>'
+			+ '<span>' + text + '</span>'
 			;
 			print( 'div', html, 'talk' );
 		}
@@ -260,13 +254,18 @@ const Application = function () {
 			const color = color_from_name( name );
 			const html
 			= '<span>' + format_timestamp(message.broadcast.time) + '</span>'
-			+ '<span style="color:' + color + '">' + name + '</span>' + ' joined the chat.'
+			+ '<span style="color:' + color + '">' + name + '</span>'
+			+ ' joined the chat.'
 			;
 			print( 'div', html , 'join');
 			update_user_list( message.broadcast.who );
 		}
 		else if (message.broadcast && message.broadcast.type == 'session/disconnect') {
-			const name  = message.broadcast.nickName || message.broadcast.userName || message.broadcast.address;
+			const name
+			=( message.broadcast.nickName
+			|| message.broadcast.userName
+			|| message.broadcast.address
+			);
 			const color = color_from_name( name );
 			const html
 			= '<span>' + format_timestamp(message.broadcast.time) + '</span>'
@@ -302,7 +301,7 @@ const Application = function () {
 		return new Promise( (proceed, abort)=>{
 			//... Await dialog
 			self.nickName = self.elements.textNickName.value.trim();
-console.log( 'MAIN nick_name', self.nickName );
+
 			if (self.nickName) {
 				proceed({ session:{login:{username:'guest'}}, chat:{nick:self.nickName} });
 			} else {
@@ -325,7 +324,7 @@ console.log( 'MAIN nick_name', self.nickName );
 
 
 	this.init = async function () {
-		console.log( '%c' + PROGRAM_NAME + ' v' + PROGRAM_VERSION, 'color:#080; font-weight:bold;' );
+		console.log( '%c' + PROGRAM_NAME + ' v' + PROGRAM_VERSION, 'color:#260; font-weight:bold;' );
 		if (DEBUG.INSTANCES) console.log( 'Application.init' );
 
 		// Gather DOM elements
@@ -370,8 +369,9 @@ console.log( 'MAIN nick_name', self.nickName );
 		});
 
 		// Disable <form> submission
-		CEP.dom.disableFormSubmit( self.elements.form );
+		self.cep.dom.disableFormSubmit( self.elements.form );
 
+		// FOCUS on WINDOW CLICK
 		self.elements.form.addEventListener( 'click', (event)=>{
 			if (['FORM', 'OUTPUT'].indexOf( event.target.tagName) >= 0) {
 				scroll_down();
@@ -379,6 +379,7 @@ console.log( 'MAIN nick_name', self.nickName );
 			}
 		});
 
+		// TOGGLE DEBUG
 		self.elements.textInput.addEventListener( 'keydown', (event)=>{
 			if ((event.key == 'd') && !event.shiftKey && !event.ctrlKey && event.altKey) {
 				event.preventDefault();
@@ -386,8 +387,10 @@ console.log( 'MAIN nick_name', self.nickName );
 			}
 		});
 
+		// NICK COLOR
 		self.elements.textNickName.addEventListener( 'input', update_nick_color );
 
+		// SEND BUTTON
 		self.elements.btnSend.addEventListener( 'click', ()=>{
 			const message  = self.elements.textInput.value.trim();
 			const new_nick = self.elements.textNickName.value.trim();
@@ -397,7 +400,7 @@ console.log( 'MAIN nick_name', self.nickName );
 				window.history.pushState(
 					"object or string",
 					"Title",
-					"/new/index.html?name=" + new_nick,
+					"/?name=" + new_nick,
 				);
 			}
 
@@ -409,7 +412,8 @@ console.log( 'MAIN nick_name', self.nickName );
 					self.cep.send( {chat:{nick:new_nick}} );
 					set_nick( new_nick );
 				}
-			} else if (message) {
+			}
+			else if (message) {
 				self.cep.send( {chat:{say:message}} );
 			}
 		});

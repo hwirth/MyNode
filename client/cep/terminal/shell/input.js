@@ -56,7 +56,7 @@ export const ShellInput = function (cep, terminal, shell) {
 		const nr_lines = (lines.length > 0) ? lines.length : 1;
 		shell.elements.input.rows = Math.max( MIN_LINES, nr_lines + EXTRA_LINES );
 
-		const cssvar_height = CEP.dom.getCSSVariable( '--terminal-line-height' );
+		const cssvar_height = cep.dom.getCSSVariable( '--terminal-line-height' );
 
 		const scale = parseFloat( cssvar_height || 1 );
 		shell.elements.input.style.height = scale * (shell.elements.input.rows + 1) + 'em';

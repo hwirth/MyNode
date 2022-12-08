@@ -88,7 +88,7 @@ export const LoginMenu = function (cep, terminal) {
 		self.elements = {};
 		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
 
-		CEP.dom.disableFormSubmit( self.elements.menuLogin );
+		cep.dom.disableFormSubmit( self.elements.menuLogin );
 
 		function click_login () {
 			const click_event = document.createEvent( 'MouseEvents' );

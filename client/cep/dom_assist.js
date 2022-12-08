@@ -35,8 +35,8 @@ export const DomAssist = function (cep) {
 
 	this.loadCSS = function (file_name) {
 		return new Promise( (done)=>{
-			if (file_name.slice(0, CEP.baseDir.length + 1) == (CEP.baseDir + '/')) {
-				file_name = file_name.slice( CEP.baseDir.length + 1 );
+			if (file_name.slice(0, cep.baseDir.length + 1) == (cep.baseDir + '/')) {
+				file_name = file_name.slice( cep.baseDir.length + 1 );
 			}
 			const link = document.createElement( 'link' );
 			link.setAttribute( 'rel', 'stylesheet' );
@@ -57,11 +57,12 @@ export const DomAssist = function (cep) {
 	*/
 	this.reloadCSS = function (file_name) {
 		return new Promise( (done)=>{
-			if (file_name.charAt(0) != '/') file_name = '/' + file_name;
-
-			if (file_name.slice(0, CEP.baseDir.length + 1) == (CEP.baseDir + '/')) {
-				file_name = file_name.slice( CEP.baseDir.length + 1 );
+			//... if (file_name.charAt(0) != '/') file_name = '/' + file_name;
+console.log( 'base', cep.baseDir, file_name );
+			if (cep.baseDir && (file_name.slice(0, cep.baseDir.length + 1) == (cep.baseDir + '/'))) {
+				file_name = file_name.slice( cep.baseDir.length + 1 );
 			}
+
 			console.log( 'DomAssist.reloadCSS():', file_name );
 
 			const head     = document.querySelector( 'head' );
@@ -86,7 +87,7 @@ export const DomAssist = function (cep) {
 
 	this.getCSSVariable = function (variable_name, element = null) {
 		if (!element) element = document.documentElement;
-		getComputedStyle( element ).getPropertyValue( variable_name );
+		return getComputedStyle( element ).getPropertyValue( variable_name );
 
 	}; // getCSSVariable
 

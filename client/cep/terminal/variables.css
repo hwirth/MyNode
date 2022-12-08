@@ -5,8 +5,9 @@ cep-terminal {
 	--marker-left    : var(--terminal-margin);
 	--marker-width   : 100%;
 
-	--tab-size       : 4;
-	--input-tab-size : 8; X:var(--tab-size);
+	--tab-size        : 4;
+	--input-tab-size  : var(--tab-size);
+	--editor-tab-size : 8;
 
 	--terminal-height    : calc(100vh - 2 * (var(--terminal-margin) ));
 	--terminal-margin    : 0px;
@@ -33,108 +34,6 @@ cep-terminal {
 	--button-outline       : none;
 	--button-padding       : 0.5em 1em;
 
-}
-
-cep-terminal.fancy {
-	--beam-offset-x  : 12px;
-	--beam-dots-left : 11px;
-	--marker-left    : var(--terminal-margin);
-	--marker-width   : calc(100% - 15px);
-
-	--terminal-margin     : 15px;
-	--terminal-padding-x  : 10px;
-	--terminal-padding-y  : 1em;
-
-	--toolbar-color      : #fed;
-
-	--toolbar-background : #235e;
-
-	--toolbar-border-radius : 0.5em;
-	--toolbar-padding       : 1px;
-	--toolbar-gap           : 5px;
-	--Xtoolbar-outline    : solid 2px #00f;
-	--toolbar-box-shadow :
-		inset 0 0 0 1px #08f4,
-		inset 0 0 5px 0 #000
-	;
-
-	--menu-gap : 0px;
-	--menu-arrow-offset:5px;
-
-	--items-border-radius : 0.5em;
-	--items-padding       : 0em;
-
-	--button-color                      : #fed;
-	--button-background                 : #246d;
-	--button-special-color              : #fed;
-	--button-special-background         : #534d;
-	--button-enabled-color              : #af4;
-	--button-enabled-background         : #240d;
-	--button-special-enabled-background : #240d;
-	--button-special-enabled-color      : #fca;
-	--button-task-background            : #355d;
-
-	--button-border        : solid 1px #0008;
-	--button-border-radius : 0.5em;
-	--button-outline       : none;
-	--button-padding       : 0.35em 1em;
-	--button-box-shadow    :
-		inset -0px -0px 0px 1px #0006,
-		inset  1px  1px 0px 1px #fff2
-	;
-
-	--offline-color       : #fc08;
-	--offline-background  : #555;
-	--online-color        : #0af;
-	--online-color-0      : #0afc;
-	--online-color-f      : #0aff;
-	--online-background   : #37aa;
-	--online-border       : solid 1px #0000;
-	--online-box-shadow   :
-		0 0 10px 3px #28da,
-		inset 0 0 2px 1px #0ffc
-	;
-
-	--connection-margin : 0;
-	--connection-height : unset;X:2.4em;
-
-	--authenticated-color : #fff;
-	--transmit-background : #4af7;
-	--transmit-box-shadow   :
-		0 0 13px 4px #28da,
-		inset 0 0 4px 1px #0ffc
-	;
-}
-.fancy.terminal {
-	--focus-box-shadow : #0ff;
-
-
-
-	--menu-gap           : 5px;
-	--top-menu-radius    : 0 0 var(--input-radius) var(--input-radius);
-	--bottom-menu-radius : var(--input-radius) var(--input-radius) 0 0;
-	--user-radius        : 0px;
-
-	--output-margin-top  : 1rem;
-	--output-margin-x    : 0px;
-	--output-padding-x   : 0;X:var(--menu-gap);
-
-	--top-menu-radius    : var(--input-radius);
-	--bottom-menu-radius : var(--input-radius);
-
-	--input-border       : solid 1px #000;
-	--input-radius       : 1rem;
-	--input-padding-x    : 0.8rem;
-	--button-bg          : #48c3;
-	--button-enabled-bg  : #88ff0028;
-	--button-special-bg  : #ff000028;
-	--button-enter-bg    : var(--button-special-background);
-	--button-close-bg    : var(--button-special-background);
-
-	--online-bg          : #0484;   /* Buttons bg */
-	--offline-bg         : #230d;
-
-	--transmit-bg        : #48a5;
 }
 
 
@@ -191,7 +90,7 @@ cep-terminal {
 	--toggle-state-off : #78a;
 	--toggle-state-on  : #bdf;
 
-	--chat-color : #8df;
+	--chat-color : #fed;
 	--cep-color  : #abc;
 	--mcp-color  : #f00;
 
@@ -216,8 +115,8 @@ cep-terminal {
 	--broadcast-color : #86f;
 	--update-color    : #090;
 
-	--offline-color       : #fc08;
-	--offline-background  : #555;
+	--offline-color       : #fc0;
+	--offline-background  : #400;
 	--online-color        : #0af;
 	--online-color-0      : #0afc;
 	--online-color-f      : #0aff;
@@ -230,3 +129,129 @@ cep-terminal {
 	--separator-border : dashed 1px var(--separator-color);
 }
 
+
+
+
+cep-terminal.fancy {
+	--beam-offset-x  : 12px;
+	--beam-dots-left : 11px;
+	--marker-left    : var(--terminal-margin);
+	--marker-width   : calc(100% - 15px);
+
+	--terminal-margin     : 15px;
+	--terminal-padding-x  : 10px;
+	--terminal-padding-y  : 1em;
+
+	--toolbar-color      : #fed;
+
+	--toolbar-background : #235e;
+
+	--toolbar-border-radius : 0.5em;
+	--toolbar-padding       : 1px;
+	--toolbar-gap           : 5px;
+	--Xtoolbar-outline    : solid 2px #00f;
+	--toolbar-box-shadow :
+		inset 0 0 0 1px #08f4,
+		inset 0 0 5px 0 #000
+	;
+
+	--menu-gap : 1px;
+	--menu-arrow-offset:5px;
+
+	--items-gap: 0px;
+	--items-border-radius : 0.5em;
+	--items-padding       : 0em;
+	--items-background    : none;
+
+	--button-color                      : #fed;
+	--button-background                 : #246d;
+	--button-special-color              : #fed;
+	--button-special-background         : #534d;
+	--button-enabled-color              : #7f5;
+	--button-enabled-background         : #486800dd;
+	--button-special-enabled-background : var(--button-enabled-background);
+	--button-special-enabled-color      : #fca;
+	--button-task-background            : #355d;
+
+	--button-border        : solid 1px #000a;
+	--button-border-radius : 0.5em;
+	--button-outline       : none;
+	--button-padding       : 0.35em 1em;
+	--button-box-shadow    :
+		inset -0px -0px 0px 1px #0004,
+		inset  1px  1px 0px 1px #fff1
+	;
+
+	--offline-color       : #fc0;
+	--offline-background  : var(--button-special-background);
+	--offline-box-shadow   :
+		0 0 10px 3px #f25,
+		inset 0 0 2px 1px #a03
+	;
+	--offline-box-shadow   :
+		0 0 15px 5px #f008,
+		inset 0 0 2px 2px #f00a
+	;
+	--online-color        : #0af;
+	--online-color-0      : #00ffff50; /*animate*/
+	--online-color-f      : #00ffff80;
+	--online-background   : #37aa;
+	--online-border       : solid 1px #0000;
+	--online-box-shadow   :
+		0 0 10px 7px #28fd,
+		inset 0 0 2px 1px #0ff
+	;
+	--online-box-shadow   :
+		0 0 15px 5px #28f6,
+		inset 0 0 2px 2px #0ffa
+	;
+
+	--main-active-box-shadow :
+		0 0 15px 5px #4f84,
+		inset 0 0 2px 2px #0f8c
+	;
+
+	--connection-margin : 0 1px 0 0;
+	--connection-height : unset;X:2.4em;
+
+	--authenticated-color : #fff;
+	--transmit-background : #4af7;
+	--transmit-box-shadow   :
+		0 0 13px 4px #28da,
+		inset 0 0 4px 1px #0ffc
+	;
+}
+.fancy.terminal {
+	--focus-box-shadow : #0ff;
+
+
+
+	--menu-gap           : 5px;
+	--top-menu-radius    : 0 0 var(--input-radius) var(--input-radius);
+	--bottom-menu-radius : var(--input-radius) var(--input-radius) 0 0;
+	--user-radius        : 0px;
+
+	--output-margin-top  : 1rem;
+	--output-margin-x    : 0px;
+	--output-padding-x   : 0;X:var(--menu-gap);
+
+	--top-menu-radius    : var(--input-radius);
+	--bottom-menu-radius : var(--input-radius);
+
+	--input-border       : solid 1px #000;
+	--input-radius       : 1rem;
+	--input-padding-x    : 0.8rem;
+	--button-bg          : #48c3;
+	--button-enabled-bg  : #88ff0028;
+	--button-special-bg  : #ff000028;
+	--button-enter-bg    : var(--button-special-background);
+	--button-close-bg    : var(--button-special-background);
+
+	--online-bg          : #0484;   /* Buttons bg */
+	--offline-bg         : #230d;
+
+	--transmit-bg        : #48a5;
+}
+
+
+/*EOF*/
