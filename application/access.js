@@ -7,9 +7,7 @@
 
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
-const { color_log, dump } = require( '../server/debug.js' );
 const { STATUS, REASONS } = require( './constants.js' );
-
 
 const PROTOCOL_DESCRIPTION = (`
 	connected: {session:{login:{username:literal=guest}}}
@@ -40,10 +38,10 @@ const PROTOCOL_DESCRIPTION = (`
 `); // PROTOCOL_DESCRIPTION
 
 
-module.exports = function AccessControl (persistent, callback) {
+module.exports = function AccessControl (persistent, callback, meta) {
 	const self = this;
-
-	this.request = {};
+	const RULE = meta.addRule;
+	const HELP = meta.addHelp;
 
 	this.rules;
 
@@ -126,7 +124,7 @@ module.exports = function AccessControl (persistent, callback) {
 				return check_syntax( JSON.parse( json ) );
 
 			} catch (error) {
-				color_log( COLORS.ERROR, 'parse_rule:', source, syntax );
+				DEBUG.log( COLORS.ERROR, 'parse_rule:', source, syntax );
 				throw new Error( error.message + ' in rule ' + source );
 				return null;
 			}
@@ -169,17 +167,13 @@ module.exports = function AccessControl (persistent, callback) {
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	this.request = {};
+
+// SAY ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'rules', 'Request persistent.descriptionState' );
+	RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:string}}' );
 	this.request.rules = function (client, request_id, parameters) {
-		return client.respond( STATUS.SUCCESS, request_id, persistent.descriptionState );
-
-		const command = Object.keys( parameters )[0];
-
-		switch (command) {
-			case 'list': {
-				const switches = (typeof parameters.list == 'string') ? null : parameters.list;
-				client.respond( STATUS.SUCCESS, request_id, switches );
-			}
-		}
+		return { result: persistent.descriptionState };
 	};
 
 
@@ -223,7 +217,7 @@ module.exports = function AccessControl (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.exit' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'Access.exit' );
 
 		return Promise.resolve();
 
@@ -231,7 +225,7 @@ module.exports = function AccessControl (persistent, callback) {
 
 
 	this.reset = function () {
-		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'Access.reset' );
+		if (DEBUG.RESET) DEBUG.log( COLORS.INSTANCES, 'Access.reset' );
 
 		if (Object.keys( persistent ).length == 0) {
 			persistent.configuration = null;
@@ -244,7 +238,7 @@ module.exports = function AccessControl (persistent, callback) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'Access.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'Access.init' );
 		self.reset();
 		return Promise.resolve();
 

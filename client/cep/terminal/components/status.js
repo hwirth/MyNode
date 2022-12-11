@@ -223,7 +223,7 @@ export function StatusBar (cep, terminal) {
 
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
 
 		self.clockElement = self.elements.time;
 		start_clock();

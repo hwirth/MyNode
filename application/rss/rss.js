@@ -10,12 +10,13 @@ const DomParser = require( 'dom-parser' );
 const RssParser = require( 'rss-parser' );
 
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
-const { color_log, dump } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
 
-module.exports = function ChatServer (persistent, callback) {
+module.exports = function ChatServer (persistent, callback, meta) {
 	const self = this;
+	const RULE = meta.addRule;
+	const HELP = meta.addHelp;
 
 	this.request = {};
 
@@ -33,7 +34,7 @@ module.exports = function ChatServer (persistent, callback) {
 		const feed_items   = persistent.items[feed.name];
 		const report_items = {};
 
-		color_log( COLORS.RSS_ENABLED, 'RSS:', 'polling:', feed.name );
+		DEBUG.log( COLORS.RSS_ENABLED, 'RSS:', 'polling:', feed.name );
 		const result = await rss_parser.parseURL( feed.url );
 
 		result.items.forEach( (item)=>{
@@ -59,7 +60,7 @@ module.exports = function ChatServer (persistent, callback) {
 
 		if (Object.keys( report_items ).length > 0) {
 			callback.broadcast({
-				type  : 'rss',
+				type  : 'rss/news',
 				feed  : feed.name,
 				items : report_items,
 			});
@@ -74,7 +75,7 @@ module.exports = function ChatServer (persistent, callback) {
 		if (feed.enabled) {
 			poll( feed );
 		} else {
-			color_log( COLORS.RSS_DISABLED, 'RSS:', 'disabled:', feed.name );
+			DEBUG.log( COLORS.RSS_DISABLED, 'RSS:', 'disabled:', feed.name );
 		}
 
 		persistent.next = (persistent.next + 1) % persistent.feeds.length;
@@ -116,90 +117,104 @@ module.exports = function ChatServer (persistent, callback) {
 	} // get_status
 
 
-	this.request.status = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.list>', client );
-		client.respond( STATUS.SUCCESS, request_id, get_status() );
+// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'status', 'Show configuration of all feeds' );
+	RULE( 'guest,user,mod,admin,dev,owner: {rss:{status:empty}}' );
+	this.request.status = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<rss.list>', client );
+		return { result:get_status() };
 
 	}; // request.status
 
 
-	this.request.toggle = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.toggle>', client );
+// TOGGLE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'toggle', 'Enable or disable regular polling of one or all feed(s)' );
+	RULE( 'mod,admin,dev,owner: {rss:{toggle:string}}' );
+	this.request.toggle = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<rss.toggle>', client );
 
-		if (typeof parameters != 'string') {
-			client.respond( STATUS.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
-			return;
+		if (typeof parameter != 'string') {
+			return { failure:REASONS.INVALID_REQUEST };
 		}
 
-		if (parameters == 'all') {
+		if (parameter == 'all') {
 			persistent.feeds.forEach( (feed)=>{
 				feed.enabled = !feed.enabled;
 				//...poll( feed );
 			});
 			request_id.command += ':all';   //...?
+
 		} else {
-			const feed = persistent.feeds.find( f => f.name == parameters );
+			const feed = persistent.feeds.find( f => f.name == parameter );
 			if (!feed) {
-				client.respond( STATUS.FAILURE, request_id, 'Unknown feed name' );
-				return;
+				return { failure:'Unknown feed' };
 			}
+
 			feed.enabled = !feed.enabled;
 			//...poll( feed );
+			// Return all
 		}
 
-		client.respond( STATUS.SUCCESS, request_id, get_status() );
+		return { result:get_status() };
 
 	}; // request.toggle
 
 
-	this.request.interval = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.interval>', client );
+// INTERVAL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'interval', 'Change time between poll attempts' );
+	RULE( 'mod,admin,dev,owner: {rss:{interval:number}}' );
+	this.request.interval = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<rss.interval>', client );
 
 		function isNumeric (string) {
 			return !isNaN(parseFloat(string)) && isFinite(string);
 		}
 
-		if (isNumeric( parameters )) {
-			persistent.interval = parameters;
+		if (isNumeric( parameter )) {
+			persistent.interval = Math.max( SETTINGS.RSS.MIN_INTERVAL, parameter );
 			start_interval();
-			client.respond( STATUS.SUCCESS, request_id, {interval: parameters} );
+			return { result: {interval: parameter} };
 			return;
 		}
 
-		if (typeof parameters != 'string') {
-			client.respond( STATUS.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
-			return;
+		if (typeof parameter != 'string') {
+			return { failure:REASONS.INVALID_REQUEST };
 		}
 
 	}; // request.interval
 
 
-	this.request.show = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.show>', client );
+// NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'show', 'Show cached feed items of a feed' );
+	RULE( 'guest,user,mod,admin,dev,owner: {rss:{show:string}}' );
+	this.request.show = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<rss.show>', client );
 
-		const feed_name = parameters;
-
+		const feed_name = parameter;
 		let result = persistent;
-		if ((typeof parameters == 'string') && (persistent.items[feed_name])) {
+		if ((typeof parameter == 'string') && (persistent.items[feed_name])) {
 			result = persistent.items[feed_name];
 		}
 
-		client.respond( STATUS.SUCCESS, request_id, result );
+		return { result:result };
 
 	}; // request.show
 
 
-	this.request.update = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.update>', client );
+// UPDATE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'update', 'Poll a feed immediately' );
+	RULE( 'mod,admin,dev,owner: {rss:{update:string}}' );
+	this.request.update = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<rss.update>', client );
 
-		const feed_name = parameters;
+		const feed_name = parameter;
 
 		let feeds = persistent.feeds;
-		if (typeof parameters == 'string') {
+		if (typeof parameter == 'string') {
 			if (persistent.feeds[feed_name]) {
 				feeds = persistent.feeds[feed_name];
 			} else {
-				client.respond( STATUS.FAILURE, request_id, 'Unknown feed' );
+				return { failure:'Unknown feed' };
 			}
 		}
 
@@ -212,15 +227,18 @@ module.exports = function ChatServer (persistent, callback) {
 			}
 		}).filter( entry => (entry != null) );
 
-		client.respond( STATUS.SUCCESS, request_id, polled );
+		return { result:polled };
 
 	}; // request.show
 
 
-	this.request.reset = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<rss.reset>', client );
+// NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'reset', 'Reset persistent RSS data' );
+	RULE( 'dev,owner: {rss:{reset:empty}}' );
+	this.request.reset = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<rss.reset>', client );
 		self.reset( /*force*/true );
-		client.respond( STATUS.SUCCESS, request_id, 'RSS cache reset' );
+		return { result: 'RSS cache reset' };
 
 	}; // request.reset
 
@@ -230,7 +248,7 @@ module.exports = function ChatServer (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'RssServer.exit' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'RssServer.exit' );
 		stop_interval();
 		return Promise.resolve();
 
@@ -238,7 +256,7 @@ module.exports = function ChatServer (persistent, callback) {
 
 
 	this.reset = function (force = false) {
-		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'RSSServer.reset' );
+		if (DEBUG.RESET) DEBUG.log( COLORS.INSTANCES, 'RSSServer.reset' );
 
 		if (force || Object.keys( persistent ).length == 0) {
 			const data = {
@@ -268,7 +286,7 @@ module.exports = function ChatServer (persistent, callback) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'RSSServer.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'RSSServer.init' );
 		self.reset();
 		poll_all_enabled();
 		start_interval();

@@ -10,10 +10,10 @@ import { SETTINGS as CEP_SETTINGS, DEBUG } from '../config.js';
 import { SETTINGS  } from './config.js';
 import { Audio     } from './audio.js';
 import { Events    } from '../events.js';
-import { MainMenu  } from './gadgets/main_menu.js';
-import { LoginMenu } from './gadgets/login_menu.js';
-import { UserList  } from './gadgets/user_list.js';
-import { StatusBar } from './gadgets/status.js';
+import { MainMenu  } from './components/main_menu.js';
+import { LoginMenu } from './components/login_menu.js';
+import { UserList  } from './components/user_list.js';
+import { StatusBar } from './components/status.js';
 import { CEPShell  } from './shell/shell.js';
 import { Settings  } from './applets/settings.js';
 import { Editor    } from './editor/editor.js';
@@ -42,12 +42,12 @@ export const DebugTerminal = function (cep) {
 	const RESSOURCE = {
 		html: (`
 			<cep-terminal tabindex="0">
-				<header class="toolbar" tabindex="0">
+				<header class="toolbar">
 					<div></div>
 					<div class="location"><span><abbr>CEP</abbr> Debug Terminal</span></div>
 					<div></div>
 				</header>
-				<footer class="toolbar" tabindex="0">
+				<footer class="toolbar">
 					<div></div>
 					<div class="status"></div>
 					<div></div>
@@ -96,25 +96,67 @@ export const DebugTerminal = function (cep) {
 
 // GADGETS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.createGadgets = function (applet, gadgets) {
-		gadgets.forEach( (gadget)=>{
-			const content = cep.dom.elementFromHTML( gadget.html );
+	this.createComponents = function (applet, components) {
+		components.forEach( (component)=>{
+			const content = cep.dom.elementFromHTML( component.html );
 			applet.containers.push({
-				parent  : gadget.parent,
+				parent  : component.parent,
 				element : content,
 			});
 			applet.elements = {
 				...applet.elements,
-				...cep.dom.gatherElements( content, gadget.elements ),
-				parent    : self.elements[gadget.parent],
+				...cep.dom.gatherElements( content, component.elements ),
+				parent    : self.elements[component.parent],
 				container : content,
 			};
 		});
 
-	}; // createGadgets
+	}; // createComponents
 
 
-// APPLETS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// MODULES ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function add_task_menu_entries (entries) {
+		entries.forEach( (entry)=>{
+			const { name, caption, template, show } = entry;
+
+			self.applets.mainMenu.elements.itemsMain.appendChild(
+				cep.dom.newElement({
+					tagName   : 'button',
+					innerText : caption,
+					events    : { click:()=>add_task(entry) },
+				}),
+			);
+		});
+
+		function add_task (entry) {
+			let { name, template } = entry;
+
+			let attempt_nr = 1;
+			while (name_exists()) ++attempt_nr;
+
+			self.installApplet( name, template, /*show_applet*/true );
+
+			function name_exists () {
+				if (!self.applets[name]) return false;
+				if (!self.applets[name + '(' + attempt_nr + ')']) {
+					name = name + '(' + attempt_nr + ')';
+					return false;
+				}
+				return true;
+			}
+		}
+
+	} // add_task_menu_entries
+
+
+	this.installModule = function (parameters) {
+		const { name, template } = parameters;
+
+		self.modules[name] = template;
+
+	}; // installModule
+
 
 	this.installApplet = async function (name, template, show_applet = false) {
 		if (self.applets[name]) await self.applets[name].exit();
@@ -136,16 +178,22 @@ export const DebugTerminal = function (cep) {
 		if (applet.taskName) {
 			const NEW = cep.dom.newElement;
 
-			const context_menu = applet.contextMenu();
+			const context_menu = {
+				show  : { caption: 'Show' , action: ()=>self.showApplet (applet) },
+				hide  : { caption: 'Hide' , action: ()=>self.hideApplet (applet) },
+				close : { caption: 'Close', action: ()=>self.closeApplet(applet) },
+			};
 			const menu_entries = [];
 			Object.entries( context_menu ).forEach( ([name, definition])=>{
 				menu_entries.push( NEW({
 					tagName   : 'button',
+					className : name,
 					innerHTML : definition.caption,
 					events    : {click: definition.action},
 				}) );
 			});
 
+			// Storing the context menu element inside the applet instance
 			const task_name = applet.taskName || applet.taskTitle || applet.templateName;
 			applet.taskEntry = NEW({
 				tagName   : 'nav',
@@ -170,6 +218,11 @@ export const DebugTerminal = function (cep) {
 			applet.taskTitle = task_name + instance_nr;
 
 			self.elements.bottomLeft.appendChild( applet.taskEntry );
+
+			if (applet.focusItem) {
+				applet.focusItem.addEventListener( 'focus', ()=>self.focusApplet(applet) );
+				applet.focusItem.addEventListener( 'blur' , ()=>self.blurApplet (applet) );
+			}
 		}
 
 		if (show_applet) self.showApplet( applet );
@@ -192,7 +245,7 @@ export const DebugTerminal = function (cep) {
 			if (unmount_applet.taskName) unmount_applet.containers.forEach( (container)=>{
 				const is_mounted = container.element.parentNode === self.elements[container.parent];
 				if (is_mounted) self.elements[container.parent].removeChild( container.element );
-				if (unmount_applet.taskEntry) unmount_applet.taskEntry.classList.remove( 'enabled' );
+				if (unmount_applet.taskEntry) unmount_applet.taskEntry.classList.remove( 'active' );
 			});
 		});
 
@@ -203,10 +256,14 @@ export const DebugTerminal = function (cep) {
 
 		if (applet.taskEntry) {
 			self.elements.location.innerHTML = applet.taskTitle;
-			applet.taskEntry.classList.add( 'enabled' );
+			if (applet.taskEntry) applet.taskEntry.classList.add( 'active' );
 		}
 
-		self.elements.terminal.focus();
+		if (applet.focusItem) {
+			applet.focusItem.focus();
+		} else {
+			self.elements.terminal.focus();
+		}
 
 	}; // showApplet
 
@@ -235,6 +292,18 @@ export const DebugTerminal = function (cep) {
 	}; // closeApplet
 
 
+	this.focusApplet = function (applet) {
+		if (applet.taskEntry) applet.taskEntry.classList.add( 'active' );
+
+	}; // focusApplet
+
+
+	this.blurApplet = function (applet) {
+		if (applet.taskEntry) applet.taskEntry.classList.remove( 'active' );
+
+	}; // blurApplet
+
+
 // TERMINAL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.toggleVisibility = function (make_visible = null) {
@@ -253,9 +322,56 @@ export const DebugTerminal = function (cep) {
 	}; // toggleVisibility
 
 
+	this.updateBrowserURL = function (target_toggle) {
+		if (!self.toggles.save.enabled && (target_toggle.name != 'save')) return;
+
+		//... don't work with button text
+		//...! Current shell!
+		const shell_toggles = (self.applets.shell) ? self.applets.shell.toggles : {};
+		const all_toggles   = {...self.toggles, ...shell_toggles, terminal: {
+			name:'terminal', preset:true, enabled:true,
+		}};
+		const key_order = ['animate','fancy','light','split','terminal','login','save'];
+		const order = (toggle_a, toggle_b) => {
+			const a = key_order.indexOf( toggle_a.name );
+			const b = key_order.indexOf( toggle_b.name );
+			if (a < 0) return +1;
+			if (b < 0) return -1;
+			return Math.sign( a - b );
+		};
+		const sorted = Object.values( all_toggles ).sort( order );
+		const toggles = sorted.reduce( (prev, toggle)=>{
+			const parameter = '&' + toggle.name;
+			const show = toggle.enabled != (toggle.preset ^ cep.GET.has(toggle.name));
+			return prev + (show ? parameter : '');
+		}, '');
+		const base_url = (location.href + '?').split('?',1)[0];
+		const old_nick = cep.GET.get( 'name' );
+		const new_nick = self.applets.mainMenu.elements.btnCEP.innerText.split(':')[1];
+		const use_nick = new_nick || old_nick;
+		const new_url  = '/?' + (use_nick ? 'name='+use_nick : '') + toggles;
+
+		window.history.pushState(
+			'It says put "object or string" here, but I don\'t see any effect in my browser',
+			'It says put "title" here, but I don\'t see any effect in my browser',
+			new_url,
+		);
+
+	}; // updateBrowserURL
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // DOM ACTIONS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.domUpdateConnectionState = function (state) {
+		self.elements.terminal.classList.toggle( 'connected', cep.connection.isConnected() );
+		self.elements.terminal.classList.toggle( 'authenticated', cep.connection.sentCredentials );
+
+
+
+	}; // domUpdateConnectionState
+
 
 	this.animatePing = function (transmit = false) {
 		if (!SETTINGS.ANIMATE_TRANSMISSION) return;
@@ -379,6 +495,8 @@ export const DebugTerminal = function (cep) {
 		console.log( 'DebugTerminal.getCredentials:', websocket_url );
 
 		return new Promise( (proceed, abort)=>{
+			if (!self.toggles.login.enabled) proceed();
+
 			//... Await dialog
 			let user_name = self.applets.loginMenu.elements.userName.value.trim();
 			let nick_name = self.applets.loginMenu.elements.nickName.value.trim();
@@ -505,8 +623,8 @@ export const DebugTerminal = function (cep) {
 		if (DEBUG.INSTANCES) console.log( 'DebugTerminal.init' );
 
 		await Promise.all([
-			cep.dom.loadCSS( 'cep/terminal/variables.css' ),
-			cep.dom.loadCSS( 'cep/terminal/terminal.css' ),
+			cep.dom.loadCSS( 'cep/terminal/css/variables.css' ),
+			cep.dom.loadCSS( 'cep/terminal/css/terminal.css' ),
 		]);
 
 		const container = cep.dom.elementFromHTML( RESSOURCE.html );
@@ -536,46 +654,23 @@ export const DebugTerminal = function (cep) {
 		self.bit     = self.audio.bit;   //... still needs to be created before shell. Move to shell entirely
 		self.events  = await new Events( self, EMITS_EVENTS, {toggle: self.onToggle} );
 
+		// Instantiate applets
 		self.toggles = {};
 		self.applets = {};                                // true/false: Whether to activate (show)
 		await self.installApplet( 'mainMenu' , MainMenu , true  );   // Creates our toggles, must be first
 		await self.installApplet( 'loginMenu', LoginMenu, true  );
 		await self.installApplet( 'userList' , UserList , true  );
 		await self.installApplet( 'status'   , StatusBar, true  );
-		await self.installApplet( 'editor'   , Editor   , true  );
-		await self.installApplet( 'settings' , Settings , true  );
+		//await self.installApplet( 'editor'   , Editor   , false );
+		//await self.installApplet( 'settings' , Settings , false );
 		await self.installApplet( 'shell'    , CEPShell , true  );
+		add_task_menu_entries([
+			{ name:'settings', caption:'Settings', template:Settings, show:false },
+			{ name:'editor'  , caption:'Editor'  , template:Editor  , show:false },
+			{ name:'shell'   , caption:'Shell'   , template:CEPShell, show:true  },
+		]);
 
-
-		// MAIN MENU ENTRY
-		add_menu_entry( 'shell'   , 'Shell'    , CEPShell );
-		add_menu_entry( 'editor'  , 'Editor'   , Editor   );
-		add_menu_entry( 'settings', 'Settings' , Settings );
-		function add_menu_entry (name, caption, template) {
-			self.applets.mainMenu.elements.itemsMain.appendChild( cep.dom.newElement({
-				tagName   : 'button',
-				innerText : caption,
-				events    : { click:()=>add_task(name, template) },
-			}) );
-
-			function add_task (name, template) {
-				let attempt_nr = 1;
-				while (name_exists()) ++attempt_nr;
-
-				self.installApplet( name, template, /*show_applet*/true );
-
-				function name_exists () {
-					if (!self.applets[name]) return false;
-					if (!self.applets[name + '(' + attempt_nr + ')']) {
-						name = name + '(' + attempt_nr + ')';
-						return false;
-					}
-					return true;
-				}
-			}
-		}
-
-
+		// GET PARAMETER
 		if (cep.GET.has( 'name' )) {
 			self.applets.loginMenu.elements.userName.value = 'root';
 			self.applets.loginMenu.elements.passWord.value = '12345';
@@ -591,6 +686,7 @@ export const DebugTerminal = function (cep) {
 			if (event.target.tagName == 'BUTTON') self.audio.beep();
 		});
 
+		// WEB SOCKET
 		cep.connection.events.add( 'open'   , self.onWsOpen    );
 		cep.connection.events.add( 'close'  , self.onWsClose   );
 		cep.connection.events.add( 'error'  , self.onWsError   );
@@ -598,12 +694,35 @@ export const DebugTerminal = function (cep) {
 		cep.connection.events.add( 'message', self.onWsMessage );
 		cep.connection.events.add( 'ping'   , self.animatePing );
 
+		// TOGGLES
 		self.events.add( 'toggle', (toggle)=>{
-			if (toggle.name == 'ping') {
-				CEP_SETTINGS.WEBSOCKET.HIDE_PING = toggle.enabled;
+			switch (toggle.name) {
+				case 'ping': {
+					CEP_SETTINGS.WEBSOCKET.HIDE_PING = toggle.enabled;
+					break;
+				}
+				case 'light': {
+					self.elements.html.classList.toggle( 'light', toggle.enabled );
+					self.elements.html.classList.toggle( 'dark', !toggle.enabled );
+					break;
+				}
 			}
+			self.updateBrowserURL( toggle );
 			self.bit.say( toggle.enabled );
 		})
+		//...? updateBrowserURL();
+
+		// LIGHT MODE
+		if (cep.GET.has( 'light' )) {
+			self.toggles.light.toggle( true );
+		} else if (cep.GET.has( 'dark' )) {
+			self.toggles.light.toggle( false );
+		} else {
+			const prefers_light = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
+			self.toggles.light.toggle( prefers_light );
+		}
+
+
 if (self.applets.shell)//...!
 		CEP_SETTINGS.WEBSOCKET.HIDE_PING = self.applets.shell.toggles.ping.enabled;
 

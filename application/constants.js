@@ -17,7 +17,7 @@ module.exports.REASONS = {
 	APPLICATION_ERROR           : 'Application error',
 	TOKEN_ISSUED                : 'A new token has been issued',
 	INSUFFICIENT_PERMS          : 'Insufficient permissions',
-	PERSISTENCE_RESET           : 'Persistent data have been reloaded',
+	PERSISTENCE_RESET           : 'Persistence was cleared',
 	INVALID_REQUEST             : 'Invalid request',
 	INVALID_ADDRESS             : 'Invalid address',
 	INVALID_USERNAME            : 'Invalid username',
@@ -34,7 +34,6 @@ module.exports.REASONS = {
 	NICKNAME_CHANGED            : 'Changed nickname',
 	KICKED_BY                   : 'Kicked by',
 	USERNAME_UNKNOWN            : 'User NAME unknown',
-	MALFORMED_REQUEST           : 'Malformed request',
 
 }; // RESPONSES
 
@@ -54,5 +53,15 @@ const STRINGS = {
 
 module.exports.STATUS    = STATUS;
 module.exports.STRINGS   = STRINGS;
+
+
+// HELPERS --> helpers.js
+
+module.exports.isEmptyObject = function (thing) {
+	return (typeof thing == 'object') && (Object.keys(thing).length == 0);
+}
+
+
+
 
 //EOF

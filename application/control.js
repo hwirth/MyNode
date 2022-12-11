@@ -10,13 +10,16 @@ const exec = require( 'child_process' ).exec;
 
 const { SETTINGS          } = require( '../server/config.js' );
 const { DEBUG, COLORS     } = require( '../server/debug.js' );
-const { color_log, dump   } = require( '../server/debug.js' );
 
 const { RESPONSE, REASONS, STATUS, STRINGS } = require( './constants.js' );
 
+const Helpers = require( './constants.js' );
 
-module.exports = function ServerControl (persistent, callback) {
+
+module.exports = function ServerControl (persistent, callback, meta) {
 	const self = this;
+	const RULE = meta.addRule;
+	const HELP = meta.addHelp;
 
 	this.fsWatchers;
 
@@ -82,7 +85,7 @@ module.exports = function ServerControl (persistent, callback) {
 				return zeros + string;
 			}
 
-			return (
+			let result = (
 				  (years   ? years      + 'y' : '')
 				+ (weeks   ? weeks      + 'w' : '')
 				+ (days    ? days       + 'd:' : '')
@@ -91,6 +94,12 @@ module.exports = function ServerControl (persistent, callback) {
 				+ leading( seconds, 2 ) + '.'
 				+ leading( millis , 3 ) + 's'
 			);
+
+			while ((result.charAt(0) === '0') && isNaN( result.charAt(1) )) {
+				result = result.slice(1);
+			}
+
+			return result;
 
 		} else {
 			return milliseconds;
@@ -135,57 +144,213 @@ module.exports = function ServerControl (persistent, callback) {
 	} // get_source_info
 
 
+// ACCESS VARIABLE ///////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function access_variable (target, path, value) {
+		try {
+console.log( 'TARGET', target );
+			switch (target) {
+				case 'SETTINGS': target = SETTINGS; break;
+				case 'DEBUG'   : target = DEBUG   ; break;
+				case 'RESPONSE': target = RESPONSE; break;
+				case 'REASONS' : target = REASONS ; break;
+				case 'STRINGS' : target = STRINGS ; break;
+			}
+			if (!target) throw new Error( 'Variable undefined' );
+			return property( target, path.split('.'), value );
+		}
+		catch (error) {
+			return error.message;
+		}
+
+		function property (target, path, value) {
+			const set_value = (typeof value != 'undefined');
+			return walk( target, path, 'object' );
+
+			function walk (target, path, traversed) {
+				if (path.length == 0) return target;
+				const key = path[0];
+
+				if (typeof target[key] == 'undefined') {
+					throw new Error( 'Property not found: ' + traversed + '.' + key );
+				}
+
+				if (set_value && (path.length == 1)) return target[key] = value;
+				return walk( target[key], path.slice(1), traversed + '.' + key );
+			}
+		}
+
+	} // access_variable
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.request = {};
 
-	this.request.token = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.token>', client );
+// HELP //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'help', 'Help on available protocols' );
+	RULE( 'connectinc,guest,user,mod,admin,dev,owner: {server:{help:*}}' );
+	this.request.help = function (client, request_id, parameter) {
+		if (typeof parameter == 'object') {
+			if (Object.keys(parameter).length == 0) {
+				parameter = '';
+			} else {
+				return { failure: REASONS.INVALID_REQUEST };
+			}
+		}
+
+		const meta  = callback.getMeta();
+		const parts = parameter.split('.').filter( part => part != '' );
+
+		if (parts.length == 0) {
+			return { result: Object.keys(meta.help) };
+		} else {
+			const entry  = access_variable(meta.help, parameter);
+			if (typeof entry == 'undefined') {
+				return { failure: 'Undefined entry'  };
+			}
+			const result = (typeof entry == 'string') ? entry : Object.keys( entry );
+			return { result: {[parameter]:result} };
+
+		}
+
+		return { failure: REASONS.INVALID_REQUEST };
+
+	}; // help
+
+
+
+// INSPECT ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'global', 'Read or write global variables' );
+	RULE( 'admin,dev,owner: {server:{global:{get:string}}}' );
+	RULE( 'admin,dev,owner: {server:{global:{set:string}}}' );
+	this.request.global = function (client, request_id, parameter) {
+		if (!parameter.get && !parameter.set) {
+			return { failure: REASONS.INVALID_REQUEST };
+		}
+
+		let value;
+		let operation;
+		if (parameter.get) {
+			operation = 'get';
+			parameter = parameter.get;
+			if (typeof parameter != 'string') {
+				return { failure: REASONS.INVALID_REQUEST };
+			}
+		} else  {
+			operation = 'set';
+			value = parameter.value;
+			parameter = parameter.set;
+			if (typeof parameter != 'string') {
+				return { failure: REASONS.INVALID_REQUEST };
+			}
+		}
+
+		const parts  = parameter.split('.').filter( part => part != '' );
+		if (parts.length != 2) {
+			return { failure: REASONS.INVALID_REQUEST };
+		}
+		const target = parts[0];
+		const path   = parts.slice(1).join('.');
+		const entry  = access_variable( target, path, value );
+
+		if (typeof entry == 'undefined') {
+			return { failure: 'Undefined entry' };
+		}
+
+		const result
+		= (typeof entry == 'string') ? entry
+		: (typeof entry == 'object') ? Object.keys( entry )
+		: (typeof entry == 'array' ) ? entry
+		: entry
+		;
+		return {result:{ [operation]: {[parameter]:result} }};
+
+		return { failure: REASONS.INVALID_REQUEST };
+
+	}; // global
+
+
+// TOKEN /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'token', 'Request a token for TFA' );
+	RULE( 'admin,dev,owner: {server:{token:empty}}' );
+	this.request.token = function (client, request_id, parameter, Xcallback) {
+		DEBUG.log( COLORS.COMMAND, '<server.token>', client );
 
 		if (!client.inGroup( 'admin', 'dev' )) {
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return;
+			return { failure:REASONS.INSUFFICIENT_PERMS };
 		}
 
 		create_new_access_token();
 
-		client.respond( STATUS.SUCCESS, request_id, REASONS.TOKEN_ISSUED );
+		return { result: REASONS.TOKEN_ISSUED };
 
 	}; // token
 
 
-	this.request.status = async function (client, request_id, parameters) {
+// DEBUG /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'debug', 'Change a DEBUG setting' );
+	RULE( 'admin,dev,owner: {server:{debug:*}}' );
+	this.request.debug = function (client, request_id, parameter, Xcallback) {
+		DEBUG.log( COLORS.COMMAND, '<server.debug>', client );
+
+		if (!client.inGroup( 'admin', 'dev' )) {
+			return { failure:REASONS.INSUFFICIENT_PERMS };
+		}
+
+		if (typeof parameter != 'object') {
+			return { failure:REASONS.INVALID_REQUEST };
+		}
+
+		let success = true;
+		const result = {};
+		Object.entries( parameter ).forEach( ([key, value])=>{
+
+			if (typeof DEBUG[key] == 'undefined') {
+				result['A'+key] = 'DEBUG["'+key+'"] undefined';
+				success = false;
+			}
+			else if (Helpers.isEmptyObject( value )) {
+				result['read ' + key] = DEBUG[key];
+			}
+			else {
+				result['write ' + key] = DEBUG[key] = value;
+			}
+		});
+
+		return { success:success, result:result };
+
+	}; // token
+
+
+// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'status', 'Server status report. Secondary parameters can be used in parallel' );
+	RULE( 'admin,dev,owner: {server:{status:empty}}' );
+	RULE( 'admin,dev,owner: {server:{status:*}}'     );
+	this.request.status = async function (client, request_id, parameter, Xcallback) {
 		let response = null;
 
 		if (!client.login) {
-			color_log( COLORS.ERROR, '<server.status.persistent>', client );
-			response = [ STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS ];
+			DEBUG.log( COLORS.ERROR, '<server.status.persistent>', client );
+			return { failure:REASONS.INSUFFICIENT_PERMS };
 
-		} else if (parameters.persistent || (parameters.persistent === null)) {
-			color_log( COLORS.COMMAND, '<server.status.persistent>', client );
+		} else if (parameter.persistent || (parameter.persistent === null)) {
+			DEBUG.log( COLORS.COMMAND, '<server.status.persistent>', client );
 			if (client.inGroup( 'admin', 'dev' )) {
-				response = [
-					STATUS.SUCCESS,
-					request_id,
-					callback.getAllPersistentData(),
-				];
+				return { result:callback.getAllPersistentData() };
 			} else {
-				response = [
-					STATUS.SUCCESS,
-					request_id,
-					REASONS.INSUFFICIENT_PERMS,
-				];
+				return { failure:REASONS.INSUFFICIENT_PERMS };
 			}
 
-		} else if (Object.keys(parameters).length > 0) {
-			color_log( COLORS.COMMAND, '<server.status.persistent>', client );
+		} else if (Object.keys(parameter).length > 0) {
+			DEBUG.log( COLORS.COMMAND, '<server.status.persistent>', client );
 
 			let Xadd_persistent, add_uptime, add_memory, add_settings, add_debug, add_source, add_access;
-			const requested_all = (Object.keys( parameters ).indexOf('all') >= 0);
+			const requested_all = (Object.keys( parameter ).indexOf('all') >= 0);
 			function has (key) {
-				return (requested_all) || (Object.keys( parameters ).indexOf(key) >= 0);
+				return (requested_all) || (Object.keys( parameter ).indexOf(key) >= 0);
 			}
 			if (has('persistent')) add_persistent = persistent;
 			if (has('uptime'    )) add_uptime     = get_uptime( /*formatted*/true );
@@ -198,10 +363,8 @@ module.exports = function ServerControl (persistent, callback) {
 				meta  : callback.getAllPersistentData().access.descriptionState,
 			};
 
-			response = [
-				STATUS.SUCCESS,
-				request_id,
-				{
+			return {
+				result: {
 					upTime   : add_uptime,
 					memory   : add_memory,
 					settings : add_settings,
@@ -209,26 +372,25 @@ module.exports = function ServerControl (persistent, callback) {
 					source   : add_source,
 					access   : add_access,
 				},
-			];
+			};
 
 		} else {
-			response = [
-				STATUS.SUCCESS,
-				request_id,
-				{
+			return {
+				result: {
 					upTime   : get_uptime( /*formatted*/true ),
 					memory   : get_memory_info(),
 				},
-			];
+			};
 		}
-
-		client.respond( ...response );
 
 	}; // status
 
 
-	this.request.reset = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.reset>', client );
+// RESET /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'reset', 'Reset protocol data' );
+	RULE( 'admin,dev,owner: {server:{reset:empty}}' );
+	this.request.reset = function (client, request_id, parameter, Xcallback) {
+		DEBUG.log( COLORS.COMMAND, '<server.reset>', client );
 
 		if (!client.inGroup('dev')) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
@@ -238,15 +400,23 @@ module.exports = function ServerControl (persistent, callback) {
 		callback.broadcast({ [REASONS.PERSISTENCE_RESET]: {} });
 		callback.reset();
 
-		client.respond( STATUS.SUCCESS, request_id, REASONS.PERSISTENCE_RESET );
+		return {
+			result    : REASONS.PERSISTENCE_RESET,
+			broadcast : {
+				type: 'server/reset',
+			},
+		};
 
 	}; // reset
 
 
-	this.request.restart = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.restart>', client );
+// RESTART ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'restart', 'Restart the server' );
+	RULE( 'admin,dev,owner: {server:{restart:empty}}' );
+	this.request.restart = function (client, request_id, parameter, Xcallback) {
+		DEBUG.log( COLORS.COMMAND, '<server.restart>', client );
 
-		const provided_token = String( parameters.token || null );
+		const provided_token = String( parameter.token || null );
 
 		if (false&&!verify_token( provided_token, client )) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
@@ -258,10 +428,13 @@ module.exports = function ServerControl (persistent, callback) {
 	}; // restart
 
 
-	this.request.shell = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.shell>', client );
+// SHELL /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'shell', 'Call a shell program' );
+	RULE( 'admin,dev,owner: {server:{shell:*}}' );
+	this.request.shell = function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<server.shell>', client );
 
-		const provided_token = String( parameters.token || null );
+		const provided_token = String( parameter.token || null );
 
 		if (!verify_token( provided_token, client )) {
 			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
@@ -293,67 +466,7 @@ module.exports = function ServerControl (persistent, callback) {
 			client.send({ notice: { fortune: '<q>'+banner+'</q>' }} );
 		}
 
-	}; // restart
-
-
-	this.request.inspect = function (client, request_id, parameters) {
-/*
-		if (typeof parameters != 'string') {
-			client.respond( STATUS.FAILURE, request_id, REASONS.MALFORMED_REQUEST );
-			return;
-		}
-
-console.log( 'MCP INSPECT', parameters );
-		escalate_privileges(
-			client,
-			request_id.token || DEBUG.MCPTOKEN,
-			execute,
-		);
-
-		function respond_error () {
-			client.respond( STATUS.FAILURE, request_id, STRINGS.YOU_SHOULDNT_HAVE );
-		}
-
-		function execute () {
-			let target = parameters;
-
-			if (!target) {
-				respond_error();
-				return;
-			}
-
-			if (Object.keys(parameters).length > 0) {
-		let count = 0;
-				const path = parameters.split('.');
-console.log( 'path:', path );
-console.log( ++count, 'target:', typeof target );
-
-				if (parameters) {
-					path.find( (token)=>{
-						if (target[ token ]) {
-							target = target[token];
-console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(target) );
-						} else {
-							respond_error();
-							return;
-						}
-					});
-				}
-			}
-
-			if (typeof target == 'undefined') target = 'undefined';
-
-			let Xresult = null;
-			switch (typeof target) {
-			case 'object' :  result = Object.keys( target );  break;
-			default       :  result = target;                 break;
-			}
-
-			if (!parameters) parameters = 'master';
-			client.respond( STATUS.SUCCESS, request_id, result );
-		}
-*/
-	}; // inspect
+	}; // shell
 
 
 // CRASH TEST ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -363,24 +476,30 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 	const TEST_URL = 'https://rss.orf.at/news.xml';
 
 	// Mistake in application code: Uses a Promise, doesn't catch
-	this.request.crashSync = function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.crashSync>', client );
+	HELP( 'crashSync', 'Crash the server synchronously' );
+	RULE( 'dev,owner: {server:{crashSync:empty}}' );
+	this.request.crashSync = function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<server.crashSync>', client );
 
 		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
 	} // crashSync
 
 	// Mistake in application code: Uses a Promise, doesn't await
-	this.request.crashAsync = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.crashAsync>', client );
+	HELP( 'crashAsync', 'Crash the server asynchronously' );
+	RULE( 'dev,owner: {server:{crashAsync:empty}}' );
+	this.request.crashAsync = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<server.crashAsync>', client );
 
 		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
 	} // crashAsync
 
 	// This will get caught properly:
-	this.request.crashSafe = async function (client, request_id, parameters) {
-		color_log( COLORS.COMMAND, '<server.crashSafe>', client );
+	HELP( 'crashSafe', 'Crash the server safely' );
+	RULE( 'dev,owner: {server:{crashSafe:empty}}' );
+	this.request.crashSafe = async function (client, request_id, parameter) {
+		DEBUG.log( COLORS.COMMAND, '<server.crashSafe>', client );
 
 		await fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
@@ -392,7 +511,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onMessage = function (...parameters) {
-		if (DEBUG.MCP) color_log(
+		if (DEBUG.MCP) DEBUG.log(
 			COLORS.MCP,
 			'MASTER CONTROL:',
 			...parameters.map( (parameter)=>{
@@ -411,7 +530,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.exit' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'ServerManager.exit' );
 		if (SETTINGS.WATCH_FILES) {
 			Object.keys( self.fsWatchers ).forEach( key => self.fsWatchers[key].close() );
 		}
@@ -421,7 +540,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 
 	this.reset = function () {
-		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'ServerManager.reset' );
+		if (DEBUG.RESET) DEBUG.log( COLORS.INSTANCES, 'ServerManager.reset' );
 		if (Object.keys( persistent ).length == 0) ;
 
 		create_new_access_token();
@@ -430,7 +549,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'ServerManager.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'ServerManager.init' );
 		self.reset();
 
 		if (SETTINGS.WATCH_FILES) {
@@ -438,9 +557,13 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 			SETTINGS.BROADCAST_FILE_CHANGE_FOLDERS.forEach( (dir)=>{
 				const path = SETTINGS.BASE_DIR + dir;
 				self.fsWatchers[dir] = fs.watch( path, (event, file_name)=>{
+if (file_name.slice('.goutputstream'.length) == '.goutputstream') {
+	return;
+}
 					if (file_name && (file_name.charAt(0) != '.')) {
 						const path = dir + '/' + file_name;
 						if (path.slice(0,7) == 'client/') {
+console.log( 'WATCHER 1', file_name, path );
 							callback.broadcast({
 								type   : 'reload/client',
 								reload : {
@@ -448,6 +571,7 @@ console.log( ++count, 'target<'+typeof target+'>[' + token + ']:', Object.keys(t
 								},
 							});
 						} else {
+console.log( 'WATCHER 2', file_name, path );
 							callback.broadcast({
 								type   : 'reload/server',
 								reload : {

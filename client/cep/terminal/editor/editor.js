@@ -7,7 +7,7 @@
 
 import { DEBUG             } from '../../config.js';
 import { SETTINGS, PRESETS } from '../config.js';
-import { Toggle            } from '../gadgets/toggle.js';
+import { Toggle            } from '../toggle.js';
 
 const PROGRAM_NAME = 'Editor';
 const PROGRAM_VERSION = '0.0.1p';
@@ -138,21 +138,9 @@ scroll    : { preset:pT.SCROLL    , target:tO, blink:bT, menu:mT, shortcut:'r', 
 
 	this.taskName      = PROGRAM_NAME;
 	this.taskMainClass = 'editor';
-
+	this.focusItem;
 	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
 
-	this.show  = function () { terminal.showApplet ( self ); }; // show
-	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
-	this.close = function () { terminal.closeApplet( self ); }; // close
-
-	this.contextMenu = function () {
-		return {
-			show  : { caption:'Show' , action:self.show  },
-			hide  : { caption:'Hide' , action:self.hide  },
-			close : { caption:'Close', action:self.close },
-		};
-
-	}; // contextMenu
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -304,7 +292,8 @@ return
 
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
+		self.focusItem = self.elements.input;
 
 		self.toggles = {};
 		Object.entries( create_toggles_definition() ).forEach( ([name, definition])=>{

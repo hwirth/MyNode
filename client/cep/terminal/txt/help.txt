@@ -1,15 +1,13 @@
-MyNode CHAT and DEBUG CONSOLE
------------------------------
-Single lines input by the user are sent as  chat.say  requests,
-otherwise TAB formatted multiline text is sent as JSON object.
-Debug mode (Alt+D) shows all websocket messages going in or out.
+MyNode CHAT and DEBUG TERMINAL
+------------------------------
+Simply enter a line of text to chat with other people in the room.
+Lines starting with a dot or slash are commands: TAB formatted
+multiline text is converted and sent as JSON object.
 
-/help <topic>
-Topics:
-	tabJSON    Mulitline input, values may contain white space (Shift+Enter)
-	dotJSON    Single line short format, limited use
-	keyboard   Keyboard controls for the terminal not listed under "toggles"
-	toggles    Keyboard shortcuts for terminal options
+/help tabJSON    Mulitline input, values may contain white space (Shift+Enter)
+/help dotJSON    Single line short format, limited use
+/help keyboard   Keyboard controls for the terminal not listed under "toggles"
+/help toggles    Keyboard shortcuts for terminal options
 
 Check the project README for more details.
 

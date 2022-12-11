@@ -7,7 +7,7 @@
 
 import { DEBUG   } from '../../config.js';
 import { PRESETS } from '../config.js';
-import { Toggle  } from './toggle.js';
+import { Toggle  } from '../toggle.js';
 
 
 export const MainMenu = function (cep, terminal) {
@@ -28,11 +28,6 @@ export const MainMenu = function (cep, terminal) {
 				<nav class="main menu">
 					<button class="connection">Offline</button>
 					<div class="main items">
-						<!-- button>CEP-Shell</button>
-						<button>Files</button>
-						<button>Server</button>
-						<button>Clients</button>
-						<button>Users</button -->
 						<nav class="toggles menu">
 							<button>Toggles</button>
 							<div class="items"></div>
@@ -41,10 +36,10 @@ export const MainMenu = function (cep, terminal) {
 				</nav>
 			`),
 			elements: {
-				btnCEP        : '.connection',
-				btnToggles    : '.toggles > button',
-				itemsMain     : '.main.items',
-				itemsToggles  : '.toggles > .items',
+				btnCEP       : '.connection',
+				btnToggles   : '.toggles > button',
+				itemsMain    : '.main.items',
+				itemsToggles : '.toggles > .items',
 			},
 		},
 	];
@@ -61,13 +56,15 @@ export const MainMenu = function (cep, terminal) {
 		const M = self.elements.itemsToggles;
 		return {
 // Classname  InitialValue    PutClassOn   BlinkThese   KeyboardAlt+  innerHTML
-//...! light   : { preset:null     , target:HTML, blink:BLINK, shortcut:'l', caption:'Light Mode', menu:M },
-animate : { preset:T.ANIMATE, target:TERM, blink:BLINK, shortcut:'a', caption:'Animations', menu:M },
-beep    : { preset:T.BEEP   , target:TERM, blink:BLINK, shortcut:'b', caption:'Beep'      , menu:M },
-fancy   : { preset:T.FANCY  , target:TERM, blink:BLINK, shortcut:'f', caption:'Fancy'     , menu:M },
-bit     : { preset:T.SPEECH , target:TERM, blink:BLINK, shortcut:'i', caption:'Bit'       , menu:M },
-speech  : { preset:T.SPEECH , target:TERM, blink:BLINK, shortcut:'o', caption:'Speech'    , menu:M },
-status  : { preset:T.STATUS , target:TERM, blink:BLINK, shortcut:'z', caption:'Status Bar', menu:M },
+light   : { preset:null     , target:null, blink:BLINK, shortcut:'l', caption:'Light Mode' , menu:M },   // terminal.js
+animate : { preset:T.ANIMATE, target:TERM, blink:BLINK, shortcut:'a', caption:'Animations' , menu:M },
+beep    : { preset:T.BEEP   , target:TERM, blink:BLINK, shortcut:'b', caption:'Beep'       , menu:M },
+fancy   : { preset:T.FANCY  , target:TERM, blink:BLINK, shortcut:'f', caption:'Fancy'      , menu:M },
+bit     : { preset:T.SPEECH , target:TERM, blink:BLINK, shortcut:'i', caption:'Bit'        , menu:M },
+speech  : { preset:T.SPEECH , target:TERM, blink:BLINK, shortcut:'o', caption:'Speech'     , menu:M },
+status  : { preset:T.STATUS , target:TERM, blink:BLINK, shortcut:'z', caption:'Status Bar' , menu:M },
+login   : { preset:T.LOGIN  , target:null, blink:BLINK, shortcut:'g', caption:'Auto login' , menu:M },   // Beware of login button
+save    : { preset:T.SAVE   , target:TERM, blink:BLINK, shortcut:'n', caption:'Save to URL', menu:M },
 		};
 
 	} // create_toggles_definition
@@ -77,10 +74,6 @@ status  : { preset:T.STATUS , target:TERM, blink:BLINK, shortcut:'z', caption:'S
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.show  = function () { terminal.showApplet ( self ); }; // show
-	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
-	this.close = function () { terminal.closeApplet( self ); }; // close
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
@@ -88,7 +81,6 @@ status  : { preset:T.STATUS , target:TERM, blink:BLINK, shortcut:'z', caption:'S
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) console.log( 'MainMenu.exit' );
-		self.hide();
 		return Promise.resolve();
 
 	}; // exit
@@ -99,7 +91,7 @@ status  : { preset:T.STATUS , target:TERM, blink:BLINK, shortcut:'z', caption:'S
 
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
 
 		Object.entries( create_toggles_definition() ).forEach( ([name, definition])=>{
 			terminal.toggles[name] = new Toggle( cep, terminal, {
@@ -113,7 +105,6 @@ status  : { preset:T.STATUS , target:TERM, blink:BLINK, shortcut:'z', caption:'S
 				action    : ()=>{ terminal.toggles[name].toggle(); },
 			});
 		});
-
 
 		return Promise.resolve();
 

@@ -7,16 +7,15 @@
 
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
-const { color_log, dump } = require( '../server/debug.js' );
 const { REASONS, STATUS, STRINGS } = require( './constants.js' );
 
 const WebSocketClient = require( './client.js' );
 
 
-module.exports = function SessionHandler (persistent, callback) {
+module.exports = function SessionHandler (persistent, callback, meta) {
 	const self = this;
-
-	this.request = {};
+	const RULE = meta.addRule;
+	const HELP = meta.addHelp;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -24,7 +23,7 @@ module.exports = function SessionHandler (persistent, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function log_warning (command_name, reason, ...specifics) {
-		color_log(
+		DEBUG.log(
 			COLORS.WARNING,
 			'<session.' + command_name + '> ' + reason,
 			...[...specifics].map( entry => JSON.parse(JSON.stringify(entry)) ),
@@ -34,7 +33,7 @@ module.exports = function SessionHandler (persistent, callback) {
 
 
  	function log_persistent () {
-		if (DEBUG.ROUTER_PERSISTENT_DATA) color_log(
+		if (DEBUG.ROUTER_PERSISTENT_DATA) DEBUG.log(
 			COLORS.PROTOCOL,
 			'<session>',
 			'persistent:',
@@ -89,41 +88,21 @@ module.exports = function SessionHandler (persistent, callback) {
 
 
 	this.broadcast = async function (message) {
-		function get_formatted_time () {
-			return Intl.DateTimeFormat( 'en', {
-				weekday : 'short',
-				year    : 'numeric',
-				month   : 'short',
-				day     : 'numeric',
-				hour    : '2-digit',
-				minute  : '2-digit',
-				second  : '2-digit',
-				//fractionalSecondDigits: '3',
-				timeZoneName: ['short', 'shortOffset', 'shortGeneric'][0],
-				hour12  : false,
-
-			}).format(new Date());
-			//...new Date().toUTCString();
-		}
-
-		//...if (typeof message != 'string') message = JSON.stringify( message, null, '\t' );
-if (message.broadcast) console.trace();
+console.log( COLORS.ERROR + 'Seesion.broadcast()' + COLORS.RESET + ' should no longer be used?' );
 		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
-		const bulletin = {
-			broadcast: {
-				time    : time,              // Add timestamp
-				address : message.address,   // Ensure order of entries
-				type    : message.type,      // Ensure order of entries
-				...message,
-			}
-		};
 
-		const clients = callback.getAllClients();
-		Object.keys( clients ).forEach( (address)=>{
-			const client = clients[address];
-			const to_everyone = (message.type.split('/')[0] == 'reload');
-			if (client.login || to_everyone) client.send( bulletin );
-		});
+		const who_data = (message.who) ?  self.getWho() : undefined;
+		delete message.who;
+
+		const recipients = client => message.recipients && message.recipients(client) || true;
+		Object.values( callback.getAllClients() )
+		.filter( recipients )
+		.forEach( client => client.send({
+				broadcast : message,
+				who       : who_data,
+				time      : time,
+			}),
+		);
 
 	}; // broadcast
 
@@ -134,7 +113,7 @@ if (message.broadcast) console.trace();
 
 	this.onConnect = async function (socket, client_address) {
 		if (persistent.clients[client_address]) {
-			color_log(
+			DEBUG.log(
 				COLORS.PROTOCOLS,
 				'SessionHandler.onConnect:',
 				REASONS.ALREADY_LOGGED_IN,
@@ -149,9 +128,9 @@ if (message.broadcast) console.trace();
 
 
 		self.broadcast({
+			who     : true,
 			type    : 'session/connect',
 			address : client_address,
-			who     : self.getWho(),
 		});
 
 	}; // onConnect
@@ -161,7 +140,7 @@ if (message.broadcast) console.trace();
 		const client = persistent.clients[client_address];
 
 		if (!client) {
-			color_log(
+			DEBUG.log(
 				COLORS.ERROR,
 				'ERROR',
 				'SessionHandler.onDisconnect: Unknown client:',
@@ -175,17 +154,17 @@ if (message.broadcast) console.trace();
 
 		if (true || client.login) {
 			self.broadcast({
+				who      : true,
 				type     : 'session/disconnect',
 				address  : client_address,
 				userName : client.login.userName,
 				nickName : client.login.nickName,
-				who      : self.getWho(),
 			});
 		} else {
 			self.broadcast({
+				who     : true,
 				type    : 'session/disconnect',
 				address : client_address,
-				who     : self.getWho(),
 			});
 		}
 
@@ -194,7 +173,7 @@ if (message.broadcast) console.trace();
 
 	this.onMessage = function (socket, client_address, message) {
 		if (!message.session || !message.session.pong) {
-			//persistent.clients[client_address ].registerActivity();
+			//...?persistent.clients[client_address ].registerActivity();
 		}
 
 	}; // onMessage
@@ -204,54 +183,49 @@ if (message.broadcast) console.trace();
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+	this.request = {};
 	this.guestNr = 0;
 
+// PONG //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'pong', 'Answer to a server ping (Usually happens automatically)' );
+	RULE( 'connecting,guest,user,mod,admin,dev,owner: {session:{pong:number}}' );
 	this.request.pong = function (client, request_id, parameters) {
 		if (isNaN( parameters )) {
-			client.respond( STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
+			return { failure: REASONS.INVALID_REQUEST };
 		} else {
-			client.receivePong( parameters );
+client.receivePong( parameters );
 		}
-
-		/*
-		if (Object.keys(parameters).length == 0) {
-			client.respond( STATUS.SUCCESS, request_id, {client: client} );
-
-		} else {
-			const command = Object.keys( parameters )[0];
-			client.respond( STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
-		}
-		*/
 
 	}; // pong
 
 
+// LOGIN /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'login', 'Authenticate as registered user' );
+	RULE( 'connecting: {session:{login:{username:guest}}}' );
+	RULE( 'connecting: {session:{login:{username:string,password:string}}}' );
+	RULE( 'connecting: {session:{login:{username:string,password:string,factor2:string}}}' );
 	this.request.login = function (client, request_id, parameters) {
 		if (client.login) {
 			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.ALREADY_LOGGED_IN );
-			return;
+			return { failure: REASONS.ALREADY_LOGGED_IN };
 		}
 
 		if (!parameters.username) {
 			log_warning( 'login', REASONS.BAD_USERNAME, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
-			return;
-		} else {
-			parameters.username = parameters.username.toLowerCase();
+			return { failure: REASONS.INVALID_USERNAME };
 		}
+
+		parameters.username = parameters.username.toLowerCase();
 
 		if (!parameters.password && (parameters.username != 'guest')) {
 			log_warning( 'login', REASONS.BAD_PASSWORD, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_PASSWORD );
-			return;
+			return { failure: REASONS.INVALID_PASSWORD };
 		}
 
 		const user_record = persistent.accounts[parameters.username];
 		if (!user_record) {
 			log_warning( 'login', REASONS.INVALID_USERNAME, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
-			return;
+			return { failure: REASONS.INVALID_USERNAME };
 		}
 
 		const password_correct
@@ -292,16 +266,18 @@ if (message.broadcast) console.trace();
 
 			client.setIdleTime( user_record.maxIdleTime );
 
-			callback.broadcast({
-				type     : 'session/login',
-				address  : client.address,
-				userName : login.userName,
-				who      : self.getWho(),
-			});
+			DEBUG.log( COLORS.COMMAND, '<session.login>', client );
 
-			color_log( COLORS.COMMAND, '<session.login>', client );
-			client.respond( STATUS.SUCCESS, request_id, client );
-
+			return {
+				result    : client,
+				broadcast : {
+					who      : true,
+					type     : 'session/login',
+					address  : client.address,
+					userName : login.userName,
+				},
+			};
+		/*
 			send_cookie();
 			async function send_cookie () {
 				const exec = require( 'child_process' ).exec;
@@ -327,16 +303,20 @@ if (message.broadcast) console.trace();
 					},
 				});
 			}
+		*/
 
 // /client.js ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		} else {
 			log_warning( 'login', REASONS.BAD_PASSWORD, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.BAD_PASSWORD );
+			return { failure: REASONS.BAD_PASSWORD };
 		}
 
 	}; // login
 
 
+// AUTHENTICATE //////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'authenticate', 'Authenticate via second factor' );
+	RULE( 'connecting,guest,user,mod,admin,dev,owner: {session:{authenticate:string}}' );
 	this.request.authenticate = function (client, request_id, parameters) {
 		const token = parameters.factor2 || parameters.token;
 		client.factor2 = callback.verifyToken(
@@ -345,7 +325,7 @@ if (message.broadcast) console.trace();
 			/*login_request*/true,
 		);
 		if (client.factor2) {
-			color_log( COLORS.COMMAND, '<session.authenticate>', client );
+			DEBUG.log( COLORS.COMMAND, '<session.authenticate>', client );
 			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_AUTHENTICATED );
 		} else {
 			log_warning( 'authenticate', REASONS.NOT_LOGGED_IN, client );
@@ -355,58 +335,69 @@ if (message.broadcast) console.trace();
 	}; // logout
 
 
+// LOGOUT ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'logout', 'Log out of a registered account' );
+	RULE( 'guest,user,mod,admin,dev,owner: {session:{logout:empty}}' );
 	this.request.logout = function (client, request_id, parameters) {
 		if (client.login) {
-			color_log( COLORS.COMMAND, '<session.logout>', client );
-			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_LOGGED_OUT );
+			DEBUG.log( COLORS.COMMAND, '<session.logout>', client );
 
 			const user_name = client.login.userMame;
-			const nick_name = client.login.nciMame;
+			const nick_name = client.login.nickName;
 			client.login = false;
 
-			callback.broadcast({
-				type     : 'session/logout',
-				address  : client.address,
-				userName : user_name,
-				nickName : nick_name,
-				who      : self.getWho(),
-			});
+			return {
+				result    : REASONS.SUCCESSFULLY_LOGGED_OUT,
+				broadcast : {
+					type     : 'session/logout',
+					address  : client.address,
+					userName : user_name,
+					nickName : nick_name,
+					who      : true,
+				},
+			};
 
 		} else {
 			log_warning( 'logout', REASONS.NOT_LOGGED_IN, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.NOT_LOGGED_IN );
+			return { failure: REASONS.NOT_LOGGED_IN };
 		}
 
 	}; // logout
 
 
+// WHO ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'who', 'Request list of connected users' );
+	RULE( 'guest,user,mod,admin,dev,owner: {session:{who:*}}' );
 	this.request.who = async function (client, request_id, parameters) {
 		const clients = self.getWho();
 		if (clients) {
-			color_log( COLORS.COMMAND, '<session.who>', client );
-			client.respond( STATUS.SUCCESS, request_id, clients );
+			DEBUG.log( COLORS.COMMAND, '<session.who>', client );
+			return { result: clients };
 		} else {
-			color_log( COLORS.COMMAND, '<session.who>', client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			DEBUG.log( COLORS.COMMAND, '<session.who>', client );
+			return { failure: REASONS.INSUFFICIENT_PERMS };
 		}
 
 	}; // who
 
 
+// CLIENTS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'clients', 'Request all connected client data' );
+	RULE( 'admin,dev,owner: {session:{clients:empty}}' );
 	this.request.clients = async function (client, request_id, parameters) {
 		if (client.login) {
-			color_log( COLORS.COMMAND, '<session.clients>', client );
+			DEBUG.log( COLORS.COMMAND, '<session.clients>', client );
 
 			const clients = {};
 			Object.keys( persistent.clients ).forEach( (address)=>{
-				clients[address] = dump( persistent.clients[address] );
+				clients[address] = DEBUG.dump( persistent.clients[address] );
 			});
 
-			client.respond( STATUS.SUCCESS, request_id, clients );
+client.respond( STATUS.SUCCESS, request_id, clients );
 
 		} else {
-			color_log( COLORS.COMMAND, '<session.clients>', client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+			DEBUG.log( COLORS.COMMAND, '<session.clients>', client );
+client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 		}
 
 	}; // clients
@@ -415,7 +406,7 @@ if (message.broadcast) console.trace();
 	this.request.kick = async function (client, request_id, parameters) {
 		if (!client.inGroup( 'mod', 'admin', 'dev' )) {
 			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
+client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
 			return;
 		}
 if (!client.login) throw new Error( 'NO CLIENT' );
@@ -434,36 +425,36 @@ console.log( 'KICK: parameters:', parameters );
 			target_client = self.getClientByName( parameters );
 		}
 
-		if (!target_client) {
-			if (parameters.address) {
-				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
-				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS );
-			}
-			else if (parameters.username) {
-				log_warning( 'kick', REASONS.INVALID_USERNAME, client );
-				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
-			}
-			else {
-				log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, client );
-				client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
-			}
+if (!target_client) {
+	if (parameters.address) {
+		log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
+client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS );
+	}
+	else if (parameters.username) {
+		log_warning( 'kick', REASONS.INVALID_USERNAME, client );
+client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
+	}
+	else {
+		log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, client );
+client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
+	}
 
-			return;
-		}
+	return;
+}
 
-		if (DEBUG.ROUTER_PERSISTENT_DATA) color_log(
+		if (DEBUG.ROUTER_PERSISTENT_DATA) DEBUG.log(
 			COLORS.SESSION,
 			'<session.kick>',
 			'Terminating connection to ',
 			target_client,
 		);
 
-		target_client.respond(
-			STATUS.NONE,
-			request_id,
-			REASONS.KICKED_BY + ' ' + client.login.userName,
-			null,
-		);
+target_client.respond(
+	STATUS.NONE,
+	request_id,
+	REASONS.KICKED_BY + ' ' + client.login.userName,
+	null,
+);
 
 		const target_address  = target_client.address;
 		const target_username = target_client.login.userName;
@@ -471,15 +462,15 @@ console.log( 'KICK: parameters:', parameters );
 		target_client.login = false;
 		await target_client.closeSocket();
 
-		client.respond(
-			STATUS.SUCCESS,
-			request_id,
-			(
-				REASONS.KICKED_USER
-				.replace('NAME', target_username)
-				.replace('ADDRESS', target_address)
-			)
-		);
+client.respond(
+	STATUS.SUCCESS,
+	request_id,
+	(
+		REASONS.KICKED_USER
+		.replace('NAME', target_username)
+		.replace('ADDRESS', target_address)
+	)
+);
 
 		if (parameters.username) {
 			if (self.getClientByName( parameters.username )) {
@@ -490,20 +481,15 @@ console.log( 'KICK: parameters:', parameters );
 	}; // kick
 
 
+// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	HELP( 'status', 'Request current login status' );
+	RULE( 'connecting,guest,user,mod,admin,dev,owner: {session:{status:empty}}' );
 	this.request.status = function (client, request_id, parameters) {
 		if (Object.keys(parameters).length == 0) {
-			client.respond( STATUS.SUCCESS, request_id, {client: client} );
-
+			return { result: {client:client} };
 		} else {
-			const command = Object.keys( parameters )[0];
-			client.respond( STATUS.FAILURE, request_id, {[command]: REASONS.INVALID_REQUEST} );
+			return { failure: REASONS.INVALID_REQUEST };
 		}
-
-	}; // status
-
-
-	this.request.pum = function (client, request_id, parameters) {
-		client.respond( STATUS.SUCCESS, request_id, {pom: 'yay'} );
 
 	}; // status
 
@@ -513,7 +499,7 @@ console.log( 'KICK: parameters:', parameters );
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.exit' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'SessionHandler.exit' );
 		return Promise.resolve();
 		//return new Promise( done => setTimeout(done, SETTINGS.TIMEOUT.SOCKET_CLOSE) );
 
@@ -521,7 +507,7 @@ console.log( 'KICK: parameters:', parameters );
 
 
 	this.reset = function () {
-		if (DEBUG.RESET) color_log( COLORS.INSTANCES, 'SessionHandler.reset' );
+		if (DEBUG.RESET) DEBUG.log( COLORS.INSTANCES, 'SessionHandler.reset' );
 
 		if (Object.keys( persistent ).length == 0) {
 			const data = {
@@ -559,7 +545,7 @@ console.log( 'KICK: parameters:', parameters );
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'SessionHandler.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'SessionHandler.init' );
 		self.reset();
 		return Promise.resolve();
 

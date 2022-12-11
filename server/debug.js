@@ -47,6 +47,11 @@ const DEBUG = {                                                // What to log
 
 	BOOT_TIME                 : Date.now(),
 
+	// Publish functions
+	log         : color_log,
+	dump        : dump,
+	formatError : format_error,
+
 }; // DEBUG
 
 
@@ -71,7 +76,7 @@ const ANSI_COLORS = {
 
 /**
  * COLORS
- * Actual colors used with  color_log()
+ * Actual colors used with  DEBUG.log()
  */
 const COLORS = {
 	DEFAULT      : ANSI_COLORS.DIM    + ANSI_COLORS.WHITE,
@@ -95,6 +100,7 @@ const COLORS = {
 	PROTOCOLS    : ANSI_COLORS.BRIGHT + ANSI_COLORS.MAGENTA,
 	PROTOCOL     : ANSI_COLORS.BRIGHT + ANSI_COLORS.GREEN,
 
+	RELOAD       : ANSI_COLORS.GREEN,
 	ROUTER       : ANSI_COLORS.CYAN,
 	SESSION      : ANSI_COLORS.GREEN,
 	ACCESS       : ANSI_COLORS.BRIGHT + ANSI_COLORS.CYAN,
@@ -131,19 +137,29 @@ module.exports.COLORS        = COLORS;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 function format_error (error) {
-	return error.stack.replace( new RegExp(SETTINGS.BASE_DIR, 'g'), '' );
+	if (!error) console.trace();
+	const node_internal = line => line.indexOf('(node:') < 0;
+	const empty         = line => line.trim() != '';
+	return (
+		(error.stack ? error.stack : '')
+		.split('\n').filter( node_internal ).filter( empty ).join('\n')
+		.replaceAll( SETTINGS.BASE_DIR, '' )
+		.replace( 'Error: ', '')
+	);
 
 } // format_error
 
 
 /**
- * color_log
+ * DEBUG.log
  * Creates nice output to the console while debugging, and/or writes text sans color to a log file.
  * See also  config.js: SETTINGS.LOG.*
  */
 function color_log (colors = '', heading = '', ...text_list) {
 	if (colors == '\n') return console.log();
 	//...if (heading.charAt(0) == '<') heading = '\n' + heading;
+
+
 
 
 	function dump_client (client) {
@@ -162,6 +178,9 @@ function color_log (colors = '', heading = '', ...text_list) {
 
 	const text = [...text_list];
 
+	if (JSON.stringify(text).indexOf( 'pong' ) >= 0) return;
+
+
 	if (text[0] && (typeof text[0].idleSince != 'undefined')) {
 		text[0] = dump_client( text[0] );
 	}
@@ -170,7 +189,7 @@ function color_log (colors = '', heading = '', ...text_list) {
 try {
 	heading = String( heading );
 } catch (error) {
-console.log( 'color_log: HEADING' );//...
+console.log( 'DEBUG.log: HEADING' );//...
 }
 	function format_uptime (milliseconds) {
 		const seconds = Math.floor( milliseconds / 1000 );
@@ -218,7 +237,7 @@ console.log( 'color_log: HEADING' );//...
 			const path = file_name.substr( 0, pos + 1 );
 
 			if (!fs.existsSync( path )) {
-				console.log( 'debug.js: color_log: Attempting to create directory "' + path + '"' );
+				console.log( 'debug.js: DEBUG.log: Attempting to create directory "' + path + '"' );
 				fs.mkdirSync( path, { recursive: true } );
 			}
 
@@ -258,7 +277,7 @@ console.log( 'color_log: HEADING' );//...
 		}
 	}
 
-} // color_log
+} // DEBUG.log
 
 
 function dump (data, short_format = false) {
@@ -273,11 +292,6 @@ function dump (data, short_format = false) {
 	}
 
 } // dump
-
-
-module.exports.format_error = format_error;
-module.exports.color_log    = color_log;
-module.exports.dump         = dump;
 
 
 //EOF

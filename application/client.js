@@ -7,7 +7,6 @@
 
 const { SETTINGS        } = require( '../server/config.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
-const { color_log, dump } = require( '../server/debug.js' );
 
 const { REASONS, STATUS, STRINGS } = require( './constants.js' );
 
@@ -56,7 +55,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	function on_login_timeout () {
-		color_log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
+		DEBUG.log( COLORS.WARNING, 'WebSocketClient-on_login_timeout:', client_address );
 		self.send({ notice: STRINGS.LOGIN_TIMEOUT });
 		self.closeSocket();
 
@@ -64,7 +63,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	function on_idle_timeout () {
-		color_log( COLORS.WARNING, 'WebSocketClient-on_idle_timeout:', client_address );
+		DEBUG.log( COLORS.WARNING, 'WebSocketClient-on_idle_timeout:', client_address );
 		self.send({ notice: STRINGS.IDLE_TIMEOUT });
 		self.closeSocket();
 
@@ -85,7 +84,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 		const is_pingpong = message.update && (message.update.type =='ping')
 		const do_log = DEBUG.MESSAGE_OUT && (!is_pingpong || (is_pingpong && SETTINGS.PING.LOG));
-		if (do_log) color_log(
+		if (do_log) DEBUG.log(
 			COLORS.SESSION,
 			'WebSocketClient-send:',
 			message,
@@ -210,7 +209,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		set_timeout( 'pong', failed_to_pong, SETTINGS.PING.TIMEOUT );
 
 		function failed_to_pong () {
-			color_log( COLORS.WARNING, 'NO PONG:', dump(self) );
+			DEBUG.log( COLORS.WARNING, 'NO PONG:', DEBUG.dump(self) );
 			socket.send( JSON.stringify({
 				notice: 'Ping timeout',
 			}));
@@ -233,7 +232,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log(
+		if (DEBUG.INSTANCES) DEBUG.log(
 			COLORS.INSTANCES, 'WebSocketClient.exit:',
 			self.address, self.login ? self.login.userName : '', self.login ? self.login.nickName : ''
 		);
@@ -250,7 +249,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketClient.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'WebSocketClient.init' );
 
 		self.address      = client_address;
 		self.idleSince    = Date.now();

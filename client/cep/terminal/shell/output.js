@@ -30,6 +30,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 	this.scrollDown = function () {
 		if (shell.toggles.scroll.enabled) {
 			shell.elements.output.scrollBy(0, 99999);
+			shell.elements.output1.scrollBy(0, 99999);
 		}
 		if( !document.activeElement.closest( 'cep-terminal' )   // In case the main app steals our focus
 		||  !document.activeElement.closest( '.login.menu'  )   // Don't take focus out of login form
@@ -68,7 +69,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 	this.deleteToMarker = function () {
 		let element = get_last();
 		shell.elements.input.value = '';
-		if (element.classList.contains( 'mark' )) {
+		if (element && element.classList.contains( 'mark' )) {
 			shell.elements.output.removeChild( element );
 			return;
 		}
@@ -93,7 +94,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 		const file_extension = file_name.split('.').pop();
 		switch (file_extension) {
 			case 'html': {
-				shell.toggles.compact.disable();
+				shell.toggles.compact.toggle( false );
 
 				const iframe     = document.createElement( 'iframe' );
 				iframe.src       = file_name + '?included' + (id_selector ? '#'+id_selector : '');
@@ -107,7 +108,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 					);
 					shell.toggles.scroll.enable();
 					self.scrollDown();
-					setTimeout( ()=>shell.toggles.scroll.disable(), 500 );
+					setTimeout( ()=>shell.toggles.scroll.toggle(false), 500 );
 				});
 				const last_print = shell.elements.output.querySelector( ':scope > :last-child' );
 				iframe.addEventListener( 'click', (event)=>{
@@ -125,11 +126,11 @@ export const ShellOutput = function (cep, terminal, shell) {
 					.split( '//EOF', 1 )[0]
 					.replaceAll( '&', '&amp;' )
 					.replaceAll( '<', '&lt;'  )
-					.replaceAll( '\n[ ]' , '\n[<span class="todo"> </span>]'            )
-					.replaceAll( '\n[!]' , '\n[<span class="todo important">!</span>]'  )
-					.replaceAll( '\n[#]' , '\n[<span class="todo urgent">#</span>]'     )
-					.replaceAll( '\n[?]' , '\n[<span class="todo research">?</span>]'   )
-					.replaceAll( '\n[\\]', '\n[<span class="todo cancelled">\\</span>]' )
+					.replaceAll( '\n[ ]' , '\n<span class="todo"> </span>'            )
+					.replaceAll( '\n[!]' , '\n<span class="todo important">!</span>'  )
+					.replaceAll( '\n[#]' , '\n<span class="todo urgent">#</span>'     )
+					.replaceAll( '\n[?]' , '\n<span class="todo research">?</span>'   )
+					.replaceAll( '\n[\\]', '\n<span class="todo cancelled">\\</span>' )
 				);
 				const pages = html_parsed.split( '\n#' );
 
@@ -155,7 +156,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 
 // PRINT /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.print = function (message, class_name = null) {
+	this.print = function (message, class_name = null, output_nr = '') {
 
 		function replace_href (word) {
 			//...! Ignores tab-prefixed "words":
@@ -181,14 +182,14 @@ export const ShellOutput = function (cep, terminal, shell) {
 				'slash'    , 'period'  , 'colon'   , 'semi'     , 'curlyO' ,
 				'bracketO' , 'parensO' , 'parensC' , 'bracketC' , 'curlyC' ,
 		*/
-				'true'     , 'false'   , 'null'
+				'true'     , 'false'   , 'null'    , 'error',
 			];
 			const tokens = [
 		/*
 				'/', '.', ':', ';', '{',
 				'[', '(', ')', ']', '}',
 		*/
-				'true', 'false', 'null',
+				'true', 'false', 'null', 'error:'
 			];
 
 			let message_html = (
@@ -205,7 +206,11 @@ export const ShellOutput = function (cep, terminal, shell) {
 			;
 
 			tokens.forEach( (token, index)=>{
-				const html = '<code class="' + class_names[index] + '">' + token + '</code>';
+				const html
+				= (token == 'error:')
+				? '<code class="' + class_names[index] + '">error</code>:'
+				: '<code class="' + class_names[index] + '">' + token + '</code>'
+				;
 				message_html = message_html.replaceAll( token, html );
 			});
 
@@ -228,7 +233,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 
 		let print_message = null;
 		if (message.html) {
-			print_message = message.html; //... .replaceAll( '<a href', '<a target="_blank" href' );
+			print_message = message.html.replaceAll( '<a href', '<a target="_blank" href' );
 			print_message = print_message.replaceAll( '\n', '<br>\n' );
 			print_message = (
 				print_message
@@ -249,7 +254,8 @@ export const ShellOutput = function (cep, terminal, shell) {
 		const new_element = document.createElement( 'pre' );
 		if (class_name) new_element.className = class_name;
 		new_element.innerHTML = print_message.trim();
-		shell.elements.output.appendChild( new_element );
+
+		shell.elements['output' + output_nr].appendChild( new_element );
 
 		['response', 'broadcast'].forEach( (category)=>{
 			if (message[category] && message[category].type) {

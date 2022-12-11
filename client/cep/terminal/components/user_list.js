@@ -38,10 +38,6 @@ export const UserList = function (cep, terminal) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.show  = function () { terminal.showApplet ( self ); }; // show
-	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
-	this.close = function () { terminal.closeApplet( self ); }; // close
-
 	this.update = function (users_online, full_name = null) {
 		const user_list  = self.elements.navUsers;
 
@@ -52,7 +48,7 @@ export const UserList = function (cep, terminal) {
 
 if (user_list.querySelectorAll( 'button' ).length == 0) for(let i = 0; i < 1; ++i) {
 const button = document.createElement( 'button' );
-button.className = 'enabled room';
+button.className = 'active room';
 button.innerText = 'Public Room';
 user_list.appendChild( button );
 }
@@ -85,7 +81,7 @@ button.innerText = 'dummyuser';
 list.appendChild( button );
 }
 
-	}; // updateWhoList
+	}; // update
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -94,7 +90,6 @@ list.appendChild( button );
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) console.log( 'LoginMenu.exit' );
-		self.hide();
 		return Promise.resolve();
 
 	}; // exit
@@ -105,7 +100,7 @@ list.appendChild( button );
 
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
 
 		return Promise.resolve();
 

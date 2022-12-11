@@ -20,8 +20,6 @@ const { MIME_TYPES, HTTPS_OPTIONS      } = require( './config.js' );
 const { WSS_OPTIONS, /*TURN_OPTIONS,*/ } = require( './config.js' );
 const { STRINGS                        } = require( '../application/constants.js' );
 const { DEBUG, COLORS                  } = require( '../server/debug.js' );
-const { color_log, dump, format_error  } = require( '../server/debug.js' );
-
 
 const EXIT_MESSAGE = STRINGS.END_OF_LINE;
 
@@ -50,9 +48,9 @@ const Main = function () {
 			+ extra_dashes
 		);
 
-		//if (text.charAt(0) != '/') color_log( '\n' );
-		color_log( color, banner );
-		if (text.charAt(0) == '/') color_log( '\n' );
+		//if (text.charAt(0) != '/') DEBUG.log( '\n' );
+		DEBUG.log( color, banner );
+		if (text.charAt(0) == '/') DEBUG.log( '\n' );
 
 	} // log_header
 
@@ -150,7 +148,7 @@ function parse_json(message) {//...
 			EXTRA_HEADER_DASHES,
 		);
 
-		if (DEBUG.MESSAGE_IN && do_log) color_log( COLORS.RECEIVED, 'Received:', message );
+		if (DEBUG.MESSAGE_IN && do_log) DEBUG.log( COLORS.RECEIVED, 'Received:', message );
 
 		await self.reloader.onMessage( socket, client_address, json_string );
 
@@ -199,7 +197,7 @@ function parse_json(message) {//...
 
 			const after = os.userInfo();
 
-			color_log(
+			DEBUG.log(
 				COLORS.RUNNING_AS,
 				'PRIVILEGES DROPPED:',
 				'User:', COLORS.RUNNING_AS + after.username + COLORS.DEFAULT,
@@ -208,8 +206,8 @@ function parse_json(message) {//...
 			);
 
 		} catch (error) {
-			color_log( COLORS.DEFAULT, error );
-			color_log(
+			DEBUG.log( COLORS.DEFAULT, error );
+			DEBUG.log(
 				COLORS.WSS,
 				'WebSocketServer-drop_privileges:',
 				'Could not drop privileges, terminating program.',
@@ -223,13 +221,13 @@ function parse_json(message) {//...
 // HTTP SERVER ///////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function create_http_server (websocket_server) {
-		color_log( COLORS.WSS, 'WebSocketServer:', 'Creating http server' );
+		DEBUG.log( COLORS.WSS, 'WebSocketServer:', 'Creating http server' );
 
 		const new_http_server = https.createServer( HTTPS_OPTIONS ).listen( HTTPS_OPTIONS.port );
 
 		new_http_server.on( 'error', (error)=>{
 			if (error.code == 'EADDRINUSE') {
-				color_log(
+				DEBUG.log(
 					'WebSocketServer-create_http_server: http_server.onError:'
 					+ ' Port '
 					+ error.port
@@ -253,7 +251,7 @@ function parse_json(message) {//...
 				client_address = client_address.slice( 7 );
 			}
 
-			if (DEBUG.HTTP_UPGRADE) color_log(
+			if (DEBUG.HTTP_UPGRADE) DEBUG.log(
 				COLORS.HTTP,
 				'http_server.onUpgrade:',
 				client_address,
@@ -265,12 +263,14 @@ function parse_json(message) {//...
 					'Welcome on ' + SETTINGS.SERVER_BANNER
 				//: {},] })
 				);
+
 				socket.send(
 					JSON.stringify({
-						update: {
-							type   : 'server/name',
-							name   : SETTINGS.SERVER_NAME,
+						broadcast : {
+							type : 'server/name',
+							name : SETTINGS.SERVER_NAME,
 						},
+						time : Date.now(),
 					}),
 				);
 			});
@@ -282,9 +282,9 @@ function parse_json(message) {//...
 		new_http_server.on( 'request', (request, response)=>{
 
 			function return_http_error (response, code, url) {
-				color_log( COLORS.ERROR, 'http:', 'Client address:', request.socket.remoteAddress );
-				color_log( COLORS.ERROR, 'http:', 'Requested URL:', request.url );
-				color_log( COLORS.ERROR, 'http:', 'Headers:', request.headers , '-'.repeat(77) );
+				DEBUG.log( COLORS.ERROR, 'http:', 'Client address:', request.socket.remoteAddress );
+				DEBUG.log( COLORS.ERROR, 'http:', 'Requested URL:', request.url );
+				DEBUG.log( COLORS.ERROR, 'http:', 'Headers:', request.headers , '-'.repeat(77) );
 
 				response.statusCode = code;
 				response.end(
@@ -297,7 +297,7 @@ function parse_json(message) {//...
 
 
 			//if ( DEBUG.HTTP_GET_ALL || (DEBUG.HTTP_GET_ROOT && (request.url == '/')) ) {
-			//	color_log( COLORS.HTTPS, 'GET', request.url );
+			//	DEBUG.log( COLORS.HTTPS, 'GET', request.url );
 			//}
 
 			if (request.url == '/public_ip') {
@@ -318,7 +318,7 @@ function parse_json(message) {//...
 			}
 
 			if (request_url_clean != request_url_tainted) {
-				color_log( COLORS.ERROR, 'http:', 'Invalid URL: ' + request_url_tainted );
+				DEBUG.log( COLORS.ERROR, 'http:', 'Invalid URL: ' + request_url_tainted );
 				return_http_error( response, 404, request_url_tainted );
 				return;
 			}
@@ -332,28 +332,28 @@ function parse_json(message) {//...
 			;
 
 			if (!fs.existsSync( file_name )) {
-				color_log( COLORS.ERROR, 'http:', 'File not found: ' + file_name );
+				DEBUG.log( COLORS.ERROR, 'http:', 'File not found: ' + file_name );
 				return_http_error( response, 404, file_name );
 				return;
 			}
 
 			fs.stat( file_name, (error)=>{
 				if (error !== null) {
-					color_log( COLORS.ERROR, 'http:', error.code );
+					DEBUG.log( COLORS.ERROR, 'http:', error.code );
 					return_http_error( response, 404, file_name );
 					return;
 				}
 			});
 
 			if (!fs.statSync( file_name ).isFile()) {
-				color_log( COLORS.ERROR, 'http:', 'Not a file ' + file_name );
+				DEBUG.log( COLORS.ERROR, 'http:', 'Not a file ' + file_name );
 				return_http_error( response, 404, file_name );
 				return;
 			}
 
 			fs.readFile( file_name, (error, data)=>{
 				if (error) {
-					color_log( COLORS.ERROR, 'http:', error );
+					DEBUG.log( COLORS.ERROR, 'http:', error );
 					return;
 				} else {
 					const file_extension = path.extname( file_name ).substr( 1 );
@@ -376,7 +376,7 @@ function parse_json(message) {//...
 // WEB SOCKET ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function create_web_socket (callback) {
-		color_log( COLORS.WSS, 'WebSocketServer:', 'Creating web socket' );
+		DEBUG.log( COLORS.WSS, 'WebSocketServer:', 'Creating web socket' );
 
 		const new_server = new WebSocket.Server({ noServer: true });
 
@@ -384,11 +384,11 @@ function parse_json(message) {//...
 			let client_address = null;
 
 			if (DEBUG.HTTP_COOKIES) if (request.headers.cookie) {
-				color_log( COLORS.WSS, 'Cookie:', request.headers.cookie );
+				DEBUG.log( COLORS.WSS, 'Cookie:', request.headers.cookie );
 			}
 
 			if (request.headers['x-forwarded-for']) {
-				color_log( COLORS.WARNING, 'Unexpected header:', 'x-forwarded-for' );
+				DEBUG.log( COLORS.WARNING, 'Unexpected header:', 'x-forwarded-for' );
 				client_address = request.headers['x-forwarded-for'];   //... Not tested
 
 			} else {
@@ -408,7 +408,7 @@ function parse_json(message) {//...
 				callback.onMessage( socket, client_address, message_data );
 			});
 
-			socket.on( 'pong', (...params)=>{
+			socket.on( 'pong', (...params)=>{//...?
 				console.log( 'pong:', ...params );
 			});
 
@@ -417,13 +417,13 @@ function parse_json(message) {//...
 			});
 
 			socket.onerror = function (error) {
-				color_log( COLORS.ERROR, 'WebSocketServer-create_websocket:', error  );
+				DEBUG.log( COLORS.ERROR, 'WebSocketServer-create_websocket:', error  );
 			}
 
 			callback.onConnect( socket, client_address );
 		});
 
-		color_log( COLORS.WSS, 'WebSocketServer:', 'Web socket running on port', HTTPS_OPTIONS.port );
+		DEBUG.log( COLORS.WSS, 'WebSocketServer:', 'Web socket running on port', HTTPS_OPTIONS.port );
 
 		return new_server;
 
@@ -433,7 +433,7 @@ function parse_json(message) {//...
 // ERROR HANDLER /////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	async function global_error_handler (error) {
-		color_log( COLORS.WARNING, STRINGS.GLOBAL_ERROR_HANDLER, error.message );
+		DEBUG.log( COLORS.WARNING, STRINGS.GLOBAL_ERROR_HANDLER, error.message );
 		console.trace();
 		console.log( error );
 
@@ -448,11 +448,11 @@ function parse_json(message) {//...
 				self.reloader.router.protocols.session.broadcast({
 					type    : 'fatal',
 					message : error.message,
-					error   : format_error( error ),
+					error   : DEBUG.formatError( error ),
 				});
 
 			} catch (error) {
-				color_log( COLORS.ERROR, 'FATAL SYSTEM FAILURE:', 'GEH', error );
+				DEBUG.log( COLORS.ERROR, 'FATAL SYSTEM FAILURE:', 'GEH', error );
 			}
 
 			await new Promise( done => setTimeout(done, 1000) );
@@ -473,7 +473,7 @@ function parse_json(message) {//...
 	function install_error_handler() {
 		if (!SETTINGS.INSTALL_GEH) return;
 
-		color_log( COLORS.WSS, 'WebSocketServer:', 'Setting up error handler' );
+		DEBUG.log( COLORS.WSS, 'WebSocketServer:', 'Setting up error handler' );
 
 		process.on( 'uncaughtException'  , global_error_handler );
 		process.on( 'unhandledRejection' , global_error_handler );
@@ -498,7 +498,7 @@ function parse_json(message) {//...
 		console.log( '| ' + COLORS.RESET + COLORS.SHUT_DOWN + 'SHUTTING DOWN' + COLORS.RESET );
 		console.log( "'" + '-'.repeat(78) );
 
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.exit' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'WebSocketServer.exit' );
 
 		if (self.reloader.exit) {
 			const EC = EXIT_CODES;
@@ -525,7 +525,7 @@ function parse_json(message) {//...
 			if (typeof event == 'number') exit_code = event;
 			if (event == 'SIGINT') exit_code = EXIT_CODES.EXIT;
 
-			color_log( COLORS.EXIT, 'EXIT', 'Server terminating with exit code', exit_code );
+			DEBUG.log( COLORS.EXIT, 'EXIT', 'Server terminating with exit code', exit_code );
 
 			process.removeListener( 'uncaughtException'  , global_error_handler );
 			process.removeListener( 'unhandledRejection' , global_error_handler );
@@ -548,7 +548,7 @@ function parse_json(message) {//...
 // INIT //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'WebSocketServer.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'WebSocketServer.init' );
 
 		return new Promise( async (done)=>{
 			console.log( '.' + '-'.repeat(78) );

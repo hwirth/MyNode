@@ -14,12 +14,12 @@ export const SETTINGS = {
 	CSS_FILE_NAME : '/cep/terminal/css/layout.css',
 	CSS_VARS_NAME : '/cep/terminal/css/variables.css',
 
-	CONNECT_ON_START     : location.href.indexOf('connect') >= 0,
 	AUTO_APPEND_TAGS     : true,
 	KEY_BEEP             : true,   // Turn off entirely, overrides PRESET
 	MAIN_VOLUME          : 1.0,    //0..1
 	SAM_ALWAYS_NEW       : !true,   // Reinstantiate SAM on every call, enabling MAIN_VOLUME
 	ANIMATE_TRANSMISSION : true,   // Blink buttons/beam, when websocket data are sent or received
+	INDENT_ERRORS        : 2,      // Adjust indentation in output, 0: no indent, 1: same level, 2 one more level
 
 	KEEP_STATUS_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789 .,;:!?+-="\'*$%&/|\\()[<>]{}ßäöü~#_@€',
 
@@ -43,7 +43,9 @@ export const SETTINGS = {
 export const PRESETS = {
 	FILTER: {
 		PING      : !get( 'ping'      ),
+		CHAT      :  get( 'chat'      ),
 		CEP       : !get( 'cep'       ),
+		ERROR     : !get( 'error'     ),
 		STRING    :  get( 'string'    ),
 		NOTICE    :  get( 'notice'    ),
 		BROADCAST : !get( 'broadcast' ),
@@ -53,9 +55,13 @@ export const PRESETS = {
 	},
 
 	TOGGLE: {
+		LIGHT      : preferred_scheme(),
+		LOGIN      :  get( 'login'      ),
+		SAVE       : !get( 'save'       ),
 		TERMINAL   :  get( 'terminal'   ),
-		STATUS     : !get( 'status'     ),
+		SPLIT      :  get( 'split'      ),
 		FILTER     : !get( 'filter'     ),
+		STATUS     : !get( 'status'     ),
 		ALL_USERS  : !get( 'terminal'   ),
 		SCROLL     : !get( 'scroll'     ),
 		COMPACT    : !get( 'compact'    ),
@@ -74,6 +80,7 @@ export const PRESETS = {
 		SAM: 0.01,
 	},
 };
+// PRESET HELPERS
 function get (search) {
 	const decoded_uri = decodeURIComponent( location.href );
 	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
@@ -84,6 +91,25 @@ function get (search) {
 //... I'd prefer the main system to use &toggles=<comma separated list>, but that doesn't work with JS-free login
 //... <form>s. This is still nice to use when testing and typing the URL in manually, perhaps I'll fix the main program
 }
+function preferred_scheme () {
+	const prefers_light = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
+	const prefers_dark  = window.matchMedia( '(prefers-color-scheme:dark)'  ).matches;
+	const get_light = get( 'light' );
+	const get_dark  = get( 'dark'  );
+	const mode
+	= (get_light    ) ? 'light'
+	: (get_dark     ) ? 'dark'
+	: (prefers_light) ? 'light'
+	: (prefers_dark ) ? 'dark'
+	: 'light'
+	;
+
+	document.documentElement.classList.toggle( 'light', mode );
+	document.documentElement.classList.toggle( 'dark', !mode );
+
+	return (mode == 'light');
+}
+
 
 
 //EOF

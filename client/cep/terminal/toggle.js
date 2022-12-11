@@ -5,8 +5,8 @@
 
 "use strict";
 
-import { DEBUG    } from '../../config.js';
-import { SETTINGS } from '../config.js';
+import { DEBUG    } from '../config.js';
+import { SETTINGS } from './config.js';
 
 
 export function Toggle (cep, terminal, parameters) {
@@ -68,10 +68,10 @@ export function Toggle (cep, terminal, parameters) {
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) console.log( 'Toggle.init' );
-
 		self.name     = parameters.name;
 		self.blink    = parameters.blink    || [];
 		self.enabled  = parameters.preset   || false;
+		self.preset   = parameters.preset;
 		self.shortcut = parameters.shortcut || null;
 
 		if (parameters.button) {

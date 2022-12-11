@@ -7,7 +7,7 @@
 
 import { DEBUG             } from '../../config.js';
 import { SETTINGS, PRESETS } from '../config.js';
-import { Toggle            } from '../gadgets/toggle.js';
+import { Toggle            } from '../toggle.js';
 import { handle_message    } from './handle_message.js'
 import { ShellInput        } from './input.js';
 import { ShellOutput       } from './output.js';
@@ -15,7 +15,7 @@ import { Parsers           } from './parsers.js';
 import { History           } from './history.js';
 
 const PROGRAM_NAME = 'CEP-Shell';
-const PROGRAM_VERSION = '0.5.0α';
+const PROGRAM_VERSION = '0.5.2α';
 
 
 export const CEPShell = function (cep, terminal) {
@@ -32,6 +32,8 @@ export const CEPShell = function (cep, terminal) {
 	this.requestId;
 	this.buttonScripts;
 
+	this.tagData;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
@@ -44,13 +46,15 @@ export const CEPShell = function (cep, terminal) {
 			html     : (`
 				<main class="shell">
 					<output></output>
+					<output></output>
 					<textarea></textarea>
 				</main>
 			`),
 			elements : {
-				main   : 'CONTAINER',
-				output : 'output',
-				input  : 'textarea',
+				main    : 'CONTAINER',
+				output  : 'output',
+				output1 : 'output:nth-of-type(2)',
+				input   : 'textarea',
 			},
 		},{
 			parent   : 'bottomRight',
@@ -123,6 +127,7 @@ export const CEPShell = function (cep, terminal) {
 		const pT   = PRESETS.TOGGLE;
 		const pF   = PRESETS.FILTER;
 		const tO   = self.elements.output;
+		const tM   = self.elements.main;
 		const tT   = terminal.elements.terminal;
 		const bF   = [self.elements.btnEnter, self.elements.btnFilters];
 		const bT   = [self.elements.btnEnter, self.elements.btnToggles];
@@ -133,6 +138,8 @@ export const CEPShell = function (cep, terminal) {
 // Classname  InitialValue          PutClassOn BlinkThese ButtonIn KeyboardAlt+   innerHTML
 ping      : { preset:pF.PING      , target:tO, blink:bF, menu:mF, shortcut:'p',  caption:'Ping'       },
 cep       : { preset:pF.CEP       , target:tO, blink:bF, menu:mF, shortcut:null, caption:'CEP'        },
+error     : { preset:pF.ERROR     , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Error'      },
+chat      : { preset:pF.CHAT      , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Chat'       },
 string    : { preset:pF.STRING    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'String'     },
 notice    : { preset:pF.NOTICE    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Notice'     },
 broadcast : { preset:pF.BROADCAST , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Broadcast'  },
@@ -146,6 +153,7 @@ overflow  : { preset:pT.OVERFLOW  , target:tO, blink:bT, menu:mT, shortcut:'v', 
 separators: { preset:pT.SEPARATORS, target:tO, blink:bT, menu:mT, shortcut:'s',  caption:'Separators' },
 stripes   : { preset:pT.STRIPES   , target:tO, blink:bT, menu:mT, shortcut:'x',  caption:'Stripes'    },
 scroll    : { preset:pT.SCROLL    , target:tO, blink:bT, menu:mT, shortcut:'r',  caption:'AutoScroll' },
+split     : { preset:pT.SPLIT     , target:tM, blink:bT, menu:mT, shortcut:'h',  caption:'Split'      },
 		};
 
 	} // create_toggles_definition
@@ -178,6 +186,9 @@ nStat     : { menu:DEBUG , script:'session\n\tstatus' },
 kroot     : { menu:DEBUG , script:'session\n\tkick\n\t\tusername: root'  },
 kuser     : { menu:DEBUG , script:'session\n\tkick\n\t\tusername: user'  },
 RSS       : { menu:DEBUG , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
+msgOutOn  : { menu:DEBUG , script:'server\n\tdebug\n\t\tMESSAGE_OUT:true'  },
+msgOutOff : { menu:DEBUG , script:'server\n\tdebug\n\t\tMESSAGE_OUT:false' },
+TEST      : { menu:DEBUG , script:'unknown\n\tproto\nserver\n\ttoken' },
 defcon3   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,red' },
 defcon2   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,uv' },
 defcon1   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,green' },
@@ -225,21 +236,8 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 
 	this.taskName      = 'Shell';
 	this.taskMainClass = 'shell';
-
+	this.focusItem;
 	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
-
-	this.show  = function () { terminal.showApplet ( self ); }; // show
-	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
-	this.close = function () { terminal.closeApplet( self ); }; // close
-
-	this.contextMenu = function () {
-		return {
-			show  : { caption:'Show' , action:self.show  },
-			hide  : { caption:'Hide' , action:self.hide  },
-			close : { caption:'Close', action:self.close },
-		};
-
-	}; // contextMenu
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -350,9 +348,11 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		const TE = terminal.applets.loginMenu.elements;
 		const SE = self.elements;
 
+		const output = event.target.closest( 'output' );
+
 		const iframe = event.target.querySelector( 'iframe' )
 		if (iframe) {
-			SE.output.scrollTop = event.target.offsetTop - 15;
+			output.scrollTop = event.target.offsetTop - 15;
 		}
 
 		const closest_pre = event.target.closest( 'pre' );
@@ -378,8 +378,10 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 	function on_output_dblclick (event) {
 		if (event.target.tagName == 'BODY') return terminal.toggles.terminal.toggle();
 
+		const output = event.target.closest( 'output' );
+
 		// Toggle .compact
-		const last_element    = self.elements.output.querySelector( ':scope > :last-child' );
+		const last_element    = output.querySelector( ':scope > :last-child' );
 		const clicked_element = event.target.closest( 'pre' );
 		if (clicked_element === last_element) {
 			// Don't .compact, instead toggle "uncollapse last message"
@@ -506,7 +508,11 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 			self.output.print( 'Sending string: <q>' + message + '</q>', 'string' );
 		} else {
 			const extra_class =  (message.session && message.session.pong) ? ' ping' : '';
-			const html = self.parsers.requestToText( message );
+			const html = (
+				self.parsers.requestToText( message )
+				.replaceAll( '&', '&amp;' )
+				.replaceAll( '<', '&lt;' )
+			);
 			self.output.print( html, 'request' + extra_class );
 		}
 
@@ -533,12 +539,17 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 	this.init = async function () {
 		if (DEBUG.INSTANCES) console.log( 'CEPShell.init' );
 
+		// PLUGIN INIT
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
+		self.focusItem = self.elements.input;
 
+		// OWN PROPERTIES
 		self.requestId = 0;
+		self.tagData   = {};
 
+		// SUB-OBJECTS
 		self.parsers = new Parsers    ( cep, terminal, self );
 		self.output  = new ShellOutput( cep, terminal, self );
 		self.input   = new ShellInput ( cep, terminal, self );
@@ -549,6 +560,8 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 			},
 		});
 
+		// TOGGLES
+		const output_toggles = ['last','compact','overflow','separators','stripes','scroll'];
 		self.toggles = {};
 		Object.entries( create_toggles_definition() ).forEach( ([name, definition])=>{
 			self.toggles[name] = new Toggle( cep, terminal, {
@@ -561,17 +574,26 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 				modifiers : 'alt',
 				action    : ()=>{ self.toggles[name].toggle(); },
 			});
+			if (output_toggles.indexOf(name) >= 0) update_outputs( name );
 		});
 		terminal.events.add( 'toggle', (toggle)=>{
 			const scrollers = ['compact','separators','overflow'];
 			if (scrollers.indexOf(toggle.name) >= 0) {
 				self.output.scrollDown();
 			}
+			const class_name = output_toggles.find( t => t == toggle.name );
+			if (class_name) update_outputs( toggle.name );
 		});
+		function update_outputs (toggle_name) {
+			const toggle = self.toggles[toggle_name];
+			self.elements.output1.classList.toggle( toggle_name, toggle.enabled );
+		}
 
+		// TOGGLE STATES
 		self.updateToggleStates();
 		terminal.events.add( 'toggle', self.updateToggleStates );
 
+		// SCRIPT BUTTONS
 		self.buttonScripts = {};
 		Object.entries( create_scriptbutton_definition() ).forEach( ([name, definition])=>{
 			self.buttonScripts[name] = definition.script;
@@ -601,6 +623,8 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		});
 
 
+		// Events
+
 		// MAIN ELEMENT
 		self.elements.main.addEventListener( 'click', (event)=>{
 			if (event.target === self.elements.main) self.input.focusPrompt();
@@ -610,16 +634,18 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 			event => self.elements.main.addEventListener( event, on_keyboard_event, {passive: false} )
 		);
 		// INPUT
-        	self.elements.input .addEventListener( 'keydown' , on_keydown );
-        	//...self.elements.input .addEventListener( 'keyup'   , on_keyup   );
+        	self.elements.input .addEventListener( 'keydown', on_keydown );
+        	//...self.elements.input .addEventListener( 'keyup'  , on_keyup   );
 
-		// MOUSE
-		self.elements.output.addEventListener( 'click'   , on_output_click    );
-		self.elements.output.addEventListener( 'dblclick', on_output_dblclick );
+		// OUTPUT - MOUSE
+		self.elements.output .addEventListener( 'click'   , on_output_click    );
+		self.elements.output .addEventListener( 'dblclick', on_output_dblclick );
+		self.elements.output1.addEventListener( 'click'   , on_output_click    );
+		self.elements.output1.addEventListener( 'dblclick', on_output_dblclick );
 
 		// BUTTON: "Clear"
-		self.elements.btnClear.addEventListener( 'click'    , self.output.clearInput     );
-		self.elements.btnClear.addEventListener( 'dblclick' , self.output.deleteToMarker );
+		self.elements.btnClear.addEventListener( 'click'   , self.output.clearInput     );
+		self.elements.btnClear.addEventListener( 'dblclick', self.output.deleteToMarker );
 
 		// BUTTON: "Enter"
 		self.elements.btnEnter.addEventListener( 'click', self.input.onEnterClick );
@@ -635,9 +661,9 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		});
 
 		// PROMPT
-		self.elements.input.addEventListener( 'keyup'  , self.input.adjustTextarea );
-		self.elements.input.addEventListener( 'input'  , on_input_change );
-		self.elements.input.addEventListener( 'change' , on_input_change );
+		self.elements.input.addEventListener( 'keyup' , self.input.adjustTextarea );
+		self.elements.input.addEventListener( 'input' , on_input_change           );
+		self.elements.input.addEventListener( 'change', on_input_change           );
 		function on_input_change () {
 			self.input.adjustTextarea();
 			self.output.scrollDown();
@@ -645,21 +671,28 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 
 		// Re-focus prompt
 		let mouse_moved = true;   // Detect actual clicks, not text selection
-		self.elements.output.addEventListener( 'blur',      ()=>mouse_moved = false );
-		self.elements.output.addEventListener( 'mousedown', ()=>mouse_moved = false );
-		self.elements.output.addEventListener( 'mousemove', ()=>mouse_moved = true  );
-		self.elements.output.addEventListener( 'mouseup', (event)=>{
+		self.elements.output .addEventListener( 'blur',      ()=>mouse_moved = false );
+		self.elements.output .addEventListener( 'mousedown', ()=>mouse_moved = false );
+		self.elements.output .addEventListener( 'mousemove', ()=>mouse_moved = true  );
+		self.elements.output .addEventListener( 'mouseup', (event)=>{
+			if (event.button != 0) return;
+			if (!mouse_moved) self.input.focusPrompt();
+		});
+		self.elements.output1.addEventListener( 'blur',      ()=>mouse_moved = false );
+		self.elements.output1.addEventListener( 'mousedown', ()=>mouse_moved = false );
+		self.elements.output1.addEventListener( 'mousemove', ()=>mouse_moved = true  );
+		self.elements.output1.addEventListener( 'mouseup', (event)=>{
 			if (event.button != 0) return;
 			if (!mouse_moved) self.input.focusPrompt();
 		});
 
 		// SNIFF WEBSOCKET TRAFFIC
-		cep.connection.events.add( 'open'   , self.onWsOpen       );
-		cep.connection.events.add( 'close'  , self.onWsClose      );
-		cep.connection.events.add( 'error'  , self.onWsError      );
-		cep.connection.events.add( 'retry'  , self.onWsRetry      );
-		cep.connection.events.add( 'send'   , self.onWsSend       );
-		cep.connection.events.add( 'message', self.onWsMessage    );
+		cep.connection.events.add( 'open'   , self.onWsOpen    );
+		cep.connection.events.add( 'close'  , self.onWsClose   );
+		cep.connection.events.add( 'error'  , self.onWsError   );
+		cep.connection.events.add( 'retry'  , self.onWsRetry   );
+		cep.connection.events.add( 'send'   , self.onWsSend    );
+		cep.connection.events.add( 'message', self.onWsMessage );
 
 		cep.events.add( 'reload/client', self.onCepReload );
 
@@ -678,12 +711,12 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		if (cep.GET.has('username')) login_menu.elements.userName.value = cep.GET.get('username');
 		if (cep.GET.has('nickname')) login_menu.elements.nickName.value = cep.GET.get('nickname');
 		if (cep.GET.has('password')) login_menu.elements.passWord.value = cep.GET.get('password');
-
+	/*
 		if (cep.GET.has('login')) setTimeout( ()=>{
 			login_menu.elements.login.click();
 			self.elements.btnEnter.click();
 		}, 0);
-
+	*/
 		if (!terminal.elements.terminal.classList.contains( 'hidden' )) {
 			setTimeout( self.output.focusPrompt, 100 );
 		}

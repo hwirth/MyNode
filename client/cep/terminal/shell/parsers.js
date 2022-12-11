@@ -5,6 +5,8 @@
 
 "use strict";
 
+import * as Helpers from '../../helpers.js';
+
 
 export const Parsers = function (cep, terminal, shell, BUTTON_SCRIPTS) {
 	const self = this;
@@ -122,10 +124,7 @@ export const Parsers = function (cep, terminal, shell, BUTTON_SCRIPTS) {
 					case 'null'  : value = null;   break;
 				}
 
-				function isNumeric (string) {
-					return !isNaN(parseFloat(string)) && isFinite(string);
-				}
-				if (isNumeric( value )) {
+				if (Helpers.isNumeric( value )) {
 					value = parseFloat(value);
 				}
 

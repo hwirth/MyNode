@@ -12,7 +12,6 @@ const glob      = require( 'glob' );
 
 const { SETTINGS      } = require( './config.js' );
 const { DEBUG, COLORS } = require( './debug.js' );
-const { color_log, format_error } = require( './debug.js' );
 
 
 const EMPTY = {};//...
@@ -37,9 +36,9 @@ module.exports = function AppReloader (callback) {
 		await new Promise( (done)=>{
 
 			const g = glob( SETTINGS.APP_PATH + '/**/*.js', (error, matches)=>{
-				if (error) color_log(
+				if (error) DEBUG.log(
 					COLORS.ERROR,
-					'AppReloader-get_file_times:',
+					'RELOADER-get_file_times:',
 					error,
 				);
 
@@ -57,7 +56,7 @@ module.exports = function AppReloader (callback) {
 
 		await Promise.all( stat_requests );
 
-		if (DEBUG.RELOADER_TIMES) color_log(
+		if (DEBUG.RELOADER_TIMES) DEBUG.log(
 			COLORS.RELOADER,
 			'AppReloader-get_file_times:',
 			'File times:',
@@ -89,7 +88,7 @@ module.exports = function AppReloader (callback) {
 			return (new_time != old_time);
 		});
 
-		if (DEBUG.RELOADER_TIMES) color_log(
+		if (DEBUG.RELOADER_TIMES) DEBUG.log(
 			COLORS.RELOADER,
 			'AppReloader-re_require_modules:',
 			'changed_files:',
@@ -107,7 +106,7 @@ module.exports = function AppReloader (callback) {
 					file_name_report[index] = {};   // Empty: Nicer formatting in DebugConsole
 				};
 
-				if (DEBUG.RELOADER) color_log(
+				if (DEBUG.RELOADER) DEBUG.log(
 					(file_has_changed ? COLORS.REQUIRE : COLORS.UP_TO_DATE),
 					'AppReloader-re_require_modules:',
 					file_name,
@@ -134,7 +133,7 @@ module.exports = function AppReloader (callback) {
 
 		const nr_reloaded_files = Object.keys( file_name_report ).length;
 
-		if (DEBUG.RELOADER) color_log(
+		if (DEBUG.RELOADER) DEBUG.log(
 			COLORS.RELOADER,
 			'AppReloader-reload_modules:',
 			'nr_reloaded_files:',
@@ -158,7 +157,7 @@ module.exports = function AppReloader (callback) {
 		} else {
 			self.fileTimes.current = await get_file_times();
 
-			if (DEBUG.RELOADER_TIMES) color_log(
+			if (DEBUG.RELOADER_TIMES) DEBUG.log(
 				COLORS.RELOADER,
 				'AppReloader-reload_modules:',
 				self.fileTimes.current,
@@ -168,7 +167,7 @@ module.exports = function AppReloader (callback) {
 			// Re-require modules
 			const reload_required = some_modules_updated( socket, client_address );
 
-			if (DEBUG.RELOADER_TIMES) color_log(
+			if (DEBUG.RELOADER_TIMES) DEBUG.log(
 				COLORS.RELOADER,
 				'AppReloader-reload_modules:',
 				'reload_required:',
@@ -184,19 +183,21 @@ module.exports = function AppReloader (callback) {
 
 		// Re-require modules
 
-		function report_error (error, error_name = 'ROUTER ERROR 0') {
+		function report_error (error, error_name = 'RELOADER-reload_modules') {
 			if (!socket) {
-				color_log( COLORS.ERROR, '-'.repeat(59) );
-				color_log( COLORS.ERROR, error_name, 'CANNOT REPORT ERROR: NO SOCKET:', error.message );
-				color_log( COLORS.ERROR, '-'.repeat(59) );
+				DEBUG.log( COLORS.ERROR, '-'.repeat(59) );
+				DEBUG.log( COLORS.ERROR, error_name, '--NO-SOCKET--??', error.message );
+				DEBUG.log( COLORS.ERROR, '-'.repeat(59) );
 				console.log( error );
-				return;
+				//...return;
 			}
 
+			console.log( error );
+
 			const message = {
-				type    : 'error/application',
-				message : error.message,
-				error   : format_error( error ),
+				type    : 'error',
+				source  : 'reloader/report_error',
+				error   : DEBUG.formatError( error ),
 			};
 
 			try {
@@ -207,16 +208,17 @@ module.exports = function AppReloader (callback) {
 					const clients = self.persistent.session.clients;
 					Object.keys( clients ).forEach( (address)=>{
 						const client = clients[address];
-						client.send({ 'FATAL SYSTEM FAILURE': format_error(error) });
+						client.send({ 'FATAL SYSTEM FAILURE': DEBUG.formatError(error) });
 					});
 
 				} catch (error) {
-					color_log( COLORS.ERROR, '-'.repeat(59) );
-					color_log( COLORS.ERROR, error_name,
+					DEBUG.log( COLORS.ERROR, '-'.repeat(59) );
+					DEBUG.log( COLORS.ERROR, error_name,
 						'CANNOT REPORT ERROR: NO CLIENTS:', message );
-					color_log( COLORS.ERROR, '-'.repeat(59) );
-					console.log( error );
+					DEBUG.log( COLORS.ERROR, '-'.repeat(59) );
 				}
+
+				DEBUG.log( COLORS.RELOADER, 'RELOADER-reload_modules:', error );
 			}
 		}
 
@@ -234,11 +236,11 @@ module.exports = function AppReloader (callback) {
 		};
 
 		if (self.router) {
-			if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '-'.repeat(49) + COLORS.STRONG + 'EXIT' );
+			if (DEBUG.INSTANCES) DEBUG.log( COLORS.DEFAULT, '-'.repeat(49) + COLORS.STRONG + 'EXIT' );
 			self.router.exit();
 		}
 
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '-'.repeat(49) + COLORS.STRONG + 'INIT' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.DEFAULT, '-'.repeat(49) + COLORS.STRONG + 'INIT' );
 
 		try {
 			self.router = await new require(
@@ -250,10 +252,10 @@ module.exports = function AppReloader (callback) {
 
 		} catch (error) {
 			invalidate_require_cache();
-			report_error( error, 'ROUTER ERROR 1' );
+			report_error( error, 'RELOADER ERROR 2' );
 		}
 
-		if (DEBUG.INSTANCES) color_log( COLORS.DEFAULT, '-'.repeat(48) + COLORS.STRONG + '/INIT' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.DEFAULT, '-'.repeat(48) + COLORS.STRONG + '/INIT' );
 		if (DEBUG.RELOADER_TIMES) console.timeEnd( '| (re)load time' );
 
 	} // reload_modules
@@ -283,10 +285,10 @@ module.exports = function AppReloader (callback) {
 		//...try {
 			message = JSON.parse( String(json_string) );
 		//...} catch (error) {
-		//...	color_log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
+		//...	DEBUG.log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
 		//...}
 
-		if (DEBUG.RELOADER_MESSAGE) color_log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
+		if (DEBUG.RELOADER_MESSAGE) DEBUG.log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 
 		if (message) {
 			try {
@@ -294,11 +296,16 @@ module.exports = function AppReloader (callback) {
 				await self.router.onMessage( socket, client_address, message );
 
 			} catch (error) {
-				color_log( COLORS.ERROR, 'ERROR:', 'Reloader.onMessage: reload_modules:', error );
+				DEBUG.log(
+					COLORS.ERROR, 'RELOADER.onMessage:',
+					'Reloader.onMessage: reload_modules:',
+					error,
+				);
+
 				self.router.protocols.session.broadcast({
 					type    : 'error',
-					message : error.message,
-					error   : format_error( error ),
+					source  : 'reloader/onMessage',
+					error   : DEBUG.formatError( error ),
 				});
 			}
 		}
@@ -311,7 +318,7 @@ module.exports = function AppReloader (callback) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.exit = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.exit' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'AppReloader.exit' );
 
 		if (self.router) {
 			return self.router.exit().then( ()=>{
@@ -336,7 +343,7 @@ module.exports = function AppReloader (callback) {
 
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) color_log( COLORS.INSTANCES, 'AppReloader.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'AppReloader.init' );
 
 		return new Promise( async (done)=>{
 			await self.reset();

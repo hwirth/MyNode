@@ -58,7 +58,7 @@ export const DomAssist = function (cep) {
 	this.reloadCSS = function (file_name) {
 		return new Promise( (done)=>{
 			//... if (file_name.charAt(0) != '/') file_name = '/' + file_name;
-console.log( 'base', cep.baseDir, file_name );
+
 			if (cep.baseDir && (file_name.slice(0, cep.baseDir.length + 1) == (cep.baseDir + '/'))) {
 				file_name = file_name.slice( cep.baseDir.length + 1 );
 			}
@@ -77,7 +77,7 @@ console.log( 'base', cep.baseDir, file_name );
 			head.appendChild( new_link );
 
 			new_link.addEventListener( 'load', ()=>{
-				if (old_link) head.removeChild( old_link );
+				if (old_link) setTimeout( ()=>head.removeChild(old_link) );
 				done();
 			});
 		});

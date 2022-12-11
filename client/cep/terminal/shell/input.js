@@ -7,6 +7,12 @@
 
 import { SETTINGS } from '../config.js';
 
+// access_variable()
+import { DEBUG    as CEP_DEBUG     } from '../../config.js';
+import { SETTINGS as CEP_SETTINGS  } from '../../config.js';
+import { SETTINGS as TERM_SETTINGS } from '../config.js';
+import { PRESETS  as TERM_PRESETS  } from '../config.js';
+
 
 export const ShellInput = function (cep, terminal, shell) {
 	const self = this;
@@ -18,6 +24,64 @@ export const ShellInput = function (cep, terminal, shell) {
 		'nick'  : 'chat\n\tnick:*',
 		'who'   : 'session\n\twho',
 	};
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// ACCESS VARIABLE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function access_variable (command) {			//...	/get CEP_DEBUG.EVENTS
+		try {
+			const parts = command.split( ' ' );
+			const operation   = parts[0].slice(1);
+			const string_path = parts[1];
+			const value       = parts[2];
+
+			if( (operation == 'get') && (parts.length == 2)
+			||  (operation == 'set') && (parts.length == 3)
+			) {
+				const path = string_path.split('.');
+				const var_name = path.shift();
+				let target = null;
+				switch (var_name) {
+					case 'CEP_DEBUG'    : target = CEP_DEBUG    ; break;
+					case 'CEP_SETTINGS' : target = CEP_SETTINGS ; break;
+					case 'TERM_SETTINGS': target = TERM_SETTINGS; break;
+					case 'TERM_PRESETS' : target = TERM_PRESETS ; break;
+					default: throw new Error( 'Invalid path' );
+				}
+				const result = property( target, path, value );
+				shell.output.print( operation + ' ' + string_path + ' ' + result, 'cep' );
+
+			} else {
+				throw new Error( 'Invalid number of arguments' );
+			}
+		}
+		catch (error) {
+			console.log( error );
+			shell.output.print( error.message, 'error' );
+		}
+
+		return;
+
+		function property (target, path, value) {
+			const set_value = (typeof value != 'undefined');
+			return walk( target, path, 'object' );
+
+			function walk (target, path, traversed) {
+				if (path.length == 0) return target;
+				const key = path[0];
+
+				if (typeof target[key] == 'undefined') {
+					throw new Error( 'Property not found: ' + traversed + '.' + key );
+				}
+
+				if (set_value && (path.length == 1)) return target[key] = value;
+				return walk( target[key], path.slice(1), traversed + '.' + key );
+			}
+		}
+
+	} // access_variable
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -83,6 +147,7 @@ export const ShellInput = function (cep, terminal, shell) {
 				shell.output.scrollDown();
 			} else {
 				shell.output.print( '&nbsp;', 'mark' );
+				shell.output.print( '&nbsp;', 'mark', 1 );
 			}
 			return;
 		}
@@ -130,6 +195,8 @@ export const ShellInput = function (cep, terminal, shell) {
 					cep.connection.disconnect();
 					break;
 				}
+				case 'get'     :  // fall through
+				case 'set'     :  access_variable( command );    break;
 				case 'version' :  shell.output.printVersion();   break;
 				case 'clear'   :  shell.output.clearScreen();    break;
 				case 'help'    :  show_file( '/cep/terminal/txt/help.txt'  , parameter );  break;
@@ -161,7 +228,10 @@ export const ShellInput = function (cep, terminal, shell) {
 
 // SEND REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
 		function send_json (request) {
-			if (SETTINGS.AUTO_APPEND_TAGS) request.tag = ++shell.requestId;
+			if (SETTINGS.AUTO_APPEND_TAGS) {
+				request.tag = ++shell.requestId;
+				shell.tagData[request.tag] = Date.now();
+			}
 			cep.connection.send( request );
 		}
 
@@ -176,12 +246,16 @@ export const ShellInput = function (cep, terminal, shell) {
 			let nr_attempts = 0;
 
 			if (!cep.connection.isConnected()) {
-				//...? shell.output.print( 'Connecting to ' + SETTINGS.WEBSOCKET.URL, 'cep' );
-				try { await cep.connection.connect(); }
-				catch {
-					shell.output.print( 'Could not connect', 'cep error' )
+				await cep.connection.connect().catch( error =>{
+					console.log(
+						'%cERROR:', 'color:red',
+						'ShellInput-remote_command:',
+						error.message,
+						text,
+					);
+					shell.output.print( 'Error: ' + error.message, 'cep error' );
 					return;
-				}
+				});
 			}
 
 			if (cep.connection.isConnected()) {
@@ -189,7 +263,7 @@ export const ShellInput = function (cep, terminal, shell) {
 				send_json( request );
 			} else {
 				shell.output.print( request, 'request' );
-				shell.output.print( 'Not connected', 'cep error' )
+				shell.output.print( 'Auto-connect failed', 'cep error' )
 			}
 
 		} // remote_command

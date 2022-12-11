@@ -73,6 +73,13 @@ export const ClientEndPoint = function (parameters = {}) {
 	}; // toggleTerminal
 
 
+// MODULES ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.install = function (parameters) {
+		if (self.terminal) self.terminal.installModule( parameters );
+
+	}; // install
+
 // HELPERS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.GET = new URLSearchParams( location.search.slice(1) );
@@ -96,16 +103,17 @@ export const ClientEndPoint = function (parameters = {}) {
 					+ file_name
 					+ '</a> was reloaded'
 					;
+
 					self.events.emit( 'reload/css', html );
 					self.dom.reloadCSS( file_name );
-				} else {
-					do_reload |= !(
-						   (file_name.slice(-4) == '.css')
-						|| (file_name.slice(-4) == '.txt')
-						|| (file_name.slice(-4) == 'TODO')
-						|| (file_name.slice(-6) == 'README')
-					);
 				}
+
+				do_reload |= !(
+					   (file_name.slice(-4) == '.css')
+					|| (file_name.slice(-4) == '.txt')
+					|| (file_name.slice(-4) == 'TODO')
+					|| (file_name.slice(-6) == 'README')
+				);
 			});
 			if (do_reload) {
 				if (SETTINGS.RELOAD_ON_UPDATE) {
@@ -116,7 +124,8 @@ export const ClientEndPoint = function (parameters = {}) {
 				}
 			}
 		}
-	}; // onMessage
+
+	}; // onWsMessage
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

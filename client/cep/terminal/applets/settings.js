@@ -83,39 +83,10 @@ export const Settings = function (cep, terminal) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.interface = {
-		taskName  : 'Settings',
-		mainClass : 'settings',
-		events    : {
-			onContextMenu: ()=>{
-				return {
-					show  : { caption:'Show' , action:self.show  },
-					hide  : { caption:'Hide' , action:self.hide  },
-					close : { caption:'Close', action:self.close },
-				};
-			},
-		},
-
-
-	};
-
 	this.taskName      = 'Settings';
 	this.taskMainClass = 'settings';
-
+	this.focusItem;
 	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
-
-	this.show  = function () { terminal.showApplet ( self ); }; // show
-	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
-	this.close = function () { terminal.closeApplet( self ); }; // close
-
-	this.contextMenu = function () {
-		return {
-			show  : { caption:'Show' , action:self.show  },
-			hide  : { caption:'Hide' , action:self.hide  },
-			close : { caption:'Close', action:self.close },
-		};
-
-	}; // contextMenu
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -176,7 +147,8 @@ export const Settings = function (cep, terminal) {
 
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
+		//self.focusItem = self.elements.main;
 
 		self.elements.termSettings.append( ...create_settings(TERM_SETTINGS) );
 		self.elements.termPresets .append( ...create_settings(TERM_PRESETS ) );
@@ -197,6 +169,8 @@ export const Settings = function (cep, terminal) {
 				});
 			}
 		});
+
+
 
 		return Promise.resolve();
 

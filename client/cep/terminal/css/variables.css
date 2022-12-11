@@ -1,4 +1,12 @@
-cep-terminal {
+/*** SPIELWIESE variables.css ***/
+
+:root {
+	Xscroll-behavior:smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
+	color-scheme:light dark;   /* both supported //...SODD */
+}
+
+
+/* GEOMETRY */ cep-terminal {
 	--font-size   : 14px;
 	--line-height : 1rem;
 
@@ -34,11 +42,12 @@ cep-terminal {
 	--button-outline       : none;
 	--button-padding       : 0.5em 1em;
 
+	--output-margin-x   : 0;
+	--output-padding-x  : 0;
 }
 
 
-/* DARK MODE */
-cep-terminal {
+/* BASE, DARK MODE */ cep-terminal {
 	--scrollbar-thumb-color:#08f4;
 	--scrollbar-track-color:#0660;
 
@@ -73,7 +82,7 @@ cep-terminal {
 	--button-enabled-color              : #af4;
 	--button-enabled-background         : #240;
 	--button-special-enabled-background : #240;
-	--button-special-enabled-color      : #fca;
+	--button-special-enabled-color      : #faf;
 
 	--button-enter-color        : var(--button-special-color);
 	--button-enter-background   : var(--button-special-background);
@@ -112,7 +121,7 @@ cep-terminal {
 	--response-color  : #78f;
 	--string-color    : #5c6;
 	--notice-color    : #acf;
-	--broadcast-color : #86f;
+	--broadcast-color : #aaa;
 	--update-color    : #090;
 
 	--offline-color       : #fc0;
@@ -123,6 +132,12 @@ cep-terminal {
 	--online-background   : #157;
 	--authenticated-color : #fff;
 
+	--todo-color           : #aaa;
+	--todo-important-color : #fc0d;
+	--todo-urgent-color    : #fa0;
+	--todo-research-color  : #8cfc;
+	--todo-cancelled-color : #8cfc;
+
 	--transmit-background : #268;
 
 	--separator-color  : #a60;
@@ -130,6 +145,81 @@ cep-terminal {
 }
 
 
+/* LIGHT MODE */ html.light cep-terminal:not(.fancy) { /*
+	--focus-box-shadow : #fff4;
+	--focus-filter : saturate(1.25) brightness(1.2);
+
+	--a-color   : #058;
+	--a-visited : #648;
+	--a-active  : #08f;
+	--a-focus   : #08f;
+	--a-hover   : #08c;
+
+	--terminal-bg   : #fff;
+	--toolbar-bg    : #ccc;
+	--toolbar-color : #666;
+
+	--input-color : #028;
+	--input-bg    : #fff;
+
+	--button-color         : #eee;
+	--button-bg            : #666;
+	--button-enabled-color : #cf8;
+	--button-enabled-bg    : #684;
+	--button-special-color : #fff;
+	--button-special-bg    : #678;
+
+	--button-enter-color : var(--button-special-color);
+	--button-enter-bg    : var(--button-special-bg);
+	--button-close-color : var(--button-special-color);
+	--button-close-bg    : var(--button-special-bg);
+
+	--caret-color    : #f00;
+
+	--stripes-color0 : #0001;
+	--stripes-color1 : var(--terminal-bg);
+
+	--toggle-state-off : #36a;
+	--toggle-state-on  : #48f;
+
+	--chat-color : #478;
+	--cep-color  : #555;
+	--mcp-color  : #f00;
+
+	--warning-color : #c80;
+	--error-color   : #e20;
+	--success-color : #0a0;
+
+	--code-color    : #fcb;
+	--success-color : #060;
+	--warning-color : #fc0;
+	--error-color   : #f00;
+	--true-color    : var(--true-color);
+	--false-color   : var(--error-color);
+	--null-color    : #28a;
+
+	--hover-color     : #000;
+	--text-color      : #210;
+	--request-color   : #a60;
+	--response-color  : #348;
+	--string-color    : #162;
+	--notice-color    : #568;
+	--broadcast-color : #86c;
+	--update-color    : #040;
+
+	--offline-color       : #c80;
+	--offline-bg          : #654;
+	--online-color        : #0af;
+	--online-color-0      : #03b;
+	--online-color-f      : #0af;
+	--online-bg           : #268;
+	--authenticated-color : #fff;
+
+	--transmit-bg : #48a;
+
+	--separator-color  : #a60;
+	--separator-border : dashed 1px var(--separator-color);
+*/ }
 
 
 cep-terminal.fancy {
@@ -165,12 +255,12 @@ cep-terminal.fancy {
 
 	--button-color                      : #fed;
 	--button-background                 : #246d;
-	--button-special-color              : #fed;
+	--Xbutton-special-color              : #fed;
 	--button-special-background         : #534d;
 	--button-enabled-color              : #7f5;
 	--button-enabled-background         : #486800dd;
 	--button-special-enabled-background : var(--button-enabled-background);
-	--button-special-enabled-color      : #fca;
+	--Xbutton-special-enabled-color      : #fca;
 	--button-task-background            : #355d;
 
 	--button-border        : solid 1px #000a;
@@ -206,7 +296,9 @@ cep-terminal.fancy {
 		inset 0 0 2px 2px #0ffa
 	;
 
-	--main-active-box-shadow :
+	--task-active-color      : var(--button-enabled-color);
+	--task-active-background : var(--button-enabled-background);
+	--task-active-box-shadow :
 		0 0 15px 5px #4f84,
 		inset 0 0 2px 2px #0f8c
 	;

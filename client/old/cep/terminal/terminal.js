@@ -469,7 +469,7 @@ export const DebugConsole = function (callback) {
 		self.elements.btnNode.innerText = 'MyNode';
 		self.elements.navWho.innerHTML = '';
 
-		self.elements.terminal.classList.remove( 'connected' );
+		self.elements.terminal.classList.remove( 'connected', 'authenticated' );
 
 	}; // onSocketClose
 
@@ -482,7 +482,7 @@ export const DebugConsole = function (callback) {
 
 		self.elements.btnNode.innerText = 'MyNode';
 
-		self.elements.terminal.classList.remove( 'connected' );
+		self.elements.terminal.classList.remove( 'connected', 'authenticated' );
 
 	}; // onSocketError
 

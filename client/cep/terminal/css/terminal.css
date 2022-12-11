@@ -1,9 +1,14 @@
-/*** spielwiese.css ***/
+/*** SPIELWIESE terminal.css ***/
 
 :root {
 	Xscroll-behavior:smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 	color-scheme:light dark;   /* both supported //...SODD */
 }
+
+
+html.light cep-terminal:not(.fancy) { filter:saturate(3) invert(100%) hue-rotate(180deg); }
+html.dark  cep-terminal:not(.fancy) { filter:none; }
+
 
 /*** FONTS ***/
 cep-terminal {
@@ -335,13 +340,13 @@ cep-terminal button:is(.blinkEnabled,.blinkDisabled) {
 	66% { filter:brightness(var(--b2)) contrast(var(--c1)); }
 }
 /* SPECIAL COLOR */
-cep-terminal button:is(.ssnStat,.clear,.help,.token,.login,.logout,.connect,.disconnect) {
+cep-terminal button:is(.ssnStat,.clear,.help,.token,.login,.logout,.connect,.disconnect,.save) {
 	color: var(--button-special-color);
 	background:var(--button-special-background);
 }
 cep-terminal button.enter   { background:var(--button-enter-background ); color:var(--button-enter-color  ); }
 cep-terminal button.close   { background:var(--button-close-background ); color:var(--button-close-color  ); }
-cep-terminal button.enabled:is(.ssnStat,.clear,.help,.token,.login,.logout,.connect,.disconnect) {
+cep-terminal button.enabled:is(.ssnStat,.clear,.help,.token,.login,.logout,.connect,.disconnect,.save) {
 	background:var(--button-special-enabled-background); color:var(--button-special-enabled-color);
 }
 
@@ -382,9 +387,10 @@ cep-terminal:not(.connected).fancy .toolbar nav.task.enabled > button {
 	background:var(--offline-background); color:var(--offline-color);
 }
 
-cep-terminal.connected.fancy .toolbar .who_list > button.enabled,
-cep-terminal.connected.fancy .toolbar nav.task.enabled > button {
-	box-shadow:var(--main-active-box-shadow); z-index:1;
+cep-terminal.connected.fancy .toolbar .who_list > button.active,
+cep-terminal.connected.fancy .toolbar nav.task.active > button {
+	box-shadow:var(--task-active-box-shadow); z-index:1;
+	color:var(--task-active-color); background:var(--task-active-background);
 }
 
 
@@ -430,6 +436,17 @@ cep-terminal .toolbar .toggle_states * {
 
 cep-terminal main.shell { display:grid; grid-template-rows:auto 1fr; }
 cep-terminal main.shell * { line-height:var(--line-height); }
+
+cep-terminal main.shell.split {
+	display:grid;
+	grid-template-rows:auto 1fr;
+	grid-template-columns:1fr 1fr;
+	grid-template-areas:"tl r" "bl r";
+}
+cep-terminal main.shell.split output:nth-of-type(2) { grid-area:tl; }
+cep-terminal main.shell.split output:nth-of-type(2) { grid-area:r; Xborder-left:solid 1px #4af; }
+cep-terminal main.shell.split textarea { grid-area:bl; }
+cep-terminal main.shell:not(.split) output:nth-of-type(2) { display:none; }
 
 /* OUTPUT */
 cep-terminal .shell output {
@@ -492,7 +509,14 @@ cep-terminal main.shell pre.response  { color:var(--response-color);  }
 cep-terminal main.shell pre.chat      { color:var(--chat-color);      Xfont-weight:bold; }
 cep-terminal main.shell pre.error     { color:var(--error-color);     }
 
+Xcep-terminal main.shell pre.error::after {
+	content:'';
+	position:absolute; top:0; left:var(--output-margin-x); width:5px; height:100%;
+	background:linear-gradient(to right, #0000, var(--error-color) 50%, #0000 100%);
+}
+
 cep-terminal main.shell pre.chat > :first-child::after { content:':'; color:#888; }
+
 
 cep-terminal code      { color:var(--code-color   ); }
 cep-terminal .success  { color:var(--success-color); }
@@ -513,9 +537,19 @@ cep-terminal code.bracketC { color:#ccc; }
 cep-terminal code.curlyC   { color:#bbb; }
 */
 
+cep-terminal main.shell pre .todo { font-weight:bold; color:var(--todo-color); }
+cep-terminal main.shell pre .todo::before { content:'['; color:#888; }
+cep-terminal main.shell pre .todo::after  { content:']'; color:#888; }
+cep-terminal main.shell pre .todo.important { color:var(--todo-important-color); }
+cep-terminal main.shell pre .todo.urgent    { color:var(--todo-urgent-color   ); }
+cep-terminal main.shell pre .todo.research  { color:var(--todo-research-color ); }
+cep-terminal main.shell pre .todo.cancelled { color:var(--todo-cancelled-color); }
+
 cep-terminal .shell pre { display:block; }
 cep-terminal .shell .filter.cep       pre.cep,
 cep-terminal .shell .filter.ping      pre.ping,
+cep-terminal .shell .filter.error     pre.error,
+cep-terminal .shell .filter.chat      pre.chat,
 cep-terminal .shell .filter.string    pre.string,
 cep-terminal .shell .filter.notice    pre.notice,
 cep-terminal .shell .filter.broadcast pre.broadcast,
@@ -590,22 +624,22 @@ cep-terminal .shell iframe {
 
 cep-terminal main { position:relative; }
 cep-terminal main > div.settings {
-	height:100%; width:100%;
-	text-align:center; overflow:scroll; padding:1em 0;
+	height:100%; width:auto;
+	text-align:center; overflow:scroll; Xpadding:1em 0; float:left;
 }
 cep-terminal.fancy main > div.settings { margin-left:50px; }
 cep-terminal main > .settings .settings {
 	display:inline-table; table-layout:fixed;
-	width:100%; margin:1em 0;
+	width:100%; margin:1em 0 0;
 }
 cep-terminal main > .settings .settings label { display:table-row; width:100%; }
 cep-terminal main > .settings .settings label > * { display:table-cell; padding:0.5rem; }
 cep-terminal main > .settings .settings input { text-align:right; width:100%; }
 cep-terminal main > .settings .settings span  { text-align:left; }
 cep-terminal main > .settings .settings span:hover { color:#fff; }
-cep-terminal main > .settings h2 { color:var(--terminal-color); }
+cep-terminal main > .settings h2 { color:var(--terminal-color); margin:1em 0 0; }
 
-cep-terminal.fancy main > .settings {
+Xcep-terminal.fancy main > .settings {
 	--w:calc( 90% - 10vw );
 	--l:calc( (100% - var(--w)) / 2 );
 	--p:100vmin;
@@ -718,18 +752,20 @@ cep-terminal.fancy.bit.no    main::after {
 }
 
 /* FANCY PRE */
-cep-terminal.fancy main.shell :is(textarea, pre) { padding-left:50px; }
-
+Xcep-terminal.fancy main.shell :is(textarea, pre) { padding-left:50px; }
+cep-terminal main.shell pre { padding-left:0.5rem; }
+cep-terminal.fancy main.shell textarea,
+cep-terminal.fancy main.shell output:first-of-type pre { padding-left:50px; }
 
 /* Beam DOTS */
-cep-terminal.fancy .shell pre::before {
+cep-terminal.fancy .shell output:first-of-type pre::before {
 	content:'';
 	position:absolute; left:var(--beam-dots-left); top:0.5rem;
 	width:10px; height:7px; transform:translate(-50%,-50%);
 	outline:solid 1px #fff2; border-radius:100%;
 	background:radial-gradient(ellipse at center, #fff, #fff8 2px, #fff1 5px, #fff0 6px);
 }
-cep-terminal.animate.fancy .shell pre.expand::before {
+cep-terminal.animate.fancy .shell output:first-of-type pre.expand::before {
 	animation: MARKER_GLOW 3s ease-in-out infinite;
 }
 @keyframes MARKER_GLOW {
@@ -834,6 +870,7 @@ cep-terminal.fancy.rainbowflash { filter:hue-rotate(360deg); }
 cep-terminal.fancy.green    { filter:hue-rotate(-80deg); }
 cep-terminal.fancy.red      { filter:hue-rotate(180deg) brightness(1.25) contrast(1.5) saturate(2); }
 cep-terminal.fancy.uv       { filter:hue-rotate(30deg); }
+cep-terminal.fancy.uv2      { filter:hue-rotate(30deg) brightness(1.5); }
 cep-terminal.fancy.pink     { filter:hue-rotate(90deg); }
 cep-terminal.fancy.contrast { filter:contrast(2) brightness(1.5); }
 cep-terminal.fancy.white    { filter:blur(3px) saturate(10) grayscale(1) brightness(1.25) contrast(1.25); }

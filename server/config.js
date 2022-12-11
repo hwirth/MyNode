@@ -54,7 +54,7 @@ const SETTINGS = {
         |___/
 ` //... Workaround for Geany bug: `
 
-	) + ' '.repeat(37 - server_name.length) + server_name + '.',
+	) + ' '.repeat(37 - server_name.length) + server_name,
 
 	DEV_SERVER  : DEV_SERVER,
 	INSTALL_GEH : true,   // Global error and unhandled rejection handler
@@ -74,26 +74,26 @@ const SETTINGS = {
 		TIMEOUT  : 5*1000,     // How long the client has to send a pong
 	},
 
-	ROUTER_ALWAYS_RELOAD : false,
+	ROUTER_ALWAYS_RELOAD : false,//...! Verify this works
 
 	LOG: {
 		FILE_NAME     : config_file.LOG_FILE_NAME,                // File name for log output
-		TO_CONSOLE    : (config_file.LOG_TO_CONSOLE == 'true'),   // Whether color_log() outputs to STDOUT
-		TO_FILE       : (config_file.LOG_TO_FILE == 'true'),      // Whether color_log() outputs to file
+		TO_CONSOLE    : (config_file.LOG_TO_CONSOLE == 'true'),   // Whether DEBUG.log() outputs to STDOUT
+		TO_FILE       : (config_file.LOG_TO_FILE == 'true'),      // Whether DEBUG.log() outputs to file
 		MAX_FILE_SIZE : ((true) ? 1000*1000 : null),              // After write, file size will be adjusted
 		MAX_DEPTH     : ((DEV_SERVER) ? 9 : 3),                   // null or int, objects log detail
-		PING_PONG     : false,                                    // color_log  hides ping messages
 	},
 
 	SERVER: {
 		RUN_AS_USER   : config_file.RUN_AS_USER,
 		RUN_AS_GROUP  : config_file.RUN_AS_GROUP,
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
+		VERBOSITY     : 1,
 	},
 
 	// Upper case chars are also accepted
 	ALLOWED_URI_CHARS  : 'abcdefghijklmnopqrstuvwxyz0123456789_.,?&%=-+/:[]',   // http server white list
-	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789_[]()@-/äöüß',   // Chat name white list
+	ALLOWED_NAME_CHARS : 'abcdefghijklmnopqrstuvwxyz0123456789_[]()@-/äöüß',    // Chat name white list
 
 	TIMEOUT: {
 		SOCKET_CLOSE  : 300,
@@ -103,19 +103,24 @@ const SETTINGS = {
 
 	BROADCAST_FILE_CHANGE_FOLDERS: [
 		'server',
-		'application',
-		'application/chat',
-		'application/rss',
+		//...'application',        //... Handled by reloader
+		//...'application/chat',
+		//...'application/rss',
 		'client',
 		'client/cep',
 		'client/cep/terminal',
+		'client/cep/terminal/css',
 		'client/cep/terminal/applets',
-		'client/cep/terminal/gadgets',
+		'client/cep/terminal/components',
 		'client/cep/terminal/shell',
 		'client/cep/terminal/editor',
 		'client/cep/terminal/txt',
 		'client/docs',
 	],
+
+	RSS: {
+		MIN_INTERVAL : 1000,
+	},
 
 }; // SETTINGS
 

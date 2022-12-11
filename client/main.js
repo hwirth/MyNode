@@ -11,6 +11,10 @@ import { log_event      } from './cep/config.js';
 const PROGRAM_NAME = 'Chat';
 const PROGRAM_VERSION = '0.0.1α';
 
+const SETTINGS = {
+	CONNECT_ON_START : true,
+};
+
 const DEBUG = {
 	INSTANCES : false,
 	EVENTS    : false,
@@ -418,7 +422,7 @@ const Application = function () {
 			}
 		});
 
-		self.cep.connect();
+		if (SETTINGS.CONNECT_ON_START) self.cep.connect();
 
 		return Promise.resolve();
 
@@ -435,11 +439,13 @@ const Application = function () {
 // PROGRAM ENTRY POINT
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-addEventListener( 'load', async ()=>{
+addEventListener( 'load', on_load );
+async function on_load () {
 	load_status( 'Initializing...' );
 	await new Application();
 	document.querySelector( 'html' ).classList.remove('init');
-});
+	removeEventListener( 'load', on_load );
+}
 
 
 //EOF

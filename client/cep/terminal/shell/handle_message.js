@@ -1,4 +1,4 @@
-// hadnle_message.js
+// handle_message.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -8,94 +8,34 @@
 import { SETTINGS } from '../config.js';
 
 
-export function handle_message (cep, terminal, shell, message) {
-	//...if (!message.update || !message.update.ping) terminal.animatePing( /*transmit*/true );
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HELPERS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	// See  WebSocketClient.send()
-	try   { message = JSON.parse( event.data ); }
-	catch { /* Assume string */ }
+function format_error (string_error, extra_tabs = 0) {
+	return string_error.split('\n').map( indent ).join('\n');
 
-	process_who( message );
-
-	const root_key = Object.keys( message )[0];
-	switch (root_key) {
-		case 'update': {
-			switch (message.update.type) {
-				case 'chat/say'     :  return update_chat_say();
-				case 'chat/html'    :  update_chat_html();    break;
-				case 'server/name'  :  return update_server_name();
-				case 'session/ping' :  return print_message( 'ping' );
-			}
-			return shell.output.print( message, 'update error' );
-		}
-		case 'broadcast': {
-			let type = message.broadcast.type;
-			if (type.slice(0, 5) == 'error') type = 'error';
-			switch (type) {
-				case 'rss'                :  broadcast_rss();    break;
-				case 'error'              :  broadcast_error();  break;
-				case 'reload/server'      : // fall through
-				case 'reload/client'      : // fall through
-				case 'chat/nick'          : // fall through
-				case 'session/connect'    : // fall through
-				case 'session/login'      : // fall through
-				case 'session/logout'     : // fall through
-				case 'session/disconnect' : break;
-			}
-			break;
-		}
-		case 'response': {
-			switch (message.response.command) {
-				case 'session.login'  :  response_session_login();   break;
-				case 'session.logout' :  response_session_logout();  break;
-				case 'session.who'    :  response_session_who();     break;
-				case 'chat.nick'      :  response_chat_nick();       break;
-			}
-
-			break;
-		}
+	function indent (line, index) {
+		if ((extra_tabs === null) || (index == 0)) return line.charAt(0) == '\t' ? line.slice(1) : line;
+		const indent = '\t'.repeat( SETTINGS.INDENT_ERRORS + extra_tabs );
+		return indent + line.trim();
 	}
 
-	return print_message();
+} // format_error
 
 
-// HELPERS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function print_message (extra_class = '') {
-		let class_name = 'response';
-		if (extra_class) extra_class = ' ' + extra_class;
-
-		if      (typeof message == 'string')              class_name = 'string expand'
-		else if (typeof message.cep       != 'undefined') class_name = 'cep expand'
-		else if (typeof message.notice    != 'undefined') class_name = 'notice'
-		else if (typeof message.broadcast != 'undefined') class_name = 'broadcast'
-		else if (typeof message.update    != 'undefined') class_name = 'update'
-		;
-
-		shell.output.print( message, class_name + extra_class );
-
-	} // print_message
-
-
-	function process_who (message) {
-		if (message.who) return update( message.who );
-
-		Object.values( message ).forEach( (entry)=>{
-			if (entry.who) update( entry.who );
-			Object.entries( entry ).forEach( (sub_entry)=>{
-				if (sub_entry.who) update( sub_entry.who );
-			});
-		});
-
-		function update (data) {
-			terminal.applets.userList.update( data );
-		}
-
-	} // process_who
+//{'🡇': message}
+// ⬁ ⬀ ⬂ ⬃ // ⬉ ⬈ ⬊ ⬋
+// ⮜ ⮞ ⮝ ⮟ // ⮘ ⮚ ⮙ ⮛
+// ◄ ► ◅ ▻ ▼▲  ⯇ ⯈ ⯅ ⯆  △▽
+// 🠴 🠶 🠵 🠷
+// 🢘 🢚 🢙 🢛
+// https://de.wikipedia.org/wiki/Unicodeblock_Geometrische_Formen ◻◼◎○◊◉◈◇◆▱▰▣■□
 
 
 // COLOR FROM NAME ///////////////////////////////////////////////////////////////////////////////////////////////119:/
 
+function color_from_name (name) {
 	function hue_to_rgb (p, q, t) {
 		if (t < 0) t += 1;
 		if (t > 1) t -= 1;
@@ -133,52 +73,137 @@ export function handle_message (cep, terminal, shell, message) {
 	} // hsl_to_html_color
 
 
-	function color_from_name (name) {
-		if (!name) return '#fff';
+	if (!name) return '#fff';
 
-		const sum = name.split('').reduce( (sum, char) => (sum + char.charCodeAt(0)), 0 );
-		const nr_colors = 16;
-		const color = hsl_to_html_color( ((sum * 13) % nr_colors) / nr_colors, 0.8, 0.7 );
-		return color;
+	const sum = name.split('').reduce( (sum, char) => (sum + char.charCodeAt(0)), 0 );
+	const nr_colors = 16;
+	const color = hsl_to_html_color( ((sum * 13) % nr_colors) / nr_colors, 0.8, 0.7 );
+	return color;
 
-		function rotl (byte, amount = 1) {
-			byte = byte << amount;
-			const overflow = byte >> 8;
-			return byte & 0xFF & overflow;
+	function rotl (byte, amount = 1) {
+		byte = byte << amount;
+		const overflow = byte >> 8;
+		return byte & 0xFF & overflow;
+	}
+
+} // color_from_name
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// HANDLE MESSAGE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+export function handle_message (cep, terminal, shell, message) {
+	const secondary_output = shell.toggles.split.enabled;
+	//...if (!message.update || !message.update.ping) terminal.animatePing( /*transmit*/true );
+
+	// See  WebSocketClient.send()
+	try   { message = JSON.parse( event.data ); }
+	catch { /* Assume string */ }
+
+	function print_message (output_nr) {
+		let class_name = 'error';
+		if (message.broadcast) {
+			class_name = 'broadcast';
+			if (secondary_output) output_nr = 1;
 		}
+		if (message.response) class_name = 'response';
+		shell.output.print( message, class_name, output_nr );
+	}
 
-	} // color_from_name
+	if (typeof message == 'string') return shell.output.print( message, 'string expand' );
+	if (message.who) terminal.applets.userList.update( message.who );
 
-
-// UPDATE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function update_server_name () {
-		terminal.applets.loginMenu.elements.btnNode.innerText = message.update.name;
+	if (message.response ) {
+		process_response();
 		print_message();
+	}
+	else if (message.broadcast) {
+		process_broadcast();
+		print_message();
+	}
+	else {
+		console.log( 'handle_message(): Unidentified message:', JSON.stringify(message, null, '\t') );
+		print_message( secondary_output ? 1 : '' );
+	}
+
+	return;
+
+
+// BROADCAST /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function process_broadcast () {
+		const broadcast = (message.broadcast instanceof Array) ? message.broadcast : [message.broadcast];
+		broadcast.forEach( entry =>{
+			if (entry.error) entry.error = format_error( entry.error );
+			if (!entry.type) return console.log( 'handle_message(): Broadcast without type:', entry );
+
+			switch (entry.type) {
+				// Other types are broadcast:
+				case 'error'              : broadcast_error      ( entry );  break;
+				case 'session/ping'       : print_message( entry, 'ping' );  break;
+				case 'session/connect'    : break;
+				case 'session/disconnect' : break;
+				case 'session/login'      : break;
+				case 'session/logout'     : break;
+				case 'server/name'        : broadcast_server_name( entry );  break;
+				case 'server/reset'       : break;
+				case 'chat/nick'          : break;
+				case 'chat/say'           : broadcast_chat_say   ( entry );  break;
+				case 'chat/html'          : broadcast_chat_html  ( entry );  break;
+				case 'rss/news'           : broadcast_rss_news   ( entry );  break;
+				default: {
+					console.log( 'handle_message()-process_broadcast(): Unknown broadcast type' );
+				}
+			}
+		});
+
+	} // process_broadcast
+
+
+	function broadcast_error (broadcast) {
+		const text    = format_error( broadcast.error, null );
+		const parts   = text.split( ':' );
+		const error   = parts.shift();
+		const message = parts.join( ':' ).replaceAll( '\n', '<br>' );
+		const html = '<span class="error">' + error + '</span>: ' + message.trim();
+		shell.output.print({ html: html });
+
+		terminal.applets.status.show(
+			'<span><span class="warning">Warning</span>: '
+			+ broadcast.error.split('\n')[0]
+			+ '</span>'
+			,
+			/*clear*/true,
+		);
+
+	} // broadcast_error
+
+
+	function broadcast_server_name (broadcast) {
+		terminal.applets.loginMenu.elements.btnNode.innerText = broadcast.name;
 	}
 
 
-	function update_chat_say () {
-		print_message();
-		const name = (message.update.nickName || message.update.userName);
+	function broadcast_chat_say (broadcast) {
+		const name = (broadcast.nickName || broadcast.userName);
 		const sender
 		= '<span style="color:' + color_from_name(name) + '">'
 		+ name
 		+ '</span>'
 		;
-		const html = sender + '<span> ' + message.update.chat + ' </span>';
+		const html = sender + '<span> ' + broadcast.message + ' </span>';
 		shell.output.print( {html: html}, 'chat' );
 	}
 
-	function update_chat_html () {
-		shell.output.print({ html: message.update.html });
+
+	function broadcast_chat_html (broadcast) {
+		shell.output.print({ html: broadcast.html }, 'html');
 	}
 
 
-// BROADCAST /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function broadcast_rss () {
-		Object.values( message.broadcast.items ).forEach( (entry, index)=>{
+	function broadcast_rss_news (broadcast) {
+		Object.values( broadcast.items ).forEach( (entry, index)=>{
 			const anchor = (
 				'<a href="'
 				+ entry.link
@@ -193,52 +218,82 @@ export function handle_message (cep, terminal, shell, message) {
 	}
 
 
-	function broadcast_error () {
-		terminal.applets.status.show(
-			'<span><span class="warning">Warning</span>: '
-			+ message.broadcast.error
-			+ '</span>'
-			,
-			/*clear*/true,
-		);
-	}
-
-
 // RESPONSE //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function response_session_login () {
-		if (message.response.success) {
+	function process_response () {
+		const is_array = message.response instanceof Array;
+
+		// Handle all responses
+		if (is_array) {
+			message.response.forEach( handle_response );
+		} else {
+			handle_response( message.response );     //...	.chat.say:test...server.token
+		}
+
+		// Format times
+		if (message.tag && shell.tagData[message.tag]) {
+			message.time.push( Date.now() - shell.tagData[message.tag] );
+			shell.tagData[message.tag] = message;   //...! Display list on screen
+		}
+
+		return true;
+
+		function handle_response (response) {
+			if (!response) return;   //... Server error
+
+			if (response.who) terminal.applets.userList.update( response.who );
+
+			if (response.error) response.error = format_error( response.error, 1 );
+			//...if (!response.response && !response.success) return;   //... Server error
+
+			switch (response.command) {
+				case 'session.login'  :  response_session_login( response );  break;
+case 'chat/nick'      :  response_chat_nick    ( response );  break;
+case 'session/status' :  break;
+			}
+		}
+
+	} // process_response
+
+
+	function response_session_login (response) {
+		if (response.success) {
 			terminal.elements.terminal.classList.add( 'authenticated' );
 			terminal.applets.mainMenu.elements.btnCEP.innerText
-			= message.response.result.login.nickName || message.response.result.login.userName;
+			= response.result.login.userName
+			+ (response.result.login.nickName ? ':'+response.result.login.nickName : '')
+			;
 		}
 	}
 
 
-	function response_session_logout () {
-		terminal.elements.terminal.classList.remove( 'authenticated' );
-		terminal.applets.mainMenu.elements.btnCEP.innerText = 'Connected';
-		if (message.response.success) terminal.updateWhoList( null ); //{dummy:'Logged out'} );
+	function response_session_logout (response) {
+		if (response.success) {
+			terminal.elements.terminal.classList.remove( 'authenticated' );
+			terminal.applets.mainMenu.elements.btnCEP.innerText = 'Connected';
+		}
 	}
 
+
+	function response_chat_nick (broadcast) {
+		if (response.success) {
+			const parts = terminal.applets.mainMenu.elements.btnCEP.innerText.split(':');
+			const new_name = response.result.userName + ':' + response.result.nickName;
+			terminal.applets.mainMenu.elements.btnCEP.innerText = new_name;
+		} else {
+			shell.output.print( 'Nick change failed: ' + response.result, 'cep error' );
+		}
+	}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function response_session_who () {
 		if (message.response.success) terminal.applets.userList.update( message.response.result );
 	}
 
 
-	function response_chat_nick () {
-		if (message.response.success) {
-			const parts = terminal.applets.mainMenu.elements.btnCEP.innerText.split(':');
-			const new_name = message.response.result.userName + ':' + message.response.result.nickName;
-			terminal.applets.mainMenu.elements.btnCEP.innerText = new_name;
-		} else {
-			shell.output.print( 'Nick change failed: ' + message.response.result, 'cep error' );
-		}
-	}
-
-
-} // handle_message
+} // new_protocol
 
 
 //EOF

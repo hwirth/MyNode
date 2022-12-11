@@ -64,10 +64,6 @@ export const LoginMenu = function (cep, terminal) {
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.show  = function () { terminal.showApplet ( self ); }; // show
-	this.hide  = function () { terminal.hideApplet ( self ); }; // hide
-	this.close = function () { terminal.closeApplet( self ); }; // close
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
@@ -75,7 +71,6 @@ export const LoginMenu = function (cep, terminal) {
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) console.log( 'LoginMenu.exit' );
-		self.hide();
 		return Promise.resolve();
 
 	}; // exit
@@ -86,7 +81,7 @@ export const LoginMenu = function (cep, terminal) {
 
 		self.containers = [];
 		self.elements = {};
-		terminal.createGadgets( self, RESSOURCE );   // Populates self.containers and self.elements
+		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
 
 		cep.dom.disableFormSubmit( self.elements.menuLogin );
 

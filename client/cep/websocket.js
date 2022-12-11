@@ -24,11 +24,12 @@ export const AutoWebSocket = function (parameters = {}) {
 
 	this.webSocket;
 
-	this.getCredentials;   // Callback returning a Promise while displaying a dialog
+	this.getCredentials;    // Callback returning a Promise while displaying a dialog
 
-	this.eventListeners;   // Dict of arrays of registered event handlers
-	this.webSocketURL;     // Set at creation time
-	this.autoReconnect;    // Clear this flag to stop the reconnect loop
+	this.eventListeners;    // Dict of arrays of registered event handlers
+	this.webSocketURL;      // Set at creation time
+	this.autoReconnect;     // Clear this flag to stop the reconnect loop
+	this.sentCredentials;   // Wether we sent the JSON after the socket opened
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -54,7 +55,15 @@ export const AutoWebSocket = function (parameters = {}) {
 		}
 
 		if (self.isConnecting) {
-			throw new Error( 'ClientEndPoint.connect: Already connecting' );
+			//throw new Error( 'ClientEndPoint.connect: Already connecting' );
+			return new Promise( (resolve, reject) =>{
+				self.events.add( 'login', resolve );
+				setTimeout( ()=>{
+					console.log( 'WAITING FOR OPEN TIMED OUT' );
+					self.events.remove( 'login', resolve );
+					reject( 'AutoWebSocket.connect(): Connection timed out' );
+				}, 1000);
+			});
 		}
 
 		self.isConnecting = true;
@@ -137,6 +146,7 @@ export const AutoWebSocket = function (parameters = {}) {
 			if (!SETTINGS.WEBSOCKET.HIDE_PING) self.events.emit( 'ping', message.update.pong );
 			self.send( {session:{pong:message.update.pong}} );
 		} else {
+//...console.log( 'emitting' );
 			self.events.emit( 'message', message );
 		}
 
@@ -211,7 +221,7 @@ export const AutoWebSocket = function (parameters = {}) {
 			//...document.cookie = 'username=' + parameters.username + '; path=/';
 			//...document.cookie = 'password=' + parameters.password + '; path=/';
 
-			let timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_TIMOUT );
+			let timeout = null; //...setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_TIMOUT );
 			self.webSocket = null;
 			try {
 				self.webSocket = new WebSocket( self.webSocketURL );
@@ -229,27 +239,42 @@ export const AutoWebSocket = function (parameters = {}) {
 				self.webSocket.addEventListener( 'message', on_message );
 			}
 
+
 			function on_open (event) {
 				clearTimeout( timeout );
 				self.events.emit( 'open', event );
-				if (credentials) on_send( credentials );
+				if (credentials) {
+					self.sentCredentials = true;
+					on_send( credentials );
+				}
 				attempt_nr = 0;
 console.log('OPEN isConnecting false');
 self.isConnecting = false;//...? Why here, should happen in resolve!?
 				resolve();
 			}
 			function on_close (event) {
+				self.sentCredentials = false;
 				self.events.emit( 'close', event );
-				if (!timeout) timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+	self.webSocket = null;
+				if (!timeout) {
+					clearTimeout( timeout );
+					timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+				}
 			}
 			function on_error (event) {
+				self.sentCredentials = false;
 				self.events.emit( 'error', event );
-				if (!timeout) timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+	self.webSocket = null;
+				if (!timeout) {
+					clearTimeout( timeout );
+					timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+				}
 			}
 			function retry () {
 				clearTimeout( timeout );
 				timeout = null;
 				self.webSocket = null;
+				self.sentCredentials = false;
 				const max_attempts = (attempt_nr >= SETTINGS.WEBSOCKET.MAX_RETRIES);
 
 				if (self.autoReconnect && !max_attempts) {
@@ -280,9 +305,10 @@ self.isConnecting = false;//...? Why here, should happen in resolve!?
 	this.init = async function () {
 		if (DEBUG.INSTANCES) console.log( 'AutoWebSocket.init' );
 
-		self.webSocket     = null;
-		self.webSocketURL  = parameters.webSocketURL;
-		self.autoReconnect = parameters.autoReconnect;
+		self.webSocket       = null;
+		self.webSocketURL    = parameters.webSocketURL;
+		self.autoReconnect   = parameters.autoReconnect;
+		self.sentCredentials = false;
 
 		if (!self.webSocketURL) throw new Error( 'ClientEndPoint.init: WebSocket URL undefined' );
 		//...! Check for valid URL

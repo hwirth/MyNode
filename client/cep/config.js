@@ -18,7 +18,7 @@ export const DEBUG = {
 };
 
 export const SETTINGS = {
-	CONNECT_ON_START : location.href.indexOf('connect') >= 0,
+	CONNECT_ON_START : false,//...location.href.indexOf('connect') >= 0,
 	RELOAD_ON_UPDATE : true,
 
 	WEBSOCKET: {
@@ -32,7 +32,7 @@ export const SETTINGS = {
 };
 
 
-export function log_event (caption, data) {
+export function log_event (caption, data) {//...??
 	if (!DEBUG.WEBSOCKET.LOG_EVENTS) return;
 	console.groupCollapsed( caption );
 	console.log( data );
