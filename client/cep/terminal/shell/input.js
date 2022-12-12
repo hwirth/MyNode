@@ -165,9 +165,7 @@ export const ShellInput = function (cep, terminal, shell) {
 			//...? return;
 		}
 
-		if (!perform_local( text )) {
-			await remote_command( text );
-		}
+		if (!perform_local( text )) await remote_command( text );
 
 		shell.history.add( text );
 		shell.elements.input.value = '';
@@ -246,6 +244,7 @@ export const ShellInput = function (cep, terminal, shell) {
 			let nr_attempts = 0;
 
 			if (!cep.connection.isConnected()) {
+		/*
 				await cep.connection.connect().catch( error =>{
 					console.log(
 						'%cERROR:', 'color:red',
@@ -256,6 +255,7 @@ export const ShellInput = function (cep, terminal, shell) {
 					shell.output.print( 'Error: ' + error.message, 'cep error' );
 					return;
 				});
+		*/
 			}
 
 			if (cep.connection.isConnected()) {

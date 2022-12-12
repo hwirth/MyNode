@@ -80,7 +80,7 @@ module.exports = function AppReloader (callback) {
 
 
 	function some_modules_updated (socket, client_address) {
-		const file_name_report = {};   // Response telling user which files were updated
+		const file_name_report = [];   // Response telling user which files were updated
 
 		const changed_files = Object.keys( self.fileTimes.current ).filter( (file_name)=>{
 			const new_time = self.fileTimes.current[file_name];
@@ -102,8 +102,7 @@ module.exports = function AppReloader (callback) {
 
 				const file_has_changed = (changed_files.indexOf( file_name ) >= 0);
 				if (file_has_changed) {
-					const index = file_name.replace( '../', '' );
-					file_name_report[index] = {};   // Empty: Nicer formatting in DebugConsole
+					file_name_report.push( file_name.replace( '../', '' ) );
 				};
 
 				if (DEBUG.RELOADER) DEBUG.log(
@@ -124,14 +123,15 @@ module.exports = function AppReloader (callback) {
 			});
 		}
 
-		if (socket && Object.keys( file_name_report ).length) {
+		if (socket && file_name_report.length) {
 			self.router.protocols.session.broadcast({
 				type   : 'reload/server',
-				reload : file_name_report,
+				source : 'some_modules_updated',
+				reload : (file_name_report.length == 1) ? file_name_report[0] : file_name_report,
 			});
 		}
 
-		const nr_reloaded_files = Object.keys( file_name_report ).length;
+		const nr_reloaded_files = file_name_report.length;
 
 		if (DEBUG.RELOADER) DEBUG.log(
 			COLORS.RELOADER,
@@ -229,9 +229,12 @@ module.exports = function AppReloader (callback) {
 			url        : SETTINGS.MAIN_MODULE,
 			persistent : self.persistent,
 			callbacks  : {
-				triggerExit : callback.triggerExit,
-				broadcast   : (...params)=>{ self.router.protocols.session.broadcast(...params); },
-				reset       : self.reset,
+				triggerExit       : callback.triggerExit,
+				getServerInstance : callback.getServerInstance,
+				broadcast         : (...params)=>{
+					self.router.protocols.session.broadcast(...params);
+				},
+				reset             : self.reset,
 			},
 		};
 
@@ -336,19 +339,15 @@ module.exports = function AppReloader (callback) {
 	this.reset = async function () {
 		self.persistent = {};
 		self.fileTimes = { previous: {}, current: {} };
-
+		invalidate_require_cache();
 		await reload_modules();
 
 	}; // reset
 
 
-	this.init = function () {
+	this.init = async function () {
 		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'AppReloader.init' );
-
-		return new Promise( async (done)=>{
-			await self.reset();
-			done();
-		});
+		await self.reset();
 
 	}; // init
 

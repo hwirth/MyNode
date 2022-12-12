@@ -222,7 +222,12 @@ export const AutoWebSocket = function (parameters = {}) {
 			//...document.cookie = 'password=' + parameters.password + '; path=/';
 
 			let timeout = null; //...setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_TIMOUT );
-			self.webSocket = null;
+			if (self.webSocket) {
+console.log( 'DELETING OLD SOCKET' );
+				self.webSocket.close();
+				self.webSocket = null;
+			}
+
 			try {
 				self.webSocket = new WebSocket( self.webSocketURL );
 			}

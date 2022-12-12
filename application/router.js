@@ -19,7 +19,8 @@ const MetaData        = require( './meta.js'   );
 module.exports.Router = function (persistent, callback) {
 	const self = this;
 
-	this.protocols;
+	this.protocols;   // Services that can be queried
+	this.meta;        // Collected information after instantiating the protocols
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -159,13 +160,8 @@ handled_commands.push( combined_name );
 					try {
 						answer = await request_handler(
 							client,
-							request_id,
 							request_arguments,
-
-						).catch( (error)=>{
-							send_error( error, 3 );
-							answer = {error : error};
-						});
+						);
 
 					} catch (error) {
 						send_error( error, 4 );
@@ -178,7 +174,6 @@ handled_commands.push( combined_name );
 					try {
 						answer = request_handler(
 							client,
-							request_id,
 							request_arguments,
 						);
 
@@ -337,6 +332,7 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 // COMPILE ANSWERS AND SEND //////////////////////////////////////////////////////////////////////////////////////119:/
 
 		// REPLY
+
 		const time_r0 = Number( hrtime.bigint() - nano_t0 ) / 1000/1000;
 		const time_r1 =[
 			date_t0,
@@ -344,12 +340,13 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 		];
 		const time_r2 = (SETTINGS.MESSAGE_TIMESTAMPS) ? time_r1 : undefined;
 		const response = {
-			response : (results.length > 1) ? results : results[0],
-			time     : time_r2,
 			tag      : message.tag,
+			time     : time_r2,
+			response : (results.length > 1) ? results : results[0],
 		};
 
 		socket.send( JSON.stringify(response) );
+
 
 		// BROADCAST
 
@@ -414,7 +411,7 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 	this.init = async function () {
 		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'Router.init' );
 
-		const meta = new MetaData();
+		self.meta = new MetaData();
 		self.protocols = {};
 
 // PROTOCOL INTERFACE ////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -428,8 +425,9 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 			broadcast              : (...params)=>{ return self.protocols.session.broadcast(...params); },
 			reset                  : callback.reset,
 			triggerExit            : callback.triggerExit,
+			getServerInstance      : callback.getServerInstance,
 			verifyToken            : (...params)=>{ return self.protocols.mcp.verifyToken(...params); },
-			getMeta                : ()=>{ return meta },
+			getMeta                : ()=>{ return self.meta },
 			getRules               : ()=>{ return self.protocols.access.rules; },
 			getProtocols           : ()=>self.protocols,
 			getWho                 : (...params)=>{ return self.protocols.session.getWho(...params); },
@@ -452,6 +450,9 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 			},
 			access: {
 				template: AccessControl,
+				callbacks: [
+					'getMeta',
+				],
 			},
 			//...server: { template: ServerControl, callbacks: Object.keys(registered_callbacks) },
 			server: {
@@ -467,6 +468,7 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 					'getAllPersistentData',
 					'getProtocolDescription',
 					'triggerExit',
+					'getServerInstance',
 				],
 			},
 			chat: {
@@ -502,16 +504,18 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 				new_callbacks[name] = registered_callbacks[name];
 			});
 
-			meta.setCollectorKey( protocol_name );
-			self.protocols[protocol_name] = await new protocol.template( data, new_callbacks, meta );
+			self.meta.setCollectorKey( protocol_name );
+			self.protocols[protocol_name] = await new protocol.template( data, new_callbacks, self.meta );
 		});
 
 		await Promise.all( load_requests );
 
 		// Process collected meta data
 
-console.log( 'meta.help:', meta.help );
-console.log( 'meta.rules:', meta.rules );
+		self.protocols.access.reset();   // Process metadata
+console.log( 'meta.help:', self.meta.help );
+console.log( 'meta.rules:', self.meta.rules );
+console.log( 'access.rules:', self.protocols.access.rules );
 
 		// Protocol description
 
@@ -523,12 +527,12 @@ console.log( 'meta.rules:', meta.rules );
 			//...DEBUG.log( COLORS[good ? 'ROUTER' : 'WARNING'], type + ':', rule );
 		}
 
-		meta.rules.forEach( description =>{
+		self.meta.rules.forEach( description =>{
 			const found = registered_rules.find( rule => rule == description );
 			log( 'declared', description, found );
 		});
-		meta.rules.forEach( description =>{
-			const found = meta.rules.find( rule => rule == description );
+		self.meta.rules.forEach( description =>{
+			const found = self.meta.rules.find( rule => rule == description );
 			log( 'registered', description, found );
 		});
 persistent.access.descriptionState = validation_results;

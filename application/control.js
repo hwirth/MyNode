@@ -61,6 +61,101 @@ module.exports = function ServerControl (persistent, callback, meta) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// WATCH FILES
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function start_watch_files () {
+		self.fsWatchers = {};
+
+		SETTINGS.WATCH_FILES.forEach( (dir)=>{
+			const path = SETTINGS.BASE_DIR + dir;
+			const watcher = fs.watch( path, watch_dir );
+			self.fsWatchers[path] = watcher;
+
+			function watch_dir (event, file_name) {
+				if (!file_name || (file_name.charAt(0) == '.')) return;
+
+				const path = dir + '/' + file_name;
+				if (path.slice(0,7) == 'client/') {
+					callback.broadcast({
+						type   : 'reload/client',
+						source : 'server/watch',
+						reload : path.slice(7),
+					});
+				} else {
+					callback.broadcast({
+						type   : 'reload/server',
+						source : 'server/watch',
+						reload : path,
+					});
+				}
+			}
+		});
+
+		if (DEBUG.FILE_WATCHER) DEBUG.log(
+			COLORS.FILE_WATCHER, 'ServerControl-start_watch_files:', Object.keys( self.fsWatchers ),
+		);
+
+	} // start_watch_files
+
+
+	function stop_watch_files () {
+		const closed = [];
+
+		if (SETTINGS.WATCH_FILES) {
+			Object.entries( self.fsWatchers ).forEach( ([path, watcher])=>{
+				self.fsWatchers[path].close();
+				closed.push( path );
+			});
+		}
+
+		if (DEBUG.FILE_WATCHER) DEBUG.log(
+			COLORS.FILE_WATCHER, 'ServerControl-stop_watch_files:', closed,
+		);
+
+	} // stop_watch_files
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// ACCESS VARIABLE
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function access_variable (target, path, value) {
+		const target_name = (typeof target == 'string') ? target : 'OBJECT';
+console.log( '>>>>', target, path );
+		switch (target) {
+			case 'node'    : target = callback.getServerInstance();  break;
+			case 'SETTINGS': target = SETTINGS; break;
+			case 'DEBUG'   : target = DEBUG   ; break;
+			case 'RESPONSE': target = RESPONSE; break;
+			case 'REASONS' : target = REASONS ; break;
+			case 'STRINGS' : target = STRINGS ; break;
+		}
+		if (!target) throw new Error( 'Variable undefined' );
+		if (!path) return target;
+		return property( target, path.split('.'), value );
+
+		function property (target, path, value) {
+			const set_value = (typeof value != 'undefined');
+			return walk( target, path, target_name );
+
+			function walk (target, path, traversed) {
+				if (path.length == 0) return target;
+				const key = path[0];
+
+				if (typeof target[key] == 'undefined') {
+					throw new Error( 'Property not found: ' + traversed + '.' + key );
+				}
+
+				if (set_value && (path.length == 1)) return target[key] = value;
+				return walk( target[key], path.slice(1), traversed + '.' + key );
+			}
+		}
+
+	} // access_variable
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // HELPERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -95,7 +190,7 @@ module.exports = function ServerControl (persistent, callback, meta) {
 				+ leading( millis , 3 ) + 's'
 			);
 
-			while ((result.charAt(0) === '0') && isNaN( result.charAt(1) )) {
+			while ((result.charAt(0) === '0') && !isNaN( result.charAt(1) )) {
 				result = result.slice(1);
 			}
 
@@ -144,45 +239,6 @@ module.exports = function ServerControl (persistent, callback, meta) {
 	} // get_source_info
 
 
-// ACCESS VARIABLE ///////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function access_variable (target, path, value) {
-		try {
-console.log( 'TARGET', target );
-			switch (target) {
-				case 'SETTINGS': target = SETTINGS; break;
-				case 'DEBUG'   : target = DEBUG   ; break;
-				case 'RESPONSE': target = RESPONSE; break;
-				case 'REASONS' : target = REASONS ; break;
-				case 'STRINGS' : target = STRINGS ; break;
-			}
-			if (!target) throw new Error( 'Variable undefined' );
-			return property( target, path.split('.'), value );
-		}
-		catch (error) {
-			return error.message;
-		}
-
-		function property (target, path, value) {
-			const set_value = (typeof value != 'undefined');
-			return walk( target, path, 'object' );
-
-			function walk (target, path, traversed) {
-				if (path.length == 0) return target;
-				const key = path[0];
-
-				if (typeof target[key] == 'undefined') {
-					throw new Error( 'Property not found: ' + traversed + '.' + key );
-				}
-
-				if (set_value && (path.length == 1)) return target[key] = value;
-				return walk( target[key], path.slice(1), traversed + '.' + key );
-			}
-		}
-
-	} // access_variable
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -190,9 +246,10 @@ console.log( 'TARGET', target );
 	this.request = {};
 
 // HELP //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'help', 'Help on available protocols' );
-	RULE( 'connectinc,guest,user,mod,admin,dev,owner: {server:{help:*}}' );
-	this.request.help = function (client, request_id, parameter) {
+HELP( 'help', 'Help on available protocols' );
+RULE( 'connectinc,guest,user,mod,admin,dev,owner: {server:{help:*}}' );
+
+	this.request.help = function (client, parameter) {
 		if (typeof parameter == 'object') {
 			if (Object.keys(parameter).length == 0) {
 				parameter = '';
@@ -207,7 +264,7 @@ console.log( 'TARGET', target );
 		if (parts.length == 0) {
 			return { result: Object.keys(meta.help) };
 		} else {
-			const entry  = access_variable(meta.help, parameter);
+			const entry  = access_variable( meta.help, parameter );
 			if (typeof entry == 'undefined') {
 				return { failure: 'Undefined entry'  };
 			}
@@ -222,11 +279,15 @@ console.log( 'TARGET', target );
 
 
 
-// INSPECT ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'global', 'Read or write global variables' );
-	RULE( 'admin,dev,owner: {server:{global:{get:string}}}' );
-	RULE( 'admin,dev,owner: {server:{global:{set:string}}}' );
-	this.request.global = function (client, request_id, parameter) {
+// GLOBAL ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+HELP( 'global', 'Read or write global variables' );
+HELP( 'global.get', 'Read a global variable' );
+HELP( 'global.set', 'Write a new value to a global variable' );
+
+RULE( 'admin,dev,owner: {server:{global:{get:string}}}' );
+RULE( 'admin,dev,owner: {server:{global:{set:string}}}' );
+
+	this.request.global = function (client, parameter) {
 		if (!parameter.get && !parameter.set) {
 			return { failure: REASONS.INVALID_REQUEST };
 		}
@@ -237,24 +298,31 @@ console.log( 'TARGET', target );
 			operation = 'get';
 			parameter = parameter.get;
 			if (typeof parameter != 'string') {
-				return { failure: REASONS.INVALID_REQUEST };
+				return { failure: REASONS.INVALID_REQUEST + '(1)' };
 			}
 		} else  {
 			operation = 'set';
 			value = parameter.value;
 			parameter = parameter.set;
 			if (typeof parameter != 'string') {
-				return { failure: REASONS.INVALID_REQUEST };
+				return { failure: REASONS.INVALID_REQUEST + '(2)' };
 			}
 		}
 
 		const parts  = parameter.split('.').filter( part => part != '' );
-		if (parts.length != 2) {
-			return { failure: REASONS.INVALID_REQUEST };
+		if (parts.length < 1) {
+			return { failure: REASONS.INVALID_REQUEST + '(3)' };
 		}
 		const target = parts[0];
 		const path   = parts.slice(1).join('.');
-		const entry  = access_variable( target, path, value );
+		let entry;
+		try {
+			entry = access_variable( target, path, value );
+
+		} catch (error) {
+			console.log( 'E', error );
+			return { failure: error.message.replace('object', target) };
+		}
 
 		if (typeof entry == 'undefined') {
 			return { failure: 'Undefined entry' };
@@ -266,17 +334,16 @@ console.log( 'TARGET', target );
 		: (typeof entry == 'array' ) ? entry
 		: entry
 		;
-		return {result:{ [operation]: {[parameter]:result} }};
-
-		return { failure: REASONS.INVALID_REQUEST };
+		return {result:{[parameter]:result} };
 
 	}; // global
 
 
 // TOKEN /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'token', 'Request a token for TFA' );
-	RULE( 'admin,dev,owner: {server:{token:empty}}' );
-	this.request.token = function (client, request_id, parameter, Xcallback) {
+HELP( 'token', 'Request a token for TFA' );
+RULE( 'admin,dev,owner: {server:{token:empty}}' );
+
+	this.request.token = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.token>', client );
 
 		if (!client.inGroup( 'admin', 'dev' )) {
@@ -290,46 +357,13 @@ console.log( 'TARGET', target );
 	}; // token
 
 
-// DEBUG /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'debug', 'Change a DEBUG setting' );
-	RULE( 'admin,dev,owner: {server:{debug:*}}' );
-	this.request.debug = function (client, request_id, parameter, Xcallback) {
-		DEBUG.log( COLORS.COMMAND, '<server.debug>', client );
-
-		if (!client.inGroup( 'admin', 'dev' )) {
-			return { failure:REASONS.INSUFFICIENT_PERMS };
-		}
-
-		if (typeof parameter != 'object') {
-			return { failure:REASONS.INVALID_REQUEST };
-		}
-
-		let success = true;
-		const result = {};
-		Object.entries( parameter ).forEach( ([key, value])=>{
-
-			if (typeof DEBUG[key] == 'undefined') {
-				result['A'+key] = 'DEBUG["'+key+'"] undefined';
-				success = false;
-			}
-			else if (Helpers.isEmptyObject( value )) {
-				result['read ' + key] = DEBUG[key];
-			}
-			else {
-				result['write ' + key] = DEBUG[key] = value;
-			}
-		});
-
-		return { success:success, result:result };
-
-	}; // token
-
-
 // STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'status', 'Server status report. Secondary parameters can be used in parallel' );
-	RULE( 'admin,dev,owner: {server:{status:empty}}' );
-	RULE( 'admin,dev,owner: {server:{status:*}}'     );
-	this.request.status = async function (client, request_id, parameter, Xcallback) {
+HELP( 'status', 'Server status report. Secondary parameters can be used in parallel' );
+
+RULE( 'admin,dev,owner: {server:{status:empty}}' );
+RULE( 'admin,dev,owner: {server:{status:*}}'     );
+
+	this.request.status = async function (client, parameter) {
 		let response = null;
 
 		if (!client.login) {
@@ -387,23 +421,19 @@ console.log( 'TARGET', target );
 
 
 // RESET /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'reset', 'Reset protocol data' );
-	RULE( 'admin,dev,owner: {server:{reset:empty}}' );
-	this.request.reset = function (client, request_id, parameter, Xcallback) {
+HELP( 'reset', 'Reset protocol data' );
+RULE( 'admin,dev,owner: {server:{reset:empty}}' );
+
+	this.request.reset = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.reset>', client );
 
-		if (!client.inGroup('dev')) {
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return;
-		}
-
-		callback.broadcast({ [REASONS.PERSISTENCE_RESET]: {} });
 		callback.reset();
 
 		return {
 			result    : REASONS.PERSISTENCE_RESET,
 			broadcast : {
 				type: 'server/reset',
+				note: 'Client objects may be require reinstantiation'
 			},
 		};
 
@@ -411,37 +441,41 @@ console.log( 'TARGET', target );
 
 
 // RESTART ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'restart', 'Restart the server' );
-	RULE( 'admin,dev,owner: {server:{restart:empty}}' );
-	this.request.restart = function (client, request_id, parameter, Xcallback) {
+HELP( 'restart', 'Restart the server' );
+//RULE( 'admin,dev,owner: {server:{restart:empty}}'  );
+RULE( 'admin,dev,owner: {server:{restart:number}}' );
+
+	this.request.restart = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.restart>', client );
 
 		const provided_token = String( parameter.token || null );
 
-		if (false&&!verify_token( provided_token, client )) {
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return;
+		if (false&& !verify_token( provided_token, client )) {
+			return { failure:REASONS.INSUFFICIENT_PERMS };
 		}
 
-		callback.triggerExit();
+		const delay = Helpers.isNumeric(parameter) ? parameter : 0;
+		setTimeout( ()=>callback.triggerExit(), delay );
+
+		return { result:'Restarting in ' + delay + 'ms' };
 
 	}; // restart
 
 
 // SHELL /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'shell', 'Call a shell program' );
-	RULE( 'admin,dev,owner: {server:{shell:*}}' );
-	this.request.shell = function (client, request_id, parameter) {
+HELP( 'shell', 'Call a shell program' );
+RULE( 'admin,dev,owner: {server:{shell:*}}' );
+
+	this.request.shell = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.shell>', client );
 
 		const provided_token = String( parameter.token || null );
 
 		if (!verify_token( provided_token, client )) {
-			client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return;
+			return { failure:REASONS.INSUFFICIENT_PERMS };
 		}
 
-		client.respond( STATUS.SUCCESS, request_id, REASONS.INSUFFICIENT_PERMS );
+		return { failure:REASONS.INSUFFICIENT_PERMS };
 
 		//callback.triggerExit();
 
@@ -470,35 +504,38 @@ console.log( 'TARGET', target );
 
 
 // CRASH TEST ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+HELP( 'crashSync' , 'Crash the server synchronously'  );
+HELP( 'crashAsync', 'Crash the server asynchronously' );
+HELP( 'crashSafe' , 'Crash the server safely'         );
+
+RULE( 'dev,owner: {server:{crashSync:empty}}'  );
+RULE( 'dev,owner: {server:{crashAsync:empty}}' );
+RULE( 'dev,owner: {server:{crashSafe:empty}}'  );
 
 	//...? How to automatically recover from application errors like this:
 
 	const TEST_URL = 'https://rss.orf.at/news.xml';
 
 	// Mistake in application code: Uses a Promise, doesn't catch
-	HELP( 'crashSync', 'Crash the server synchronously' );
-	RULE( 'dev,owner: {server:{crashSync:empty}}' );
-	this.request.crashSync = function (client, request_id, parameter) {
+	this.request.crashSync = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.crashSync>', client );
 
 		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
 	} // crashSync
 
+
 	// Mistake in application code: Uses a Promise, doesn't await
-	HELP( 'crashAsync', 'Crash the server asynchronously' );
-	RULE( 'dev,owner: {server:{crashAsync:empty}}' );
-	this.request.crashAsync = async function (client, request_id, parameter) {
+	this.request.crashAsync = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.crashAsync>', client );
 
 		fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
 
 	} // crashAsync
 
+
 	// This will get caught properly:
-	HELP( 'crashSafe', 'Crash the server safely' );
-	RULE( 'dev,owner: {server:{crashSafe:empty}}' );
-	this.request.crashSafe = async function (client, request_id, parameter) {
+	this.request.crashSafe = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<server.crashSafe>', client );
 
 		await fetch( TEST_URL ).then( response => UNDEFINED_FUNCTION );
@@ -531,9 +568,7 @@ console.log( 'TARGET', target );
 
 	this.exit = function () {
 		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'ServerManager.exit' );
-		if (SETTINGS.WATCH_FILES) {
-			Object.keys( self.fsWatchers ).forEach( key => self.fsWatchers[key].close() );
-		}
+		stop_watch_files();
 		return Promise.resolve();
 
 	}; // exit
@@ -551,39 +586,7 @@ console.log( 'TARGET', target );
 	this.init = function () {
 		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'ServerManager.init' );
 		self.reset();
-
-		if (SETTINGS.WATCH_FILES) {
-			self.fsWatchers = [];
-			SETTINGS.BROADCAST_FILE_CHANGE_FOLDERS.forEach( (dir)=>{
-				const path = SETTINGS.BASE_DIR + dir;
-				self.fsWatchers[dir] = fs.watch( path, (event, file_name)=>{
-if (file_name.slice('.goutputstream'.length) == '.goutputstream') {
-	return;
-}
-					if (file_name && (file_name.charAt(0) != '.')) {
-						const path = dir + '/' + file_name;
-						if (path.slice(0,7) == 'client/') {
-console.log( 'WATCHER 1', file_name, path );
-							callback.broadcast({
-								type   : 'reload/client',
-								reload : {
-									[path.slice(7)] : {},
-								},
-							});
-						} else {
-console.log( 'WATCHER 2', file_name, path );
-							callback.broadcast({
-								type   : 'reload/server',
-								reload : {
-									[path] : {},
-								},
-							});
-						}
-					}
-				});
-			});
-		}
-
+		start_watch_files ();
 		return Promise.resolve();
 
 	}; // init

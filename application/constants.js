@@ -56,12 +56,12 @@ module.exports.STRINGS   = STRINGS;
 
 
 // HELPERS --> helpers.js
-
 module.exports.isEmptyObject = function (thing) {
 	return (typeof thing == 'object') && (Object.keys(thing).length == 0);
 }
-
-
+module.exports.isNumeric = function (string) {
+	return !isNaN(parseFloat(string)) && isFinite(string);
+}
 
 
 //EOF

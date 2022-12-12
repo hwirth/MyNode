@@ -65,7 +65,8 @@ const Application = function () {
 		if (tag_name == 'pre') new_element.setAttribute( 'tabindex', '0' );
 		self.elements.textOutput.appendChild( new_element );
 		scroll_down();
-	}
+
+	} // print
 
 
 	function update_nick_color () {
@@ -85,7 +86,8 @@ const Application = function () {
 			html += '<span style="color:' + color + '">' + name + '</span>';
 		});
 		self.elements.listUsers.innerHTML = html;
-	}
+
+	} // update_user_list
 
 
 // COLOR FROM NAME ///////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -149,6 +151,9 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function set_connection_state (state) {
+console.groupCollapsed( 'set_connection_state: ' + state );
+console.trace();
+console.groupEnd();
 		// Set class to chat <form> according to state
 		['offline', 'connecting', 'connected', 'online', 'error', 'retry'].forEach( (class_name)=>{
 			self.elements.form.classList.toggle( class_name, (class_name == state) );
@@ -206,6 +211,8 @@ const Application = function () {
 	}; // onWsSend
 
 
+// ON MESSAGE ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
 	this.onWsMessage = function (message) {
 
 		// Print hidden protocol debug messages
@@ -216,85 +223,103 @@ const Application = function () {
 		self.elements.textOutput.appendChild( pre );
 		if (self.elements.textOutput.classList.contains('debug')) scroll_down();
 
-		// Process message regluarly
-		if( (message.response)
-		&&  (message.response.success)
-		&&  (message.response.type == 'result')
-		&&  (message.response.command == 'session.login')
-		) {
-			const login = message.response.result.login;
-			return set_connection_state( 'online' );
+		if (message.response) {
+			const response = message.response;
+			const entries = (response instanceof Array) ? response : [response];
+			entries.forEach( handle_response );
 		}
-		else if( (message.response)
-		&& (message.response.success)
-		&& (message.response.type == 'result')
-		&& (message.response.command == 'session.logout')
-		) {
-			set_connection_state( 'connected' );
+		if (message.broadcast) {
+			const broadcast = message.broadcast;
+			const entries = (broadcast instanceof Array) ? broadcast : [broadcast];
+			entries.forEach( handle_broadcast );
 		}
-		else if( (message.response)
-		&& (message.response.success)
-		&& (message.response.type == 'result')
-		&& (message.response.command == 'session.who')
-		) {
-			update_user_list( message.response.result );
-		}
-		else if (message.update && (message.update.type == 'server/name')) {
-			const html =  'Connected to MyNode ' + message.update.name + '.';
-			print( 'div', html );
-		}
-		else if (message.update && (message.update.type == 'chat/say')) {
-			const sender = message.update.nickName || message.update.userName;
-			const text   = message.update.chat;
-			const html
-			= '<span>' + format_timestamp(message.update.time) + '</span>'
-			+ '<span style="color:' + color_from_name( sender ) + '">' + sender + '</span>'
-			+ '<span>' + text + '</span>'
-			;
-			print( 'div', html, 'talk' );
-		}
-		else if (message.broadcast && message.broadcast.type == 'session/login') {
-			const name  = message.broadcast.userName;
-			const color = color_from_name( name );
-			const html
-			= '<span>' + format_timestamp(message.broadcast.time) + '</span>'
-			+ '<span style="color:' + color + '">' + name + '</span>'
-			+ ' joined the chat.'
-			;
-			print( 'div', html , 'join');
-			update_user_list( message.broadcast.who );
-		}
-		else if (message.broadcast && message.broadcast.type == 'session/disconnect') {
-			const name
-			=( message.broadcast.nickName
-			|| message.broadcast.userName
-			|| message.broadcast.address
-			);
-			const color = color_from_name( name );
-			const html
-			= '<span>' + format_timestamp(message.broadcast.time) + '</span>'
-			+ '<span style="color:' + color + '">' + name + '</span>' + ' left the chat.'
-			;
-			print( 'div', html, 'leave' );
-			update_user_list( message.broadcast.who );
-		}
-		else if (message.broadcast && message.broadcast.type == 'chat/nick') {
-			const prev_name  = message.broadcast.oldNick || message.broadcast.userName;
-			const nick_name  = message.broadcast.nickName;
-			const prev_color = color_from_name( prev_name );
-			const nick_color = color_from_name( nick_name );
-			const html
-			= '<span>' + format_timestamp(message.broadcast.time) + '</span>'
-			+ '<span style="color:' + prev_color + '">' + prev_name + '</span>'
-			+ ' is now known as '
-			+ '<span style="color:' + nick_color + '">' + nick_name + '</span>'
-			+ '.'
-			;
-			print( 'div', html, 'nick' );
-			update_user_list( message.broadcast.who );
-		}
+		if (message.who) update_user_list( message.who );
+
+		return;
 
 	}; // onWsMessage
+
+
+	function handle_response (response) {
+		if (!response.success) return;
+
+		switch (response.command) {
+			case 'session.login': {
+				set_connection_state( 'online' );
+				break;
+			}
+			case 'session.logout': {
+				set_connection_state( 'connected' );
+				break;
+			}
+		}
+
+	} // handle_response
+
+
+	function handle_broadcast (broadcast) {
+		const formatted_time = format_timestamp( broadcast.time );
+		switch (broadcast.type) {
+			case 'server/name': {
+				const html =  'Connected to MyNode ' + broadcast.name + '.';
+				print( 'div', html );
+				break;
+			}
+			case 'chat/say': {
+				const sender = broadcast.nickName || broadcast.userName;
+				const text   = broadcast.message;
+				const color  = color_from_name( sender );
+				const html
+				= '<span>' + formatted_time + '</span>'
+				+ '<span style="color:' + color + '">' + sender + '</span>'
+				+ '<span>' + text + '</span>'
+				;
+				print( 'div', html, 'talk' );
+				break;
+			}
+			case 'session/login': {
+				const name  = broadcast.userName;
+				const color = color_from_name( name );
+				const html
+				= '<span>' + formatted_time + '</span>'
+				+ '<span style="color:' + color + '">' + name + '</span>'
+				+ ' joined the chat.'
+				;
+				print( 'div', html , 'join');
+				break;
+			}
+			case 'session/disconnect': {
+				const name
+				=( broadcast.nickName
+				|| broadcast.userName
+				|| broadcast.address
+				);
+				const color = color_from_name( name );
+				const html
+				= '<span>' + formatted_time + '</span>'
+				+ '<span style="color:' + color + '">' + name + '</span>' + ' left the chat.'
+				;
+				print( 'div', html, 'leave' );
+				break;
+			}
+			case 'chat/nick': {
+				const prev_name  = broadcast.oldNick || broadcast.userName;
+				const nick_name  = broadcast.nickName;
+				const prev_color = color_from_name( prev_name );
+				const nick_color = color_from_name( nick_name );
+				const html
+				= '<span>' + formatted_time + '</span>'
+				+ '<span style="color:' + prev_color + '">' + prev_name + '</span>'
+				+ ' is now known as '
+				+ '<span style="color:' + nick_color + '">' + nick_name + '</span>'
+				+ '.'
+				;
+				print( 'div', html, 'nick' );
+				break;
+			}
+		}
+
+	} // handle_broadcast
 
 
 // PROTOCOL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -364,7 +389,7 @@ const Application = function () {
 					send    : self.onWsSend,
 				},
 			},
-	/*
+	/*//...
 			events: {
 				'reload/client' : ()=>print( 'div', 'The client was updated, reloading.', 'reload' ),
 				'reload/css'    : ()=>print( 'div', 'A CSS file has been reloaded.'     , 'reload' ),

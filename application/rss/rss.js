@@ -12,6 +12,8 @@ const RssParser = require( 'rss-parser' );
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
+const { isNumeric } = require( '../constants.js' );
+
 
 module.exports = function ChatServer (persistent, callback, meta) {
 	const self = this;
@@ -118,9 +120,10 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 
 // STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'status', 'Show configuration of all feeds' );
-	RULE( 'guest,user,mod,admin,dev,owner: {rss:{status:empty}}' );
-	this.request.status = async function (client, request_id, parameter) {
+HELP( 'status', 'Show configuration of all feeds' );
+RULE( 'guest,user,mod,admin,dev,owner: {rss:{status:empty}}' );
+
+	this.request.status = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<rss.list>', client );
 		return { result:get_status() };
 
@@ -128,9 +131,10 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 
 // TOGGLE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'toggle', 'Enable or disable regular polling of one or all feed(s)' );
-	RULE( 'mod,admin,dev,owner: {rss:{toggle:string}}' );
-	this.request.toggle = async function (client, request_id, parameter) {
+HELP( 'toggle', 'Enable or disable regular polling of one or all feed(s)' );
+RULE( 'mod,admin,dev,owner: {rss:{toggle:string}}' );
+
+	this.request.toggle = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<rss.toggle>', client );
 
 		if (typeof parameter != 'string') {
@@ -142,7 +146,6 @@ module.exports = function ChatServer (persistent, callback, meta) {
 				feed.enabled = !feed.enabled;
 				//...poll( feed );
 			});
-			request_id.command += ':all';   //...?
 
 		} else {
 			const feed = persistent.feeds.find( f => f.name == parameter );
@@ -161,16 +164,13 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 
 // INTERVAL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'interval', 'Change time between poll attempts' );
-	RULE( 'mod,admin,dev,owner: {rss:{interval:number}}' );
-	this.request.interval = async function (client, request_id, parameter) {
+HELP( 'interval', 'Change time between poll attempts' );
+RULE( 'mod,admin,dev,owner: {rss:{interval:number}}' );
+
+	this.request.interval = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<rss.interval>', client );
 
-		function isNumeric (string) {
-			return !isNaN(parseFloat(string)) && isFinite(string);
-		}
-
-		if (isNumeric( parameter )) {
+		if (Helpers.isNumeric( parameter )) {
 			persistent.interval = Math.max( SETTINGS.RSS.MIN_INTERVAL, parameter );
 			start_interval();
 			return { result: {interval: parameter} };
@@ -185,9 +185,10 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 
 // NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'show', 'Show cached feed items of a feed' );
-	RULE( 'guest,user,mod,admin,dev,owner: {rss:{show:string}}' );
-	this.request.show = async function (client, request_id, parameter) {
+HELP( 'show', 'Show cached feed items of a feed' );
+RULE( 'guest,user,mod,admin,dev,owner: {rss:{show:string}}' );
+
+	this.request.show = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<rss.show>', client );
 
 		const feed_name = parameter;
@@ -202,9 +203,10 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 
 // UPDATE ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'update', 'Poll a feed immediately' );
-	RULE( 'mod,admin,dev,owner: {rss:{update:string}}' );
-	this.request.update = async function (client, request_id, parameter) {
+HELP( 'update', 'Poll a feed immediately' );
+RULE( 'mod,admin,dev,owner: {rss:{update:string}}' );
+
+	this.request.update = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<rss.update>', client );
 
 		const feed_name = parameter;
@@ -233,9 +235,10 @@ module.exports = function ChatServer (persistent, callback, meta) {
 
 
 // NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'reset', 'Reset persistent RSS data' );
-	RULE( 'dev,owner: {rss:{reset:empty}}' );
-	this.request.reset = async function (client, request_id, parameter) {
+HELP( 'reset', 'Reset persistent RSS data' );
+RULE( 'dev,owner: {rss:{reset:empty}}' );
+
+	this.request.reset = async function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<rss.reset>', client );
 		self.reset( /*force*/true );
 		return { result: 'RSS cache reset' };

@@ -49,7 +49,7 @@ module.exports = function MetaData () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.init = function () {
-		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'Router.init' );
+		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'MetaData.init' );
 		self.rules = [];
 		self.help  = {};
 		self.key   = null;

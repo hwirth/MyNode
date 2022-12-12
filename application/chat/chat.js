@@ -32,9 +32,10 @@ module.exports = function ChatServer (persistent, callback, meta) {
 	this.request = {};
 
 // NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'nick', 'Change your nickname in chat. Allowed characters: ' + SETTINGS.ALLOWED_NAME_CHARS );
-	RULE( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
-	this.request.nick = function (client, request_id, parameter, Xcallback) {
+HELP( 'nick', 'Change your nickname in chat. Allowed characters: ' + SETTINGS.ALLOWED_NAME_CHARS );
+RULE( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
+
+	this.request.nick = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<chat.nick>', client );
 
 		if (client.login) {
@@ -51,8 +52,8 @@ module.exports = function ChatServer (persistent, callback, meta) {
 			const new_nick      = parameter;
 
 			client.login.nickName = new_nick;
-const who_data = callback.getWho();
-console.log( 'WHO', who_data );
+			const who_data = callback.getWho();
+			console.log( 'WHO', who_data );
 
 			return {
 				result: {
@@ -78,9 +79,10 @@ console.log( 'WHO', who_data );
 
 
 // SAY ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'say', 'Send a text message to all users' );
-	RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:string}}' );
-	this.request.say = function (client, request_id, parameter, Xcallback) {
+HELP( 'say', 'Send a text message to all users' );
+RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:string}}' );
+
+	this.request.say = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<chat.say>', client	);
 
 		if (client.login) {
@@ -108,9 +110,10 @@ console.log( 'WHO', who_data );
 
 
 // HTML //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'html', 'Send HTML to all users' );
-	RULE( 'mod,admin,dev,owner: {chat:{html:string}}' );
-	this.request.html = function (client, request_id, parameter, Xcallback) {
+HELP( 'html', 'Send HTML to all users' );
+RULE( 'mod,admin,dev,owner: {chat:{html:string}}' );
+
+	this.request.html = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<chat.html>', client	);
 
 		if (client.login) {
@@ -142,48 +145,27 @@ RULE( 'mod,admin,dev,owner: {chat:{mode:{set:string}}}' );
 RULE( 'mod,admin,dev,owner: {chat:{mode:{add:string}}}' );
 RULE( 'mod,admin,dev,owner: {chat:{mode:{del:string}}}' );
 
-	this.request.mode = function (client, request_id, parameter, Xcallback) {
+	this.request.mode = function (client, parameter, request_id) {
 		DEBUG.log( COLORS.COMMAND, '<char.mode>', client );
 
-		if (client.login) {
-const message       = parameter;
-const t0            = Date.now();
-const all_clients   = callback.getAllClients();
-const authenticated = client_address => all_clients[client_address].login;
-
-			const command_type
-			= (parameter.set) ? 'set'
-			: (parameter.add) ? 'add'
-			: (parameter.del) ? 'del'
-			: null
-			;
-			const mode = parameter[command_type];
-			if (!command_type || !mode) {
-client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_REQUEST );
-				return { failure:REASONS.INVALID_REQUEST };
-			}
-
-callback.broadcast({
-	address  : client.address,
-	type     : 'chat/mode/' + command_type,
-	//...userName : client.login.userName,
-	//...nickName : client.login.nickName,
-	mode     : parameter[command_type],
-});
-client.respond( STATUS.SUCCESS, request_id );
-
-			return {
-				success   : true,
-				broadcast : {
-					type : 'chat/mode/' + command_type,
-					mode : mode,
-				}
-			};
-
-		} else {
-client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return { failure:REASONS.INSUFFICIENT_PERMS };
+		const command_type
+		= (parameter.set) ? 'set'
+		: (parameter.add) ? 'add'
+		: (parameter.del) ? 'del'
+		: null
+		;
+		const mode = parameter[command_type];
+		if (!command_type || !mode) {
+			return { failure:REASONS.INVALID_REQUEST };
 		}
+
+		return {
+			success   : true,
+			broadcast : {
+				type : 'chat/mode/' + command_type,
+				mode : mode,
+			}
+		};
 
 	}; // request.mode
 

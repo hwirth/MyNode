@@ -55,11 +55,11 @@ module.exports = function SessionHandler (persistent, callback, meta) {
 
 	this.getClientByName = function (name) {
 		const client_address = Object.keys( persistent.clients ).find( (test_address)=>{
-			const client = persistent.clients[test_address];
+			const login = persistent.clients[test_address].login;
 			return (
-				client.login
-				&&( (client.login.userName.toLowerCase() == name.toLowerCase())
-				||  client.login.nickName && (client.login.nickName.toLowerCase() == name.toLowerCase())
+				login
+				&&( (login.userName.toLowerCase() == name.toLowerCase())
+				||  login.nickName && (login.nickName.toLowerCase() == name.toLowerCase())
 				)
 			);
 		});
@@ -188,23 +188,25 @@ console.log( COLORS.ERROR + 'Seesion.broadcast()' + COLORS.RESET + ' should no l
 
 // PONG //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 	HELP( 'pong', 'Answer to a server ping (Usually happens automatically)' );
-	RULE( 'connecting,guest,user,mod,admin,dev,owner: {session:{pong:number}}' );
-	this.request.pong = function (client, request_id, parameters) {
+	RULE( 'connected,guest,user,mod,admin,dev,owner: {session:{pong:number}}' );
+	this.request.pong = function (client, parameters) {
 		if (isNaN( parameters )) {
 			return { failure: REASONS.INVALID_REQUEST };
 		} else {
-client.receivePong( parameters );
+			client.receivePong( parameters );
 		}
 
 	}; // pong
 
 
 // LOGIN /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'login', 'Authenticate as registered user' );
-	RULE( 'connecting: {session:{login:{username:guest}}}' );
-	RULE( 'connecting: {session:{login:{username:string,password:string}}}' );
-	RULE( 'connecting: {session:{login:{username:string,password:string,factor2:string}}}' );
-	this.request.login = function (client, request_id, parameters) {
+HELP( 'login', 'Authenticate as registered user' );
+
+RULE( 'connected: {session:{login:{username:string}}}' );
+RULE( 'connected: {session:{login:{username:string,password:string}}}' );
+RULE( 'connected: {session:{login:{username:string,password:string,factor2:string}}}' );
+
+	this.request.login = function (client, parameters) {
 		if (client.login) {
 			log_warning( 'login', REASONS.ALREADY_LOGGED_IN, client );
 			return { failure: REASONS.ALREADY_LOGGED_IN };
@@ -235,7 +237,7 @@ client.receivePong( parameters );
 
 		if (password_correct) {
 // client.js /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
+//...
 			// Make new client object
 
 			client.clearLoginTimeout();
@@ -315,9 +317,10 @@ client.receivePong( parameters );
 
 
 // AUTHENTICATE //////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'authenticate', 'Authenticate via second factor' );
-	RULE( 'connecting,guest,user,mod,admin,dev,owner: {session:{authenticate:string}}' );
-	this.request.authenticate = function (client, request_id, parameters) {
+HELP( 'authenticate', 'Authenticate via second factor' );
+RULE( 'connected,guest,user,mod,admin,dev,owner: {session:{authenticate:string}}' );
+
+	this.request.authenticate = function (client, parameters) {
 		const token = parameters.factor2 || parameters.token;
 		client.factor2 = callback.verifyToken(
 			token,
@@ -326,19 +329,20 @@ client.receivePong( parameters );
 		);
 		if (client.factor2) {
 			DEBUG.log( COLORS.COMMAND, '<session.authenticate>', client );
-			client.respond( STATUS.SUCCESS, request_id, REASONS.SUCCESSFULLY_AUTHENTICATED );
+			return { result: REASONS.SUCCESSFULLY_AUTHENTICATED };
 		} else {
 			log_warning( 'authenticate', REASONS.NOT_LOGGED_IN, client );
-			client.respond( STATUS.FAILURE, request_id, REASONS.AUTHENTICATION_FAILED );
+			return { failure: REASONS.AUTHENTICATION_FAILED };
 		}
 
 	}; // logout
 
 
 // LOGOUT ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'logout', 'Log out of a registered account' );
-	RULE( 'guest,user,mod,admin,dev,owner: {session:{logout:empty}}' );
-	this.request.logout = function (client, request_id, parameters) {
+HELP( 'logout', 'Log out of a registered account' );
+RULE( 'guest,user,mod,admin,dev,owner: {session:{logout:empty}}' );
+
+	this.request.logout = function (client, parameters) {
 		if (client.login) {
 			DEBUG.log( COLORS.COMMAND, '<session.logout>', client );
 
@@ -365,10 +369,88 @@ client.receivePong( parameters );
 	}; // logout
 
 
+// KICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+HELP( 'kick', 'Disconnect a client' );
+RULE( 'admin,dev,owner: {session:{kick:string}}' );
+
+	this.request.kick = async function (client, parameters) {
+//... cant kick multiple
+console.log( 'KICK: parameters:', parameters );
+
+		if (parameters.username) parameters.username = parameters.username.toLowerCase();
+
+		let target_client = null;
+		if (parameters.address) {
+			target_client = persistent.clients[parameters.address];
+		}
+		else if (parameters.username) {
+			// Searches for nicknames too
+			target_client = self.getClientByName( parameters.username );
+		}
+		else if (typeof parameters == 'string') {
+			target_client = self.getClientByName( parameters );
+		}
+
+		if (!target_client) {
+			if (parameters.address) {
+				log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
+				return { failure: REASONS.INVALID_ADDRESS };
+			}
+			else if (parameters.username) {
+				log_warning( 'kick', REASONS.INVALID_USERNAME, client );
+				return { failure: REASONS.INVALID_USERNAME };
+			}
+			else {
+				log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, client );
+				return { failure: REASONS.INVALID_ADDRESS_OR_USERNAME };
+			}
+		}
+
+		if (DEBUG.ROUTER_PERSISTENT_DATA) DEBUG.log(
+			COLORS.SESSION,
+			'<session.kick>',
+			'Terminating connection to ',
+			target_client,
+		);
+
+		target_client.send({ notice: REASONS.KICKED_BY + ' ' + client.login.userName });
+
+		const target_address  = target_client.address;
+		const target_username = target_client.login.userName;
+
+		target_client.login = false;
+		await target_client.closeSocket();
+
+		const result = (
+			REASONS.KICKED_USER
+			.replace('NAME', target_username)
+			.replace('ADDRESS', target_address)
+		);
+
+		return { result: result };
+
+	}; // kick
+
+
+// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+HELP( 'status', 'Request current login status' );
+RULE( 'connected,guest,user,mod,admin,dev,owner: {session:{status:empty}}' );
+
+	this.request.status = function (client, parameters) {
+		if (Object.keys(parameters).length == 0) {
+			return { result: client };
+		} else {
+			return { failure: REASONS.INVALID_REQUEST };
+		}
+
+	}; // status
+
+
 // WHO ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'who', 'Request list of connected users' );
-	RULE( 'guest,user,mod,admin,dev,owner: {session:{who:*}}' );
-	this.request.who = async function (client, request_id, parameters) {
+HELP( 'who', 'Request list of connected users' );
+RULE( 'guest,user,mod,admin,dev,owner: {session:{who:*}}' );
+
+	this.request.who = async function (client, parameters) {
 		const clients = self.getWho();
 		if (clients) {
 			DEBUG.log( COLORS.COMMAND, '<session.who>', client );
@@ -382,116 +464,20 @@ client.receivePong( parameters );
 
 
 // CLIENTS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'clients', 'Request all connected client data' );
-	RULE( 'admin,dev,owner: {session:{clients:empty}}' );
-	this.request.clients = async function (client, request_id, parameters) {
-		if (client.login) {
-			DEBUG.log( COLORS.COMMAND, '<session.clients>', client );
+HELP( 'clients', 'Request all connected client data' );
+RULE( 'admin,dev,owner: {session:{clients:empty}}' );
 
-			const clients = {};
-			Object.keys( persistent.clients ).forEach( (address)=>{
-				clients[address] = DEBUG.dump( persistent.clients[address] );
-			});
+	this.request.clients = async function (client, parameters) {
+		DEBUG.log( COLORS.COMMAND, '<session.clients>', client );
 
-client.respond( STATUS.SUCCESS, request_id, clients );
+		const clients = {};
+		Object.keys( persistent.clients ).forEach( (address)=>{
+			clients[address] = DEBUG.dump( persistent.clients[address] );
+		});
 
-		} else {
-			DEBUG.log( COLORS.COMMAND, '<session.clients>', client );
-client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-		}
+		return { result: clients };
 
 	}; // clients
-
-
-	this.request.kick = async function (client, request_id, parameters) {
-		if (!client.inGroup( 'mod', 'admin', 'dev' )) {
-			log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
-client.respond( STATUS.FAILURE, request_id, REASONS.INSUFFICIENT_PERMS );
-			return;
-		}
-if (!client.login) throw new Error( 'NO CLIENT' );
-		//... cant kick multiple
-console.log( 'KICK: parameters:', parameters );
-		if (parameters.username) parameters.username = parameters.username.toLowerCase();
-
-		let target_client = null;
-		if (parameters.address) {
-			target_client = persistent.clients[parameters.address];
-		}
-		else if (parameters.username) {
-			target_client = self.getClientByName( parameters.username );
-		}
-		else if (typeof parameters == 'string') {
-			target_client = self.getClientByName( parameters );
-		}
-
-if (!target_client) {
-	if (parameters.address) {
-		log_warning( 'kick', REASONS.INSUFFICIENT_PERMS, client );
-client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS );
-	}
-	else if (parameters.username) {
-		log_warning( 'kick', REASONS.INVALID_USERNAME, client );
-client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_USERNAME );
-	}
-	else {
-		log_warning( 'kick', REASONS.INVALID_ADDRESS_OR_USERNAME, client );
-client.respond( STATUS.FAILURE, request_id, REASONS.INVALID_ADDRESS_OR_USERNAME );
-	}
-
-	return;
-}
-
-		if (DEBUG.ROUTER_PERSISTENT_DATA) DEBUG.log(
-			COLORS.SESSION,
-			'<session.kick>',
-			'Terminating connection to ',
-			target_client,
-		);
-
-target_client.respond(
-	STATUS.NONE,
-	request_id,
-	REASONS.KICKED_BY + ' ' + client.login.userName,
-	null,
-);
-
-		const target_address  = target_client.address;
-		const target_username = target_client.login.userName;
-
-		target_client.login = false;
-		await target_client.closeSocket();
-
-client.respond(
-	STATUS.SUCCESS,
-	request_id,
-	(
-		REASONS.KICKED_USER
-		.replace('NAME', target_username)
-		.replace('ADDRESS', target_address)
-	)
-);
-
-		if (parameters.username) {
-			if (self.getClientByName( parameters.username )) {
-				self.request.kick( client, parameters );
-			}
-		}
-
-	}; // kick
-
-
-// STATUS ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'status', 'Request current login status' );
-	RULE( 'connecting,guest,user,mod,admin,dev,owner: {session:{status:empty}}' );
-	this.request.status = function (client, request_id, parameters) {
-		if (Object.keys(parameters).length == 0) {
-			return { result: {client:client} };
-		} else {
-			return { failure: REASONS.INVALID_REQUEST };
-		}
-
-	}; // status
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -515,6 +501,9 @@ client.respond(
 					'root': {
 						password: '12345',
 						groups: [
+							'guest',
+							'user',
+							'mod',
 							'admin',
 							'dev',
 						],

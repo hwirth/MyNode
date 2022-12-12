@@ -45,6 +45,8 @@ const DEBUG = {                                                // What to log
 	ROUTER                    : DEBUG_ENABLED && false,
 	ROUTER_PERSISTENT_DATA    : DEBUG_ENABLED && false,
 
+	FILE_WATCHER              : DEBUG_ENABLED && !false,
+
 	BOOT_TIME                 : Date.now(),
 
 	// Publish functions
@@ -105,6 +107,8 @@ const COLORS = {
 	SESSION      : ANSI_COLORS.GREEN,
 	ACCESS       : ANSI_COLORS.BRIGHT + ANSI_COLORS.CYAN,
 
+	FILE_WATCHER : ANSI_COLORS.BRIGHT + ANSI_COLORS.YELLOW,
+
 	COMMAND      : ANSI_COLORS.BRIGHT + ANSI_COLORS.CYAN,
 	SUCCESS      : ANSI_COLORS.BRIGHT + ANSI_COLORS.GREEN,
 	ERROR        : ANSI_COLORS.BRIGHT + ANSI_COLORS.RED,
@@ -144,7 +148,7 @@ function format_error (error) {
 		(error.stack ? error.stack : '')
 		.split('\n').filter( node_internal ).filter( empty ).join('\n')
 		.replaceAll( SETTINGS.BASE_DIR, '' )
-		.replace( 'Error: ', '')
+		//....replace( 'Error: ', '')
 	);
 
 } // format_error

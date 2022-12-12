@@ -574,7 +574,9 @@ export const DebugTerminal = function (cep) {
 		self.animatePing( /*transmit*/true );
 
 		if (message.broadcast && message.broadcast.reload) {
-			Object.keys( message.broadcast.reload ).forEach( (file_name)=>{
+			const reload = message.broadcast.reload;
+			const file_names = (typeof reload == 'string') ? [reload] : reload;
+			file_names.forEach( (file_name)=>{
 				if (file_name.charAt(0) != '/') file_name = '/' + file_name;
 				file_name = file_name.replace( 'client/', '' ).replace( cep.baseDir + '/', '' );
 				self.applets.status.show(

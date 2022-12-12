@@ -47,7 +47,7 @@ module.exports = function AccessControl (persistent, callback, meta) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// HELPERS
+// RULE PARSERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function format_source (configuration, show_line_numbers = true) {
@@ -67,9 +67,23 @@ module.exports = function AccessControl (persistent, callback, meta) {
 	} // format_source
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PARSER
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+	function stringify_configuration (rules) {
+		return Object.keys( rules ).map( (key)=>{
+			const rule = rules[key];
+			const groups = rule.groups.join( ',' );
+			const syntax = (
+				JSON.stringify( rule.syntax )
+				.replace( /"/g  , '' )
+				.replace( /\[/g , '' )
+				.replace( /\]/g , '' )
+			);
+
+			return groups + ': ' + syntax;
+
+		}).join('\n');
+
+	} // stringify_configuration
+
 
 	function parse_configuration (configuration) {
 		const groups = ['connected', 'guest', 'user', 'mod', 'admin', 'dev', 'owner'];
@@ -125,7 +139,7 @@ module.exports = function AccessControl (persistent, callback, meta) {
 
 			} catch (error) {
 				DEBUG.log( COLORS.ERROR, 'parse_rule:', source, syntax );
-				throw new Error( error.message + ' in rule ' + source );
+				throw new Error( error.message + ' in rule ' + source + '\n' + syntax );
 				return null;
 			}
 
@@ -134,32 +148,11 @@ module.exports = function AccessControl (persistent, callback, meta) {
 	} // parse_configuration
 
 
-	function stringify_configuration (rules) {
-		return Object.keys( rules ).map( (key)=>{
-			const rule = rules[key];
-			const groups = rule.groups.join( ',' );
-			const syntax = (
-				JSON.stringify( rule.syntax )
-				.replace( /"/g  , '' )
-				.replace( /\[/g , '' )
-				.replace( /\]/g , '' )
-			);
-
-			return groups + ': ' + syntax;
-
-		}).join('\n');
-
-	}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // VERIFY
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function verify_request (client, request) {
-		return self.rules.find( (rule)=>{
-
-		});
-
 	} // verify_request
 
 
@@ -169,17 +162,73 @@ module.exports = function AccessControl (persistent, callback, meta) {
 
 	this.request = {};
 
-// SAY ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-	HELP( 'rules', 'Request persistent.descriptionState' );
-	RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:string}}' );
-	this.request.rules = function (client, request_id, parameters) {
-		return { result: persistent.descriptionState };
-	};
+// RULES /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+HELP( 'rules', 'Request available protocols' );
+
+RULE( 'guest,user,mod,admin,dev,owner: {access:{rules:empty}}' );
+RULE( 'guest,user,mod,admin,dev,owner: {access:{rules:{grouped:empty}}}' );
+RULE( 'admin,dev,owner: {access:{rules:{all:empty}}}' );
+RULE( 'admin,dev,owner: {access:{rules:{description:empty}}}' );
+
+	this.request.rules = function (client, parameters) {
+		if (parameters.grouped) {
+			return { result: self.getClientRulesGrouped(client) };
+		}
+		else if (parameters.all) {
+			return { result: self.rules };
+		}
+		else if (parameters.description) {
+			return { result: self.getProtocolDescription().split('\n') };
+		}
+		else {
+			return { result: self.getClientRules(client) };
+		}
+
+	}; // rules
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+// CLIENT RULES //////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function find_rules (group_name) {
+		const match  = rule => rule.groups.indexOf(group_name) >= 0;
+		const syntax = rule => (
+			JSON.stringify( rule.syntax )
+			.replaceAll('"', '')
+			.replaceAll(':{', '.')
+			.replaceAll('{', '')
+			.replaceAll('}', '')
+		);
+		const found_rules = self.rules.filter( match ).map( syntax );
+		return { [group_name]: found_rules };
+	}
+
+	this.getClientRulesGrouped = function (client) {
+		const combine = (prev, group)=>({...prev, ...group});
+		return client.getGroups().map( find_rules ).reduce( combine, {} );
+
+	}; // getClientRules
+
+
+	this.getClientRules = function (client) {
+		const combine = (prev, group)=>({...prev, ...group});
+		const result  = client.getGroups().map( find_rules ).reduce( combine, {} );
+
+		// Filter duplicates
+		const all_combined = new Set();
+		Object.values( result ).forEach( (rules)=>{
+			rules.forEach( rule => all_combined.add(rule) );
+		});
+
+		return { result: Array.from( all_combined ) };
+
+	}; // getClientRules
+
+
+// PROTOCOL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.getProtocolDescription = function () {
 		return stringify_configuration( self.rules );
@@ -199,17 +248,9 @@ module.exports = function AccessControl (persistent, callback, meta) {
 			throw new Error( 'Syntax error in configuration' );
 		}
 
-		persistent.configuration = source;
 		self.rules = parsed;
 
 	}; // loadConfiguration
-
-
-	this.reloadConfiguration = function () {
-		self.loadConfiguration( persistent.configuration );
-
-	}; // reloadConfiguration
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -226,20 +267,14 @@ module.exports = function AccessControl (persistent, callback, meta) {
 
 	this.reset = function () {
 		if (DEBUG.RESET) DEBUG.log( COLORS.INSTANCES, 'Access.reset' );
-
-		if (Object.keys( persistent ).length == 0) {
-			persistent.configuration = null;
-			persistent.rules = {};
-		}
-
-		self.loadConfiguration( PROTOCOL_DESCRIPTION );
+		const configuration = callback.getMeta().rules.join('\n');
+		self.loadConfiguration( configuration );
 
 	}; // reset
 
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'Access.init' );
-		self.reset();
 		return Promise.resolve();
 
 	}; // init

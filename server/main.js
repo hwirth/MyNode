@@ -577,6 +577,7 @@ function parse_json(message) {//...
 
 			self.reloader = await new AppReloader({
 				triggerExit: ()=>self.exit( EXIT_CODES.REQUEST_RESTART ),
+				getServerInstance : ()=>self,
 			});
 
 			done();

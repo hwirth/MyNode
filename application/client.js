@@ -182,13 +182,23 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 
 	this.inGroup = function (...groups) {
-		if (!self.login) return false;
+		if (!self.login) return [...groups].indexOf( 'connected' );
 
 		const in_at_least_one = (previous, group)=>{
 			return previous || (self.login.groups.indexOf(group) >= 0);
 		}
 
 		return [...groups].reduce( in_at_least_one, /*initialValue*/false );
+
+	}; // inGroup
+
+
+	this.getGroups = function () {
+		if (self.login) {
+			return self.login.groups;
+		} else {
+			return ['connected'];
+		}
 
 	}; // inGroup
 

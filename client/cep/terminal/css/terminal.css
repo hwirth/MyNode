@@ -440,7 +440,7 @@ cep-terminal main.shell * { line-height:var(--line-height); }
 cep-terminal main.shell.split {
 	display:grid;
 	grid-template-rows:auto 1fr;
-	grid-template-columns:1fr 1fr;
+	grid-template-columns:1fr min(50%, auto);
 	grid-template-areas:"tl r" "bl r";
 }
 cep-terminal main.shell.split output:nth-of-type(2) { grid-area:tl; }
@@ -619,6 +619,35 @@ cep-terminal .shell iframe {
 	Xbackground:#000a;   /* Turns command dark */
 }
 
+/* UPDATED FILES */
+cep-terminal output:not(:first-of-type) pre:is(.files,.error,.unknown) {
+	Xmargin-left:-0.5rem; Xmargin-right:-0.5rem;
+	Xmargin:0.5rem 1px;
+	padding:1rem 1rem;
+	color:var(--cep-color);
+}
+cep-terminal output:not(:first-of-type) pre.files {
+	background:#8cf2;
+}
+cep-terminal output:not(:first-of-type) pre.error {
+	background:#fc02;
+}
+cep-terminal output:not(:first-of-type) pre.unknown {
+	background:#fc82; color:#fc0;
+}
+cep-terminal.fancy output:not(:first-of-type) pre:is(.files,.error,.unknown) {
+	padding:0.25em 0.5em; margin:0.5em; border-radius:0.25em;
+}
+cep-terminal.fancy output:not(:first-of-type) pre.files {
+	outline:solid 2px #08f8;
+}
+cep-terminal.fancy output:not(:first-of-type) pre.error {
+	outline:solid 2px #fc08;
+}
+cep-terminal.fancy output:not(:first-of-type) pre.unknown {
+	outline:solid 2px #ff08;
+}
+
 
 /*** SETTINGS ***/
 
@@ -778,8 +807,8 @@ cep-terminal.fancy .shell pre.expand::before {
 	background:radial-gradient(ellipse at center, #ffff, #fff8 3px, #fff1 10px, #fff0 20px);
 	width:20px;
 }
-cep-terminal.fancy .shell pre.chat span { display:inline; }
-cep-terminal.fancy .shell pre.chat::before {
+cep-terminal.fancy main.shell pre.chat span { display:inline; }
+cep-terminal.fancy main.shell pre.chat::before {
 	--s:10px;
 	content:'';
 	top:3px; left:6px;
@@ -787,7 +816,7 @@ cep-terminal.fancy .shell pre.chat::before {
 	outline:solid 1px #f8cd; border-radius:0px;
 	background:#0006; transform:rotate(45deg);
 }
-cep-terminal.fancy.connected .shell pre.chat::before {
+cep-terminal.fancy.connected main.shell pre.chat::before {
 	outline:solid 1px #6cfc;
 }
 cep-terminal.fancy pre.chat.unexpand::before { background:#fff6; }

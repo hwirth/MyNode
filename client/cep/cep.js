@@ -92,7 +92,9 @@ export const ClientEndPoint = function (parameters = {}) {
 	this.onWsMessage = function (message) {
 		if (message.broadcast && (message.broadcast.type == 'reload/client')) {
 			let do_reload = false;
-			Object.keys( message.broadcast.reload ).forEach( (file_name)=>{//...! change protocol
+			const reload = message.broadcast.reload;
+			const file_names = (typeof reload == 'string') ? [reload] : reload;
+			file_names.forEach( (file_name)=>{//...! change protocol
 				file_name = file_name.replace( 'client/', '' );
 				if (self.baseDir) file_name = file_name.replace( self.baseDir + '/', '' );
 				if (file_name.slice(-4) == '.css') {
@@ -104,7 +106,7 @@ export const ClientEndPoint = function (parameters = {}) {
 					+ '</a> was reloaded'
 					;
 
-					self.events.emit( 'reload/css', html );
+					//...self.events.emit( 'reload/css', html );
 					self.dom.reloadCSS( file_name );
 				}
 
@@ -117,7 +119,7 @@ export const ClientEndPoint = function (parameters = {}) {
 			});
 			if (do_reload) {
 				if (SETTINGS.RELOAD_ON_UPDATE) {
-					self.events.emit( 'reload/client' );
+					//self.events.emit( 'reload/client' );
 					self.send( {chat:{say:'Reloading'}} );
 					document.documentElement.classList.add( 'client_reload' );
 					setTimeout( ()=>location.reload(), 333 );

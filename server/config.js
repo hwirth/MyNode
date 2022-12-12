@@ -65,7 +65,6 @@ const SETTINGS = {
 
 	MESSAGE_TIMESTAMPS   : true,   // Send time with each JSON reply
 	REPORT_HANDLED       :!true,   // Always send response handled/rejected
-	WATCH_FILES          : true,   // Report file changes via broadcast
 
 	PING: {
 		LOG      : false,      // true: Might flood your log output
@@ -101,7 +100,7 @@ const SETTINGS = {
 		IDLE          : null,//60*60*1000,
 	},
 
-	BROADCAST_FILE_CHANGE_FOLDERS: [
+	WATCH_FILES: [   // Set to false to disable
 		'server',
 		//...'application',        //... Handled by reloader
 		//...'application/chat',
