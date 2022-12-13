@@ -1,6 +1,6 @@
 // editor.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -289,6 +289,8 @@ return
 
 	this.init = async function () {
 		if (DEBUG.INSTANCES) console.log( 'Editor.init' );
+
+		//...! self.saveCallback, cancel (release)
 
 		self.containers = [];
 		self.elements = {};

@@ -1,6 +1,6 @@
 // parsers.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -20,7 +20,7 @@ export const Parsers = function (cep, terminal, shell, BUTTON_SCRIPTS) {
 
 
 	this.parseButtonScript = function (script) {
-		const login_menu = terminal.applets.loginMenu;
+		const login_menu = terminal.applets.nodeMenu;
 		const username = login_menu.elements.userName.value;
 		const nickname = login_menu.elements.nickName.value;
 		const factor2  = login_menu.elements.factor2.value || 'null';

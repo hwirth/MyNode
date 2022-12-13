@@ -1,6 +1,6 @@
 // router.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -11,7 +11,7 @@ const { SETTINGS        } = require( '../server/config.js' );
 const { REASONS         } = require( './constants.js' );
 const { DEBUG, COLORS   } = require( '../server/debug.js' );
 
-const Helpers         = require( './constants.js' );
+const Helpers         = require( '../server/helpers.js' );
 const WebSocketClient = require( './client.js' );
 const MetaData        = require( './meta.js'   );
 
@@ -293,7 +293,9 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 
 			if (answer.message.broadcast) broadcasts.push( answer.message.broadcast );
 
-			const command_name = answer.protocol + '.' + answer.command;
+			const command_name = answer.protocol + '.' + answer.command
+			+ (answer.message.command ? '.' + answer.message.command : '')
+			;
 
 			if ('boolean' == typeof answer.message.success) {
 				results.push({

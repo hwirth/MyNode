@@ -210,7 +210,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		// Not sufficient, connection can "fall asleep" and hang before waking up. App level ping helps.
 
 		self.send({
-			update: {
+			broadcast: {
 				type: 'session/ping',
 				pong: ++self.pingNr,
 			}

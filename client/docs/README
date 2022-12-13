@@ -1,11 +1,7 @@
 ==================================================================================================================119:=
-                              SPIELWIESE - copy(l)eft 2022 - spielwiese.central-dogma.at
-                                                  README for v0.0.5p
+MyNode - copy(l)eft 2022 - spielwiese.central-dogma.at
+README Dec 13, 2022 - Some things will likey have changed, since I last updated this file.
 ==================================================================================================================119:=
-
-
-*** At the moment, this   R E A D M E   I S   O U T D A T E D   per definition ***
-
 
 Index
 	1. Overview
@@ -22,23 +18,127 @@ Index
 	7. Code parking space
 
 
-1. Overview
+1. Introduction
+===============
+For a CSS based poker game, I wanted to add multi player capabilities. As it usually goes, the scope of the project
+exploded a little and now it has become MyNode, which is a client/server system for applications like a chat or
+multi-player games written in NodeJS.
+
+1.1. Client End Point
+---------------------
+The "CEP" is a fancy self-reconnecting websocket and API to the server functions for the application developer. It
+also provides a debug terminal that allows to send manually crafted JSON messages to the server and also serves as
+mod/admin interface.
+
+1.1 Main server - ./server/
+---------------------------
+The main program is the minimum amount of code needed to facilitate hot-code reloading (You press ctrl+s and everything
+reinstantiates seamlessly without dropping websocket connections, or the clients are sent reload commands).
+The http and websocket servers are part of the main program.
+
+1.2 Protocols - ./application/
+------------------------------
+	* All hot-reloadable code is considered "application" as far as the main server is concerned.
+	* Most programs implement a protocol and provide their services to the CEP directly
+	* The core protocols deal with message routing, as well as server, permission, user and account management.
+
+1.3 Payload protocols
+---------------------
+The actual applications, for instance the demo chat, a specific game server, instant messenger or IRC gateways, etc.
+
+
+2. Overview
 ===========
- "Spielwiese" is to be a general websocket server fulfilling all needs of my home page (chat, games, tools, etc.).
-Server side code can be edited through the browser client and hot reloaded on the fly.
+This section describes, what MyNode could potentially become. So far I have only been picking low hanging fruit and
+the system is amazingly powerful already. I'd prefer to keep things as simple as they are now, which might be in
+conflict with adding certain features in the future.
 
-  WebSocketServer()  deals with connections and communicates messages between client and (what it considers) business
-logic, called "application" here. It also provides automatic hot-reloading and is kept to the viable minimum required
-for that.
-
- The rest of the Spielwiese is implemented as application, which deals in analysing the request, routing it to the
-appropriate server module ("protocol"), session handling, etc., and a minmal preliminary chat server as placeholder for
-the real payloads. The collection of servers in the  ./application/  directory is called "protocols", payload servers
-live in sub-directories.
+2.1. "Chat", a demo application - ./client/
+-------------------------------------------
+This simple chat utilizes the CEP to talk to ./application/chat/* .
+The debug terminal and its assets are loaded only, when the user opens it for the first time.
 
 
+2.2. Client End Point - ./client/cep/
+-------------------------------------
+Provides a self-reconnecting websocket (AutoWebSocket) and helps match sent requests and received responses.
 
-2. File structure
+	const cep = new ClientEndPoint(<arguments>);
+	cep.connection.*  The websocket interface: .conncect(), etc.
+	cep.dom.*         A few things the experimental features in the terminal use, but are of generic utility,
+	                  so we publish them for the main application.
+	cep.reload.*      Tools to hot-reload object templates, css files, etc.
+
+
+2.2.1. MyNode WebSocket Interface
+---------------------------------
+	See ./client/main.js
+
+2.2.2. Utilities
+----------------
+	* Asset streaming and caching
+	* Device manager for controllers, microphones, cameras, head sets, etc.
+	* File upload and dragdop support between browser and a file manager
+	* WebRTC voice, video and data streams
+	* Hot code reloading
+
+	A simple Events() object
+	Events can be "emitted" as you expect, or be "called back": When using  callback , only the most recent event
+	listener will be called. This is used for asynchronously retreiving login credentials before socket connect,
+	and allows the terminal (or any other additional applet) to provide a login form on their own and "take over"
+	the duty of providing login credentials, whenever the websockets aks for them. This is transparent to the main
+	application.
+
+2.2.3. Debug terminal
+---------------------
+	* Displays all messages sent or received through the AutoWebSocket
+	* Can send manually crafted JSONs
+	* UI for server control protocol
+	* UI for user management (edit accounts, kick, ban)
+	* Remote access to all internal variables of the server
+	* Remote access to all internal variables of every connected client
+	* Remote IDE for software development (Currently just a code editor)
+	* Remote file manager
+	* Testing ground while developing future CEP features
+
+
+2.3. MyNode Server
+------------------
+
+2.3.1 Main program
+------------------
+	* HTTP and websocket server
+	* Code hot-reloader
+
+2.3.2 Core protocols
+--------------------
+All hot reloadable parts are considered application code, most of which implements an independent "protocol".
+The main program in the application directory is the Router, which validates the request, gathers results and sends
+them back. It is closely tied to the session and access protocols, and does not publish a protocol itself.
+
+	* application/router.js    Receives message, calls according protocol request handler, sends result back
+	* application/meta.js      Gathers information about the code, when it is compiled
+	* application/access.js    Permission management for requests based on meta data
+	* application/session.js   Session, user and account management
+	* application/control.js   Server control debug protocol
+
+2.3.3 Payload protocols
+-----------------------
+Most of these are not yet implemented, or very rudimentary for testing purposes only.
+
+	* Chat
+	* File manager
+	* "Remote desktop" from client to client, Synergy like mouse and keyboard sharing
+	* RSS, IRC, Email, Forum, GPT chatbot, ...
+	* Turn based games (Showdown, Dice Chess, Billiard, Chess, MOO2)
+	* Real time games (Dbris, Getaway, VirtuaRacing/Microprose F1 GP, My Little Program, Lightcycle)
+
+
+3 Debug terminal for JSON messages
+----------------------------------
+
+
+4. File structure
 =================
 	./start_server.sh            Runs node in a loop, terminates on certain exit codes
 	./server/                    Code in this folder cannot be hot-reloaded
@@ -49,12 +149,21 @@ live in sub-directories.
 	./application/               Hot reloadable code, responses to messages from the websocket
 	./application/router.js      Calls response handler according to requested protocol/command
 	./application/session.js     Main protocol, handles accounts and logins
-	./application/client.js
+	./application/client.js      I want to get rid of its methods and re-integrate it with session.js
 	./application/chat/chat.js   Custom server protocol, simple text chat
-	./htdocs                     Chat client and a debug thingy
+	./client/                    Chat client and a gamified debug thingy
+	./client/index.html
+	./client/main.js
+	./client/cep/
+	./client/cep/cep.js
+	./client/cep/websocket.js
+	./client/cep/config.js
+	./client/cep/events.js       Simple event mechanism.
+	./client/cep/dom_assist.js   DOM helpers, find elements, reload CSS, etc.
+	./client/cep/helpers.js      Things that are just generally missing in JavaScript, like isNumeric()
 
 
-3. Mode of operation
+5. Mode of operation
 ====================
 
 3.1. Messages and session handling

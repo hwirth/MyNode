@@ -1,6 +1,6 @@
 // server/main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -94,21 +94,21 @@ const Main = function () {
 	this.onMessage = async function (socket, client_address, json_string) {
 		const request_nr  = ++message_id;
 
-	if (!true && typeof json_string != 'string') {
-		log_header(
-			COLORS.WARNING,
-			'GOT BUFFER '
-			+ request_nr
-			+ ' ]--[ '
-			+ COLORS.STRONG
-			+ client_address
-			+ COLORS.WARNING
-			,
-			EXTRA_HEADER_DASHES,
-		);
+if (!true && typeof json_string != 'string') {
+	log_header(
+		COLORS.WARNING,
+		'GOT BUFFER '
+		+ request_nr
+		+ ' ]--[ '
+		+ COLORS.STRONG
+		+ client_address
+		+ COLORS.WARNING
+		,
+		EXTRA_HEADER_DASHES,
+	);
 
-		return socket.close();
-	}
+	return socket.close();
+}
 
 function parse_json(message) {//...
 	let result = message;

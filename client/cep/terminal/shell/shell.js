@@ -1,6 +1,6 @@
 // shell.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -15,7 +15,7 @@ import { Parsers           } from './parsers.js';
 import { History           } from './history.js';
 
 const PROGRAM_NAME = 'CEP-Shell';
-const PROGRAM_VERSION = '0.5.2α';
+const PROGRAM_VERSION = '0.4.4α';
 
 
 export const CEPShell = function (cep, terminal) {
@@ -70,10 +70,6 @@ export const CEPShell = function (cep, terminal) {
 				<nav class="shell menu">
 					<button class="enter">Enter</button>
 					<div class="items">
-						<nav class="toggles menu">
-							<button>Toggles</button>
-							<div class="items"></div>
-						</nav>
 						<nav class="filters menu">
 							<button>Filter</button>
 							<div class="items"></div>
@@ -97,6 +93,10 @@ export const CEPShell = function (cep, terminal) {
 						</nav>
 						<nav class="debug menu">
 							<button>Debug</button>
+							<div class="items"></div>
+						</nav>
+						<nav class="toggles menu">
+							<button>Toggles</button>
 							<div class="items"></div>
 						</nav>
 					</div>
@@ -143,7 +143,6 @@ chat      : { preset:pF.CHAT      , target:tO, blink:bF, menu:mF, shortcut:null,
 string    : { preset:pF.STRING    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'String'     },
 notice    : { preset:pF.NOTICE    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Notice'     },
 broadcast : { preset:pF.BROADCAST , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Broadcast'  },
-update    : { preset:pF.UPDATE    , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Update'     },
 request   : { preset:pF.REQUEST   , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Request'    },
 response  : { preset:pF.RESPONSE  , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Response'   },
 filter    : { preset:pT.FILTER    , target:tO, blink:bF, menu:mF, shortcut:'d',  caption:'Filter'    , button:btnF },
@@ -160,7 +159,7 @@ split     : { preset:pT.SPLIT     , target:tM, blink:bT, menu:mT, shortcut:'h', 
 
 
 	function create_scriptbutton_definition () {
-		const AUTH   = terminal.applets.loginMenu.elements.itemsLogin;
+		const AUTH   = terminal.applets.nodeMenu.elements.itemsLogin;
 		const MODE   = self.elements.itemsMode;
 		const DEFCON = self.elements.itemsDefcon;
 		const ADD    = self.elements.itemsAdd;
@@ -177,22 +176,14 @@ user      : { menu:AUTH  , script:'session\n\tlogin\n\t\tusername: user\n\t\tpas
 root      : { menu:AUTH  , script:'session\n\tlogin\n\t\tusername: root\n\t\tpassword: 12345\n%N' },
 help      : { menu:DEBUG , script:'/help'   },
 manual    : { menu:DEBUG , script:'/manual' },
-restart   : { menu:DEBUG , script:'server\n\trestart\n\t\ttoken: ' },
-reset     : { menu:DEBUG , script:'server\n\trestart\n\t\ttoken: ' },
-token     : { menu:DEBUG , script:'server\n\ttoken'   },
-who       : { menu:DEBUG , script:'session\n\twho'    },
-vStat     : { menu:DEBUG , script:'server\n\tstatus'  },
-nStat     : { menu:DEBUG , script:'session\n\tstatus' },
-kroot     : { menu:DEBUG , script:'session\n\tkick\n\t\tusername: root'  },
-kuser     : { menu:DEBUG , script:'session\n\tkick\n\t\tusername: user'  },
 RSS       : { menu:DEBUG , script:'rss\n\treset\n\ttoggle:all\n\tupdate' },
 msgOutOn  : { menu:DEBUG , script:'server\n\tglobal\n\t\tset:DEBUG.MESSAGE_OUT\n\t\tvalue:true'  },
 msgOutOff : { menu:DEBUG , script:'server\n\tglobal\n\t\tset:DEBUG.MESSAGE_OUT\n\t\tvalue:false' },
 TEST      : { menu:DEBUG , script:'unknown\n\tproto\nserver\n\ttoken' },
-defcon3   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,red' },
-defcon2   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,uv' },
-defcon1   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,green' },
-defcon0   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:fancy,normal' },
+defcon3   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:animate,fancy,gridblink,red' },
+defcon2   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:animate,fancy,gridblink,uv' },
+defcon1   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:animate,fancy,gridblink,normal' },
+defcon0   : { menu:DEFCON, script:'chat\n\tmode\n\t\tset:animate,fancy,gridblink,green' },
 addFancy  : { menu:ADD   , script:'chat\n\tmode\n\t\tadd:fancy' },
 addBlink  : { menu:ADD   , script:'chat\n\tmode\n\t\tadd:gridblink' },
 addMCP    : { menu:ADD   , script:'chat\n\tmode\n\t\tadd:mcp' },
@@ -215,18 +206,20 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 },{ event:'keydown', key:','        , modifiers:'alt'       , action:()=>{ terminal.nextFont(-1)           },
 },{ event:'keydown', key:'ArrowUp'  , modifiers:'cursorPos1', action:()=>{ self.history.back();            },
 },{ event:'keydown', key:'ArrowDown', modifiers:'cursorEnd' , action:()=>{ self.history.forward();         },
-},{ event:'keydown', key:'Home'     , modifiers:'ctrl'      , action:()=>{ self.output.clearInput();       },
-},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.deleteToMarker();   },
+},{ event:'keydown', key:'Escape'   , modifiers:null        , action:()=>{ self.output.clearInput();       },
+//...},{ event:'keydown', key:'End'      , modifiers:'ctrl'      , action:()=>{ self.output.scrollDown( true ); },
+//...},{ event:'keydown', key:'Home'     , modifiers:'ctrl'      , action:()=>{ self.output.scrollPos1();       },
+},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.clearScreen();      },
+},{ event:'keydown', key:'Delete'   , modifiers:'shift,ctrl', action:()=>{ self.output.deleteToMarker();   },
 },{ event:'keydown', key:'PageUp'   , modifiers:'shift'     , action:()=>{ self.output.scrollPageUp();     },
 },{ event:'keydown', key:'PageDown' , modifiers:'shift'     , action:()=>{ self.output.scrollPageDown();   },
-},{ event:'keydown', key:'Delete'   , modifiers:'shift,ctrl', action:()=>{ self.output.clearScreen();      },
 },{ event:'keydown', key:'Enter'    , modifiers:null        , action:()=>{ self.elements.btnEnter.click(); },
 },{ event:'keydown', key:'e'        , modifiers:'alt'       , action:()=>{ login_exec('disconnect');       },
 },{ event:'keydown', key:'w'        , modifiers:'alt'       , action:()=>{ login_exec('login');            },
 },
 	];
 	function login_exec (button_name) {
-		terminal.applets.loginMenu.elements[button_name].click();
+		terminal.applets.nodeMenu.elements[button_name].click();
 		self.elements.btnEnter.click();
 	}
 
@@ -238,7 +231,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 	this.taskMainClass = 'shell';
 	this.focusItem;
 	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENTS
@@ -345,7 +337,7 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 // MOUSE /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function on_output_click (event) {
-		const TE = terminal.applets.loginMenu.elements;
+		const TE = terminal.applets.nodeMenu.elements;
 		const SE = self.elements;
 
 		const output = event.target.closest( 'output' );
@@ -592,6 +584,15 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		// TOGGLE STATES
 		self.updateToggleStates();
 		terminal.events.add( 'toggle', self.updateToggleStates );
+		self.elements.toggleState.addEventListener( 'click', ()=>{
+			//const TE = terminal.applets.mainMenu.elements;
+			//TE.btnCEP.focus();
+			//setTimeout( ()=>TE.btnToggles.focus() );
+			terminal.applets.mainMenu.elements.menuCEP.classList.toggle( 'open' );
+			terminal.applets.mainMenu.elements.menuToggles.classList.toggle( 'open' );
+			self.elements.menuShell.classList.toggle( 'open' );
+			self.elements.menuToggles.classList.toggle( 'open' );
+		});
 
 		// SCRIPT BUTTONS
 		self.buttonScripts = {};
@@ -653,12 +654,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		// BUTTON: "Exit"
 		//...self.elements.btnClose.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
 
-		// TOGGLE_STATE
-		self.elements.toggleState.addEventListener( 'click', ()=>{
-			const TE = terminal.applets.mainMenu.elements;
-			TE.btnCEP.focus();
-			setTimeout( ()=>TE.btnToggles.focus() );
-		});
 
 		// PROMPT
 		self.elements.input.addEventListener( 'keyup' , self.input.adjustTextarea );
@@ -707,13 +702,13 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		welcome += 'Enter /help for more information';
 		self.output.print( welcome, 'expand' );
 
-		const login_menu = terminal.applets.loginMenu;
-		if (cep.GET.has('username')) login_menu.elements.userName.value = cep.GET.get('username');
-		if (cep.GET.has('nickname')) login_menu.elements.nickName.value = cep.GET.get('nickname');
-		if (cep.GET.has('password')) login_menu.elements.passWord.value = cep.GET.get('password');
+		const node_menu = terminal.applets.nodeMenu;
+		if (cep.GET.has('username')) node_menu.elements.userName.value = cep.GET.get('username');
+		if (cep.GET.has('nickname')) node_menu.elements.nickName.value = cep.GET.get('nickname');
+		if (cep.GET.has('password')) node_menu.elements.passWord.value = cep.GET.get('password');
 	/*
 		if (cep.GET.has('login')) setTimeout( ()=>{
-			login_menu.elements.login.click();
+			node_menu.elements.login.click();
 			self.elements.btnEnter.click();
 		}, 0);
 	*/

@@ -87,7 +87,11 @@ const SETTINGS = {
 		RUN_AS_USER   : config_file.RUN_AS_USER,
 		RUN_AS_GROUP  : config_file.RUN_AS_GROUP,
 		DOCUMENT_ROOT : config_file.DOCUMENT_ROOT,
-		VERBOSITY     : 1,
+	},
+
+	VERBOSITY : {
+		CURRENT_LEVEL   : 0,
+		FAILURE_RESULTS : 1,
 	},
 
 	// Upper case chars are also accepted

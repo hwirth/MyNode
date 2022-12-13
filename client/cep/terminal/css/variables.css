@@ -37,13 +37,30 @@
 
 	--status-fade-time : 0.333s;
 
-	--button-border        : none;
-	--button-border-radius : 0px;
-	--button-outline       : none;
-	--button-padding       : 0.5em 1em;
+	--button-outline   : none;
+	--button-border    : none;
+	--button-radius    : 0px;
+	--button-padding-x : 1em;
+	--button-padding-y : 0.5em;
+
+	--input-height     : invalid;
+	--input-outline    : none;
+	--input-border     : none;
+	--input-radius     : 0;
+	--input-padding-x  : 0.5em;
+	--input-padding-y  : var(--button-padding-y);
+	--input-color      : #fc0;
+	--input-background : #023f;
 
 	--output-margin-x   : 0;
 	--output-padding-x  : 0;
+
+	--speaker     : '🗣';
+	--one-person  : '👤';
+	--two-persons : '👥';
+
+	--self-content : var(--one-person);
+	--self-color   : #fff;
 }
 
 
@@ -71,14 +88,16 @@
 	--toolbar-background : #333;
 	--toolbar-color      : #999;
 
-	--input-color : #fc0;
-	--input-bg    : #000f;
+	--button-outline    : solid 1px #222;
+	--button-border     : invalid;
+	--button-radius     : invalid;
+	--button-color      : #fed;
+	--button-background : #246;
 
-	--button-color              : #fed;
-	--button-background         : #246;
-	--button-special-color      : #fed;
-	--button-special-background : #534;
-
+	--button-disabled-color             : #a98;
+	--button-disabled-background        : #555;
+	--button-special-color              : #fed;
+	--button-special-background         : #534;
 	--button-enabled-color              : #af4;
 	--button-enabled-background         : #240;
 	--button-special-enabled-background : #240;
@@ -131,6 +150,9 @@
 	--online-color-f      : #0aff;
 	--online-background   : #157;
 	--authenticated-color : #fff;
+
+	--task-active-color      : var(--button-enabled-color);
+	--task-active-background : var(--button-enabled-background);
 
 	--todo-color           : #aaa;
 	--todo-important-color : #fc0d;
@@ -263,14 +285,26 @@ cep-terminal.fancy {
 	--Xbutton-special-enabled-color      : #fca;
 	--button-task-background            : #355d;
 
-	--button-border        : solid 1px #000a;
-	--button-border-radius : 0.5em;
-	--button-outline       : none;
-	--button-padding       : 0.35em 1em;
-	--button-box-shadow    :
+	--Xinput-height     : invalid;
+	--input-outline    : solid 1px #0268;
+	--Xinput-border     : none;
+	--input-radius     : 0.25em;
+	--Xinput-padding-x  : 0.5em;
+	--Xinput-padding-y  : var(--button-padding-y);
+	--input-color      : #fc0;
+	--input-background : #000;
+
+	--button-border              : solid 1px #000a;
+	--button-radius              : 0.5em;
+	--button-outline             : none;
+	--button-padding-x           : 1em;
+	--button-padding-y           : 0.35em;
+	--button-box-shadow          :
 		inset -0px -0px 0px 1px #0004,
 		inset  1px  1px 0px 1px #fff1
 	;
+	--button-disabled-color      : #68ca;
+	--button-disabled-background : #3468;
 
 	--offline-color       : #fc0;
 	--offline-background  : var(--button-special-background);
@@ -288,7 +322,7 @@ cep-terminal.fancy {
 	--online-background   : #37aa;
 	--online-border       : solid 1px #0000;
 	--online-box-shadow   :
-		0 0 10px 7px #28fd,
+		0 0 10px 5px #28fd,
 		inset 0 0 2px 1px #0ff
 	;
 	--online-box-shadow   :
@@ -307,10 +341,10 @@ cep-terminal.fancy {
 	--connection-height : unset;X:2.4em;
 
 	--authenticated-color : #fff;
-	--transmit-background : #4af7;
+	--transmit-background : #068;
 	--transmit-box-shadow   :
 		0 0 13px 4px #28da,
-		inset 0 0 4px 1px #0ffc
+		inset 0 0 2px 2px #0ff
 	;
 }
 .fancy.terminal {

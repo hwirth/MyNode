@@ -79,32 +79,37 @@ RULE( 'guest,user,mod,admin,dev,owner: {chat:{nick:string}}' );
 
 
 // SAY ///////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-HELP( 'say', 'Send a text message to all users' );
-RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:string}}' );
+HELP( 'say', 'Send a text message to all or one specific users' );
+RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:{room:string,message:string}}}' );
+RULE( 'guest,user,mod,admin,dev,owner: {chat:{say:{user:string,message:string}}}' );
 
 	this.request.say = function (client, parameter) {
 		DEBUG.log( COLORS.COMMAND, '<chat.say>', client	);
 
-		if (client.login) {
-			return {
-				success   : true,
-			/*
-				result    : {
-					iSaid: message,
-				},
-			*/
-				broadcast : {
-					recipients : client => client.login,
-					type       : 'chat/say',
-					userName   : client.login.userName,
-					nickName   : client.login.nickName,
-					message    : parameter,
-				},
-			};
+		const type = (parameter.room) ? 'room' : 'private';
 
-		} else {
-			return { failure:REASONS.INSUFFICIENT_PERMS };
+		if( (type == 'chat/room'   ) && !parameter.room
+		||  (type == 'chat/private') && !parameter.user
+		) {
+			return { failure: REASONS.INVALID_REQUEST };
 		}
+
+		const recipients
+		= (type == 'room')
+		? client => client.login
+		: client => client.login && (client.login.userName.toLowerCase() == parameter.user.toLowerCase());
+		;
+
+		return {
+			success   : true,
+			broadcast : {
+				recipients : recipients,
+				type       : 'chat/' + type,
+				userName   : client.login.userName,
+				nickName   : client.login.nickName,
+				message    : parameter.message,
+			},
+		};
 
 	}; // request.say
 

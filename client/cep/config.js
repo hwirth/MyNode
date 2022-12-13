@@ -1,6 +1,6 @@
 // config.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -16,6 +16,7 @@ export const DEBUG = {
 	INSTANCES       : false,
 	EVENTS          : false,
 };
+
 
 export const SETTINGS = {
 	CONNECT_ON_START : false,//...location.href.indexOf('connect') >= 0,

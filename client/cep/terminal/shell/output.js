@@ -1,6 +1,6 @@
 // output.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -10,8 +10,13 @@ export const ShellOutput = function (cep, terminal, shell) {
 	const self = this;
 
 
-	this.printVersion = function (additional_text = '') {
-		self.print( 'CEP-Shell v' + shell.version + additional_text, 'cep' );
+	this.printVersion = function () {
+		self.print(
+			'MyNode Client End Point v'   + cep.version
+			+ ', Terminal v' + terminal.version
+			+ ', Shell v'    + shell.version
+			, 'cep'
+		);
 	};
 
 
@@ -27,8 +32,14 @@ export const ShellOutput = function (cep, terminal, shell) {
 	};
 
 
-	this.scrollDown = function () {
-		if (shell.toggles.scroll.enabled) {
+	this.scrollPos1 = function () {
+		shell.elements.output.scrollTop = 0;
+
+	}; // scrollPos1
+
+
+	this.scrollDown = function (force) {
+		if (shell.toggles.scroll.enabled || force) {
 			shell.elements.output.scrollBy(0, 99999);
 			shell.elements.output1.scrollBy(0, 99999);
 		}
@@ -106,7 +117,7 @@ export const ShellOutput = function (cep, terminal, shell) {
 					iframe.style.height = (
 						iframe.contentWindow.document.documentElement.scrollHeight + 'px'
 					);
-					shell.toggles.scroll.enable();
+					shell.toggles.scroll.toggle( true );
 					self.scrollDown();
 					setTimeout( ()=>shell.toggles.scroll.toggle(false), 500 );
 				});

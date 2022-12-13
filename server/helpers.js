@@ -1,0 +1,16 @@
+// helpers.js
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+"use strict";
+
+module.exports.isEmptyObject = function (thing) {
+	return (typeof thing == 'object') && (Object.keys(thing).length == 0);
+}
+module.exports.isNumeric = function (string) {
+	return !isNaN(parseFloat(string)) && isFinite(string);
+}
+
+
+//EOF

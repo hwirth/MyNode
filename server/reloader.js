@@ -1,6 +1,6 @@
 // reloader.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -34,7 +34,6 @@ module.exports = function AppReloader (callback) {
 		const stat_requests = [];
 
 		await new Promise( (done)=>{
-
 			const g = glob( SETTINGS.APP_PATH + '/**/*.js', (error, matches)=>{
 				if (error) DEBUG.log(
 					COLORS.ERROR,

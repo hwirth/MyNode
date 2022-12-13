@@ -1,6 +1,6 @@
 // meta.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -18,19 +18,21 @@ module.exports = function MetaData () {
 	this.rules;
 	this.help;
 
+	let current_key = null;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.setCollectorKey = function (key) {
-		self.key = key;
+		current_key = key;
 		self.help[key] = {};
 
 	}; // setCollectorKey
 
 	this.addRule = function (rule) {
-		if (!self.key) throw new Error( 'MetaData.addRule: Key unset' );
+		if (!current_key) throw new Error( 'MetaData.addRule: Key unset' );
 		self.rules.push( rule );
 		//...? self.rules.sort();
 
@@ -38,8 +40,8 @@ module.exports = function MetaData () {
 
 
 	this.addHelp = function (command, help_text) {
-		if (!self.key) throw new Error( 'MetaData.addRule: Key unset' );
-		self.help[self.key][command] = help_text;
+		if (!current_key) throw new Error( 'MetaData.addRule: Key unset' );
+		self.help[current_key][command] = help_text;
 
 	}; // addRule
 
@@ -50,9 +52,9 @@ module.exports = function MetaData () {
 
 	this.init = function () {
 		if (DEBUG.INSTANCES) DEBUG.log( COLORS.INSTANCES, 'MetaData.init' );
-		self.rules = [];
-		self.help  = {};
-		self.key   = null;
+		self.rules  = [];
+		self.help   = {};
+		current_key = null;
 
 	}; // init
 

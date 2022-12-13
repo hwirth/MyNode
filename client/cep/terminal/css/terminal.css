@@ -1,5 +1,8 @@
 /*** SPIELWIESE terminal.css ***/
 
+DEBUG:is(:hover,:focus) { box-shadow:inset 0 0 1px #f0f !important; }
+
+
 :root {
 	Xscroll-behavior:smooth;   /* Firefox: Does not scroll properly on Shift+Enter */
 	color-scheme:light dark;   /* both supported //...SODD */
@@ -148,7 +151,7 @@ cep-terminal {
 cep-terminal ::-webkit-scrollbar { opacity:1; width:9px; height:9px; }
 cep-terminal ::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb-color); }
 cep-terminal ::-webkit-scrollbar-track { background:var(--scrollbar-track-color); }
-cep-terminal ::selection { color:#fff; background:#29c8; }
+cep-terminal ::selection { color:#fff; background:#050; Xtext-shadow:none; }
 cep-terminal header { grid-area:r0; position:relative; z-index:1; }
 cep-terminal main   { grid-area:r1; position:relative; z-index:0; max-height:100%; margin:var(--terminal-padding-y) var(--terminal-padding-x); overflow:hidden; }
 cep-terminal footer { grid-area:r2; position:relative; z-index:1; }
@@ -209,6 +212,8 @@ cep-terminal .menu .menu {
 	position:relative;
 	width:100%;
 }
+cep-terminal .menu > .items { display:none; flex-direction:column; }
+cep-terminal .menu:is(:hover,:focus-within,.open) > .items { display:flex; align-items:center; justify-content:center; }
 cep-terminal .menu .items {
 	position:absolute; z-index:1;
 	outline:var(--items-outline);
@@ -218,9 +223,6 @@ cep-terminal .menu .items {
 	gap:var(--menu-gap); /*vertical*/
 }
 Xcep-terminal footer .menu .items { flex-direction:column-reverse; }
-cep-terminal .menu > .items { display:none; flex-direction:column; }
-Xcep-terminal .toolbar .menu .items,
-cep-terminal .menu:is(:hover,:focus-within) > .items { display:flex; align-items:center; justify-content:center; }
 
 cep-terminal .toolbar > div:last-child > .menu .items { right:0; }
 cep-terminal footer > div > .menu > .items { bottom:100%; }
@@ -236,6 +238,8 @@ cep-terminal .menu .items button {
 	width:100%;
 }
 /* Sub-menu indicator */
+cep-terminal .menu .menu > button { padding-right:1.25em; }
+cep-terminal .toolbar > :last-child .menu .menu > button { padding-right:var(--button-padding-x); padding-left:1.25em; }
 cep-terminal .menu .menu > button::before { Xcolor:var(--menu-arrow-color); opacity:0.5;}
 cep-terminal .toolbar > :first-child .menu .menu > button::before {
 	content:'>'; position:absolute; right:var(--menu-arrow-offset);
@@ -261,8 +265,14 @@ cep-terminal footer.toolbar .menu .items::after {
 	top:unset; bottom:0;
 }
 
+/* LOGIN MENU */
+cep-terminal .menu.login > .items { flex-direction:row; flex-wrap:wrap; width:24em; }
+cep-terminal .menu.login input  { flex-basis:100%; flex-grow:1; }
+cep-terminal .menu.login input[name=factor2] { flex-basis:calc(16em - 2px); flex-grow:1; }
+cep-terminal .menu.login button { flex-basis:calc(8em - 2px); flex-grow:1; }
 
-/*** BASIC ELEMENTS ***/
+
+/*** ANCHORS ***/
 
 cep-terminal a         { color:var(--a-color   ); text-decoration:underline; }
 cep-terminal a:visited { color:var(--a-visited ); }
@@ -270,24 +280,40 @@ cep-terminal a:active  { color:var(--a-active  ); }
 cep-terminal a:focus   { color:var(--a-focus   ); }
 cep-terminal a:hover   { color:var(--a-hover   ); }
 
-/* FORM INPUT */
+
+/*** FORM INPUT ***/
+
 	X:is(input,button) { border:none; }
 cep-terminal input {
-	height        : var(--toolbar-height   );
+	height        : var(--input-height     );
+	outline       : var(--input-outline    );
 	border        : var(--input-border     );
 	border-radius : var(--input-radius     );
 	padding       : var(--input-padding-y) var(--input-padding-x);
 	background    : var(--input-background );
 	color         : var(--input-color      );
 }
+
+
+/*** BUTTON ***/
+
 cep-terminal button {
-	border        : var(--input-border      );
-	border-radius : var(--input-radius      );
-	padding       : var(--button-padding    );
-	box-shadow    : var(--button-box-shadow );
-	background    : var(--button-background );
-	color         : var(--button-color      );
 	white-space:nowrap;
+	position:relative;
+	outline       : var(--button-outline);
+	box-shadow    : var(--button-box-shadow );
+	border        : var(--button-border);
+	border-radius : var(--button-radius);
+	padding       : var(--button-padding-y) var(--button-padding-x);
+	background    : var(--button-background);
+	color         : var(--button-color      );
+	font-family   : var(--font-family);
+	font-size     : var(--font-size);
+}
+cep-terminal button.disabled {
+	color:var(--button-disabled-color);
+	background:var(--button-disabled-background);
+	pointer-events:none;
 }
 cep-terminal.fancy.animate button {
 	transition:all 0.1s ease-in-out;
@@ -300,25 +326,12 @@ cep-terminal :is(input,button):is(:focus) {
 	filter:var(--focus-filter);
 	box-shadow:var(--focus-box-shadow);
 }
-X:is(:hover,:focus) { box-shadow:inset 0 0 1px #f0f !important; }
-
-/* BUTTON */
 cep-terminal button {
-	position:relative;
-	outline       : var(--button-outline);
-	border        : var(--button-border);
-	border-radius : var(--button-border-radius);
-	padding       : var(--button-padding);
-	color         : var(--button-color);
-	background    : var(--button-background);
-	font-family   : var(--font-family);
-	font-size     : var(--font-size);
 }
 cep-terminal.fancy button:is(:hover,:focus) {
 	box-shadow:0 0 15px 1px #4af4;
 	z-index:1;
 }
-
 cep-terminal .toolbar nav.enabled > button,
 cep-terminal .toolbar button.enabled {
 	background:var(--button-enabled-background); color:var(--button-enabled-color);
@@ -360,16 +373,19 @@ cep-terminal.fancy .toolbar button.connection {
 	z-index:1;
 }
 cep-terminal.connected .toolbar button.connection {
-	color:var(--online-color); background:var(--online-background);
-	border:var(--online-border);
-	box-shadow:var(--online-box-shadow);
+	border     : var(--online-border    );
+	box-shadow : var(--online-box-shadow);
+	color      : var(--online-color     );
+	background : var(--online-background);
 }
 cep-terminal.connected.authenticated .toolbar button.connection {
 	color:var(--authenticated-color);
 }
-Xcep-terminal:is(.ping,.transmit).animate .toolbar button.connection {
-	background:var(--transmit-background);
+cep-terminal:is(.ping,.transmit).animate .toolbar button.connection {
 	box-shadow:var(--transmit-box-shadow);
+}
+cep-terminal:is(.ping,.transmit):not(.fancy).animate .toolbar button.connection {
+	background:var(--transmit-background);
 }
 
 
@@ -380,17 +396,40 @@ Xcep-terminal:is(.ping,.transmit).animate .toolbar button.connection {
 cep-terminal header.toolbar > :nth-child(3) > .who_list {
 	display:flex; flex-direction:row-reverse; gap:var(--menu-gap);
 }
+cep-terminal header.toolbar > :nth-child(3) > .who_list .menu { position:relative; }
+cep-terminal header.toolbar > :nth-child(3) > .who_list nav:first-child .items {
+	right:0;
+}
+cep-terminal header.toolbar > :nth-child(3) > .who_list nav:not(:first-child) .items {
+	left:50%; transform:translate(-50%,0);
+}
 
 cep-terminal:not(.connected).fancy .toolbar .who_list > button.enabled,
 cep-terminal:not(.connected).fancy .toolbar nav.task.enabled > button {
 	box-shadow:var(--offline-box-shadow); z-index:1;
 	background:var(--offline-background); color:var(--offline-color);
 }
-
-cep-terminal.connected.fancy .toolbar .who_list > button.active,
+cep-terminal.connected .toolbar .who_list button.active,
+cep-terminal.connected .toolbar nav.task.active > button {
+	color:var(--task-active-color); background:var(--task-active-background);
+}
+cep-terminal.connected.fancy .toolbar .who_list button.active,
 cep-terminal.connected.fancy .toolbar nav.task.active > button {
 	box-shadow:var(--task-active-box-shadow); z-index:1;
-	color:var(--task-active-color); background:var(--task-active-background);
+}
+cep-terminal .who_list button.self::before {
+	content:var(--self-content);
+	display:inline-block;
+	vertical-align:top;
+	font-size:0.75em;
+	height:1em;
+	padding-right:0.35em;
+	text-shadow:
+		1px  0 #fff8,
+		-1px 0 #fff8,
+		0 1px  #fff8,
+		0 -1px #fff8
+	;
 }
 
 

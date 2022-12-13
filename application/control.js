@@ -10,10 +10,10 @@ const exec = require( 'child_process' ).exec;
 
 const { SETTINGS          } = require( '../server/config.js' );
 const { DEBUG, COLORS     } = require( '../server/debug.js' );
+const Helpers = require( '../server/helpers.js' );
 
 const { RESPONSE, REASONS, STATUS, STRINGS } = require( './constants.js' );
 
-const Helpers = require( './constants.js' );
 
 
 module.exports = function ServerControl (persistent, callback, meta) {
@@ -122,7 +122,7 @@ module.exports = function ServerControl (persistent, callback, meta) {
 
 	function access_variable (target, path, value) {
 		const target_name = (typeof target == 'string') ? target : 'OBJECT';
-console.log( '>>>>', target, path );
+
 		switch (target) {
 			case 'node'    : target = callback.getServerInstance();  break;
 			case 'SETTINGS': target = SETTINGS; break;
@@ -259,6 +259,10 @@ RULE( 'connectinc,guest,user,mod,admin,dev,owner: {server:{help:*}}' );
 		}
 
 		const meta  = callback.getMeta();
+
+		if (parameter == '*') return { command:'all', result:meta };
+		//...if (parameter == '*') parameter = '';
+
 		const parts = parameter.split('.').filter( part => part != '' );
 
 		if (parts.length == 0) {
@@ -285,11 +289,24 @@ HELP( 'global.get', 'Read a global variable' );
 HELP( 'global.set', 'Write a new value to a global variable' );
 
 RULE( 'admin,dev,owner: {server:{global:{get:string}}}' );
-RULE( 'admin,dev,owner: {server:{global:{set:string}}}' );
+RULE( 'admin,dev,owner: {server:{global:{set:string,value:string}}}' );
 
 	this.request.global = function (client, parameter) {
 		if (!parameter.get && !parameter.set) {
 			return { failure: REASONS.INVALID_REQUEST };
+		}
+
+		if (parameter == 'all') {
+			const result = JSON.stringify(callback.getServerInstance(), (key, value)=>{
+				if ((typeof value == 'string') || (typeof value == 'number')) ;
+				if (value instanceof Function) return '[function]';
+				if (key == 'httpServer') return;
+				if (key == 'wsServer') return;
+				if (key == 'fsWatchers') return;
+				if (key.charAt(0) == '_') return;
+				return value
+			}, '\t' );
+			return { command:'all', result:result };
 		}
 
 		let value;
@@ -298,14 +315,14 @@ RULE( 'admin,dev,owner: {server:{global:{set:string}}}' );
 			operation = 'get';
 			parameter = parameter.get;
 			if (typeof parameter != 'string') {
-				return { failure: REASONS.INVALID_REQUEST + '(1)' };
+				return { command:'get', failure: REASONS.INVALID_REQUEST + '(1)' };
 			}
 		} else  {
 			operation = 'set';
 			value = parameter.value;
 			parameter = parameter.set;
 			if (typeof parameter != 'string') {
-				return { failure: REASONS.INVALID_REQUEST + '(2)' };
+				return { command:'set', failure: REASONS.INVALID_REQUEST + '(2)' };
 			}
 		}
 
@@ -321,20 +338,37 @@ RULE( 'admin,dev,owner: {server:{global:{set:string}}}' );
 
 		} catch (error) {
 			console.log( 'E', error );
-			return { failure: error.message.replace('object', target) };
+			return { command:operation, failure: error.message.replace('object', target) };
 		}
 
 		if (typeof entry == 'undefined') {
-			return { failure: 'Undefined entry' };
+			return { command:operation, failure: 'Undefined entry' };
 		}
 
 		const result
 		= (typeof entry == 'string') ? entry
+		: (entry instanceof Array  ) ? entry.map( formatted_array )
 		: (typeof entry == 'object') ? Object.keys( entry )
-		: (typeof entry == 'array' ) ? entry
 		: entry
 		;
-		return {result:{[parameter]:result} };
+
+		return {
+			command : operation,
+			result  : {
+				path  : parameter,
+				type  : typeof result,
+				value : result,
+			},
+		};
+
+
+		function formatted_array (entry) {
+			if ((typeof entry == 'string') || (typeof entry == 'number')) {
+				return entry;
+			} else {
+				return typeof entry;
+			}
+		}
 
 	}; // global
 
@@ -433,7 +467,7 @@ RULE( 'admin,dev,owner: {server:{reset:empty}}' );
 			result    : REASONS.PERSISTENCE_RESET,
 			broadcast : {
 				type: 'server/reset',
-				note: 'Client objects may be require reinstantiation'
+				note: 'Client objects may require reinstantiation'
 			},
 		};
 

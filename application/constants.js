@@ -1,6 +1,6 @@
 // constants.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -53,15 +53,6 @@ const STRINGS = {
 
 module.exports.STATUS    = STATUS;
 module.exports.STRINGS   = STRINGS;
-
-
-// HELPERS --> helpers.js
-module.exports.isEmptyObject = function (thing) {
-	return (typeof thing == 'object') && (Object.keys(thing).length == 0);
-}
-module.exports.isNumeric = function (string) {
-	return !isNaN(parseFloat(string)) && isFinite(string);
-}
 
 
 //EOF

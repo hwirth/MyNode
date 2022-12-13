@@ -7,7 +7,7 @@ multiline text is converted and sent as JSON object.
 /help tabJSON    Mulitline input, values may contain white space (Shift+Enter)
 /help dotJSON    Single line short format, limited use
 /help keyboard   Keyboard controls for the terminal not listed under "toggles"
-/help toggles    Keyboard shortcuts for terminal options
+/help local      Local commands
 
 Check the project README for more details.
 
@@ -59,24 +59,24 @@ KEYBOARD
 	Shift+Enter      Inserts line break (tabJSON)
 	Ctrl+Home        Clears input
 	Ctrl+Shift+Home  Clears screen
-	Shift+Ctrl+Del   Clears eveything up to the last marker
+	Shift+Ctrl+Del  Clears eveything up to the last marker
 	Alt+[.|,]        Change font
 	Alt+[+|-]        Change font size
 
-#toggles
-TOGGLES
--------
-	terminal     Open the terminal         Alt+T
-	scroll       Lock auto-scrolling       Alt+R
-	compact      Collapse all messages     Alt+C
-	separators   Separate messages         Alt+S
-	overflow     Messages singe line       Alt+V
-	last         Uncollapse last message   Alt+Y
-	fancy        Playful theme             Alt+F
-	animate      Animations                Alt+A   Slow Computer
-	bit          Answers yes/no            Alt+B
-	keyBeep      Buttons and kbd. sound    Alt+K
-	tts          SAM speech synthesizer    Alt+M
+Enter /toggles to see a list of keyboard shortcuts.
 
-With "toggles" as comma separated list, bookmark:
- /?username=<user>&password=<pass>&nickname=<nick>&login[=<toggles>]>
+#local
+LOCAL COMMANDS
+--------------
+/version  Show CEP version
+/clear    Clear screen
+/toggles  List keyboard shortcuts (Terminal and shell)
+/get      Read a global variable
+/set      Set a global variable
+/help     Show help for a topic
+/issue    Show login message
+/readme   Show the project README
+/todo     Show the project TODO
+/manual   Open the MyNode manual
+/diary    Open the dev diary
+/test     Do something

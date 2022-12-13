@@ -1,6 +1,6 @@
 // cep.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -12,12 +12,15 @@ import { DomAssist     } from './dom_assist.js';
 import { AutoWebSocket } from './websocket.js';
 import { DebugTerminal } from './terminal/terminal.js';
 
+const PROGRAM_NAME = 'MyNode Client End Point';
+const PROGRAM_VERSION = '0.4β';
 
 export const ClientEndPoint = function (parameters = {}) {
 	const self = this;
-	self.templateName = 'ClientEndPoint';
 
-	if (DEBUG.WINDOW_APP) window.CEP = self;
+	this.templateName = 'ClientEndPoint';
+	this.version = PROGRAM_VERSION;
+	if (DEBUG.WINDOW_APP) window.CEP = this;
 
 	this.events;
 	this.connection;
@@ -36,7 +39,7 @@ export const ClientEndPoint = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
+/*
 	this.connected = function () {
 		return self.connection.connected();
 
@@ -59,7 +62,7 @@ export const ClientEndPoint = function (parameters = {}) {
 		self.connection.send( request );
 
 	};  // send
-
+*/
 
 	this.toggleTerminal = async function () {
 		if (!self.terminal) {
@@ -106,7 +109,7 @@ export const ClientEndPoint = function (parameters = {}) {
 					+ '</a> was reloaded'
 					;
 
-					//...self.events.emit( 'reload/css', html );
+					self.events.emit( 'reload/css', html );
 					self.dom.reloadCSS( file_name );
 				}
 
@@ -119,8 +122,8 @@ export const ClientEndPoint = function (parameters = {}) {
 			});
 			if (do_reload) {
 				if (SETTINGS.RELOAD_ON_UPDATE) {
-					//self.events.emit( 'reload/client' );
-					self.send( {chat:{say:'Reloading'}} );
+					self.events.emit( 'reload/client' );
+					self.connection.send( {chat:{say:'Reloading'}} );
 					document.documentElement.classList.add( 'client_reload' );
 					setTimeout( ()=>location.reload(), 333 );
 				}
@@ -143,6 +146,8 @@ export const ClientEndPoint = function (parameters = {}) {
 
 	this.init = async function () {
 		if (DEBUG.INSTANCES) console.log( 'ClientEndPoint.init' );
+
+		console.log( '%c' + PROGRAM_NAME + ' v' + PROGRAM_VERSION, 'color:#260; font-weight:bold;' );
 
 		self.baseDir = location.pathname.split( '/' ).slice( 0, -1 ).join( '/' );
 

@@ -1,6 +1,6 @@
 // config.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -39,6 +39,16 @@ export const SETTINGS = {
 		CHAT : false,
 	},
 };
+
+
+export const FUN_MODES = [
+	'fancy','animate','normal',
+	'uv','red','green','pink','white','cold',
+	'contrast',
+	'gridblink','flicker','mcp',
+	'halt',
+];
+
 
 export const PRESETS = {
 	FILTER: {
@@ -92,6 +102,8 @@ function get (search) {
 //... <form>s. This is still nice to use when testing and typing the URL in manually, perhaps I'll fix the main program
 }
 function preferred_scheme () {
+return !get( 'light' );
+
 	const prefers_light = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
 	const prefers_dark  = window.matchMedia( '(prefers-color-scheme:dark)'  ).matches;
 	const get_light = get( 'light' );

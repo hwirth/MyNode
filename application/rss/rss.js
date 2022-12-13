@@ -12,7 +12,7 @@ const RssParser = require( 'rss-parser' );
 const { DEBUG, COLORS   } = require( '../../server/debug.js' );
 const { REASONS, STATUS } = require( '../constants.js' );
 
-const { isNumeric } = require( '../constants.js' );
+const Helpers = require( '../../server/helpers.js' );
 
 
 module.exports = function ChatServer (persistent, callback, meta) {
@@ -138,7 +138,7 @@ RULE( 'mod,admin,dev,owner: {rss:{toggle:string}}' );
 		DEBUG.log( COLORS.COMMAND, '<rss.toggle>', client );
 
 		if (typeof parameter != 'string') {
-			return { failure:REASONS.INVALID_REQUEST };
+			return { failure: REASONS.INVALID_REQUEST };
 		}
 
 		if (parameter == 'all') {
@@ -184,7 +184,7 @@ RULE( 'mod,admin,dev,owner: {rss:{interval:number}}' );
 	}; // request.interval
 
 
-// NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// SHOW //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 HELP( 'show', 'Show cached feed items of a feed' );
 RULE( 'guest,user,mod,admin,dev,owner: {rss:{show:string}}' );
 
@@ -234,7 +234,7 @@ RULE( 'mod,admin,dev,owner: {rss:{update:string}}' );
 	}; // request.show
 
 
-// NICK //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// RESET /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 HELP( 'reset', 'Reset persistent RSS data' );
 RULE( 'dev,owner: {rss:{reset:empty}}' );
 

@@ -1,10 +1,11 @@
 // handle_message.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
 
+import * as Helpers from '../../helpers.js';
 import { SETTINGS } from '../config.js';
 
 
@@ -13,8 +14,6 @@ import { SETTINGS } from '../config.js';
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 export function handle_message (cep, terminal, shell, message) {
-	//...if (!message.update || !message.update.ping) terminal.animatePing( /*transmit*/true );
-
 	// See  WebSocketClient.send()
 	try   { message = JSON.parse( event.data ); }
 	catch { /* Assume string */ }
@@ -36,8 +35,8 @@ export function handle_message (cep, terminal, shell, message) {
 
 	print_message();
 
-	if      (message.broadcast) process_broadcast();
-	else if (message.response ) process_response();
+	if      (message.broadcast) Helpers.wrapArray( message.broadcast ).forEach( handle_broadcast );
+	else if (message.response ) Helpers.wrapArray( message.response  ).forEach( handle_response  );
 	else {
 		console.log( 'handle_message(): Unidentified message:', JSON.stringify(message, null, '\t') );
 		shell.output.print( message, 'cep unknown', 1 );
@@ -46,62 +45,45 @@ export function handle_message (cep, terminal, shell, message) {
 	return;
 
 
-	function process_broadcast () {
-		const broadcast = (message.broadcast instanceof Array) ? message.broadcast : [message.broadcast];
-		broadcast.forEach( entry =>{
-			if (entry.error) entry.error = format_error( entry.error );
-			if (!entry.type) return console.log( 'handle_message: No broadcast type:', entry );
+	function handle_broadcast (broadcast) {
+		if (broadcast.error) broadcast.error = format_error( broadcast.error );
+		if (!broadcast.type) return console.log( 'handle_message: No broadcast type:', broadcast );
 
-			switch (entry.type) {
-				// Other types are broadcast:
-				case 'error'              : broadcast_error        ( entry );  break;
-				case 'server/name'        : broadcast_server_name  ( entry );  break;
-				case 'server/reset'       : break;
-				case 'reload/client'      : // fall through
-				case 'reload/server'      : broadcast_reload_server( entry );  break;
-				case 'session/ping'       : print_message( entry, 'ping' );    break;
-				case 'session/connect'    : break;
-				case 'session/disconnect' : break;
-				case 'session/login'      : break;
-				case 'session/logout'     : break;
-				case 'chat/nick'          : break;
-				case 'chat/say'           : broadcast_chat_say     ( entry );  break;
-				case 'chat/html'          : broadcast_chat_html    ( entry );  break;
-				case 'rss/news'           : broadcast_rss_news     ( entry );  break;
-				default: {
-					console.log( 'handle_message: Unknown broadcast type:', entry );
-					shell.output.print( entry, 'cep error', 1 );
-				}
+		switch (broadcast.type) {
+			// Other types are broadcast:
+			case 'error'              : broadcast_error        ( broadcast );  break;
+			case 'server/name'        : broadcast_server_name  ( broadcast );  break;
+			case 'server/reset'       : break;
+			case 'reload/client'      : // fall through
+			case 'reload/server'      : broadcast_reload_server( broadcast );  break;
+			case 'session/ping'       : print_message( entry, 'ping' );        break;
+			case 'session/connect'    : break;
+			case 'session/disconnect' : break;
+			case 'session/login'      : break;
+			case 'session/logout'     : break;
+			case 'chat/nick'          : break;
+			case 'chat/room'          : // fall through
+			case 'chat/private'       : broadcast_chat_say     ( broadcast );  break;
+			case 'chat/html'          : broadcast_chat_html    ( broadcast );  break;
+			case 'rss/news'           : broadcast_rss_news     ( broadcast );  break;
+			default: {
+				console.log( 'handle_message: Unknown broadcast type:', broadcast );
+				shell.output.print( broadcast, 'cep error', 1 );
 			}
-		});
-
-	} // process_broadcast
-
-
-	function process_response () {
-		const is_array = message.response instanceof Array;
-
-		// Handle all responses
-		if (is_array) {
-			message.response.forEach( handle_response );
-		} else {
-			handle_response( message.response );     //...	.chat.say:test...server.token
 		}
 
-		return true;
+	} // handle_broadcast
 
-		function handle_response (response) {
-			if (!response) return;   //... Server error
 
-			if (response.who) terminal.applets.userList.update( response.who );
+	function handle_response (response) {
+		if (!response) return;   //... Server error
+		if (response.error) response.error = format_error( response.error, 1 );
+		if (!response.success) return;
 
-			if (response.error) response.error = format_error( response.error, 1 );
-			//...if (!response.response && !response.success) return;   //... Server error
-
-			switch (response.command) {
-				case 'session.login'  :  response_session_login( response );  break;
-case 'chat/nick'      :  response_chat_nick    ( response );  break;
-case 'session/status' :  break;
+		switch (response.command) {
+			case 'access.meta':  {
+				terminal.applets.nodeMenu.updateRequestItems( response.result );
+				break;
 			}
 		}
 
@@ -133,7 +115,7 @@ case 'session/status' :  break;
 
 
 	function broadcast_server_name (broadcast) {
-		terminal.applets.loginMenu.elements.btnNode.innerText = broadcast.name;
+		terminal.applets.nodeMenu.elements.btnNode.innerText = broadcast.name;
 	}
 
 
@@ -167,7 +149,8 @@ case 'session/status' :  break;
 		+ '</span>'
 		;
 		const html = sender + '<span> ' + broadcast.message + ' </span>';
-		shell.output.print( {html: html}, 'chat' );
+		const pm_class = (broadcast.type == 'chat/private') ? ' private' : '';
+		shell.output.print( {html: html}, 'chat' + pm_class );
 
 	} // broadcast_chat_say
 
@@ -195,48 +178,6 @@ case 'session/status' :  break;
 
 	} // broadcast_rss_news
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// RESPONSE
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function response_session_login (response) {
-		if (response.success) {
-			terminal.elements.terminal.classList.add( 'authenticated' );
-			terminal.applets.mainMenu.elements.btnCEP.innerText
-			= response.result.login.userName
-			+ (response.result.login.nickName ? ':'+response.result.login.nickName : '')
-			;
-		}
-
-	} // response_session_login
-
-
-	function response_session_logout (response) {
-		if (response.success) {
-			terminal.elements.terminal.classList.remove( 'authenticated' );
-			terminal.applets.mainMenu.elements.btnCEP.innerText = 'Connected';
-		}
-
-	} // response_session_logout
-
-
-	function response_session_who () {
-		if (message.response.success) terminal.applets.userList.update( message.response.result );
-
-	} // response_session_who
-
-
-	function response_chat_nick (broadcast) {
-		if (response.success) {
-			const parts = terminal.applets.mainMenu.elements.btnCEP.innerText.split(':');
-			const new_name = response.result.userName + ':' + response.result.nickName;
-			terminal.applets.mainMenu.elements.btnCEP.innerText = new_name;
-		} else {
-			shell.output.print( 'Nick change failed: ' + response.result, 'cep error' );
-		}
-
-	} // response_chat_nick
 
 } // new_protocol
 

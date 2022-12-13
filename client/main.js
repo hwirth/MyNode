@@ -1,6 +1,6 @@
 // main.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -151,9 +151,6 @@ const Application = function () {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	function set_connection_state (state) {
-console.groupCollapsed( 'set_connection_state: ' + state );
-console.trace();
-console.groupEnd();
 		// Set class to chat <form> according to state
 		['offline', 'connecting', 'connected', 'online', 'error', 'retry'].forEach( (class_name)=>{
 			self.elements.form.classList.toggle( class_name, (class_name == state) );
@@ -265,12 +262,13 @@ console.groupEnd();
 				print( 'div', html );
 				break;
 			}
-			case 'chat/say': {
+			case 'chat/room'    : // fall through
+			case 'chat/private' : {
 				const sender = broadcast.nickName || broadcast.userName;
 				const text   = broadcast.message;
 				const color  = color_from_name( sender );
 				const html
-				= '<span>' + formatted_time + '</span>'
+				= '<span class="time">' + formatted_time + '</span>'
 				+ '<span style="color:' + color + '">' + sender + '</span>'
 				+ '<span>' + text + '</span>'
 				;
@@ -435,19 +433,19 @@ console.groupEnd();
 
 			if (new_nick && (new_nick != self.nickName)) {
 				if (message) {
-					self.cep.send( {chat:{nick:new_nick, say:message}} );
+					self.cep.connection.send( {chat:{nick:new_nick, say:{room:'public', message:message}}} );
 					set_nick( new_nick );
 				} else {
-					self.cep.send( {chat:{nick:new_nick}} );
+					self.cep.connection.send( {chat:{say:{nick:new_nick}}} );
 					set_nick( new_nick );
 				}
 			}
 			else if (message) {
-				self.cep.send( {chat:{say:message}} );
+				self.cep.connection.send( {chat:{say:{room:'public', message:message}}} );
 			}
 		});
 
-		if (SETTINGS.CONNECT_ON_START) self.cep.connect();
+		if (SETTINGS.CONNECT_ON_START) self.cep.connection.connect();
 
 		return Promise.resolve();
 

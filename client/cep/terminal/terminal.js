@@ -1,27 +1,31 @@
 // terminal.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
 
 import { SETTINGS as CEP_SETTINGS, DEBUG } from '../config.js';
 
-import { SETTINGS  } from './config.js';
+import { SETTINGS, FUN_MODES } from './config.js';
 import { Audio     } from './audio.js';
 import { Events    } from '../events.js';
 import { MainMenu  } from './components/main_menu.js';
-import { LoginMenu } from './components/login_menu.js';
+import { NodeMenu  } from './components/node_menu.js';
 import { UserList  } from './components/user_list.js';
 import { StatusBar } from './components/status.js';
 import { CEPShell  } from './shell/shell.js';
 import { Settings  } from './applets/settings.js';
 import { Editor    } from './editor/editor.js';
 
+const PROGRAM_NAME = 'MyNode Debug Terminal';
+const PROGRAM_VERSION = '0.2.1α';
+
 
 export const DebugTerminal = function (cep) {
 	const self = this;
 	self.templateName = 'DebugTerminal';
+	this.version = PROGRAM_VERSION;
 
 	this.audio        // Beep and speech synthesis. Currently houses the Bit too.
 	this.events;      // Events we can emit
@@ -94,7 +98,7 @@ export const DebugTerminal = function (cep) {
 	this.taskTitle;   // Extracted from RESSOURCE .location
 
 
-// GADGETS ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// COMPONENTS ////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.createComponents = function (applet, components) {
 		components.forEach( (component)=>{
@@ -364,15 +368,6 @@ export const DebugTerminal = function (cep) {
 // DOM ACTIONS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.domUpdateConnectionState = function (state) {
-		self.elements.terminal.classList.toggle( 'connected', cep.connection.isConnected() );
-		self.elements.terminal.classList.toggle( 'authenticated', cep.connection.sentCredentials );
-
-
-
-	}; // domUpdateConnectionState
-
-
 	this.animatePing = function (transmit = false) {
 		if (!SETTINGS.ANIMATE_TRANSMISSION) return;
 		if (!self.toggles.animate.enabled) return;
@@ -488,93 +483,107 @@ export const DebugTerminal = function (cep) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// PROTOCOL
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.getCredentials = function (websocket_url) {
-		console.log( 'DebugTerminal.getCredentials:', websocket_url );
-
-		return new Promise( (proceed, abort)=>{
-			if (!self.toggles.login.enabled) proceed();
-
-			//... Await dialog
-			let user_name = self.applets.loginMenu.elements.userName.value.trim();
-			let nick_name = self.applets.loginMenu.elements.nickName.value.trim();
-			let password  = self.applets.loginMenu.elements.passWord.value.trim();
-			let factor2   = self.applets.loginMenu.elements.factor2 .value.trim();
-
-			if (!user_name && !nick_name) return null;   // Connect only
-
-			const request = { session: { login: { username: user_name }}};
-			if (user_name.toLowerCase() != 'guest') request.session.login.password = password;
-			if (nick_name                         ) request.chat = { nick: nick_name };
-
-			proceed( request );
-		});
-
-	}; // getCredentials
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // WEBSOCKET
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.onWsOpen = function (event) {
-		self.animatePing( /*transmit*/true );
+	const socket_state = {
+		serverName : null,
+		userName   : null,
+	};
 
-		const url = event.target.url.replace( 'wss://', '' ).replace( 'ws://', '' ).split(':')[0];
+	this.onWsStateChange = function (new_state = cep.connection.state) {
+		const ws_url    = cep.connection.webSocketURL;
+		const short_url = ws_url.replace( 'wss://', '' ).replace( 'ws://', '' ).split(':')[0];
+		const node_name = socket_state.nodeName || short_url;
+		const user_name = socket_state.userName;
 
-		self.elements.terminal.classList.add( 'connected' );
-		self.applets.mainMenu.elements.btnCEP.innerText = 'Connected';
+		const text = {
+			offline       : { node:'MyNode' , cep:'Offline'   , title:'Not connected'               },
+			connecting    : { node:node_name, cep:'Connecting', title:'Attempting to connect'       },
+			connected     : { node:node_name, cep:'Connected' , title:'Connected but not logged in' },
+			authenticated : { node:node_name, cep:user_name   , title:'Authenticated with node'     },
+		};
 
-		self.applets.loginMenu.elements.btnNode.innerText = url;
-		self.applets.loginMenu.elements.btnNode.title = event.target.url;
+		self.applets.nodeMenu.elements.btnNode.innerText = text[new_state].node;
+		self.applets.mainMenu.elements.btnCEP .innerText = text[new_state].cep;
+		self.applets.mainMenu.elements.btnCEP .title     = text[new_state].title;
 
-	}; // onWsConnect
+		const connected     = (new_state == 'connected') || (new_state == 'authenticated');
+		const authenticated = (new_state == 'authenticated');
+		self.elements.terminal.classList.toggle( 'connected'    , connected     );
+		self.elements.terminal.classList.toggle( 'authenticated', authenticated );
+
+		self.applets.nodeMenu.elements.btnNode.title = (connected) ? ws_url : '';
+
+	} // onWsStateChange
 
 
-	this.onWsClose = function () {
-		self.animatePing( /*transmit*/true );
+	this.onWsLogin = function (event) {
+		cep.connection.send( {access:{meta:{}}} );
 
-		self.elements.terminal.classList.remove( 'connected', 'authenticated' );
-		self.applets.mainMenu.elements.btnCEP.innerText = 'Offline';
+	}; // onWsLogin
 
-		self.applets.loginMenu.elements.btnNode.innerText = 'MyNode';
-		self.applets.loginMenu.elements.btnNode.title = 'Not connected';
 
-		//...self.elements.navWho.innerHTML = '';
+	this.onWsClose = function (event) {
+		self.applets.nodeMenu.updateRequestItems();
 
 	}; // onWsClose
 
 
-	this.onWsError = function () {
-		self.animatePing( /*transmit*/true );
-
-		self.onWsClose();
-		self.applets.mainMenu.elements.btnCEP.innerText = 'Error';
-
-	}; // onWsError
-
-
-	this.onWsSend = function () {
-		self.animatePing( /*transmit*/true );
-
-	}; // onWsSend
+	this.onWsSend = function (event) { self.animatePing( /*transmit*/true );  }; // onWsSend
 
 
 	this.onWsMessage = function (message) {
-		const known_classes = [
-			'fancy','animate','normal',
-			'uv','red','green','pink','white','cold',
-			'contrast',
-			'gridblink','flicker','mcp',
-			'halt',
-		];
-
 		self.animatePing( /*transmit*/true );
 
-		if (message.broadcast && message.broadcast.reload) {
-			const reload = message.broadcast.reload;
+		if (message.who) self.applets.userList.update( message.who);
+
+		if (message.response)  {
+			const response = message.response;
+			const responses = (response instanceof Array) ? response : [response];
+			responses.forEach( on_response );
+		}
+
+		if (message.broadcast) {
+			const broadcast = message.broadcast;
+			const broadcasts = (broadcast instanceof Array) ? broadcast : [broadcast];
+			broadcasts.forEach( on_broadcast );
+		}
+
+	}; // onWsMessage
+
+
+	function on_response (response) {
+		if (!response.success) return;
+
+		switch (response.command) {
+			case 'session.login': {
+				const user_name = response.result.login.userName;
+				const nick_name = response.result.login.nickName;
+				socket_state.userName = user_name + (nick_name ? ':'+nick_name : '');
+				self.onWsStateChange();
+				break;
+			}
+			case 'chat.nick': {
+				const user_name = response.result.userName;
+				const nick_name = response.result.nickName;
+				socket_state.userName = user_name + ':' + nick_name;
+				self.onWsStateChange();
+				break;
+			}
+			case 'session.logout': {
+				socket_state.userName = null;
+				self.onWsStateChange();
+				break;
+			}
+		}
+
+	} // on_response
+
+
+	function on_broadcast (broadcast) {
+		if (broadcast.reload) {
+			const reload = broadcast.reload;
 			const file_names = (typeof reload == 'string') ? [reload] : reload;
 			file_names.forEach( (file_name)=>{
 				if (file_name.charAt(0) != '/') file_name = '/' + file_name;
@@ -587,27 +596,67 @@ export const DebugTerminal = function (cep) {
 					+ '</a> was updated.'
 				);
 			});
+			return;
 		}
-		else if (message.broadcast && (message.broadcast.type == 'chat/mode/set')) {
-			known_classes.forEach( (class_name)=>{
-				self.elements.terminal.classList.toggle(
-					class_name,
-					message.broadcast.mode.indexOf(class_name) >= 0,
-				);
-			});
-		}
-		else if (message.broadcast && (message.broadcast.type == 'chat/mode/add')) {
-			if (known_classes.indexOf(message.broadcast.mode) >= 0) {
-				self.elements.terminal.classList.add( message.broadcast.mode );
+
+		switch (broadcast.type) {
+			case 'server/name': {
+				socket_state.nodeName = broadcast.name;
+				self.onWsStateChange();
+				break;
 			}
-		}
-		else if (message.broadcast && (message.broadcast.type == 'chat/mode/del')) {
-			if (known_classes.indexOf(message.broadcast.mode) >= 0) {
-				self.elements.terminal.classList.remove( message.broadcast.mode );
+			case 'chat/mode/set': {
+				FUN_MODES.forEach( (class_name)=>{
+					self.elements.terminal.classList.toggle(
+						class_name,
+						broadcast.mode.indexOf(class_name) >= 0,
+					);
+				});
+				break;
+			}
+			case 'chat/mode/add': {
+				if (FUN_MODES.indexOf(broadcast.mode) >= 0) {
+					self.elements.terminal.classList.add( broadcast.mode );
+				}
+				break;
+			}
+			case 'chat/mode/del': {
+				if (FUN_MODES.indexOf(broadcast.mode) >= 0) {
+					self.elements.terminal.classList.remove( broadcast.mode );
+				}
+				break;
 			}
 		}
 
-	}; // onWsMessage
+	} // on_broadcast
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// PROTOCOL
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.getCredentials = function (websocket_url) {
+		console.log( 'DebugTerminal.getCredentials:', websocket_url );
+
+		return new Promise( (proceed, abort)=>{
+			if (!self.toggles.login.enabled) proceed();
+
+			//... Await dialog
+			let user_name = self.applets.nodeMenu.elements.userName.value.trim();
+			let nick_name = self.applets.nodeMenu.elements.nickName.value.trim();
+			let password  = self.applets.nodeMenu.elements.passWord.value.trim();
+			let factor2   = self.applets.nodeMenu.elements.factor2 .value.trim();
+
+			if (!user_name && !nick_name) return null;   // Connect only
+
+			const request = { session: { login: { username: user_name }}};
+			if (user_name.toLowerCase() != 'guest') request.session.login.password = password;
+			if (nick_name                         ) request.chat = { nick: nick_name };
+
+			proceed( request );
+		});
+
+	}; // getCredentials
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -659,13 +708,13 @@ export const DebugTerminal = function (cep) {
 		// Instantiate applets
 		self.toggles = {};
 		self.applets = {};                                // true/false: Whether to activate (show)
-		await self.installApplet( 'mainMenu' , MainMenu , true  );   // Creates our toggles, must be first
-		await self.installApplet( 'loginMenu', LoginMenu, true  );
-		await self.installApplet( 'userList' , UserList , true  );
-		await self.installApplet( 'status'   , StatusBar, true  );
-		//await self.installApplet( 'editor'   , Editor   , false );
-		//await self.installApplet( 'settings' , Settings , false );
-		await self.installApplet( 'shell'    , CEPShell , true  );
+		await self.installApplet( 'mainMenu', MainMenu , true  );   // Creates our toggles, must be first
+		await self.installApplet( 'nodeMenu', NodeMenu , true  );
+		await self.installApplet( 'userList', UserList , true  );
+		await self.installApplet( 'status'  , StatusBar, true  );
+		//await self.installApplet( 'editor'  , Editor   , false );
+		//await self.installApplet( 'settings', Settings , false );
+		await self.installApplet( 'shell'   , CEPShell , true  );
 		add_task_menu_entries([
 			{ name:'settings', caption:'Settings', template:Settings, show:false },
 			{ name:'editor'  , caption:'Editor'  , template:Editor  , show:false },
@@ -674,9 +723,9 @@ export const DebugTerminal = function (cep) {
 
 		// GET PARAMETER
 		if (cep.GET.has( 'name' )) {
-			self.applets.loginMenu.elements.userName.value = 'root';
-			self.applets.loginMenu.elements.passWord.value = '12345';
-			self.applets.loginMenu.elements.nickName.value = cep.GET.get( 'name' );
+			self.applets.nodeMenu.elements.userName.value = 'root';
+			self.applets.nodeMenu.elements.passWord.value = '12345';
+			self.applets.nodeMenu.elements.nickName.value = cep.GET.get( 'name' );
 		}
 
 		// KEYBOARD
@@ -689,12 +738,13 @@ export const DebugTerminal = function (cep) {
 		});
 
 		// WEB SOCKET
-		cep.connection.events.add( 'open'   , self.onWsOpen    );
-		cep.connection.events.add( 'close'  , self.onWsClose   );
-		cep.connection.events.add( 'error'  , self.onWsError   );
-		cep.connection.events.add( 'send'   , self.onWsSend    );
-		cep.connection.events.add( 'message', self.onWsMessage );
-		cep.connection.events.add( 'ping'   , self.animatePing );
+		cep.connection.events.add( 'send'       , self.onWsSend        );
+		cep.connection.events.add( 'message'    , self.onWsMessage     );
+		cep.connection.events.add( 'statechange', self.onWsStateChange );
+		cep.connection.events.add( 'login'      , self.onWsLogin       );
+		cep.connection.events.add( 'logout'     , self.onWsLogin       );
+		cep.connection.events.add( 'close'      , self.onWsClose       );
+		cep.connection.events.add( 'ping'       , self.animatePing     );
 
 		// TOGGLES
 		self.events.add( 'toggle', (toggle)=>{
@@ -715,6 +765,7 @@ export const DebugTerminal = function (cep) {
 		//...? updateBrowserURL();
 
 		// LIGHT MODE
+	/*
 		if (cep.GET.has( 'light' )) {
 			self.toggles.light.toggle( true );
 		} else if (cep.GET.has( 'dark' )) {
@@ -723,7 +774,7 @@ export const DebugTerminal = function (cep) {
 			const prefers_light = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
 			self.toggles.light.toggle( prefers_light );
 		}
-
+	*/
 
 if (self.applets.shell)//...!
 		CEP_SETTINGS.WEBSOCKET.HIDE_PING = self.applets.shell.toggles.ping.enabled;

@@ -1,6 +1,6 @@
 // main_menu.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -36,10 +36,12 @@ export const MainMenu = function (cep, terminal) {
 				</nav>
 			`),
 			elements: {
-				btnCEP       : '.connection',
-				btnToggles   : '.toggles > button',
+				menuCEP      : 'CONTAINER',
+				menuToggles  : '.menu.toggles',
 				itemsMain    : '.main.items',
 				itemsToggles : '.toggles > .items',
+				btnCEP       : '.connection',
+				btnToggles   : '.toggles > button',
 			},
 		},
 	];

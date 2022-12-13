@@ -1,6 +1,6 @@
 // access.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - WEBSOCKET SERVER - copy(l)eft 2022 - https://spielwiese.central-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.central-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -162,29 +162,29 @@ module.exports = function AccessControl (persistent, callback, meta) {
 
 	this.request = {};
 
-// RULES /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-HELP( 'rules', 'Request available protocols' );
+// META //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+HELP( 'meta', 'Request available protocols' );
 
-RULE( 'guest,user,mod,admin,dev,owner: {access:{rules:empty}}' );
-RULE( 'guest,user,mod,admin,dev,owner: {access:{rules:{grouped:empty}}}' );
-RULE( 'admin,dev,owner: {access:{rules:{all:empty}}}' );
-RULE( 'admin,dev,owner: {access:{rules:{description:empty}}}' );
+RULE( 'guest,user,mod,admin,dev,owner: {access:{meta:empty}}' );
+RULE( 'guest,user,mod,admin,dev,owner: {access:{meta:{grouped:empty}}}' );
+RULE( 'admin,dev,owner: {access:{meta:{all:empty}}}' );
+RULE( 'admin,dev,owner: {access:{meta:{description:empty}}}' );
 
-	this.request.rules = function (client, parameters) {
+	this.request.meta = function (client, parameters) {
 		if (parameters.grouped) {
-			return { result: self.getClientRulesGrouped(client) };
+			return { command:'grouped', result: self.getClientRulesGrouped(client) };
 		}
 		else if (parameters.all) {
-			return { result: self.rules };
+			return { command:'all', result: self.rules };
 		}
 		else if (parameters.description) {
-			return { result: self.getProtocolDescription().split('\n') };
+			return { command:'description', result: self.getProtocolDescription().split('\n') };
 		}
 		else {
 			return { result: self.getClientRules(client) };
 		}
 
-	}; // rules
+	}; // meta
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -223,7 +223,7 @@ RULE( 'admin,dev,owner: {access:{rules:{description:empty}}}' );
 			rules.forEach( rule => all_combined.add(rule) );
 		});
 
-		return { result: Array.from( all_combined ) };
+		return Array.from( all_combined );
 
 	}; // getClientRules
 

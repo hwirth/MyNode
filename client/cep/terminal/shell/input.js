@@ -1,6 +1,6 @@
 // input.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -193,10 +193,11 @@ export const ShellInput = function (cep, terminal, shell) {
 					cep.connection.disconnect();
 					break;
 				}
+				case 'version' :  shell.output.printVersion();  break;
+				case 'clear'   :  shell.output.clearScreen();   break;
+				case 'toggles' :  show_toggles();               break;
 				case 'get'     :  // fall through
-				case 'set'     :  access_variable( command );    break;
-				case 'version' :  shell.output.printVersion();   break;
-				case 'clear'   :  shell.output.clearScreen();    break;
+				case 'set'     :  access_variable( command );   break;
 				case 'help'    :  show_file( '/cep/terminal/txt/help.txt'  , parameter );  break;
 				case 'issue'   :  show_file( '/cep/terminal/txt/issue.txt' , parameter );  break;
 				case 'readme'  :  show_file( '/docs/README'                , parameter );  break;
@@ -204,47 +205,74 @@ export const ShellInput = function (cep, terminal, shell) {
 				case 'manual'  :  show_file( '/docs/MyNode.html'           , parameter );  break;
 				case 'diary'   :  show_file( '/docs/dev_diary.html'        , parameter );  break;
 				case 'test': {
-					for ( let i=0 ; i<5 ; ++i ) terminal.applets.status.show( 'Test message ' + i );
+					for ( let i=0 ; i<5 ; ++i ) {
+						terminal.applets.status.show( 'Test message ' + i );
+					}
 					break;
 				}
 				case 'string'  : {
-					// Send raw string to the server, trying to crash it
+					// Send raw string to the server, trying to crash it //... Doesn't crash tho!?
 					//...shell.output.print( 'Sending string: <q>' + parameter + '</q>', 'string' );
 					cep.connection.send( parameter );
 					break;
 				}
 				default: {
-					terminal.elements.btnCEP.innerText = 'Error';
 					shell.output.print( 'Unrecognized command', 'cep' );
 				}
 			}
 
 			return true;
 
+			function show_toggles () {   //...! Find better location
+				const toggles = {...terminal.toggles, ...shell.toggles};
+				const has_shortcut = ([name, toggle]) => toggle.shortcut;
+				const to_list = ([name, toggle])=>{
+					return (
+						'Alt + '
+						+ toggle.shortcut.toUpperCase()
+						+ ': '
+						+ name
+					);
+				}
+				const text = (
+					Object.entries( toggles )
+					.filter( has_shortcut )
+					.map( to_list )
+					.sort()
+					.join('\n')
+				);
+				shell.output.print( text, 'cep' );
+			}
+
 		} // perform_local
 
 
 // SEND REQUEST //////////////////////////////////////////////////////////////////////////////////////////////////119:/
-		function send_json (request) {
-			if (SETTINGS.AUTO_APPEND_TAGS) {
-				request.tag = ++shell.requestId;
-				shell.tagData[request.tag] = Date.now();
-			}
-			cep.connection.send( request );
-		}
-
 		async function remote_command (text) {
+
+			function chat_message () {
+				const list   = terminal.applets.userList.elements.navWho;
+				const target = list.querySelector( 'button.active' );
+				const room   = target.dataset.room;
+				const user   = target.dataset.user;
+
+				if (room) {
+					return {chat:{say:{room:room, message:text}}};
+				} else {
+					return {chat:{say:{user:user, message:text}}};
+				}
+			}
+
 			const request
 			= (text.indexOf('\n') >= 0)
 			? shell.parsers.textToRequest( text )
-			: {chat: { say: text }}
+			: chat_message()
 			;
 
 			const max_attempts = 10;
 			let nr_attempts = 0;
 
 			if (!cep.connection.isConnected()) {
-		/*
 				await cep.connection.connect().catch( error =>{
 					console.log(
 						'%cERROR:', 'color:red',
@@ -255,7 +283,6 @@ export const ShellInput = function (cep, terminal, shell) {
 					shell.output.print( 'Error: ' + error.message, 'cep error' );
 					return;
 				});
-		*/
 			}
 
 			if (cep.connection.isConnected()) {
@@ -264,6 +291,14 @@ export const ShellInput = function (cep, terminal, shell) {
 			} else {
 				shell.output.print( request, 'request' );
 				shell.output.print( 'Auto-connect failed', 'cep error' )
+			}
+
+			function send_json (request) {
+				if (SETTINGS.AUTO_APPEND_TAGS) {
+					request.tag = ++shell.requestId;
+					shell.tagData[request.tag] = Date.now();
+				}
+				cep.connection.send( request );
 			}
 
 		} // remote_command

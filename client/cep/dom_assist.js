@@ -1,6 +1,6 @@
 // dom_assist.js
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// SPIELWIESE - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
+// MyNode - copy(l)eft 2022 - https://spielwiese.centra-dogma.at
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 "use strict";
@@ -62,8 +62,6 @@ export const DomAssist = function (cep) {
 			if (cep.baseDir && (file_name.slice(0, cep.baseDir.length + 1) == (cep.baseDir + '/'))) {
 				file_name = file_name.slice( cep.baseDir.length + 1 );
 			}
-
-			console.log( 'DomAssist.reloadCSS():', file_name );
 
 			const head     = document.querySelector( 'head' );
 			const selector = '[href^="' + file_name + '"]';
