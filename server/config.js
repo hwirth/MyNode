@@ -90,8 +90,9 @@ const SETTINGS = {
 	},
 
 	VERBOSITY : {
-		CURRENT_LEVEL   : 0,
-		FAILURE_RESULTS : 1,
+		LEVEL            : 0,   // Current verbosity level
+		FAILURE_RESULTS  : 1,
+		BROADCAST_ERRORS : 2,
 	},
 
 	// Upper case chars are also accepted

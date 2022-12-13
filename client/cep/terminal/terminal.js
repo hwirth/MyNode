@@ -21,6 +21,10 @@ import { Editor    } from './editor/editor.js';
 const PROGRAM_NAME = 'MyNode Debug Terminal';
 const PROGRAM_VERSION = '0.2.1α';
 
+DEBUG.TERMINAL = {
+	APPLETS: !false,
+};
+
 
 export const DebugTerminal = function (cep) {
 	const self = this;
@@ -119,6 +123,19 @@ export const DebugTerminal = function (cep) {
 
 
 // MODULES ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function task_debug_log (caption) {
+		if (DEBUG.TERMINAL.APPLETS) {
+			const recent
+			= (self.recentTaskApplet)
+			? (self.recentTaskApplet.taskTitle || self.recentTaskApplet)
+			: self.recentTaskApplet
+			;
+			console.log( 'DebugTerminal.recentTaskApplet:', recent, caption );
+		}
+
+	} // task_debug_log
+
 
 	function add_task_menu_entries (entries) {
 		entries.forEach( (entry)=>{
@@ -230,6 +247,7 @@ export const DebugTerminal = function (cep) {
 		}
 
 		if (show_applet) self.showApplet( applet );
+		task_debug_log( 'DebugTerminal.installApplet', show_applet, name );
 
 	}; // installApplet
 
@@ -261,6 +279,8 @@ export const DebugTerminal = function (cep) {
 		if (applet.taskEntry) {
 			self.elements.location.innerHTML = applet.taskTitle;
 			if (applet.taskEntry) applet.taskEntry.classList.add( 'active' );
+			self.recentTaskApplet = applet;
+			task_debug_log( 'DebugTerminal.showApplet' );
 		}
 
 		if (applet.focusItem) {
@@ -276,6 +296,10 @@ export const DebugTerminal = function (cep) {
 		applet.containers.forEach( (container)=>{
 			const is_mounted = container.element.parentNode === self.elements[container.parent];
 			if (is_mounted) self.elements[container.parent].removeChild( container.element );
+			if (applet.taskEntry) {
+				self.recentTaskApplet = null;//...? Stack
+				task_debug_log( 'DebugTerminal.closeApplet' );
+			}
 		});
 
 		self.elements.location.innerHTML = self.taskTitle;
@@ -286,7 +310,13 @@ export const DebugTerminal = function (cep) {
 	this.closeApplet = function (applet) {
 		self.hideApplet( applet );
 
-		if (applet.taskEntry) self.elements.bottomLeft.removeChild( applet.taskEntry );
+		if (applet.taskEntry) {
+			self.elements.bottomLeft.removeChild( applet.taskEntry );
+			if (applet === self.recentTaskApplet) {
+				self.recentTaskApplet = null;
+				task_debug_log( 'DebugTerminal.closeApplet' );
+			}
+		}
 
 		const applet_name = applet.taskEntry.dataset.name;
 		delete self.applets[ applet_name ];
@@ -297,15 +327,31 @@ export const DebugTerminal = function (cep) {
 
 
 	this.focusApplet = function (applet) {
-		if (applet.taskEntry) applet.taskEntry.classList.add( 'active' );
+		if (applet.taskEntry) {
+			self.showApplet( applet );
+			self.recentTask = applet;
+		}
 
 	}; // focusApplet
 
 
 	this.blurApplet = function (applet) {
-		if (applet.taskEntry) applet.taskEntry.classList.remove( 'active' );
+		task_debug_log( 'DebugTerminal.blurApplet' );
+		if (applet.taskEntry) {
+			applet.taskEntry.classList.remove( 'active' );
+		}
 
 	}; // blurApplet
+
+
+	this.focusRecentTask = function () {
+		task_debug_log( 'DebugTerminal.focusRecent' );
+
+		if (self.recentTaskApplet) {
+			self.focusApplet( self.recentTaskApplet );
+		}
+
+	}; // focusRecentTask
 
 
 // TERMINAL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -686,7 +732,8 @@ export const DebugTerminal = function (cep) {
 
 		document.body.appendChild( container );
 
-		self.taskTitle = self.elements.location.innerHTML;
+		self.taskTitle        = self.elements.location.innerHTML;
+		self.recentTaskApplet = null;
 
 		self.fontNames = extract_css_font_names();
 		function extract_css_font_names () {

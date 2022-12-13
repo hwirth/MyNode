@@ -305,7 +305,8 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 				});
 			}
 			if ('undefined' != typeof answer.message.failure) {
-				const result = SETTINGS.SERVER.VERBOSITY ? answer.message.failure : undefined;
+				const verbose = SETTINGS.VERBOSITY.LEVEL >= SETTINGS.VERBOSTIY.FAILURE_RESULTS;
+				const result  = verbose ? answer.message.failure : undefined;
 				results.push({
 					command : command_name,
 					success : false,
@@ -320,8 +321,9 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 				});
 			}
 			else if (answer.message.error) {
-				const error = DEBUG.formatError( answer.message.error ).split('\n', 1)[0];
-				const result = SETTINGS.SERVER.VERBOSITY ? error : undefined;
+				const error   = DEBUG.formatError( answer.message.error ).split('\n', 1)[0];
+				const verbose = SETTINGS.VERBOSITY.LEVEL >= SETTINGS.VERBOSTIY.BROADCAST_ERRORS;
+				const result  = verbose ? error : undefined;
 				results.push({
 					command : command_name,
 					success : null,

@@ -247,7 +247,7 @@ module.exports = function ServerControl (persistent, callback, meta) {
 
 // HELP //////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 HELP( 'help', 'Help on available protocols' );
-RULE( 'connectinc,guest,user,mod,admin,dev,owner: {server:{help:*}}' );
+RULE( 'connecting,guest,user,mod,admin,dev,owner: {server:{help:*}}' );
 
 	this.request.help = function (client, parameter) {
 		if (typeof parameter == 'object') {
@@ -337,7 +337,6 @@ RULE( 'admin,dev,owner: {server:{global:{set:string,value:string}}}' );
 			entry = access_variable( target, path, value );
 
 		} catch (error) {
-			console.log( 'E', error );
 			return { command:operation, failure: error.message.replace('object', target) };
 		}
 
@@ -346,8 +345,8 @@ RULE( 'admin,dev,owner: {server:{global:{set:string,value:string}}}' );
 		}
 
 		const result
-		= (typeof entry == 'string') ? entry
-		: (entry instanceof Array  ) ? entry.map( formatted_array )
+		= (entry instanceof Array  ) ? entry.map( formatted_array )
+		//...?: (typeof entry == 'string') ? entry
 		: (typeof entry == 'object') ? Object.keys( entry )
 		: entry
 		;

@@ -14,6 +14,8 @@ export const UserList = function (cep, terminal) {
 	this.containers;
 	this.elements;
 
+	this.talkingTo;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
@@ -42,14 +44,22 @@ export const UserList = function (cep, terminal) {
 		if (event.target.tagName != 'BUTTON') return;
 
 		if (!event.target.dataset.user && !event.target.dataset.room) {
-			//...? terminal.currentShell()??, .focusTopApplet()
+			terminal.focusRecentTask();
 			return;
 		}
+
+		self.talkingTo
+		= (event.target.dataset.room)
+		? { room: event.target.dataset.room }
+		: { user: event.target.dataset.user, nick:event.target.dataset.nick }
+		;
 
 		const channel_selector = 'button:is([data-room],[data-user])';
 		self.elements.navWho.querySelectorAll( channel_selector ).forEach( (button)=>{
 			button.classList.toggle( 'active', button === event.target );
 		});
+
+		terminal.focusRecentTask();
 
 	} // on_navusers_click
 
@@ -108,7 +118,6 @@ export const UserList = function (cep, terminal) {
 					: user_record.nickName || user_record.userName
 				).trim();
 
-
 				const user_menu = [
 					NEW({
 						tagName   : 'button',
@@ -151,10 +160,8 @@ export const UserList = function (cep, terminal) {
 								innerText : text,
 								dataset   : {
 									user: user_record.userName,
-							/*
 									nick: user_record.nickName,
-									addr: address,
-							*/
+									//...addr: address,
 								},
 							}),
 							NEW({ tagName:'div', className:'items', children:user_menu }),
@@ -164,9 +171,17 @@ export const UserList = function (cep, terminal) {
 			});
 		}
 
-		user_list.querySelectorAll( 'button' ).forEach( (button)=>{
+		user_list.querySelectorAll( ':is([data-user],[data-room])' ).forEach( (button)=>{
 			const is_self = (full_name.indexOf(button.innerText) >= 0);
 			button.classList.toggle( 'self', is_self );
+			if (self.talkingTo) {
+				const data = button.dataset;
+				const talk = self.talkingTo;
+				const is_room = data.room && (data.room == talk.room);
+				const is_user = data.user && (data.user == talk.user) && (data.nick == talk.nick);
+console.log( '>', data, talk, is_room, is_user );
+				button.classList.toggle( 'active', !!is_user || !!is_room );
+			}
 		});
 
 
@@ -193,6 +208,8 @@ list.appendChild( button );
 
 	this.init = async function () {
 		if (DEBUG.INSTANCES) console.log( 'UserList.init' );
+
+		self.talkingTo = { room: 'public' };
 
 		self.containers = [];
 		self.elements = {};
