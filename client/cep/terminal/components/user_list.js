@@ -179,7 +179,6 @@ export const UserList = function (cep, terminal) {
 				const talk = self.talkingTo;
 				const is_room = data.room && (data.room == talk.room);
 				const is_user = data.user && (data.user == talk.user) && (data.nick == talk.nick);
-console.log( '>', data, talk, is_room, is_user );
 				button.classList.toggle( 'active', !!is_user || !!is_room );
 			}
 		});
