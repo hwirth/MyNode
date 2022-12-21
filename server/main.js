@@ -326,10 +326,13 @@ function parse_json(message) {//...
 			const pos = (request_url_clean + '?').indexOf( '?' );
 			request_url_clean = request_url_clean.substr( 0, pos );
 
-			const file_name
-			= SETTINGS.SERVER.DOCUMENT_ROOT
-			+ ((request_url_clean == '/') ? '/index.html' : request_url_clean)
-			;
+			const file_name = SETTINGS.SERVER.DOCUMENT_ROOT + (
+				  (request_url_clean == '/') ? '/index.html'
+				: (request_url_clean == '/README' ) ? '/README/index.html'
+				: (request_url_clean == '/README/') ? '/README/index.html'
+				: (request_url_clean == '/README/index.html') ? '/README/index.html'
+				: request_url_clean
+			);
 
 			if (!fs.existsSync( file_name )) {
 				DEBUG.log( COLORS.ERROR, 'http:', 'File not found: ' + file_name );

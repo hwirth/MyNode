@@ -372,6 +372,15 @@ export const DebugTerminal = function (cep) {
 	}; // toggleVisibility
 
 
+	this.focusFirstMenuElement = function () {
+		self.elements.terminal.querySelector( ':not(main) button' ).focus();
+console.log(
+	self.elements.terminal.querySelector( ':not(main) button' )
+);
+
+	} // focusFirstMenuElement
+
+
 	this.updateBrowserURL = function (target_toggle) {
 		if (!self.toggles.save.enabled && (target_toggle.name != 'save')) return;
 

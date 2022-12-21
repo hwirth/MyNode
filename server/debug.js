@@ -45,7 +45,7 @@ const DEBUG = {                                                // What to log
 	ROUTER                    : DEBUG_ENABLED && false,
 	ROUTER_PERSISTENT_DATA    : DEBUG_ENABLED && false,
 
-	FILE_WATCHER              : DEBUG_ENABLED && !false,
+	FILE_WATCHER              : DEBUG_ENABLED && false,
 
 	BOOT_TIME                 : Date.now(),
 

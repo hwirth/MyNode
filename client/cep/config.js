@@ -30,6 +30,10 @@ export const SETTINGS = {
 		HIDE_PING      : true,
 		LOG_SLICE      : 60,
 	},
+
+	TIMEOUT: {
+		TAG_RESPONSE : 1000,   // ms until the response will no longer be expected
+	},
 };
 
 

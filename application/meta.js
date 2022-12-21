@@ -5,11 +5,7 @@
 
 "use strict";
 
-const { SETTINGS        } = require( '../server/config.js' );
-const { DEBUG, COLORS   } = require( '../server/debug.js' );
-
-const WebSocketClient = require( './client.js' );
-const MetaData        = require( './meta.js'   );
+const { DEBUG, COLORS } = require( '../server/debug.js' );
 
 
 module.exports = function MetaData () {
@@ -31,10 +27,10 @@ module.exports = function MetaData () {
 
 	}; // setCollectorKey
 
+
 	this.addRule = function (rule) {
 		if (!current_key) throw new Error( 'MetaData.addRule: Key unset' );
 		self.rules.push( rule );
-		//...? self.rules.sort();
 
 	}; // addRule
 

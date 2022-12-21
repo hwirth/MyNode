@@ -5,10 +5,10 @@
 
 "use strict";
 
-import { SETTINGS, DEBUG, log_event } from './config.js';
-
-import { Events        } from './events.js';
-import { DebugTerminal } from './terminal/terminal.js';
+import * as Helpers        from './helpers.js';
+import { SETTINGS, DEBUG } from './config.js';
+import { Events          } from './events.js';
+import { DebugTerminal   } from './terminal/terminal.js';
 
 const SOCKET_STATES = {
 	CONNECTING : 0,   // Socket has been created. The connection is not yet open
@@ -39,6 +39,8 @@ export const AutoWebSocket = function (parameters = {}) {
 	this.webSocketURL;      // Set at creation time
 	this.autoReconnect;     // Clear this flag to stop the reconnect loop
 	this.sentCredentials;   // Wether we sent the JSON after the socket opened
+	this.requestID;         // Used to correlate sent requests and received responses
+	this.requestPromises;   // Resolved, when response corresponding to request comes in
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -194,8 +196,8 @@ export const AutoWebSocket = function (parameters = {}) {
 		self.events.emit( 'message', message );
 
 		if (message.response) {
-			const responses = (message.response instanceof Array) ? message.response : [message.response];
-			responses.forEach( (response)=>{
+			//...self.requestPromises[self.requestID]
+			Helpers.wrapArray( message.response ).forEach( (response)=>{
 				if (!response.success) return;
 				switch (response.command) {
 					case 'session.login': {
@@ -210,6 +212,13 @@ export const AutoWebSocket = function (parameters = {}) {
 					}
 				}
 			});
+		}
+
+		if (message.tag && (self.requestPromises[message.tag])) {
+			const resolve = self.requestPromises[message.tag];
+			delete self.requestPromises[message.tag];
+			clearTimeout( resolve.timeout );
+			resolve.callback( message );
 		}
 
 	} // on_message
@@ -332,6 +341,22 @@ export const AutoWebSocket = function (parameters = {}) {
 	};  // send
 
 
+	this.taggedRequest = function (request) {
+		return new Promise( (resolve, reject)=>{
+			request.tag = ++self.requestID;
+			self.send( request );
+			self.requestPromises[self.requestID] = {
+				callback : resolve,
+				timeout  : setTimeout( ()=>{
+					delete self.requestPromises[self.requestID];
+					reject( 'Request timed out' );
+				}, SETTINGS.TIMEOUT.TAG_RESPONSE),
+			};
+		});
+
+	}; // taggedRequest
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONSTRUCTOR
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -352,6 +377,9 @@ export const AutoWebSocket = function (parameters = {}) {
 		self.webSocketURL    = parameters.webSocketURL;
 		self.autoReconnect   = parameters.autoReconnect;
 		self.sentCredentials = false;
+
+		self.requestID       = 0;
+		self.requestPromises = {};
 
 		if (!self.webSocketURL) throw new Error( 'ClientEndPoint.init: WebSocket URL undefined' );
 		//...! Check for valid URL

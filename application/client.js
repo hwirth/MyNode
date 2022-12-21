@@ -77,11 +77,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 
 // CONNECTION AND MESSAGES ///////////////////////////////////////////////////////////////////////////////////////119:/
 
-	this.send = function (message, request_id) {
-		if (request_id && (typeof message != 'string')) message.request = request_id.request;
-
-		if (request_id) message.command = request_id.command;
-
+	this.send = function (message) {
 		const is_pingpong = message.update && (message.update.type =='ping')
 		const do_log = DEBUG.MESSAGE_OUT && (!is_pingpong || (is_pingpong && SETTINGS.PING.LOG));
 		if (do_log) DEBUG.log(
@@ -97,54 +93,6 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		if (socket.send) socket.send( message );
 
 	}; // send
-
-
-	this.respond = function (status, request_id, result) {
-		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
-		self.send({
-			response: {
-				time    : time,
-				type    : 'result',
-				tag     : request_id.tag || null,
-				request : request_id.request,
-				command : request_id.command,
-				success : status,
-				result  : result,
-			},
-		});
-
-	}; // respond
-
-
-	this.update = function (update) {
-		const time = (SETTINGS.MESSAGE_TIMESTAMPS) ? Date.now() : undefined;
-		self.send({
-			update: {
-				time    : time,
-				type    : 'update',
-				...update,
-			},
-		});
-
-	}; // respond
-
-
-	this.broadcast = function (message, request_id = {}) {
-		if (request_id && (typeof message != 'string')) message.request = request_id.request;
-
-		if (!self.login) {
-			self.respond( STATUS.FAILURE, null, REASONS.INSUFFICIENT_PERMS );
-			return;
-		}
-
-		message.tag      = request_id.tag,
-		message.request  = request_id.request,
-		message.command  = request_id.command,
-		message.userName = (self.login) ? self.login.userName : null;
-		message.nickName = (self.login) ? self.login.nickName : null;
-		callback.broadcast( message );
-
-	}; // broadcast
 
 
 	this.closeSocket = function () {

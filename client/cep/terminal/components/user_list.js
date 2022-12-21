@@ -37,34 +37,6 @@ export const UserList = function (cep, terminal) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// EVENTS
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function on_navusers_click (event) {
-		if (event.target.tagName != 'BUTTON') return;
-
-		if (!event.target.dataset.user && !event.target.dataset.room) {
-			terminal.focusRecentTask();
-			return;
-		}
-
-		self.talkingTo
-		= (event.target.dataset.room)
-		? { room: event.target.dataset.room }
-		: { user: event.target.dataset.user, nick:event.target.dataset.nick }
-		;
-
-		const channel_selector = 'button:is([data-room],[data-user])';
-		self.elements.navWho.querySelectorAll( channel_selector ).forEach( (button)=>{
-			button.classList.toggle( 'active', button === event.target );
-		});
-
-		terminal.focusRecentTask();
-
-	} // on_navusers_click
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -121,31 +93,31 @@ export const UserList = function (cep, terminal) {
 				const user_menu = [
 					NEW({
 						tagName   : 'button',
-						className : 'disabled',
+						//disabled  : true,
 						innerText : 'Private chat',
 						dataset   : {command:'pm'},
 					}),
 					NEW({
 						tagName   : 'button',
-						className : 'disabled',
+						disabled  : true,
 						innerText : 'User info',
 						dataset   : {command:'info'},
 					}),
 					NEW({
 						tagName   : 'button',
-						className : 'disabled',
+						disabled  : true,
 						innerText : 'Ban',
 						dataset   : {command:'ban'},
 					}),
 					NEW({
 						tagName   : 'button',
-						className : 'disabled',
+						disabled  : true,
 						innerText : 'Kick',
 						dataset   : {command:'kick'},
 					}),
 					NEW({
 						tagName   : 'button',
-						className : 'disabled',
+						disabled  : true,
 						innerText : 'Block IP',
 						dataset   : {command:'block'},
 					}),
@@ -192,6 +164,39 @@ list.appendChild( button );
 }
 
 	}; // update
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+// EVENTS
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	function on_navusers_click (event) {
+		if (event.target.tagName != 'BUTTON') return;
+
+		if (!event.target.dataset.user && !event.target.dataset.room) {
+			const nav = event.target.closest( 'nav.menu' );
+			if (nav) {
+				const button = nav.querySelector( 'button' );
+				if (button) button.click();
+			}
+			terminal.focusRecentTask();
+			return;
+		}
+
+		self.talkingTo
+		= (event.target.dataset.room)
+		? { room: event.target.dataset.room }
+		: { user: event.target.dataset.user, nick:event.target.dataset.nick }
+		;
+
+		const channel_selector = 'button:is([data-room],[data-user])';
+		self.elements.navWho.querySelectorAll( channel_selector ).forEach( (button)=>{
+			button.classList.toggle( 'active', button === event.target );
+		});
+
+		terminal.focusRecentTask();
+
+	} // on_navusers_click
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

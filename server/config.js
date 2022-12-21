@@ -90,7 +90,7 @@ const SETTINGS = {
 	},
 
 	VERBOSITY : {
-		LEVEL            : 0,   // Current verbosity level
+		LEVEL            : 9,   // Current verbosity level
 		FAILURE_RESULTS  : 1,
 		BROADCAST_ERRORS : 2,
 	},
@@ -119,7 +119,7 @@ const SETTINGS = {
 		'client/cep/terminal/shell',
 		'client/cep/terminal/editor',
 		'client/cep/terminal/txt',
-		'client/docs',
+		'client/README',
 	],
 
 	RSS: {

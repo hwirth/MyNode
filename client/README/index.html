@@ -1,0 +1,494 @@
+<!DOCTYPE html><html id="top" lang="en"><head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<title>MyNode</title>
+<link rel="help"          href="README">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet"    href="/README/readme.css">
+<script>
+	addEventListener( 'click', ()=>location.reload() );
+	addEventListener( 'load', ()=>{
+		const named_headings = document.querySelectorAll( ':is(h1,h2,h3,h4,h5,h6)[id]' );
+		const initial_level  = get_nesting( named_headings[0] );
+
+		let current_level = initial_level - 1;
+		let html = '';
+
+		named_headings.forEach( heading =>{
+			const heading_level = get_nesting( heading );
+			if (current_level > heading_level) {
+				while (current_level > heading_level) {
+					--current_level;
+					html += indent(1) + '</ol>\n';
+					html += indent(0) + '</li>\n';
+				}
+			}
+			else {
+				if (current_level == heading_level) {
+					html += indent(0) + '</li>\n';
+				}
+				if (current_level < heading_level) {
+					html += indent(1) + (html ? '<ol>\n' : '<ol class="index">\n');
+					++current_level;
+				}
+			}
+
+			html += indent(0) + '<li>\n';
+			html += indent(1) + create_anchor(heading) + '\n';
+		});
+
+		while (current_level >= initial_level) {
+			html += indent(0) + '</li>\n';
+			--current_level;
+			html += indent(1) + '</ol>\n';
+		}
+
+		document.querySelector( '#index' ).outerHTML = html;
+
+		function get_nesting (heading) {
+			return heading.tagName.charAt(1);
+		}
+
+		function indent (offset = 0) {
+			const amount = 2*(current_level - initial_level) + offset + 1;
+			if (amount < 0) {
+				console.log( '!', amount );
+				return '';
+			}
+			return '\t'.repeat( amount );
+		}
+
+		function create_anchor (heading) {
+			const a  = document.createElement( 'a' );
+			a.setAttribute( 'href', '#' + heading.id );
+			a.innerText = heading.innerText;
+			return a.outerHTML;
+		}
+	});
+
+</script>
+</head><body>
+
+<header>
+	<h1>
+		<img src="/README/mynode.png" alt="MyNode logo">
+		<span>
+			MyNode
+			<small>README Dec 13, 2022</small>
+		</span>
+	</h1>
+</header>
+
+<h2>Index</h2>
+<div id="index">Requires JavaScript</div>
+
+<h2 id="overview">Overview</h2>
+<p>
+	For a CSS based poker game, I wanted to add multi player capabilities. As it usually goes, the scope of the
+	project exploded a little and now it has become MyNode, which is a client/server system written in NodeJS
+	for applications like a chat or multi-player games.
+</p>
+
+<h3 id="system_architecture_diagram">System architecture diagram</h3>
+<div class="diagram">
+	<h1>MyNode</h1>
+	<div>
+		<h2>Server</h2>
+		<div>WebSocket</div>
+		<div>Configuration</div>
+		<div>Debug</div>
+		<div>
+			<h3>Reloader</h3>
+			<div class="important">Persistent Data</div>
+			<div>
+				<h4>Ephemeral Code</h4>
+				<div class="ephemeral">
+					<h5>Router</h5>
+					<div>
+						<div class="important">
+							<h6>Protocol Interface</h6>
+						</div>
+						<div>
+							<h6>Core Protocols</h6>
+							<div>Session</div>
+							<div>Access</div>
+							<div>Control</div>
+						</div>
+						<div>
+							<h6>Applications</h6>
+							<div>Chat</div>
+							<div>Lobby</div>
+							<div>Game</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div>
+		<h2>Browser application</h2>
+		<div>
+			<h3>Boot Screen</h3>
+			<div>Watchdog</div>
+		</div>
+		<div class="important">
+			<h3>Application Code</h3>
+			<div>Demo: <q>Chat</q></div>
+		</div>
+		<div>
+			<h3>Client End Point</h3>
+			<div>
+				<h3>AutoWebSocket</h3>
+				<div>Tagged Request</div>
+			</div>
+			<div>
+				<h3>Utils</h3>
+				<div>DOM Manipulation</div>
+				<div>Assets</div>
+				<div>
+					<h4>Reloader</h4>
+					<div>CSS</div>
+					<div>Object Templates</div>
+				</div>
+			</div>
+			<div>
+				<h3>Debug Terminal</h3>
+				<div>
+					<h4>Components</h4>
+					<div>
+						<h6>Applets</h6>
+						<div>Main Menu</div>
+						<div>Login Menu</div>
+						<div>User List</div>
+					</div>
+					<div>
+						<h6>Screens</h6>
+						<div>Shell</div>
+						<div>Settings</div>
+						<div>Editor</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<h3 id="overview_client_end_point">Client End Point</h3>
+<p>
+	The "CEP" is a fancy self-reconnecting websocket and API to the server functions for the application developer.
+	It also provides a debug terminal that allows to send manually crafted JSON messages to the server and also
+	serves as mod/admin interface.
+</p>
+
+<h3 id="overview_main_server">Main server - ./server/</h3>
+<p>
+	The main program is the minimum amount of code needed to facilitate hot-code reloading (You press ctrl+s and
+	everything reinstantiates seamlessly without dropping websocket connections, or the clients are sent reload
+	commands). The http and websocket servers are part of the main program.
+</p>
+
+<h3 id="overview_protocols">Protocols - ./application/</h3>
+<ul>
+	<li>All hot-reloadable code is considered "application" as far as the main server is concerned.
+	<li>Most programs implement a protocol and provide their services to the CEP directly
+	<li>The core protocols deal with message routing, as well as server, permission, user and account management.
+</ul>
+
+<h3 id="overview_payload_protocols">Payload protocols</h3>
+<p>
+	The actual applications, for instance the demo chat, a specific game server, instant messenger or IRC gateways,
+	etc.
+</p>
+
+
+<h2 id="introduction">Introduction</h2>
+<p>
+	So far I have only been picking low hanging fruit
+	and the system is amazingly powerful already. I'd prefer to keep things as simple as they are now, which might
+	be in conflict with adding certain features in the future.
+</p>
+
+<h3 id="introduction_chat_demo"><q>Chat</q>, a demo application - ./client/</h3>
+<p>
+	This simple chat utilizes the CEP to talk to ./application/chat/* . The debug terminal and its assets are
+	loaded only, when the user opens it for the first time.
+</p>
+
+<h3 id="introduction_client_end_point">Client End Point - ./client/cep/</h3>
+<p>
+	Provides a self-reconnecting websocket (AutoWebSocket) and helps match sent requests and received responses.
+</p>
+<table>
+	<tr>
+		<td colspan="2">
+			<code>const cep = new ClientEndPoint(&lt;arguments&gt;);</code>
+		</td>
+	</tr><tr>
+		<td><code>cep.connection.*</code></td>
+		<td>The websocket interface: .conncect(), etc.</td>
+	</tr><tr>
+		<td><code>cep.dom.*</code></td>
+		<td>A few things the experimental features in the terminal use, but are of generic utility,
+			  so we publish them for the main application.</td>
+	</tr><tr>
+		<td><code>cep.reload.*</code></td>
+		<td>Tools to hot-reload object templates, css files, etc.</td>
+	</tr>
+</table>
+
+<h4 id="introduction_websocket_interface">MyNode WebSocket Interface</h4>
+<p>See ./client/main.js</p>
+
+<h4 id="introduction_utilities">Utilities</h4>
+<ul>
+	<li>Asset streaming and caching
+	<li>Device manager for controllers, microphones, cameras, head sets, etc.
+	<li>File upload and dragdop support between browser and a file manager
+	<li>WebRTC voice, video and data streams
+	<li>Hot code reloading
+</ul>
+<h5 id="introduction_event_object">A very simple Events() object</h5>
+<p>
+	Events can be "emitted" as you expect, or be "called back": When using  callback , only the most recent event
+	listener will be called. This is used for asynchronously retreiving login credentials before socket connect,
+	and allows the terminal (or any other additional applet) to provide a login form on their own and "take over"
+	the duty of providing login credentials, whenever the websockets aks for them. This is transparent to the main
+	application.
+</p>
+
+<h4 id="introduction_debug_terminal">Debug terminal</h4>
+<ul>
+	<li>Displays all messages sent or received through the AutoWebSocket
+	<li>Can send manually crafted JSONs
+	<li>UI for server control protocol
+	<li>UI for user management (edit accounts, kick, ban)
+	<li>Remote access to all internal variables of the server
+	<li>Remote access to all internal variables of every connected client
+	<li>Remote IDE for software development (Currently just a code editor)
+	<li>Remote file manager
+	<li>Testing ground while developing future CEP features
+</ul>
+
+<h3 id="introduction_mynode_server">MyNode Server</h3>
+
+<h4 id="introduction_server_main_program">Main program - ./server/main.js</h4>
+<ul>
+	<li>HTTP and websocket server
+	<li>Code hot-reloader
+</ul>
+
+<h4 id="introduction_core_protocols">Core protocols</h4>
+<p>
+	All hot reloadable parts are considered application code, most of which implements an independent "protocol".
+	The main program in the application directory is the Router, which validates the request, gathers results and
+	sends them back. It is closely tied to the session and access protocols, and does not publish a protocol itself.
+</p>
+<table>
+	<tr>
+		<td>application/router.js</td>
+		<td>Receives message, calls according protocol request handler, sends result back</td>
+	</tr><tr>
+		<td>application/meta.js</td>
+		<td>Gathers information about the code, when it is compiled</td>
+	</tr><tr>
+		<td>application/access.js</td>
+		<td>Permission management for requests based on meta data</td>
+	</tr><tr>
+		<td>application/session.js</td>
+		<td>Session, user and account management</td>
+	</tr><tr>
+		<td>application/control.js</td>
+		<td>Server control debug protocol</td>
+	</tr>
+</table>
+
+<h4 id="introduction_payload_protocols">Payload protocols</h4>
+<p>Most of these are not yet implemented, or very rudimentary for testing purposes only.</p>
+<ul>
+	<li>Chat
+	<li>File manager
+	<li>"Remote desktop" from client to client, Synergy like mouse and keyboard sharing
+	<li>RSS, IRC, Email, etc.
+	<li>Turn based games (Showdown, Dice Chess, Billiard, Chess, MOO2)
+	<li>Real time games (Dbris, Getaway, VirtuaRacing/Microprose F1 GP, My Little Program, Lightcycle)
+</ul>
+
+<h3 id="introduction_file_structure">File structure</h3>
+<table>
+	<tr>
+		<td>./start_server.sh</td>
+		<td>Runs node in a loop, terminates on certain exit codes
+	</tr><tr>
+		<td>/server/</td>
+		<td>Code in this folder cannot be hot-reloaded</td>
+	</tr><tr>
+		<td>/server/main.js</td>
+		<td>Web socket, http server, hot reload of application code</td>
+	</tr><tr>
+		<td>/server/debug.js</td>
+		<td>Colored logging to stdout, log to file</td>
+	</tr><tr>
+		<td>/server/config.js</td>
+		<td>Provides hard coded constants and values from the configuration file</td>
+	</tr><tr>
+		<td>/server/reloader.js</td>
+		<td>Hot code-reloading. Reinstantiates the application for each request</td>
+	</tr><tr>
+		<td>/application/</td>
+		<td>Hot reloadable code, responses to messages from the websocket</td>
+	</tr><tr>
+		<td>/application/router.js</td>
+		<td>Calls response handler according to requested protocol/command</td>
+	</tr><tr>
+		<td>/application/session.js</td>
+		<td>Main protocol, handles accounts and logins</td>
+	</tr><tr>
+		<td>/application/client.js</td>
+		<td>I want to get rid of its methods and re-integrate it with session.js</td>
+	</tr><tr>
+		<td>/application/chat/chat.js</td>
+		<td>Custom server protocol, simple text chat</td>
+	</tr><tr>
+		<td>/client/</td>
+		<td>Chat client and a gamified debug thingy</td>
+	</tr><tr>
+		<td>/client/index.html</td>
+		<td></td>
+	</tr><tr>
+		<td>/client/main.js</td>
+		<td></td>
+	</tr><tr>
+		<td>/client/cep/</td>
+		<td></td>
+	</tr><tr>
+		<td>/client/cep/cep.js</td>
+		<td></td>
+	</tr><tr>
+		<td>/client/cep/websocket.js</td>
+		<td></td>
+	</tr><tr>
+		<td>/client/cep/config.js</td>
+		<td></td>
+	</tr><tr>
+		<td>/client/cep/events.js</td>
+		<td>Simple event mechanism.</td>
+	</tr><tr>
+		<td>/client/cep/dom_assist.js</td>
+		<td>DOM helpers, find elements, reload CSS, etc.</td>
+	</tr><tr>
+		<td>/client/cep/helpers.js</td>
+		<td>Things that are just generally missing in JavaScript, like isNumeric()</td>
+	</tr>
+</table>
+
+<footer>copy(l)eft 2022 - spielwiese.central-dogma.at</footer>
+
+</body></html>
+<!--
+
+
+
+
+5. Mode of operation
+====================
+
+3.1. Messages and session handling
+----------------------------------
+Messages to the websocket are expected to be stringified JSON objects of the following structure:
+
+	{
+		"<Protocol name>": {
+			"<Command name>": {
+				<Command specific arguments>
+			}
+		}
+	}
+
+The "session" protocol is handling logins, accounts and permissions. The client must authenticate before accessing
+any further protocols with a message like:
+
+	{
+		"session": {
+			"login": {
+				username: '<username>',
+				password: '<password>'
+			}
+		}
+	}
+
+Responses will follow the command structure like:
+
+	{
+		"session": {
+			"login": {
+				<specific response>
+			}
+		}
+	}
+
+
+3.2. Hot code reloading
+-----------------------
+The program is split into two parts: Persistent and ephemeral. Websocket events (i.e. onMessage) will first see, if any
+modules in ./application/ have changed and will reload them and re-instantiate , before calling the updated actual event handlers contained
+in said modules.
+
+
+3.3. Persistent data
+--------------------
+The websocket itself is kept alive in the persistent part of the program, only the response handlers are hot reloaded.
+Persistent data is stored in the main part as well. Application code will be given a reference to its data on
+(re-)creation.
+
+
+3.4. Protocols
+--------------
+Each message contains commands for specific protocols. These will be relayed accordingly through  protocols.js .
+This allows for independent servers to run over the same websocket. Each protocol implementation will be given a
+reference to its respective persistent data, which is stored in  AppReloader.persistentData.<protocol name> .
+
+Some protocols need special callbacks, for instance  triggerExit , which allows a protocol to cause a full restart of
+the server. How protocols are created and interconnected is configured by hand in  Protocols.init() .
+
+
+3.5. Asynchronicity in object instantiation
+-------------------------------------------
+The whole program is probably to be considered a Singleton object.
+
+[ ] // Initialize the object asynchronously
+    // Makes sure, a reference to this instance is returned to  const protocol = await new Protocol();
+    self.init().then( ()=>self );   // const chat = await new ChatServer();
+
+
+3.6. Glue code in the main object
+---------------------------------
+//... Rephrase this
+When sub-objects need to call methods of other objects which also need to call methods of the first object, we can't
+just pass the all methods as callbacks when instantiating the first object, because the next one does not exist yet.
+Therefore, "relay" functions in the main object are used for instantiation, because we are allowed to code calls for
+things that don't yet exist, when the funcion is declared.
+//EOF
+
+4. Configuration
+================
+/etc/spielwiese.conf
+
+RUN_AS_USER           spielwiese
+RUN_AS_GROUP          spielwiese
+DOCUMENT_ROOT         /.../htdocs
+
+LOG_TO_CONSOLE        true
+LOG_TO_FILE           false
+LOG_FILE_NAME         /.../spielwiese.log
+
+SSL_PUBLIC_KEY_FILE   /.../spielwiese.crt
+SSL_PRIVATE_KEY_FILE  /.../spielwiese.key
+
+HTTPS_PORT            1337
+WS_PORT               1337
+
+
+//EOF
+
+
+-->

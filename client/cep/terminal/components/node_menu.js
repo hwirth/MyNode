@@ -173,6 +173,11 @@ export const NodeMenu = function (cep, terminal) {
 			});
 		});
 
+		// ESC --> Back to Shell
+		self.elements.menuNode.addEventListener( 'keydown', (event)=>{
+			if (event.key == 'Escape') terminal.focusRecentTask();
+		});
+
 		return Promise.resolve();
 
 	}; // init

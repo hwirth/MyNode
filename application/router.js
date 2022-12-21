@@ -75,21 +75,21 @@ module.exports.Router = function (persistent, callback) {
 	this.onMessage = async function (socket, client_address, message) {
 		// A message can contain multiple commands. We will keep track of failures and sucesses,
 		// find the right protocol and pass on the message to the final response handler.
-		// JSON format: { <protocol>: { <command>: { <request> }}}
+		// JSON format: { <protocol>: { <command>: { <parameters> }}}
 		// Main level keys designate target protocol, second level a command
 		// Since keys in objects must be unique, each command can only be used once
 
+		if (typeof message == 'string') {
+			DEBUG.log(
+				COLORS.WARNING,
+				'Not JSON:',
+				'String "' + message + '", ignoring',
+			);
+			return;
+		}
+
 		const nano_t0 = hrtime.bigint();
 		const date_t0 = Date.now();
-
-//... Improve handled/rejected commands
-const handled_commands  = [];
-const rejected_commands = [];
-
-		const request_id = {
-			tag: message.tag,
-			request: null,
-		}
 
 		const collected_answers = [];
 
@@ -103,7 +103,6 @@ const rejected_commands = [];
 
 		function send_error (error, catch_mode = '') {
 			DEBUG.log( COLORS.ERROR, 'ERROR Router.onMessage-send_error:', catch_mode, error );
-//...return;
 			callback.broadcast({
 				type     : 'error',
 				source   : 'router/' + catch_mode,
@@ -116,25 +115,6 @@ const rejected_commands = [];
 		async function call_request_handler (protocol_name, command_name) {
 			const combined_name = protocol_name + '.' + command_name;
 			const request_handler = self.protocols[protocol_name].request[command_name];
-
-			++request_id.request;
-			request_id.command = combined_name;
-
-//... Will be done through access rules
-if (!request_handler) {
-	rejected_commands.push( combined_name );
-
-	if (DEBUG.ROUTER) DEBUG.log(
-		COLORS.ERROR,
-		'Router.onMessage:',
-		'unknown command:',
-		combined_name,
-	);
-
-	return;
-}
-//... Improve handled/rejected commands
-handled_commands.push( combined_name );
 
 			const do_log = SETTINGS.PING.LOG || (protocol_name != 'session') || (command_name != 'pong');
 			if (do_log) {
@@ -205,22 +185,21 @@ handled_commands.push( combined_name );
 		const handler_calls = async ([protocol_name, protocol_command_names]) => {
 			const protocol = self.protocols[protocol_name];
 
-//... Will be done through access rules
-if (!protocol) {
-	if (DEBUG.ROUTER) DEBUG.log(
-		COLORS.WARNING,
-		'Router.onMessage:',
-		'unknown protocol:',
-		protocol_name,
-	);
-	rejected_commands.push( protocol_name );
-	collected_answers.push({
-		protocol : protocol_name,
-		command  : Object.keys( protocol_command_names ).join(','),
-		message  : {error : 'Error: Unknown protocol'},
-	});
-	return;
-}
+			//... Will be done through access rules:
+			if (!protocol) {
+				if (true || DEBUG.ROUTER) DEBUG.log(
+					COLORS.WARNING,
+					'Router.onMessage:',
+					'unknown protocol:',
+					protocol_name,
+				);
+				collected_answers.push({
+					protocol : protocol_name,
+					command  : Object.keys( protocol_command_names ).join(','),
+					message  : {error : new Error('Error: Unknown protocol') },
+				});
+				return;
+			}
 
 			if (DEBUG.ROUTER) DEBUG.log(
 				COLORS.ROUTER,
@@ -249,32 +228,11 @@ if (!protocol) {
 
 // CALL ALL HANDLERS /////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-		if (typeof message == 'string') {
-			DEBUG.log(
-				COLORS.WARNING,
-				'Not JSON:',
-				'String "' + message + '", ignoring',
-			);
-			return;
-		}
-
 		const tags                = ([protocol_name]) => protocol_name != 'tag';
 		const addressed_protocols = Object.entries( message );
 		const requests_processed  = addressed_protocols.filter( tags ).map( handler_calls );
 
 		await Promise.allSettled( requests_processed );
-
-//... Improve handled/rejected commands
-if (rejected_commands.length) DEBUG.log(
-	COLORS.ROUTER,
-	'Router.onMessage:',
-	(rejected_commands.length ? COLORS.ERROR : COLORS.DEFAULT)
-	+ 'Commands handled/rejected:'
-	+ COLORS.DEFAULT
-	, handled_commands.length
-	, '/'
-	, rejected_commands.length
-);
 
 
 // COLLECT RESULTS ///////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -305,7 +263,7 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 				});
 			}
 			if ('undefined' != typeof answer.message.failure) {
-				const verbose = SETTINGS.VERBOSITY.LEVEL >= SETTINGS.VERBOSTIY.FAILURE_RESULTS;
+				const verbose = SETTINGS.VERBOSITY.LEVEL >= SETTINGS.VERBOSITY.FAILURE_RESULTS;
 				const result  = verbose ? answer.message.failure : undefined;
 				results.push({
 					command : command_name,
@@ -322,7 +280,7 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 			}
 			else if (answer.message.error) {
 				const error   = DEBUG.formatError( answer.message.error ).split('\n', 1)[0];
-				const verbose = SETTINGS.VERBOSITY.LEVEL >= SETTINGS.VERBOSTIY.BROADCAST_ERRORS;
+				const verbose = SETTINGS.VERBOSITY.LEVEL >= SETTINGS.VERBOSITY.BROADCAST_ERRORS;
 				const result  = verbose ? error : undefined;
 				results.push({
 					command : command_name,
@@ -365,9 +323,9 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 		Object.entries( persistent.session.clients ).forEach( ([address, client])=>{
 			const client_receives = [];
 			broadcasts.forEach( (entry)=>{
-				if( (!entry.recipients)
-				||  (entry.recipients && entry.recipients( client ))
-				) {
+				const to_everyone  = !entry.recipients;
+				const is_recipient = entry.recipients && entry.recipients( client );
+				if (to_everyone || is_recipient) {
 					client_receives.push( entry );
 				}
 			});
