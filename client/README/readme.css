@@ -10,6 +10,7 @@ html, body { background:#fff; color:#000; }
 	--color4: #dec;
 	--color5: #e8f0d8;
 	--color6: #fff;
+	--comment-color:#353;
 	--diagram-padding:1em 0.5em;
 }
 
@@ -28,10 +29,11 @@ ol.index, .index ol { counter-reset:item; }
 .index li { display:block; }
 .index li:before { content:counters(item, ".") " "; counter-increment:item; }
 
-.diagram { margin-bottom:2em; max-width:55em; margin-left:auto; margin-right:auto; }
+
+.diagram { position:relative; margin-bottom:2em; max-width:60em; margin-left:auto; margin-right:auto; }
 .diagram div { min-height:3rem; }
 .diagram, .diagram :not(q) {
-	position:relative;
+	Xposition:relative;
 	display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:center;
 	flex-shrink:1; flex-grow:1;
 	padding:0.5rem; gap:0.5rem;
@@ -40,10 +42,14 @@ ol.index, .index ol { counter-reset:item; }
 	flex-grow:0;
 	font-size:1rem; font-weight:normal;
 }
-.diagram, .diagram :not(h1,h2,h3,h4,h5,h6,b,q) {
+.diagram, .diagram :not(h1,h2,h3,h4,h5,h6,small,b,q) {
 	border:solid 1px #240c; border-radius:0.25em;
 }
-.diagram :is(h1,h2) { flex-basis:100%; font-weight:bold; }
+.diagram small {
+	font-size:1em; font-style:italic;
+	color:var(--comment-color);
+}
+X.diagram :is(h1,h2) { flex-basis:100%; font-weight:bold; }
 .diagram * { }
 .diagram { background:var(--color0); }
 .diagram > div { background:var(--color1); }

@@ -6,7 +6,6 @@
 "use strict";
 
 import { ClientEndPoint } from './cep/cep.js';
-import { log_event      } from './cep/config.js';
 
 const PROGRAM_NAME = 'Chat';
 const PROGRAM_VERSION = '0.0.1α';

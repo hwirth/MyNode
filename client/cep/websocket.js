@@ -381,9 +381,6 @@ export const AutoWebSocket = function (parameters = {}) {
 		self.requestID       = 0;
 		self.requestPromises = {};
 
-		if (!self.webSocketURL) throw new Error( 'ClientEndPoint.init: WebSocket URL undefined' );
-		//...! Check for valid URL
-
 		self.events = await new Events( self, EMITS_EVENTS, parameters.events );
 
 		return Promise.resolve();

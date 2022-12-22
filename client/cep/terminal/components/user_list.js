@@ -47,7 +47,7 @@ export const UserList = function (cep, terminal) {
 		if (users_online === null) return;
 
 		if (!full_name) {
-			const current_username = terminal.applets.mainMenu.elements.btnCEP.innerText; //...! Facility for that
+			const current_username = terminal.applets.mainMenu.elements.btnCEP.innerText;
 			full_name = current_username.split(':')[1] || '';
 		}
 
@@ -156,7 +156,7 @@ export const UserList = function (cep, terminal) {
 		});
 
 
-for(let i = 0; i < 0; ++i) {
+for(let i = 0; i < 0; ++i) {//...
 const button = document.createElement( 'button' );
 button.className = '';
 button.innerText = 'dummyuser';

@@ -145,7 +145,7 @@ notice    : { preset:pF.NOTICE    , target:tO, blink:bF, menu:mF, shortcut:null,
 broadcast : { preset:pF.BROADCAST , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Broadcast'  },
 request   : { preset:pF.REQUEST   , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Request'    },
 response  : { preset:pF.RESPONSE  , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Response'   },
-filter    : { preset:pT.FILTER    , target:tO, blink:bF, menu:mF, shortcut:'d',  caption:'Filter'    , button:btnF },
+filter    : { preset:pT.FILTER    , target:tO, blink:bF, menu:mF, shortcut:'d',  caption:'Filter'    , button:btnF },//...?
 last      : { preset:pT.LAST      , target:tO, blink:bT, menu:mT, shortcut:'y',  caption:'Show Last'  },
 compact   : { preset:pT.COMPACT   , target:tO, blink:bT, menu:mT, shortcut:'c',  caption:'Compact'    },
 overflow  : { preset:pT.OVERFLOW  , target:tO, blink:bT, menu:mT, shortcut:'v',  caption:'Overflow'   },
@@ -200,29 +200,30 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		[command_button, 'btnEnter'].forEach( button => self.elements[button].click() );
 	}
 	this.keyboardShortcuts = [
-  { event:'keydown', key:'+'        , modifiers:'alt'       , action:()=>{ terminal.changeFontSize(+1);    },
-},{ event:'keydown', key:'-'        , modifiers:'alt'       , action:()=>{ terminal.changeFontSize(-1);    },
-},{ event:'keydown', key:'.'        , modifiers:'alt'       , action:()=>{ terminal.nextFont(+1)           },
-},{ event:'keydown', key:','        , modifiers:'alt'       , action:()=>{ terminal.nextFont(-1)           },
-},{ event:'keydown', key:'ArrowUp'  , modifiers:'cursorPos1', action:()=>{ self.history.back();            },
-},{ event:'keydown', key:'ArrowDown', modifiers:'cursorEnd' , action:()=>{ self.history.forward();         },
-},{ event:'keydown', key:'Escape'   , modifiers:null        , action:()=>{ self.output.clearInput();       },
-//...},{ event:'keydown', key:'End'      , modifiers:'ctrl'      , action:()=>{ self.output.scrollDown( true ); },
-//...},{ event:'keydown', key:'Home'     , modifiers:'ctrl'      , action:()=>{ self.output.scrollPos1();       },
-//},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.clearScreen();      },
-},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.deleteToMarker();   },
-},{ event:'keydown', key:'PageUp'   , modifiers:'shift'     , action:()=>{ self.output.scrollPageUp();     },
-},{ event:'keydown', key:'PageDown' , modifiers:'shift'     , action:()=>{ self.output.scrollPageDown();   },
-},{ event:'keydown', key:'Enter'    , modifiers:null        , action:()=>{ self.elements.btnEnter.click(); },
+  { event:'keydown', key:'+'        , modifiers:'alt'       , action:()=>{ terminal.changeFontSize(+1);      },
+},{ event:'keydown', key:'-'        , modifiers:'alt'       , action:()=>{ terminal.changeFontSize(-1);      },
+},{ event:'keydown', key:'.'        , modifiers:'alt'       , action:()=>{ terminal.nextFont(+1)             },
+},{ event:'keydown', key:','        , modifiers:'alt'       , action:()=>{ terminal.nextFont(-1)             },
+},{ event:'keydown', key:'ArrowUp'  , modifiers:'cursorPos1', action:()=>{ self.history.back();              },
+},{ event:'keydown', key:'ArrowDown', modifiers:'cursorEnd' , action:()=>{ self.history.forward();           },
+},{ event:'keydown', key:'Escape'   , modifiers:null        , action:()=>{ self.output.clearInput();         },
+//...},{ event:'keydown', key:'End'      , modifiers:'ctrl'      , action:()=>{ self.output.scrollDown( true );   },
+//...},{ event:'keydown', key:'Home'     , modifiers:'ctrl'      , action:()=>{ self.output.scrollPos1();         },
+//...},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.clearScreen();        },
+},{ event:'keydown', key:'Home'     , modifiers:'shift,ctrl', action:()=>{ self.output.deleteToMarker();     },
+},{ event:'keydown', key:'PageUp'   , modifiers:'shift'     , action:()=>{ self.output.scrollPageUp();       },
+},{ event:'keydown', key:'PageDown' , modifiers:'shift'     , action:()=>{ self.output.scrollPageDown();     },
+},{ event:'keydown', key:'Enter'    , modifiers:null        , action:()=>{ self.elements.btnEnter.click();   },
 },{ event:'keydown', key:'Escape'   , modifiers:null        , action:()=>{ terminal.focusFirstMenuElement(); },
-},{ event:'keydown', key:'e'        , modifiers:'alt'       , action:()=>{ login_exec('disconnect');       },
-},{ event:'keydown', key:'w'        , modifiers:'alt'       , action:()=>{ login_exec('login');            },
+},{ event:'keydown', key:'e'        , modifiers:'alt'       , action:()=>{ login_exec('disconnect');         },
+},{ event:'keydown', key:'w'        , modifiers:'alt'       , action:()=>{ login_exec('login');              },
 },
 	];
 	function login_exec (button_name) {
 		terminal.applets.nodeMenu.elements[button_name].click();
 		self.elements.btnEnter.click();
 	}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
@@ -232,6 +233,7 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 	this.taskMainClass = 'shell';
 	this.focusItem;
 	this.taskEntry;   // Will be created by  DebugTerminal.installApplet()
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENTS
@@ -707,7 +709,7 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		if (cep.GET.has('username')) node_menu.elements.userName.value = cep.GET.get('username');
 		if (cep.GET.has('nickname')) node_menu.elements.nickName.value = cep.GET.get('nickname');
 		if (cep.GET.has('password')) node_menu.elements.passWord.value = cep.GET.get('password');
-	/*
+	/*//...
 		if (cep.GET.has('login')) setTimeout( ()=>{
 			node_menu.elements.login.click();
 			self.elements.btnEnter.click();

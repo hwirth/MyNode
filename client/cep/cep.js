@@ -5,7 +5,7 @@
 
 "use strict";
 
-import { SETTINGS, DEBUG, log_event } from './config.js';
+import { SETTINGS, DEBUG } from './config.js';
 
 import { Events        } from './events.js';
 import { DomAssist     } from './dom_assist.js';
@@ -39,30 +39,6 @@ export const ClientEndPoint = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-/*
-	this.connected = function () {
-		return self.connection.connected();
-
-	} // connected
-
-
-	this.connect = function () {
-		self.connection.connect();
-
-	}; // connect
-
-
-	this.disconnect = async function () {
-		self.connection.disconnect();
-
-	}; // connect
-
-
-	this.send = function (request) {
-		self.connection.send( request );
-
-	};  // send
-*/
 
 	this.toggleTerminal = async function () {
 		if (!self.terminal) {

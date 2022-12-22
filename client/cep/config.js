@@ -37,13 +37,4 @@ export const SETTINGS = {
 };
 
 
-export function log_event (caption, data) {//...??
-	if (!DEBUG.WEBSOCKET.LOG_EVENTS) return;
-	console.groupCollapsed( caption );
-	console.log( data );
-	console.groupEnd();
-
-} // log_event
-
-
 //EOF
