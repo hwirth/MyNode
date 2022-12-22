@@ -13,7 +13,7 @@ for applications like a chat or multi-player games.
   * JSON request verification mechanism (syntax, permissions)
 
 ## Code Quality
-It is a prototype the grew out of proportions. Some things a pretty crude.
+It is a prototype the grew out of proportions. Some things are pretty crude.
 
 ## Overview
 ![server_block_diagram]
