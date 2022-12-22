@@ -386,12 +386,10 @@ const Application = function () {
 					send    : self.onWsSend,
 				},
 			},
-	/*//...
 			events: {
 				'reload/client' : ()=>print( 'div', 'The client was updated, reloading.', 'reload' ),
 				'reload/css'    : ()=>print( 'div', 'A CSS file has been reloaded.'     , 'reload' ),
 			},
-	*/
 		});
 
 		// Disable <form> submission
