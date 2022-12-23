@@ -48,17 +48,8 @@ export const DomAssist = function (cep) {
 	}; // loadCSS
 
 
-	/*  //... function refreshCSS
-		var links = document.getElementsByTagName("link");
-		for (var cl in links) {
-			var link = links[cl];
-			if (link.rel === "stylesheet") link.href += "";
-		}
-	*/
 	this.reloadCSS = function (file_name) {
 		return new Promise( (done)=>{
-			//... if (file_name.charAt(0) != '/') file_name = '/' + file_name;
-
 			if (cep.baseDir && (file_name.slice(0, cep.baseDir.length + 1) == (cep.baseDir + '/'))) {
 				file_name = file_name.slice( cep.baseDir.length + 1 );
 			}

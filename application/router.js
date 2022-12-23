@@ -132,6 +132,8 @@ module.exports.Router = function (persistent, callback) {
 			let answer;
 
 			try {
+				if (!request_handler) throw new Error( 'Unknown command' );
+
 				//... How do I catch, when I accidentially
 				//... forgot to await something in there?
 				if (request_handler.constructor.name === 'AsyncFunction') {
@@ -193,7 +195,7 @@ module.exports.Router = function (persistent, callback) {
 					'unknown protocol:',
 					protocol_name,
 				);
-				collected_answers.push({
+				collected_answers.push({//...!! done above
 					protocol : protocol_name,
 					command  : Object.keys( protocol_command_names ).join(','),
 					message  : {error : new Error('Error: Unknown protocol') },
@@ -238,6 +240,7 @@ module.exports.Router = function (persistent, callback) {
 // COLLECT RESULTS ///////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {//...
+//...Assuming pong will be a singular request as done automatically by the CEP
 
 		const results    = [];
 		const broadcasts = [];

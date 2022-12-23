@@ -163,7 +163,6 @@ module.exports = function ServerControl (persistent, callback, meta) {
 
 	function get_uptime (formatted = false) {
 		const milliseconds = process.uptime() * 1000;
-		//...const milliseconds = Date.now() - persistent.serverStartTime + 0*99999999999;
 
 		if (formatted) {
 			let seconds = Math.floor( milliseconds / 1000 );
@@ -344,9 +343,15 @@ RULE( 'admin,dev,owner: {server:{global:{set:string,value:string}}}' );
 			return { command:operation, failure: 'Undefined entry' };
 		}
 
+		function formatted_array (entry) {
+			if ((typeof entry == 'string') || (typeof entry == 'number')) {
+				return entry;
+			} else {
+				return typeof entry;
+			}
+		}
 		const result
 		= (entry instanceof Array  ) ? entry.map( formatted_array )
-		//...?: (typeof entry == 'string') ? entry
 		: (typeof entry == 'object') ? Object.keys( entry )
 		: entry
 		;
@@ -359,15 +364,6 @@ RULE( 'admin,dev,owner: {server:{global:{set:string,value:string}}}' );
 				value : result,
 			},
 		};
-
-
-		function formatted_array (entry) {
-			if ((typeof entry == 'string') || (typeof entry == 'number')) {
-				return entry;
-			} else {
-				return typeof entry;
-			}
-		}
 
 	}; // global
 

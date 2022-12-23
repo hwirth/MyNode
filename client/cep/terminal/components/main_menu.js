@@ -58,7 +58,7 @@ export const MainMenu = function (cep, terminal) {
 		const M = self.elements.itemsToggles;
 		return {
 // Classname  InitialValue    PutClassOn   BlinkThese   KeyboardAlt+  innerHTML
-light   : { preset:null     , target:null, blink:BLINK, shortcut:'l', caption:'Light Mode' , menu:M },   // terminal.js
+light   : { preset:T.LIGHT  , target:null, blink:BLINK, shortcut:'l', caption:'Light Mode' , menu:M },   // terminal.js
 animate : { preset:T.ANIMATE, target:TERM, blink:BLINK, shortcut:'a', caption:'Animations' , menu:M },
 beep    : { preset:T.BEEP   , target:TERM, blink:BLINK, shortcut:'b', caption:'Beep'       , menu:M },
 fancy   : { preset:T.FANCY  , target:TERM, blink:BLINK, shortcut:'f', caption:'Fancy'      , menu:M },

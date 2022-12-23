@@ -392,7 +392,7 @@ function parse_json(message) {//...
 
 			if (request.headers['x-forwarded-for']) {
 				DEBUG.log( COLORS.WARNING, 'Unexpected header:', 'x-forwarded-for' );
-				client_address = request.headers['x-forwarded-for'];   //... Not tested
+				client_address = request.headers['x-forwarded-for'];   //... SODD, not tested
 
 			} else {
 				client_address
@@ -590,7 +590,6 @@ function parse_json(message) {//...
 
 
 	return self.init().then( ()=>self );   // const server = await new WebSocketServer()
-	//...? Why does it require a return here, but not with the other object templates in this project??
 
 }; // Main
 

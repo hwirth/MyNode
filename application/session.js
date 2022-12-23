@@ -237,7 +237,8 @@ RULE( 'connected: {session:{login:{username:string,password:string,factor2:strin
 
 		if (password_correct) {
 // client.js /////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-//...
+//... Either commit fully to have code in the client object, or empty it out
+
 			// Make new client object
 
 			client.clearLoginTimeout();

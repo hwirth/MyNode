@@ -32,8 +32,6 @@ export const CEPShell = function (cep, terminal) {
 	this.requestId;
 	this.buttonScripts;
 
-	this.tagData;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // CONFIGURATION
@@ -133,7 +131,7 @@ export const CEPShell = function (cep, terminal) {
 		const bT   = [self.elements.btnEnter, self.elements.btnToggles];
 		const mF   = self.elements.itemsFilter;
 		const mT   = self.elements.itemsToggles;
-		const btnF = self.elements.btnFilters;
+		const btnF = self.elements.btnFilters;   // Button already created through RESSOURCE
 		return {
 // Classname  InitialValue          PutClassOn BlinkThese ButtonIn KeyboardAlt+   innerHTML
 ping      : { preset:pF.PING      , target:tO, blink:bF, menu:mF, shortcut:'p',  caption:'Ping'       },
@@ -145,7 +143,7 @@ notice    : { preset:pF.NOTICE    , target:tO, blink:bF, menu:mF, shortcut:null,
 broadcast : { preset:pF.BROADCAST , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Broadcast'  },
 request   : { preset:pF.REQUEST   , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Request'    },
 response  : { preset:pF.RESPONSE  , target:tO, blink:bF, menu:mF, shortcut:null, caption:'Response'   },
-filter    : { preset:pT.FILTER    , target:tO, blink:bF, menu:mF, shortcut:'d',  caption:'Filter'    , button:btnF },//...?
+filter    : { preset:pT.FILTER    , target:tO, blink:bF, menu:mF, shortcut:'d',  caption:'Filter'    , button:btnF },
 last      : { preset:pT.LAST      , target:tO, blink:bT, menu:mT, shortcut:'y',  caption:'Show Last'  },
 compact   : { preset:pT.COMPACT   , target:tO, blink:bT, menu:mT, shortcut:'c',  caption:'Compact'    },
 overflow  : { preset:pT.OVERFLOW  , target:tO, blink:bT, menu:mT, shortcut:'v',  caption:'Overflow'   },
@@ -239,12 +237,11 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function on_keydown (event) {//... Move to  on_keyboard_event ?
+	function on_keydown (event) {
 		const shift = event.shiftKey;
 		const ctrl  = event.ctrlKey;
 		const alt   = event.altKey;
 		const key   = event.key;
-
 
 	 	if (event.keyCode == 13) {
 			if (shift && !ctrl && !alt) {
@@ -355,18 +352,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 			closest_pre.parentNode.removeChild( closest_pre );
 		}
 
-		//...! Does no longer work:
-		if      (event.target === TE.root ) fill( 'root'  , '12345' )
-		else if (event.target === TE.user ) fill( 'user'  , 'pass2' )
-		else if (event.target === TE.guest) fill( 'guest' , '' )
-		;
-
-		function fill (username, password) {
-			TE.userName.value = username;
-			TE.passWord.value = password;
-			TE.elements.nickName.focus();
-		}
-
 	} // on_click
 
 
@@ -418,8 +403,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 			self.elements.input.value = '';
 			self.input.focusPrompt();
 		}
-
-		//...? self.input.focusPrompt();
 
 	} // on_scriptbutton_dblclick
 
@@ -540,10 +523,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		terminal.createComponents( self, RESSOURCE );   // Populates self.containers and self.elements
 		self.focusItem = self.elements.input;
 
-		// OWN PROPERTIES
-		self.requestId = 0;
-		self.tagData   = {};
-
 		// SUB-OBJECTS
 		self.parsers = new Parsers    ( cep, terminal, self );
 		self.output  = new ShellOutput( cep, terminal, self );
@@ -588,13 +567,17 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		self.updateToggleStates();
 		terminal.events.add( 'toggle', self.updateToggleStates );
 		self.elements.toggleState.addEventListener( 'click', ()=>{
-			//const TE = terminal.applets.mainMenu.elements;
-			//TE.btnCEP.focus();
-			//setTimeout( ()=>TE.btnToggles.focus() );
 			terminal.applets.mainMenu.elements.menuCEP.classList.toggle( 'open' );
 			terminal.applets.mainMenu.elements.menuToggles.classList.toggle( 'open' );
 			self.elements.menuShell.classList.toggle( 'open' );
 			self.elements.menuToggles.classList.toggle( 'open' );
+		});
+		terminal.elements.terminal.addEventListener( 'click', (event)=>{
+			if (!event.target.closest( 'main' )) return;
+			terminal.applets.mainMenu.elements.menuCEP.classList.remove( 'open' );
+			terminal.applets.mainMenu.elements.menuToggles.classList.remove( 'open' );
+			self.elements.menuShell.classList.remove( 'open' );
+			self.elements.menuToggles.classList.remove( 'open' );
 		});
 
 		// SCRIPT BUTTONS
@@ -605,9 +588,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 			const existing = definition.menu.querySelector( 'button.' + name );
 			const button = (existing) ? existing : make_button();
 
-			//... Dirty: Exception for login menu: Can not be truly reloaded in the future like this
-			//... Looks like this would actually work, but it still smells weird to do it here
-			//... instead of having a facility in  DebugTerminal()  for it
 			const already_installed = definition.menu.querySelector( '[data-script="' + name + '"]' );
 			if (!already_installed) {
 				button.addEventListener( 'click'   , on_scriptbutton_click    );
@@ -633,13 +613,14 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		self.elements.main.addEventListener( 'click', (event)=>{
 			if (event.target === self.elements.main) self.input.focusPrompt();
 		});
+
 		// KEYBOARD
 		['keydown', 'keypress', 'keyup'].forEach(
 			event => self.elements.main.addEventListener( event, on_keyboard_event, {passive: false} )
 		);
+
 		// INPUT
         	self.elements.input .addEventListener( 'keydown', on_keydown );
-        	//...self.elements.input .addEventListener( 'keyup'  , on_keyup   );
 
 		// OUTPUT - MOUSE
 		self.elements.output .addEventListener( 'click'   , on_output_click    );
@@ -653,10 +634,6 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 
 		// BUTTON: "Enter"
 		self.elements.btnEnter.addEventListener( 'click', self.input.onEnterClick );
-
-		// BUTTON: "Exit"
-		//...self.elements.btnClose.addEventListener( 'click', ()=>self.toggles.terminal.toggle() );
-
 
 		// PROMPT
 		self.elements.input.addEventListener( 'keyup' , self.input.adjustTextarea );
@@ -709,12 +686,7 @@ delMCP    : { menu:DEL   , script:'chat\n\tmode\n\t\tdel:mcp' },
 		if (cep.GET.has('username')) node_menu.elements.userName.value = cep.GET.get('username');
 		if (cep.GET.has('nickname')) node_menu.elements.nickName.value = cep.GET.get('nickname');
 		if (cep.GET.has('password')) node_menu.elements.passWord.value = cep.GET.get('password');
-	/*//...
-		if (cep.GET.has('login')) setTimeout( ()=>{
-			node_menu.elements.login.click();
-			self.elements.btnEnter.click();
-		}, 0);
-	*/
+
 		if (!terminal.elements.terminal.classList.contains( 'hidden' )) {
 			setTimeout( self.output.focusPrompt, 100 );
 		}

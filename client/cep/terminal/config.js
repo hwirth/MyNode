@@ -65,7 +65,7 @@ export const PRESETS = {
 	},
 
 	TOGGLE: {
-		LIGHT      : preferred_scheme(),
+		LIGHT      :  get( 'light'      ),
 		LOGIN      :  get( 'login'      ),
 		SAVE       : !get( 'save'       ),
 		TERMINAL   :  get( 'terminal'   ),
@@ -90,7 +90,7 @@ export const PRESETS = {
 		SAM: 0.01,
 	},
 };
-// PRESET HELPERS
+// PRESET HELPER
 function get (search) {
 	const decoded_uri = decodeURIComponent( location.href );
 	if ((decoded_uri.indexOf( 'all' ) >= 0) && (search != 'separators')) return true;
@@ -98,30 +98,7 @@ function get (search) {
 		return prev || (decoded_uri.indexOf( term ) >= 0);
 	}, false);
 	return result;
-//... I'd prefer the main system to use &toggles=<comma separated list>, but that doesn't work with JS-free login
-//... <form>s. This is still nice to use when testing and typing the URL in manually, perhaps I'll fix the main program
 }
-function preferred_scheme () {
-return !get( 'light' );
-
-	const prefers_light = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
-	const prefers_dark  = window.matchMedia( '(prefers-color-scheme:dark)'  ).matches;
-	const get_light = get( 'light' );
-	const get_dark  = get( 'dark'  );
-	const mode
-	= (get_light    ) ? 'light'
-	: (get_dark     ) ? 'dark'
-	: (prefers_light) ? 'light'
-	: (prefers_dark ) ? 'dark'
-	: 'light'
-	;
-
-	document.documentElement.classList.toggle( 'light', mode );
-	document.documentElement.classList.toggle( 'dark', !mode );
-
-	return (mode == 'light');
-}
-
 
 
 //EOF

@@ -155,7 +155,7 @@ module.exports = function WebSocketClient (socket, client_address, callback) {
 		if (!SETTINGS.PING.KICK) return;
 
 		//...socket.ping();
-		// Not sufficient, connection can "fall asleep" and hang before waking up. App level ping helps.
+		// Not sufficient, connection can "fall asleep" and hang before waking up. App level ping helps!?
 
 		self.send({
 			broadcast: {

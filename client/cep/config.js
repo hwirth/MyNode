@@ -19,8 +19,9 @@ export const DEBUG = {
 
 
 export const SETTINGS = {
-	CONNECT_ON_START : false,//...location.href.indexOf('connect') >= 0,
-	RELOAD_ON_UPDATE : true,
+	CONNECT_ON_START   : false,//... Test on v1
+	RECONNECT_ON_CLOSE : !false,//... NYI
+	RELOAD_ON_UPDATE   : true,
 
 	WEBSOCKET: {
 		MAX_RETRIES    : 100, //Number.POSITIVE_INFINITY,

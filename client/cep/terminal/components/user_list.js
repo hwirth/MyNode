@@ -133,7 +133,7 @@ export const UserList = function (cep, terminal) {
 								dataset   : {
 									user: user_record.userName,
 									nick: user_record.nickName,
-									//...addr: address,
+									//...? addr: address,
 								},
 							}),
 							NEW({ tagName:'div', className:'items', children:user_menu }),
@@ -154,14 +154,6 @@ export const UserList = function (cep, terminal) {
 				button.classList.toggle( 'active', !!is_user || !!is_room );
 			}
 		});
-
-
-for(let i = 0; i < 0; ++i) {//...
-const button = document.createElement( 'button' );
-button.className = '';
-button.innerText = 'dummyuser';
-list.appendChild( button );
-}
 
 	}; // update
 

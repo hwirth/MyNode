@@ -41,8 +41,6 @@ export function StatusBar (cep, terminal) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.show = function (html, urgent = false) {
-		//...console.log( 'StatusBar.show: html:', html );
-
 		if (html === null) return clear_list();
 		//...if (self.elements.children.length > 10) return;
 

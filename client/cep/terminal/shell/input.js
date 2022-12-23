@@ -30,7 +30,7 @@ export const ShellInput = function (cep, terminal, shell) {
 // ACCESS VARIABLE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	function access_variable (command) {			//...	/get CEP_DEBUG.EVENTS
+	function access_variable (command) {
 		try {
 			const parts = command.split( ' ' );
 			const operation   = parts[0].slice(1);
@@ -141,6 +141,7 @@ export const ShellInput = function (cep, terminal, shell) {
 
 		// Replace chat commands with actual ones
 		let text = shell.elements.input.value.trim();
+		shell.history.add( text );
 
 		if ((text.trim() == '') && (event.button === 0)) {
 			if (shell.output.isScrolledUp()) {
@@ -161,13 +162,10 @@ export const ShellInput = function (cep, terminal, shell) {
 
 		if (text.charAt(0) == '.') {
 			text = shell.elements.input.value = shell.parsers.parseShortRequest( text );
-			//...? self.focusPrompt();
-			//...? return;
 		}
 
 		if (!perform_local( text )) await remote_command( text );
 
-		shell.history.add( text );
 		shell.elements.input.value = '';
 
 		self.focusPrompt();
@@ -186,7 +184,7 @@ export const ShellInput = function (cep, terminal, shell) {
 
 			switch (token) {
 				case 'connect': {
-					cep.connection.connect( parameter || SETTINGS.WEBSOCKET.URL );//...! Remove constant
+					cep.connection.connect( parameter || SETTINGS.WEBSOCKET.URL );
 					break;
 				}
 				case 'disconnect': {
@@ -223,7 +221,7 @@ export const ShellInput = function (cep, terminal, shell) {
 
 			return true;
 
-			function show_toggles () {   //...! Find better location
+			function show_toggles () {
 				const toggles = {...terminal.toggles, ...shell.toggles};
 				const has_shortcut = ([name, toggle]) => toggle.shortcut;
 				const to_list = ([name, toggle])=>{
@@ -286,7 +284,6 @@ export const ShellInput = function (cep, terminal, shell) {
 			}
 
 			if (cep.connection.isConnected()) {
-				//...terminal.animatePing( /*transmit*/true );
 				send_json( request );
 			} else {
 				shell.output.print( request, 'request' );
@@ -294,11 +291,7 @@ export const ShellInput = function (cep, terminal, shell) {
 			}
 
 			function send_json (request) {
-				if (SETTINGS.AUTO_APPEND_TAGS) {
-					request.tag = ++shell.requestId;
-					shell.tagData[request.tag] = Date.now();
-				}
-				cep.connection.send( request );
+				cep.connection.taggedRequest( request );
 			}
 
 		} // remote_command

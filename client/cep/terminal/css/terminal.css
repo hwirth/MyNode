@@ -9,8 +9,8 @@ DEBUG:is(:hover,:focus) { box-shadow:inset 0 0 1px #f0f !important; }
 }
 
 
-html.light cep-terminal:not(.fancy) { filter:saturate(3) invert(100%) hue-rotate(180deg); }
-html.dark  cep-terminal:not(.fancy) { filter:none; }
+cep-terminal.light:not(.fancy) { filter:saturate(3) invert(100%) hue-rotate(180deg); }
+cep-terminal.dark:not(.fancy) { filter:none; }
 
 
 /*** FONTS ***/

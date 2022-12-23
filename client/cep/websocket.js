@@ -32,6 +32,8 @@ export const AutoWebSocket = function (parameters = {}) {
 
 	this.webSocket;
 	this.state;
+	this.nodeName;          // Result of a broadcast or false if not yet received
+	this.clientRecord;      // Result of a  session.login  request or false if offline/not authenticated yet
 
 	this.getCredentials;    // Callback returning a Promise while displaying a dialog
 
@@ -40,7 +42,7 @@ export const AutoWebSocket = function (parameters = {}) {
 	this.autoReconnect;     // Clear this flag to stop the reconnect loop
 	this.sentCredentials;   // Wether we sent the JSON after the socket opened
 	this.requestID;         // Used to correlate sent requests and received responses
-	this.requestPromises;   // Resolved, when response corresponding to request comes in
+	this.tagData;   // Resolved, when response corresponding to request comes in
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -67,14 +69,12 @@ export const AutoWebSocket = function (parameters = {}) {
 			} else {
 				console.log( 'ClientEndPoint-websocket_connection:', self.webSocketURL );
 			}
-			// Create socket and connect
-			//...document.cookie = 'username=' + parameters.username + '; path=/';
-			//...document.cookie = 'password=' + parameters.password + '; path=/';
 
 			if (self.webSocket) {
 				self.webSocket.close();
 				self.webSocket = null;
 			}
+
 			let timeout = null; //...setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_TIMOUT );
 
 			self.state = CONNECTION_STATE.CONNECTING;
@@ -92,33 +92,35 @@ export const AutoWebSocket = function (parameters = {}) {
 				self.events.emit( 'error', error );
 				self.state = CONNECTION_STATE.ERROR;
 				self.events.emit( 'statechange', self.state );
+				self.nodeName = false;
+				self.clientRecord = false;
 				reject( error );
 			}
 
 
 			function on_error (event) {
-				if (!timeout) {
-					clearTimeout( timeout );
-					timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
-				}
 				self.state = CONNECTION_STATE.ERROR;
 				self.events.emit( 'statechange', self.state );
 				self.events.emit( 'error', event );
 				self.webSocket = null;
-			}
-			function on_close (event) {
-				const state_before = self.state;
+				self.nodeName = false;
+				self.clientRecord = false;
 				if (!timeout) {
 					clearTimeout( timeout );
-					//timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
-					//self.state = CONNECTION_STATE.CONNECTING;
-				} else {
-					//self.state = CONNECTION_STATE.OFFLINE;
+					timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
 				}
+			}
+			function on_close (event) {
 				self.state = CONNECTION_STATE.OFFLINE;
-				if (self.state != state_before) self.events.emit( 'statechange', self.state );
+				self.events.emit( 'statechange', self.state );
 				self.events.emit( 'close', event );
 				self.webSocket = null;
+				self.nodeName = false;
+				self.clientRecord = false;
+				if (SETTINGS.RECONNECT_ON_CLOSE && !timeout) {
+					clearTimeout( timeout );
+					timeout = setTimeout( retry, SETTINGS.WEBSOCKET.RETRY_INTERVAL );
+				}
 			}
 			function retry () {
 				timeout = null;
@@ -155,74 +157,6 @@ export const AutoWebSocket = function (parameters = {}) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // EVENTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function on_message (event) {
-		let message = event.data;
-
-		if (typeof message != 'string') {
-			throw new Error( 'ClientEndPoint-on_message: Received non-string' );//...?
-		}
-
-		try { message = JSON.parse( message ); }
-		catch { /* Assume string */ }
-
-		const is_pingpong = message.broadcast && message.broadcast.pong;
-		const do_log = (!SETTINGS.WEBSOCKET.HIDE_PING || (SETTINGS.WEBSOCKET.HIDE_PING && !is_pingpong));
-
-		if (DEBUG.WEBSOCKET.LOG_MESSAGES && do_log) {
-			const key = Object.keys( message )[0];
-			console.groupCollapsed(
-				'%c🡇 ClientEndPoint received%c:',
-				'color:#48f', 'color:unset',
-				key + ':',
-				(
-					(typeof message == 'string')
-					? message
-					: (typeof message[key] == 'string')
-					? message[key]
-					: Object.keys( message[key] ).join(' ')
-				),
-			);
-			console.log( JSON.stringify(message, null, '\t') );
-			console.groupEnd();
-		}
-
-		if (message.broadcast && (message.broadcast.type == 'session/ping') && SETTINGS.WEBSOCKET.HANDLE_PING) {
-			if (!SETTINGS.WEBSOCKET.HIDE_PING) self.events.emit( 'ping', message.broadcast.pong );
-			self.send( {session:{pong:message.broadcast.pong}} );
-			return;
-		}
-
-		self.events.emit( 'message', message );
-
-		if (message.response) {
-			//...self.requestPromises[self.requestID]
-			Helpers.wrapArray( message.response ).forEach( (response)=>{
-				if (!response.success) return;
-				switch (response.command) {
-					case 'session.login': {
-						self.state = CONNECTION_STATE.AUTHENTICATED;
-						self.events.emit( 'statechange', self.state );
-						self.events.emit( 'login' );
-						break;
-					}
-					case 'session.logout': {
-						self.events.emit( 'logout' );
-						break;
-					}
-				}
-			});
-		}
-
-		if (message.tag && (self.requestPromises[message.tag])) {
-			const resolve = self.requestPromises[message.tag];
-			delete self.requestPromises[message.tag];
-			clearTimeout( resolve.timeout );
-			resolve.callback( message );
-		}
-
-	} // on_message
-
 
 	async function on_send (request) {
 		const is_pingpong = request.session && request.session.pong;
@@ -264,9 +198,89 @@ export const AutoWebSocket = function (parameters = {}) {
 	} // on_send
 
 
+	function on_message (event) {
+		let message = event.data;
+
+		if (typeof message != 'string') {
+			throw new Error( 'ClientEndPoint-on_message: Received non-string' );//...?
+		}
+
+		try { message = JSON.parse( message ); }
+		catch { /* Assume string */ }
+
+		const is_pingpong = message.broadcast && message.broadcast.pong;
+		const do_log = (!SETTINGS.WEBSOCKET.HIDE_PING || (SETTINGS.WEBSOCKET.HIDE_PING && !is_pingpong));
+
+		if (DEBUG.WEBSOCKET.LOG_MESSAGES && do_log) {
+			const key = Object.keys( message )[0];
+			console.groupCollapsed(
+				'%c🡇 ClientEndPoint received%c:',
+				'color:#48f', 'color:unset',
+				key + ':',
+				(
+					(typeof message == 'string')
+					? message
+					: (typeof message[key] == 'string')
+					? message[key]
+					: Object.keys( message[key] ).join(' ')
+				),
+			);
+			console.log( JSON.stringify(message, null, '\t') );
+			console.groupEnd();
+		}
+
+		if (message.broadcast && (message.broadcast.type == 'session/ping') && SETTINGS.WEBSOCKET.HANDLE_PING) {
+			if (!SETTINGS.WEBSOCKET.HIDE_PING) self.events.emit( 'ping', message.broadcast.pong );
+			self.send( {session:{pong:message.broadcast.pong}} );
+			return;
+		}
+
+		self.events.emit( 'message', message );
+
+		const tag_data = self.tagData[message.tag];
+
+		if (message.response) {
+			if (tag_data) message.time.push( Date.now() - tag_data.time );   // Add round trip time
+
+			Helpers.wrapArray( message.response ).forEach( (response)=>{
+				//... Calling the same resolve function for each response
+				//... Should somehow relate to .command
+				if (tag_data && tag_data.callback) tag_data.callback( response );
+				if (!response.success) return;
+
+				switch (response.command) {
+					case 'session.login': {
+						self.state = CONNECTION_STATE.AUTHENTICATED;
+						self.clientRecord = response.result;
+						self.events.emit( 'statechange', self.state );
+						self.events.emit( 'login' );
+						break;
+					}
+					case 'session.logout': {
+						self.state = CONNECTION_STATE.CONNECTED;
+						self.events.emit( 'logout' );
+						self.clientRecord.login = false;
+						break;
+					}
+				}
+			});
+		}
+
+		if (message.broadcast && (message.broadcast.type == 'server/name')) {
+			self.nodeName = message.broadcast.name;
+		}
+
+		if (tag_data) {
+			clearTimeout( tag_data.timeout );
+			delete self.tagData[message.tag];
+		}
+
+	} // on_message
+
+
 	function on_beforeunload () {
 		if (self.isConnected()) {
-			self.send( 'HUP' );   //...! Does this work?
+			self.send( 'HUP' );
 		}
 
 	} // on_beforeunload
@@ -280,6 +294,12 @@ export const AutoWebSocket = function (parameters = {}) {
 		return (self.webSocket && (self.webSocket.readyState == SOCKET_STATES.OPEN));
 
 	} // isConnected
+
+
+	this.isLoggedIn = function () {
+		return (self.state == CONNECTION_STATE.AUTHENTICATED);
+
+	} // isLoggedIn
 
 
 	this.connect = function () {
@@ -344,14 +364,15 @@ export const AutoWebSocket = function (parameters = {}) {
 	this.taggedRequest = function (request) {
 		return new Promise( (resolve, reject)=>{
 			request.tag = ++self.requestID;
-			self.send( request );
-			self.requestPromises[self.requestID] = {
+			self.tagData[self.requestID] = {
+				time     : Date.now(),
 				callback : resolve,
 				timeout  : setTimeout( ()=>{
-					delete self.requestPromises[self.requestID];
+					delete self.tagData[self.requestID];
 					reject( 'Request timed out' );
 				}, SETTINGS.TIMEOUT.TAG_RESPONSE),
 			};
+			self.send( request );
 		});
 
 	}; // taggedRequest
@@ -377,9 +398,10 @@ export const AutoWebSocket = function (parameters = {}) {
 		self.webSocketURL    = parameters.webSocketURL;
 		self.autoReconnect   = parameters.autoReconnect;
 		self.sentCredentials = false;
+		self.clientRecord    = false;
 
-		self.requestID       = 0;
-		self.requestPromises = {};
+		self.requestID = 0;
+		self.tagData   = {};
 
 		self.events = await new Events( self, EMITS_EVENTS, parameters.events );
 

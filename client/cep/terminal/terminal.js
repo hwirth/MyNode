@@ -7,7 +7,7 @@
 
 import { SETTINGS as CEP_SETTINGS, DEBUG } from '../config.js';
 
-import { SETTINGS, FUN_MODES } from './config.js';
+import { SETTINGS, PRESETS, FUN_MODES } from './config.js';
 import { Audio     } from './audio.js';
 import { Events    } from '../events.js';
 import { MainMenu  } from './components/main_menu.js';
@@ -22,7 +22,7 @@ const PROGRAM_NAME = 'MyNode Debug Terminal';
 const PROGRAM_VERSION = '0.2.1α';
 
 DEBUG.TERMINAL = {
-	APPLETS: !false,
+	APPLETS: false,
 };
 
 
@@ -156,7 +156,7 @@ export const DebugTerminal = function (cep) {
 			let attempt_nr = 1;
 			while (name_exists()) ++attempt_nr;
 
-			self.installApplet( name, template, /*show_applet*/true );
+			self.installApplet( name, template, entry.show );
 
 			function name_exists () {
 				if (!self.applets[name]) return false;
@@ -382,9 +382,9 @@ console.log(
 
 
 	this.updateBrowserURL = function (target_toggle) {
-		if (!self.toggles.save.enabled && (target_toggle.name != 'save')) return;
+		if (!self.toggles.save.enabled && (target_toggle.name != 'save')) return;   // User blocked URL saving
 
-		//... don't work with button text
+		//... Don't work with button text, switch to cep.who
 		//...! Current shell!
 		const shell_toggles = (self.applets.shell) ? self.applets.shell.toggles : {};
 		const all_toggles   = {...self.toggles, ...shell_toggles, terminal: {
@@ -436,9 +436,6 @@ console.log(
 
 
 	this.setFont = function (font_index = 0) {
-		//...const new_font_name = terminal.fontNames[font_index] || terminal.fontNames[0];
-		//...terminal.elements.terminal.style.setProperty( '--font-family', new_font_name );
-
 		for (let i = 0; i < self.fontNames.length; ++i) {
 			self.elements.terminal.classList.toggle( 'font' + i, i == font_index );
 		}
@@ -498,12 +495,7 @@ console.log(
 			console.log( 'KEYDOWN:', 'key:', event.key, 'code:', event.code );
 		}
 
-		if( (event.type == 'keydown')
-		//..done in beep &&  (self.toggles.beep.enabled)
-		//...&&  !((event.key == 'Enter') && event.target.closest('.login.menu'))
-		) {
-			self.audio.beep();
-		}
+		if (event.type == 'keydown') self.audio.beep();
 
 		self.keyboardShortcuts.forEach( (shortcut)=>{
 			const is_key = (event.key == shortcut.key) || (event.code == shortcut.code);
@@ -541,16 +533,12 @@ console.log(
 // WEBSOCKET
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
-	const socket_state = {
-		serverName : null,
-		userName   : null,
-	};
-
 	this.onWsStateChange = function (new_state = cep.connection.state) {
 		const ws_url    = cep.connection.webSocketURL;
 		const short_url = ws_url.replace( 'wss://', '' ).replace( 'ws://', '' ).split(':')[0];
-		const node_name = socket_state.nodeName || short_url;
-		const user_name = socket_state.userName;
+		const node_name = cep.connection.nodeName || short_url;
+		const login     = cep.connection.clientRecord && cep.connection.clientRecord.login;
+		const user_name = login && (login.userName + (login.nickName ? ':'+login.nickName : ''));
 
 		const text = {
 			offline       : { node:'MyNode' , cep:'Offline'   , title:'Not connected'               },
@@ -574,7 +562,13 @@ console.log(
 
 
 	this.onWsLogin = function (event) {
-		cep.connection.send( {access:{meta:{}}} );
+		//cep.connection.send( {access:{meta:{}}} );   //... Disabled handling in handle_message, now testing:
+		const request = { access: { meta:{} }};
+		cep.connection.taggedRequest( request ).then( response => {
+			if (response.command == 'access.meta') {
+				self.applets.nodeMenu.updateRequestItems( response.result );
+			}
+		});
 
 	}; // onWsLogin
 
@@ -612,22 +606,9 @@ console.log(
 		if (!response.success) return;
 
 		switch (response.command) {
-			case 'session.login': {
-				const user_name = response.result.login.userName;
-				const nick_name = response.result.login.nickName;
-				socket_state.userName = user_name + (nick_name ? ':'+nick_name : '');
-				self.onWsStateChange();
-				break;
-			}
-			case 'chat.nick': {
-				const user_name = response.result.userName;
-				const nick_name = response.result.nickName;
-				socket_state.userName = user_name + ':' + nick_name;
-				self.onWsStateChange();
-				break;
-			}
-			case 'session.logout': {
-				socket_state.userName = null;
+			case 'session.login'  : // fall through
+			case 'chat.nick'      : // fall through
+			case 'session.logout' : {
 				self.onWsStateChange();
 				break;
 			}
@@ -656,7 +637,6 @@ console.log(
 
 		switch (broadcast.type) {
 			case 'server/name': {
-				socket_state.nodeName = broadcast.name;
 				self.onWsStateChange();
 				break;
 			}
@@ -758,12 +738,12 @@ console.log(
 		//self.setFont();
 
 		self.audio   = await new Audio( cep, self );
-		self.bit     = self.audio.bit;   //... still needs to be created before shell. Move to shell entirely
+		self.bit     = self.audio.bit;
 		self.events  = await new Events( self, EMITS_EVENTS, {toggle: self.onToggle} );
 
 		// Instantiate applets
 		self.toggles = {};
-		self.applets = {};                                // true/false: Whether to activate (show)
+		self.applets = {};                            // true/false: Whether to activate (show) on load
 		await self.installApplet( 'mainMenu', MainMenu , true  );   // Creates our toggles, must be first
 		await self.installApplet( 'nodeMenu', NodeMenu , true  );
 		await self.installApplet( 'userList', UserList , true  );
@@ -771,10 +751,10 @@ console.log(
 		//await self.installApplet( 'editor'  , Editor   , false );
 		//await self.installApplet( 'settings', Settings , false );
 		await self.installApplet( 'shell'   , CEPShell , true  );
-		add_task_menu_entries([
-			{ name:'settings', caption:'Settings', template:Settings, show:false },
-			{ name:'editor'  , caption:'Editor'  , template:Editor  , show:false },
-			{ name:'shell'   , caption:'Shell'   , template:CEPShell, show:true  },
+		add_task_menu_entries([                                           // false: Only task button appears
+			{ name:'settings', caption:'Settings', template:Settings, show:true },
+			{ name:'editor'  , caption:'Editor'  , template:Editor  , show:true },
+			{ name:'shell'   , caption:'Shell'   , template:CEPShell, show:true },
 		]);
 
 		// GET PARAMETER
@@ -810,36 +790,24 @@ console.log(
 					break;
 				}
 				case 'light': {
-					self.elements.html.classList.toggle( 'light', toggle.enabled );
-					self.elements.html.classList.toggle( 'dark', !toggle.enabled );
+					self.elements.terminal.classList.toggle( 'light', toggle.enabled );
+					self.elements.terminal.classList.toggle( 'dark', !toggle.enabled );
 					break;
 				}
 			}
 			self.updateBrowserURL( toggle );
 			self.bit.say( toggle.enabled );
 		})
-		//...? updateBrowserURL();
 
 		// LIGHT MODE
-	/*
-		if (cep.GET.has( 'light' )) {
-			self.toggles.light.toggle( true );
-		} else if (cep.GET.has( 'dark' )) {
-			self.toggles.light.toggle( false );
-		} else {
-			const prefers_light = window.matchMedia( '(prefers-color-scheme:light)' ).matches;
-			self.toggles.light.toggle( prefers_light );
-		}
-	*/
+		self.elements.terminal.classList.toggle( 'light', PRESETS.TOGGLE.LIGHT );
+		self.elements.terminal.classList.toggle( 'dark', !PRESETS.TOGGLE.LIGHT );
 
-if (self.applets.shell)//...!
-		CEP_SETTINGS.WEBSOCKET.HIDE_PING = self.applets.shell.toggles.ping.enabled;
-
-	/*//...!
-		if (cep.connection.isConnected) {
-			self.elements.terminal.classList.add( 'connected' );
+		if (self.applets.shell) {
+			CEP_SETTINGS.WEBSOCKET.HIDE_PING = self.applets.shell.toggles.ping.enabled;
 		}
-	*/
+
+		self.onWsStateChange( cep.connection.state );
 
 		if (self.toggles.bit.enabled) {
 			self.toggles.bit.toggle( false );

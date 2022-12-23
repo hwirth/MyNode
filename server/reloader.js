@@ -14,9 +14,6 @@ const { SETTINGS      } = require( './config.js' );
 const { DEBUG, COLORS } = require( './debug.js' );
 
 
-const EMPTY = {};//...
-
-
 module.exports = function AppReloader (callback) {
 	const self = this;
 
@@ -284,11 +281,12 @@ module.exports = function AppReloader (callback) {
 	this.onMessage = async function (socket, client_address, json_string) {
 		let message = null;
 
-		//...try {
+		try {
 			message = JSON.parse( String(json_string) );
-		//...} catch (error) {
-		//...	DEBUG.log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
-		//...}
+
+		} catch (error) {
+			DEBUG.log( COLORS.RELOADER, 'AppReloader.onMessage:', 'JSON.parse() failed.' );
+		}
 
 		if (DEBUG.RELOADER_MESSAGE) DEBUG.log( COLORS.RELOADER, 'AppReloader.onMessage:', message );
 

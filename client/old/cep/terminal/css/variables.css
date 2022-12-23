@@ -144,7 +144,7 @@
 
 
 /* LIGHT MODE */
-html.light :not(.fancy).terminal {
+:not(.fancy).light.terminal {
 	--focus-box-shadow : #fff4;
 	--focus-filter : saturate(1.25) brightness(1.2);
 

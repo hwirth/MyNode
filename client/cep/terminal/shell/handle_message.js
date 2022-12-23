@@ -28,11 +28,6 @@ export function handle_message (cep, terminal, shell, message) {
 	if (typeof message == 'string') return shell.output.print( message, 'string expand' );
 	if (message.who) terminal.applets.userList.update( message.who );
 
-	if (message.tag && shell.tagData[message.tag]) {
-		message.time.push( Date.now() - shell.tagData[message.tag] );
-		shell.tagData[message.tag] = message;   //...! Display list on screen
-	}
-
 	print_message();
 
 	if      (message.broadcast) Helpers.wrapArray( message.broadcast ).forEach( handle_broadcast );
@@ -76,13 +71,13 @@ export function handle_message (cep, terminal, shell, message) {
 
 
 	function handle_response (response) {
-		if (!response) return;   //... Server error
 		if (response.error) response.error = format_error( response.error, 1 );
 		if (!response.success) return;
 
 		switch (response.command) {
 			case 'access.meta':  {
-				terminal.applets.nodeMenu.updateRequestItems( response.result );
+				//...terminal.applets.nodeMenu.updateRequestItems( response.result );
+				//...Currently testing  taggedRequest.then  in DebugTerminal.onWsLogin
 				break;
 			}
 		}

@@ -238,10 +238,6 @@ export const ShellOutput = function (cep, terminal, shell) {
 		} // highlight
 
 
-		// Let user scroll up   //... Make optional
-		const o = shell.elements.output;
-		const do_scroll = (o.scrollHeight - o.scrollTop >= o.clientHeight - 1);
-
 		let print_message = null;
 		if (message.html) {
 			print_message = message.html.replaceAll( '<a href', '<a target="_blank" href' );
