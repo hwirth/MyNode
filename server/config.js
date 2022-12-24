@@ -11,7 +11,7 @@ const path = require( 'path' );
 const DEV_SERVER = true || (os.hostname() == 'labor');
 
 const PROGRAM_NAME    = 'MyNode';
-const PROGRAM_VERSION = 'v0.0.7p';
+const PROGRAM_VERSION = 'v0.0.6p';
 
 // Dict of parsed values, used for exporting in this file via SETTINGS[], etc.
 const CONGIGURATION_FILE = '/etc/spielwiese.conf';
