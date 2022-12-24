@@ -29,10 +29,10 @@ powerful the program already became after my initial rush. It is still very crud
 ```javascript
 session
 	login
-		username:itsme
-		password:secRet
+		username: itsme
+		password: secRet
 chat
-	nick: hithere
+	nick: hi there
 ```
 will be sent as
 ```javascript
@@ -44,12 +44,12 @@ will be sent as
 		}
 	},
 	"chat":{
-		"nick":"hithere"
+		"nick":"hi there"
 	}
 }
 ```
 ### dotJSON
-Only usable when parameters are simple.
+Only usable when parameters are simple:
 ```javascript
 .session.login.username:itsme,password:secRet...chat.nick:hithere
 ```
