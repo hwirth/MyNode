@@ -3,6 +3,10 @@ My CSS based poker game really lacks multi-player capabilities, so I set out to 
 As per protocol, the scope of the program exploded a little and the prototype has become MyNode, which is a client/server system written in NodeJS
 for applications like a chat or multi-player games.
 
+## v0.0.7p
+It is a prototype that grew out of proportions. I went for the low hanging fruit only and am still surprised how
+powerful the program already became after my initial rush. It is still very crude in some parts.
+
 ## Features
   * Hot code reloading server and client side. I can code live, while everyone stays connected.
   * Websocket interface that recovers from server and client crashes, and tries very hard to stay connected or reconnect.
