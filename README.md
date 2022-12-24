@@ -32,7 +32,7 @@ session
 		username:itsme
 		password:secRet
 chat
-	nick: I
+	nick: hithere
 ```
 will be sent as
 ```javascript
@@ -44,14 +44,14 @@ will be sent as
 		}
 	},
 	"chat":{
-		"nick":"I"
+		"nick":"hithere"
 	}
 }
 ```
 ### dotJSON
 Only usable when parameters are simple.
 ```javascript
-.session.login.username:itsme,password:secRet...chat.nick:I
+.session.login.username:itsme,password:secRet...chat.nick:hithere
 ```
 
 ## File Structure
