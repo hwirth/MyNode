@@ -4,8 +4,9 @@ As per protocol, the scope of the program exploded a little and the prototype ha
 for applications like a chat or multi-player games.
 
 ## v0.0.7p
-It is a prototype that grew out of proportions. I went for the low hanging fruit only and am still surprised how
-powerful the program already became after my initial rush. It is still very crude in some parts.
+It is a prototype that grew out of proportions. I went for the low hanging fruit only and what came out after my
+initial rush was surprisingly powerful already and useful for bootstrapping the server. After some cleanup and
+refactoring a bit, it is still quite crude in some parts.
 
 ## Features
   * Hot code reloading server and client side. I can code live, while everyone stays connected.

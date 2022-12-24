@@ -42,7 +42,7 @@ export const AutoWebSocket = function (parameters = {}) {
 	this.autoReconnect;     // Clear this flag to stop the reconnect loop
 	this.sentCredentials;   // Wether we sent the JSON after the socket opened
 	this.requestID;         // Used to correlate sent requests and received responses
-	this.tagData;   // Resolved, when response corresponding to request comes in
+	this.tagData;           // Resolved, when response corresponding to request comes in
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
