@@ -9,7 +9,7 @@ export function isNumeric (string) {
 } // isNumeric
 
 
-export function wrapArray (string_or_array) {
+export function wrapArray (string_or_array = []) {
 	return (string_or_array instanceof Array) ? string_or_array : [string_or_array];
 
 } // wrapArray

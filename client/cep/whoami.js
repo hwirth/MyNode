@@ -27,17 +27,23 @@ export const WhoAmI = function (cep) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
 	this.onWsMessage = function (message) {
+		if (message.who) self.whoData = message.who;
 		if (!message.response) return;
 
 		Helpers.wrapArray( message.response ).forEach( (response)=>{
+			if (!response.success) return;
 			switch (response.command) {
-				case 'chat.nick':: {
+				case 'chat.nick': {
+					self.nickName = response.result.nickName;
 					break;
 				}
 				case 'session.login': {
+					self.userName = response.result.login.userName;
+					self.nickName = response.result.login.nickName;
 					break;
 				}
 				case 'session.logout': {
+					self.userName = self.nickName = null;
 					break;
 				}
 			}
@@ -47,6 +53,7 @@ export const WhoAmI = function (cep) {
 
 
 	this.onWsClose   = function () {
+		self.whoData = self.userName = self.nickName = null;
 	}; // onWsMessage
 
 
@@ -63,6 +70,7 @@ export const WhoAmI = function (cep) {
 
 	this.init = async function () {
 		if (DEBUG.INSTANCES) console.log( 'WhoAmI.init' );
+		self.userName = self.nickName = null;
 		return Promise.resolve();
 
 	}; // init
