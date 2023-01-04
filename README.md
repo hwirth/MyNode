@@ -7,7 +7,7 @@ for applications like a chat or multi-player games.
 It is a prototype that grew out of proportions. I went for the low hanging fruit only and what came out after my
 initial rush was surprisingly powerful already and valuable for bootstrapping the rest of the system. After some
 cleanup and refactoring a bit, the code is still quite crude in some parts and at the time of writing, the basic
-framework is about 85% feature complete, sans CMS functions like editor and file manager.
+framework is about 90% feature complete, sans CMS functions like editor and file manager.
 
 ## Features
   * Hot code reloading server and client side. I can code live, while everyone stays connected.
