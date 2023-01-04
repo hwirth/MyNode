@@ -11,11 +11,8 @@ const { STATUS, REASONS } = require( './constants.js' );
 
 const PROTOCOL_DESCRIPTION = (`
 	connected: {session:{login:{username:literal=guest}}}
-	connected: {session:{login:{username:literal=guest,nickname:string}}}
 	connected: {session:{login:{username:string,password:string}}}
 	connected: {session:{login:{username:string,password:string,factor2:string}}}
-	connected: {session:{login:{username:string,nickname:string,password:string}}}
-	connected: {session:{login:{username:string,nickname:string,password:string,factor2:string}}}
 	connected,guest,user,mod,admin,dev,owner: {help:*}
 	connected,guest,user,mod,admin,dev,owner: {session:{status:empty}}
 	guest,user,mod,admin,dev,owner: {session:{who:empty}}
@@ -149,14 +146,6 @@ module.exports = function AccessControl (persistent, callback, meta) {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-// VERIFY
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function verify_request (client, request) {
-	} // verify_request
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // REQUEST HANDLERS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -178,7 +167,7 @@ RULE( 'admin,dev,owner: {access:{meta:{description:empty}}}' );
 			return { command:'all', result: self.rules };
 		}
 		else if (parameters.description) {
-			return { command:'description', result: self.getProtocolDescription().split('\n') };
+			return { command:'description', result: stringify_configuration( self.rules ).split('\n') };
 		}
 		else {
 			return { result: self.getClientRules(client) };
@@ -190,6 +179,22 @@ RULE( 'admin,dev,owner: {access:{meta:{description:empty}}}' );
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 // INTERFACE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+// VERIFY ////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
+
+	this.validateRequest = function (client, request) {
+		const rules = self.getClientRules( client );
+		console.log( '=================REQUEST' );
+		console.log( rules );
+		console.log( '=================/REQUEST' );
+
+		return {
+			granted: true,
+			reason: null,
+		};
+
+	}; // validateRequest
+
 
 // CLIENT RULES //////////////////////////////////////////////////////////////////////////////////////////////////119:/
 
@@ -228,17 +233,6 @@ RULE( 'admin,dev,owner: {access:{meta:{description:empty}}}' );
 	}; // getClientRules
 
 
-// PROTOCOL //////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	this.getProtocolDescription = function () {
-		return stringify_configuration( self.rules );
-
-	}; // getProtocolDescription
-
-
-	this.parseConfiguration = parse_configuration;
-
-
 	this.loadConfiguration = function (configuration) {
 		const source      = format_source( configuration, /*show_line_numbers*/false );
 		const parsed      = parse_configuration( source );
@@ -266,6 +260,7 @@ RULE( 'admin,dev,owner: {access:{meta:{description:empty}}}' );
 
 
 	this.reset = function () {
+		// router.js calls this after all protocol templates were instantiated and meta data was collected
 		if (DEBUG.RESET) DEBUG.log( COLORS.INSTANCES, 'Access.reset' );
 		const configuration = callback.getMeta().rules.join('\n');
 		self.loadConfiguration( configuration );

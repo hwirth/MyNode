@@ -15,7 +15,6 @@ const Application = function () {
 
 	this.webSocketClient;
 	this.terminal;
-	this.youTubePlayer;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
@@ -51,43 +50,6 @@ const Application = function () {
 		}
 
 	} // disconnect_from_websocket
-
-
-	function random_video_id () {
-		return SETTINGS.YOUTUBE.VIDEO_IDS[
-			Math.floor( Math.random() * SETTINGS.YOUTUBE.VIDEO_IDS.length )
-		];
-
-	} // random_video_id()
-
-
-// YouTube ///////////////////////////////////////////////////////////////////////////////////////////////////////119:/
-
-	function random_video_id () {
-		return SETTINGS.YOUTUBE.VIDEO_IDS[
-			Math.floor( Math.random() * SETTINGS.YOUTUBE.VIDEO_IDS.length )
-		];
-
-	} // random_video_id
-
-	this.toggleYouTubePlay = function () {
-		if (self.youTubePlayer === null) {
-			self.youTubePlayer = new YouTubePlayer( self, self.dom.divYouTube, random_video_id() );
-		} else {
-			self.youTubePlayer.togglePlayer();
-		}
-
-	}; // toggleYouTubePlay
-
-
-	this.toggleYouTubePause = function () {
-		if (self.youTubePlayer === null) {
-			self.youTubePlayer = new YouTubePlayer( self, self.dom.divYouTube, random_video_id() );
-		} else {
-			self.youTubePlayer.togglePause();
-		}
-
-	}; // toggleYouTubePause
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////119:/

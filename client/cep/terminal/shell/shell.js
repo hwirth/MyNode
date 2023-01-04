@@ -8,11 +8,11 @@
 import { DEBUG             } from '../../config.js';
 import { SETTINGS, PRESETS } from '../config.js';
 import { Toggle            } from '../toggle.js';
-import { handle_message    } from './handle_message.js'
 import { ShellInput        } from './input.js';
 import { ShellOutput       } from './output.js';
 import { Parsers           } from './parsers.js';
 import { History           } from './history.js';
+import { handle_message    } from './handle_message.js'
 
 const PROGRAM_NAME = 'CEP-Shell';
 const PROGRAM_VERSION = '0.4.4α';

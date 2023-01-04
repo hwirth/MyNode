@@ -90,6 +90,63 @@ module.exports.Router = function (persistent, callback) {
 
 		const nano_t0 = hrtime.bigint();
 		const date_t0 = Date.now();
+//test();
+async function test () {
+
+		const results    = [];
+		const broadcasts = [];
+		const addressed_protocols = Object.keys( message );
+		for (let p = 0; p < addressed_protocols.length; ++p) {
+			const protocol = addressed_protocols[p];
+			const invoked_commands = Object.keys( message[protocol] );
+			for (let c = 0; c < invoked_commands.length; ++c) {
+				const command   = invoked_commands[c];
+				const parameter = message[protocol][command];
+				const request   = { [protocol]: { [command]: { parameter }}};
+				const access    = self.protocols.access.validateRequest( client, request );
+				let result      = null;
+				if (access.granted) {
+					try {
+						const request_handler = self.protocols[protocol].request[command];
+						const answer  = await request_handler( parameter );
+
+						const return_success
+						= (typeof answer.success != 'undefined') ? true
+						: (typeof answer.failure != 'undefined') ? false
+						: (typeof answer.result  != 'undefined') ? true
+						: null
+						;
+						const return_result
+						= (typeof answer.result  != 'undefined') ? answer.result
+						: (typeof answer.success != 'boolean'  ) ? answer.success
+						: (typeof answer.failure != 'boolean'  ) ? answer.failure
+						: undefined
+						;
+						result = {
+							command : answer.command,
+							success : return_success,
+							result  : return_result,
+						};
+
+						if (answer.broadcast) broadcasts.push( answer.broadcast );
+
+					} catch (error) {
+						result = {
+							error: error,
+						};
+						broadcasts.push({
+							error: error,
+						});
+					}
+				} else {
+					result = { failure: access.reason };
+				}
+				results.push( result );
+			}
+		}
+
+}
+
 
 		const collected_answers = [];
 
@@ -385,6 +442,7 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 		const ServerControl  = require( './control.js' );
 		const ChatServer     = require( './chat/chat.js' );
 		const RSSServer      = require( './rss/rss.js' );
+		const FileManager    = require( './file_manager/file_manager.js' );
 
 		const registered_callbacks = {
 			broadcast              : (...params)=>{ return self.protocols.session.broadcast(...params); },
@@ -398,10 +456,6 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 			getWho                 : (...params)=>{ return self.protocols.session.getWho(...params); },
 			getAllClients          : ()=>{ return persistent.session.clients; },
 			getAllPersistentData   : ()=>{ return persistent; },
-			getProtocolDescription : (show_line_numbers)=>{
-				return self.protocols.access
-				.getProtocolDescription( show_line_numbers );//...?
-			},
 		};
 
 		const registered_protocols = {
@@ -431,7 +485,6 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 					'getProtocols',
 					'getAllClients',
 					'getAllPersistentData',
-					'getProtocolDescription',
 					'triggerExit',
 					'getServerInstance',
 				],
@@ -448,6 +501,11 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 				template: RSSServer,
 				callbacks : [
 					'broadcast',
+				],
+			},
+			files: {
+				template: FileManager,
+				callbacks: [
 				],
 			},
 		};
@@ -478,12 +536,12 @@ if (collected_answers.filter( answer => answer.command != 'pong' ).length > 0) {
 		// Process collected meta data
 
 		self.protocols.access.reset();   // Process metadata
-console.log( 'meta.help:', self.meta.help );
-console.log( 'meta.rules:', self.meta.rules );
-console.log( 'access.rules:', self.protocols.access.rules );
+//console.log( 'meta.help:', self.meta.help );
+//console.log( 'meta.rules:', self.meta.rules );
+//console.log( 'access.rules:', self.protocols.access.rules );
 
+	/*
 		// Protocol description
-
 		const registered_rules   = registered_callbacks.getProtocolDescription().split('\n');
 		const validation_results = { registered:{}, declared:{} };
 
@@ -500,8 +558,9 @@ console.log( 'access.rules:', self.protocols.access.rules );
 			const found = self.meta.rules.find( rule => rule == description );
 			log( 'registered', description, found );
 		});
-persistent.access.descriptionState = validation_results;
+		persistent.access.descriptionState = validation_results;
 		DEBUG.log( COLORS.ROUTER, 'Protocols:', Object.keys(self.protocols), validation_results );
+	*/
 
 		return Promise.resolve();
 

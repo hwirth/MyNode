@@ -3,10 +3,11 @@ My CSS based poker game really lacks multi-player capabilities, so I set out to 
 As per protocol, the scope of the program exploded a little and the prototype has become MyNode, which is a client/server system written in NodeJS
 for applications like a chat or multi-player games.
 
-## v0.0.7p
+## v0.0.7p - Dec 23 2022
 It is a prototype that grew out of proportions. I went for the low hanging fruit only and what came out after my
-initial rush was surprisingly powerful already and useful for bootstrapping the server. After some cleanup and
-refactoring a bit, it is still quite crude in some parts.
+initial rush was surprisingly powerful already and valuable for bootstrapping the rest of the system. After some
+cleanup and refactoring a bit, the code is still quite crude in some parts and at the time of writing, the basic
+framework is about 85% feature complete, sans CMS functions like editor and file manager.
 
 ## Features
   * Hot code reloading server and client side. I can code live, while everyone stays connected.

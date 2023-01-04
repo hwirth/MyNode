@@ -202,7 +202,7 @@ console.log( COLORS.ERROR + 'Seesion.broadcast()' + COLORS.RESET + ' should no l
 // LOGIN /////////////////////////////////////////////////////////////////////////////////////////////////////////119:/
 HELP( 'login', 'Authenticate as registered user' );
 
-RULE( 'connected: {session:{login:{username:string}}}' );
+RULE( 'connected: {session:{login:{username:literal=guest}}}' );
 RULE( 'connected: {session:{login:{username:string,password:string}}}' );
 RULE( 'connected: {session:{login:{username:string,password:string,factor2:string}}}' );
 

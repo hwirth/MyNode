@@ -182,7 +182,7 @@ module.exports = function ServerControl (persistent, callback, meta) {
 			let result = (
 				  (years   ? years      + 'y' : '')
 				+ (weeks   ? weeks      + 'w' : '')
-				+ (days    ? days       + 'd:' : '')
+				+ (days    ? days       + 'd,' : '')
 				+ leading( hours  , 2 ) + 'h'
 				+ leading( minutes, 2 ) + 'm'
 				+ leading( seconds, 2 ) + '.'
@@ -410,7 +410,7 @@ RULE( 'admin,dev,owner: {server:{status:*}}'     );
 		} else if (Object.keys(parameter).length > 0) {
 			DEBUG.log( COLORS.COMMAND, '<server.status.persistent>', client );
 
-			let Xadd_persistent, add_uptime, add_memory, add_settings, add_debug, add_source, add_access;
+			let add_persistent, add_uptime, add_memory, add_settings, add_debug, add_source, add_access;
 			const requested_all = (Object.keys( parameter ).indexOf('all') >= 0);
 			function has (key) {
 				return (requested_all) || (Object.keys( parameter ).indexOf(key) >= 0);
@@ -422,8 +422,7 @@ RULE( 'admin,dev,owner: {server:{status:*}}'     );
 			if (has('debug'     )) add_debug      = DEBUG;
 			if (has('source'    )) add_source     = await get_source_info();
 			if (has('access'    )) add_access     = {
-				rules : callback.getProtocolDescription().split('\n'),
-				meta  : callback.getAllPersistentData().access.descriptionState,
+				rules : callback.getMeta().rules,
 			};
 
 			return {
